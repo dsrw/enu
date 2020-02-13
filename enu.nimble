@@ -15,7 +15,8 @@ install_files = @["enu.nim"]
 bin           = @["enu"]
 bin_dir       = "bin"
 requires "nim >= 1.0.6",
-         "godot 0.7.27"
+         "godot 0.7.27",
+         "compiler 1.0.6"
 
 
 task generate, "Generate Godot API binding":

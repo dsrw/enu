@@ -1,1 +1,2 @@
 --define:useRealtimeGC
+--define:nimOldCaseObjects
