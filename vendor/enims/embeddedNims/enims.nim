@@ -13,7 +13,7 @@ from compiler/modules import makeModule, compileSystemModule, includeModule, imp
 from compiler/ast import PSym, PNode, TSymFlag, initStrTable, newIntNode, newFloatNode, newStrNode, newNode, newTree, TNodeKind
 from compiler/pathutils import AbsoluteDir, AbsoluteFile
 
-import os, threadpool, times
+import os, times
 
 import apiImpl
 
@@ -69,19 +69,7 @@ proc cleanupNimscript(graph: ModuleGraph) =
   clearPasses(graph)
 
 
-proc watch (filename: string): int =
-  var writeTime: Time
-  var info: FileInfo
-  while true:
-      info = getFileInfo(filename)
-      writeTime = info.lastWriteTime
-      sleep(100)
-      info = getFileInfo(filename)
-      if writeTime != info.lastWriteTime and info.size > 0:
-          break
-
-
-proc compileScript* (filename: string, watch = false): Script =
+proc compileScript* (filename: string): Script =
   # Populate result
   result.new()
   result.graph = newModuleGraph(identCache, configRef)
@@ -115,9 +103,6 @@ proc compileScript* (filename: string, watch = false): Script =
   setupGlobalCtx(nil, result.graph)
   cleanupNimscript(result.graph)
 
-  # Watch the script file for changes
-  if watch: result.watcher = spawn watch result.filename
-
 
 proc reload* (script: Script) =
   setupNimscript(script.graph)
@@ -142,11 +127,6 @@ proc hasProc* (script: Script, procName: string): bool =
 
 proc call* (script: Script, procName: string,
     args: openArray[PNode] = []): PNode {.discardable.} =
-    # Check the watcher
-    if not script.watcher.isNil and script.watcher.isReady:
-      echo script.moduleName, " changed - reloading"
-      script.reload()
-      script.watcher = spawn watch script.filename
   
     setupGlobalCtx(script.mainModule, script.graph)
 

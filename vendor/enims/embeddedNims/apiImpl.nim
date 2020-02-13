@@ -18,7 +18,6 @@ from compiler/ast import
     newNode, newFloatNode, addSon, newTree
 
 from os import splitFile
-from threadpool import FlowVar
 
 # Assume location of shared state type in ../state
 import ../state
@@ -31,7 +30,6 @@ type
         mainModule*: PSym
         graph*: ModuleGraph
         context*: PCtx
-        watcher*: FlowVar[int]
 
 
 proc exposeScriptApi* (script: Script) =
