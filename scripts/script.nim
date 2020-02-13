@@ -1,0 +1,2 @@
+proc update*() =
+  echo "hello"

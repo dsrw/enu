@@ -20,7 +20,7 @@ import apiImpl
 
 # The path to the directory that contains the scripts, api declaration, and stdlib source
 let 
-  scriptsDir = getAppDir() / "scripts"
+  scriptsDir = getAppDir() / "../scripts"
   configRef = newConfigRef()
   identCache = newIdentCache()
 
