@@ -52,7 +52,7 @@ proc selectRoutine*(i: Interpreter; name: string): PSym =
   result = selectUniqueSymbol(i, name, {skTemplate, skMacro, skFunc,
                                         skMethod, skProc, skConverter})
 
-proc callRoutine*(i: Interpreter; routine: PSym; args: openArray[PNode]): PNode =
+proc callRoutine*(i: Interpreter; routine: PSym; args: openArray[PNode]): Pauseable[PNode] =
   assert i != nil
   result = vm.execProc(PCtx i.graph.vm, routine, args)
 

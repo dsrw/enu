@@ -28,6 +28,15 @@ when hasFFI:
   import evalffi
 
 type
+  PauseRequest* = ref object of CatchableError
+  PauseState* = ref object
+    c: PCtx
+    pc: int
+    tos: PStackFrame
+
+  PauseableKind* = enum
+    pkDefault, pkPause
+
   TRegisterKind = enum
     rkNone, rkNode, rkInt, rkFloat, rkRegisterAddr, rkNodeAddr
   TFullReg = object   # with a custom mark proc, we could use the same
@@ -39,6 +48,11 @@ type
     of rkNode: node: PNode
     of rkRegisterAddr: regAddr: ptr TFullReg
     of rkNodeAddr: nodeAddr: ptr PNode
+
+  Pauseable*[T] = object
+    case kind*: PauseableKind
+    of pkDefault: default*: T
+    of pkPause: state*: PauseState
 
   PStackFrame* = ref TStackFrame
   TStackFrame* = object
@@ -494,7 +508,7 @@ const
     "compiler/vmdef.MaxLoopIterations and rebuild the compiler"
   errFieldXNotFound = "node lacks field: "
 
-proc rawExecute(c: PCtx, start: int, tos: PStackFrame): TFullReg =
+proc rawExecute(c: PCtx, start: int, tos: PStackFrame): Pauseable[TFullReg] =
   var pc = start
   var tos = tos
   # Used to keep track of where the execution is resumed.
@@ -519,7 +533,7 @@ proc rawExecute(c: PCtx, start: int, tos: PStackFrame): TFullReg =
         "rc", regDescr("rc", instr.regC)]
 
     case instr.opcode
-    of opcEof: return regs[ra]
+    of opcEof: return Pauseable[TFullReg](kind:pkDefault, default:regs[ra])
     of opcRet:
       let newPc = c.cleanUpOnReturn(tos)
       # Perform any cleanup action before returning
@@ -528,7 +542,7 @@ proc rawExecute(c: PCtx, start: int, tos: PStackFrame): TFullReg =
         tos = tos.next
         let retVal = regs[0]
         if tos.isNil:
-          return retVal
+          return Pauseable[TFullReg](kind:pkDefault, default:retVal)
 
         move(regs, tos.slots)
         assert c.code[pc].opcode in {opcIndCall, opcIndCallAsgn}
@@ -1083,10 +1097,13 @@ proc rawExecute(c: PCtx, start: int, tos: PStackFrame): TFullReg =
       let prc = if not isClosure: bb.sym else: bb.sons[0].sym
       if prc.offset < -1:
         # it's a callback:
-        c.callbacks[-prc.offset-2].value(
-          VmArgs(ra: ra, rb: rb, rc: rc, slots: cast[pointer](regs),
-                 currentException: c.currentExceptionA,
-                 currentLineInfo: c.debug[pc]))
+        try:
+          c.callbacks[-prc.offset-2].value(
+            VmArgs(ra: ra, rb: rb, rc: rc, slots: cast[pointer](regs),
+                  currentException: c.currentExceptionA,
+                  currentLineInfo: c.debug[pc]))
+        except PauseRequest:
+          return Pauseable[TFullReg](kind: pkPause, state: PauseState(c:c, pc:pc, tos:tos))
       elif importcCond(prc):
         if compiletimeFFI notin c.config.features:
           globalError(c.config, c.debug[pc], "VM not allowed to do FFI, see `compiletimeFFI`")
@@ -1318,7 +1335,7 @@ proc rawExecute(c: PCtx, start: int, tos: PStackFrame): TFullReg =
         message(c.config, c.debug[pc], hintQuitCalled)
         msgQuit(int8(toInt(getOrdValue(regs[ra].regToNode, onError = toInt128(1)))))
       else:
-        return TFullReg(kind: rkNone)
+        return Pauseable[TFullReg](kind:pkDefault, default:TFullReg(kind: rkNone))
     of opcInvalidField:
       stackTrace(c, tos, pc, errFieldXNotFound & regs[ra].node.strVal)
     of opcSetLenStr:
@@ -1944,12 +1961,15 @@ proc rawExecute(c: PCtx, start: int, tos: PStackFrame): TFullReg =
 
     inc pc
 
-proc execute(c: PCtx, start: int): PNode =
+proc execute(c: PCtx, start: int): Pauseable[PNode] =
   var tos = PStackFrame(prc: nil, comesFrom: 0, next: nil)
   newSeq(tos.slots, c.prc.maxSlots)
-  result = rawExecute(c, start, tos).regToNode
+  let res = rawExecute(c, start, tos)
+  case res.kind
+  of pkDefault: return Pauseable[PNode](kind:pkDefault, default:res.default.regToNode)
+  of pkPause: return Pauseable[PNode](kind:pkPause, state:res.state)
 
-proc execProc*(c: PCtx; sym: PSym; args: openArray[PNode]): PNode =
+proc execProc*(c: PCtx; sym: PSym; args: openArray[PNode]): Pauseable[PNode] =
   if sym.kind in routineKinds:
     if sym.typ.len-1 != args.len:
       localError(c.config, sym.info,
@@ -1969,7 +1989,10 @@ proc execProc*(c: PCtx; sym: PSym; args: openArray[PNode]): PNode =
       for i in 1..<sym.typ.len:
         putIntoReg(tos.slots[i], args[i-1])
 
-      result = rawExecute(c, start, tos).regToNode
+      let res = rawExecute(c, start, tos)
+      case res.kind
+      of pkDefault: return Pauseable[PNode](kind:pkDefault, default:res.default.regToNode)
+      of pkPause: return Pauseable[PNode](kind:pkPause, state:res.state)
   else:
     localError(c.config, sym.info,
       "NimScript: attempt to call non-routine: " & sym.name.s)
@@ -1986,7 +2009,7 @@ proc evalExpr*(c: PCtx, n: PNode): PNode =
   let n = transformExpr(c.graph, c.module, n, noDestructors = true)
   let start = genExpr(c, n)
   assert c.code[start].opcode != opcEof
-  result = execute(c, start)
+  result = execute(c, start).default
 
 proc getGlobalValue*(c: PCtx; s: PSym): PNode =
   internalAssert c.config, s.kind in {skLet, skVar} and sfGlobal in s.flags
@@ -2042,8 +2065,14 @@ proc evalConstExprAux(module: PSym;
   var tos = PStackFrame(prc: prc, comesFrom: 0, next: nil)
   newSeq(tos.slots, c.prc.maxSlots)
   #for i in 0 ..< c.prc.maxSlots: tos.slots[i] = newNode(nkEmpty)
-  result = rawExecute(c, start, tos).regToNode
+  result = rawExecute(c, start, tos).default.regToNode
   if result.info.col < 0: result.info = n.info
+
+proc resume*(e: PauseState): PauseState =
+  inc e.pc
+  let res = rawExecute(e.c, e.pc, e.tos)
+  if res.kind == pkPause:
+    return res.state
 
 proc evalConstExpr*(module: PSym; g: ModuleGraph; e: PNode): PNode =
   result = evalConstExprAux(module, g, nil, e, emConst)
@@ -2158,7 +2187,7 @@ proc evalMacroCall*(module: PSym; g: ModuleGraph;
                  " generic parameter(s)")
   # temporary storage:
   #for i in L ..< maxSlots: tos.slots[i] = newNode(nkEmpty)
-  result = rawExecute(c, start, tos).regToNode
+  result = rawExecute(c, start, tos).default.regToNode
   if result.info.line < 0: result.info = n.info
   if cyclicTree(result): globalError(c.config, n.info, "macro produced a cyclic tree")
   dec(g.config.evalMacroCounter)
