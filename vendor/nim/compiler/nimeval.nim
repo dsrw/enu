@@ -17,7 +17,7 @@ import
 type
   Interpreter* = ref object ## Use Nim as an interpreter with this object
     mainModule: PSym
-    graph: ModuleGraph
+    graph*: ModuleGraph
     scriptName: string
 
 iterator exportedSymbols*(i: Interpreter): PSym =

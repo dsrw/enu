@@ -349,7 +349,10 @@ proc quit(conf: ConfigRef; msg: TMsgKind) {.gcsafe.} =
         styledMsgWriteln(fgRed, "No stack traceback available\n" &
             "To create a stacktrace, rerun compilation with ./koch temp " &
             conf.command & " <file>")
-  quit 1
+  if conf.quitHandler != nil:
+    conf.quitHandler(msg)
+  else:
+    quit 1
 
 proc handleError(conf: ConfigRef; msg: TMsgKind, eh: TErrorHandling, s: string) =
   if msg >= fatalMin and msg <= fatalMax:
