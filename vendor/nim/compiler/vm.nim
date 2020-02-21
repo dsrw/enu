@@ -1966,8 +1966,8 @@ proc execute(c: PCtx, start: int): Pauseable[PNode] =
   newSeq(tos.slots, c.prc.maxSlots)
   let res = rawExecute(c, start, tos)
   case res.kind
-  of pkDefault: return Pauseable[PNode](kind:pkDefault, default:res.default.regToNode)
-  of pkPause: return Pauseable[PNode](kind:pkPause, state:res.state)
+  of pkDefault: Pauseable[PNode](kind:pkDefault, default:res.default.regToNode)
+  of pkPause: Pauseable[PNode](kind:pkPause, state:res.state)
 
 proc execProc*(c: PCtx; sym: PSym; args: openArray[PNode]): Pauseable[PNode] =
   if sym.kind in routineKinds:
@@ -1990,9 +1990,9 @@ proc execProc*(c: PCtx; sym: PSym; args: openArray[PNode]): Pauseable[PNode] =
         putIntoReg(tos.slots[i], args[i-1])
 
       let res = rawExecute(c, start, tos)
-      case res.kind
-      of pkDefault: return Pauseable[PNode](kind:pkDefault, default:res.default.regToNode)
-      of pkPause: return Pauseable[PNode](kind:pkPause, state:res.state)
+      return case res.kind
+      of pkDefault: Pauseable[PNode](kind:pkDefault, default:res.default.regToNode)
+      of pkPause: Pauseable[PNode](kind:pkPause, state:res.state)
   else:
     localError(c.config, sym.info,
       "NimScript: attempt to call non-routine: " & sym.name.s)
