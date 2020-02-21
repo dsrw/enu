@@ -1,2 +1,2 @@
---define:useRealtimeGC
+--path:"vendor/nim"
 --define:nimOldCaseObjects

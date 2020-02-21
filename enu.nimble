@@ -1,4 +1,4 @@
-import strformat
+import strformat, strutils
 
 const
   GODOT_BIN     = "/Applications/Godot.app/Contents/MacOS/Godot"
@@ -15,9 +15,13 @@ install_files = @["enu.nim"]
 bin           = @["enu"]
 bin_dir       = "bin"
 requires "nim >= 1.0.6",
-         "godot 0.7.27",
-         "compiler 1.0.6"
+         "godot 0.7.27"
 
+task on_save, "Build on save":
+  if get_env("SAVED_FILE").starts_with("scripts"):
+    exec "bin/enu"
+  else:
+    exec "nimble build --debugger:native"
 
 task generate, "Generate Godot API binding":
   mk_dir GENERATED_DIR
