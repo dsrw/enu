@@ -5,11 +5,12 @@
     "tasks": [
         {   
             "command": "nimble",
-            "args": ["build"],
+            "args": ["on_save"],
             "options": {
                 "cwd": "${workspaceRoot}",
                 "env": {
-                    "GODOT_BIN": "/Applications/Godot.app/Contents/MacOS/Godot"
+                    "GODOT_BIN": "/Applications/Godot.app/Contents/MacOS/Godot",
+                    "SAVED_FILE": "${relativeFile}"
                 }
             },
             
