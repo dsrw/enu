@@ -1,2 +1,0 @@
-
-var modifyMe*: string = "dogs"
