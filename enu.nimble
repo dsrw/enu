@@ -12,8 +12,8 @@ author        = "Scott Wadden"
 description   = "Logo-like DSL for godot"
 license       = "MIT"
 install_files = @["enu.nim"]
-bin           = @["enu"]
-bin_dir       = "bin"
+bin           = @["enu.dylib"]
+bin_dir       = "_dlls"
 requires "nim >= 1.0.6",
          "godot 0.7.27"
 

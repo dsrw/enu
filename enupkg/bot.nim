@@ -1,118 +1,74 @@
-import engine
-
 import ../godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial],
-       godot,
-       strutils,
-       times,
-       tables,
-       os
-
-export godot.print,
-       strutils
-
-type
-  BotEnv = ref object
-    body: KinematicBody
-    delta: float
+       godot, strutils, strformat, tables, math,
+       engine
 
 const
-  VELOCITY = 1.0
-  MOVE_SPEED = 102.0
-  MOVE_DURATION = 0.052
-var
-  run_game* = true
-  scripts* = new_table[string, iterator (bot_env:BotEnv)]()
-
-template go*(rules) =
-  const name = split_file(instantiationInfo(0, true).filename).name
-  iterator build_rules*(bot_env:BotEnv) {.closure.} =
-    var bot_env {.inject.} = bot_env
-    rules
-  bot.scripts.add(name, build_rules)
-
-proc move(bot_env: BotEnv) =
-  let body = bot_env.body
-  let delta = bot_env.delta
-  var facing = body.global_transform.basis[2]
-  discard body.move_and_slide(-facing * MOVE_SPEED * delta, vec3(0, 1, 0))
-  # if bot.reload:
-  # 	bot._start_thread()
-
-  # time += delta
-  # if time >= bot.duration:
-  # 	bot._next()
-  # 	time = 0
-
-  # var facing = bot.global_transform.basis.z
-  # match bot.current_command:
-  # 	"move_forward":
-  # 		bot.move_and_slide(-facing * bot.MOVE_SPEED * delta, Vector3.UP)
-  # 	"move_backward":
-  # 		bot.move_and_slide(facing * bot.MOVE_SPEED * delta, Vector3.UP)
-  # 	"turn_left":
-  # 		bot.rotate(Vector3.UP, deg2rad(90 / bot.duration * delta))
-  # 	"turn_right":
-  # 		bot.rotate(Vector3.UP, deg2rad(-90 / bot.duration * delta))
-
-template forward*(distance = 1.0) =
-  godot.print("moving " & $distance & ":" & $VELOCITY)
-  let finish = now() + int((distance * MOVE_DURATION) * 1000).milliseconds
-  while now() < finish:
-    move(bot_env)
-    yield
-
-template back*(distance = 1.0) =
-  godot.print("moving " & $distance & ":" & $-VELOCITY)
-  let finish = now() + int(distance).seconds
-  while now() < finish:
-    yield
-
-template left*(degrees = 90.0) =
-  godot.print("turning " & $degrees)
-  let finish = now() + int(duration).seconds
-  while now() < finish:
-    yield
-
-template right*(degrees = -90.0) =
-  godot.print("turning " & $degrees)
-  let finish = now() + int(duration).seconds
-  while now() < finish:
-    yield
-
-template fd*(distance = 1.0) =
-  forward(distance)
-
-template bk*(distance = 1.0) =
-  back(distance)
-
-template lt*(distance = 1.0) =
-  left(distance)
-
-template rt*(distance = 1.0) =
-  right(distance)
+  MOVE_SPEED = 100.0
+  UP = vec3(0, 1, 0)
+  BACK = vec3(0, 0, 1)
 
 gdobj NimBot of KinematicBody:
-  var skin: Spatial
-  var material* {.gdExport.}: Material
-  var name* {.gdExport.}: string
-  var current_command: string
-  var script: iterator(bot_env:BotEnv)
-  var bot_env: BotEnv
+  var
+    material* {.gdExport.}: Material
+    name* {.gdExport.}: string
+    callback: proc(delta: float): bool
+    engine: Engine
+    
+  proc move(speed, steps: float) =
+    var last_change = vec3(float.high, float.high, float.high)
+    let
+      facing = BACK.rotated(UP, self.rotation.y)
+      finish = self.translation - facing * steps
+
+    self.callback = proc(delta: float): bool =
+      let change = abs(finish - self.translation)
+      if change > last_change:
+        self.translation = finish
+        return false
+      else:
+        discard self.move_and_slide(facing * speed * delta, UP)
+        last_change = change
+        return true
+    self.engine.pause()
+
+  proc turn(degrees: float) =
+    var duration = 0.0
+    self.callback = proc(delta: float): bool =
+      duration += delta
+      self.rotate(UP, deg_to_rad(degrees * delta))
+      duration <= 1
+    self.engine.pause()
+
+  proc forward(steps: float) = self.move(-MOVE_SPEED, steps)
+  proc back(steps: float) = self.move(MOVE_SPEED, steps)
+  proc left(degrees: float) = self.turn(degrees)
+  proc right(degrees: float) = self.turn(-degrees)
 
   method ready*() =
-    self.bot_env = BotEnv(body: self.as(KinematicBody), delta: 0.0)
-    self.skin = self.get_node("Mannequiny").as(Spatial)
-    let mesh = self.skin.get_node("root/Skeleton/body001").as(MeshInstance)
+    let
+      skin = self.get_node("Mannequiny").as(Spatial)
+      mesh = skin.get_node("root/Skeleton/body001").as(MeshInstance)
+    
     mesh.material_override = self.material
-    discard self.skin.callv("transition_to", new_array(1.new_variant))
-    try:
-      self.script = scripts[self.name]
-    except:
-      print(get_current_exception_msg())
+    discard skin.callv("transition_to", new_array(1.new_variant))
 
-  method process*(delta: float64) =
-    if self.script == nil:
-      print("nil script")
+    self.engine = load(&"{self.name}.nim")
+    if self.engine != nil:
+        self.engine.
+          expose("exposed", "forward", proc(e: Engine, a: VmArgs) =
+            forward(self, get_float(a, 0))).
+          expose("exposed", "back", proc(e: Engine, a: VmArgs) =
+            back(self, get_float(a, 0))).
+          expose("exposed", "left", proc(e: Engine, a: VmArgs) =
+            left(self, get_float(a, 0))).
+          expose("exposed", "right", proc(e: Engine, a: VmArgs) =
+            right(self, get_float(a, 0))).
+          expose("exposed", "print", proc(e: Engine, a: VmArgs) =
+            print(get_string(a, 0))).
+          call("run")
     else:
-      self.bot_env.delta = delta
-      self.script(self.bot_env)
+      print &"Couldn't load {self.name}.nim"
+
+  method physics_process*(delta: float64) =
+    if self.callback == nil or not self.callback(delta):
+      discard self.engine.resume()

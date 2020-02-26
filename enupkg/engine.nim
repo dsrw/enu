@@ -13,7 +13,7 @@ const
   STDLIB = find_nim_std_lib_compile_time()
   
 let  
-  PAUSE = PauseRequest()
+  PAUSE* = PauseRequest()
 
 proc load*(script_file: string): Engine =
   let source_paths = [STDLIB, parent_dir current_source_path]
@@ -38,9 +38,11 @@ proc call*(e: Engine, proc_name = "main"): bool {.discardable.} =
   if result:
     e.script_state = call_result.state
 
-proc expose*(e: Engine, script_name, proc_name: string, routine: proc(e: Engine, a: VmArgs)) =
+proc expose*(e: Engine, script_name, proc_name: string, 
+             routine: proc(e: Engine, a: VmArgs)): Engine =
   e.intr.implement_routine "*", script_name, proc_name, proc(a: VmArgs) {.gcsafe.} =
     routine(e, a)
+  e
 
 proc pause*(engine: Engine) =
   raise PAUSE

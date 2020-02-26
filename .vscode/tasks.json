@@ -5,7 +5,7 @@
     "tasks": [
         {   
             "command": "nimble",
-            "args": ["on_save"],
+            "args": ["build", "--verbose"],
             "options": {
                 "cwd": "${workspaceRoot}",
                 "env": {
