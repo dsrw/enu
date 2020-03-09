@@ -28,7 +28,7 @@ task generate, "Generate Godot API binding":
   exec &"{GODOT_BIN} --gdnative-generate-json-api {API_JSON}"
   exec &"nimble c {GENERATOR}"
   exec &"{GENERATOR} {GENERATED_DIR} {API_JSON}"
-  
+
 task clean, "Remove files produced by build":
   rm_dir GENERATED_DIR
   rm_dir ".nimcache"
