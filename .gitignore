@@ -4,3 +4,5 @@ godotapi/
 tools/generate
 _dlls
 enu
+enupkg/editor
+enupkg/utils

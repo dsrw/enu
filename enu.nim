@@ -1,2 +1,2 @@
 import segfaults
-import enupkg/bot
+import enupkg / [bot, editor, game]
