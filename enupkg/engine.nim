@@ -29,7 +29,7 @@ proc load*(script_file: string): Engine =
     echo get_current_exception_msg()
     return nil
 
-proc call*(e: Engine, proc_name = "main"): bool {.discardable.} =
+proc call*(e: Engine, proc_name = "main"): bool =
   let foreign_proc = select_routine(e.intr, proc_name)
   if foreign_proc == nil:
     quit &"script does not export a proc of the name: '{proc_name}'"

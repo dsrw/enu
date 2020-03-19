@@ -22,6 +22,7 @@ gdobj NimBot of KinematicBody:
     orig_translation: Vector3
     paused = false
     selected = false
+    running = false
 
   proc update_material*(value: Material) =
     let
@@ -92,7 +93,7 @@ gdobj NimBot of KinematicBody:
       e.expose("enu", "left", a => self.left(get_float(a, 0)))
       e.expose("enu", "right", a => self.right(get_float(a, 0)))
       e.expose("enu", "print", a => print(get_string(a, 0)))
-      e.call("run")
+      self.running = e.call("run")
     else:
       print_error &"Unable to load {self.enu_script}"
 
@@ -110,8 +111,8 @@ gdobj NimBot of KinematicBody:
   method physics_process*(delta: float64) =
     if not self.paused:
       try:
-        if self.callback == nil or not self.callback(delta):
-          discard self.engine.resume()
+        if self.running and (self.callback == nil or not self.callback(delta)):
+          self.running = self.engine.resume()
       except:
         print &"Error resuming {self.enu_script}:\n",
               get_current_exception_msg()
@@ -119,6 +120,7 @@ gdobj NimBot of KinematicBody:
   method on_reload*() =
     self.translation = self.orig_translation
     self.rotation = self.orig_rotation
+    self.paused = false
     self.load_script()
 
   method on_pause*() =

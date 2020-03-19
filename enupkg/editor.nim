@@ -31,13 +31,3 @@ gdobj Editor of TextEdit:
 
     hide_editor = proc() =
       self.visible = false
-
-  method input*(event: InputEvent) =
-    let e = event.as(InputEventKey)
-    if e != nil and e.pressed:
-      if e.scancode == KEY_TAB:
-        self.accept_event()
-        self.insert_text_at_cursor("  ")
-      elif e.scancode == KEY_ENTER:
-        self.accept_event()
-        self.insert_text_at_cursor("\n" & detect_indent self.get_line(self.cursor_get_line))
