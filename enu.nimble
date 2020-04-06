@@ -14,7 +14,7 @@ license       = "MIT"
 install_files = @["enu.nim"]
 bin           = @["enu.dylib"]
 bin_dir       = "_dlls"
-requires "nim >= 1.0.6",
+requires "nim >= 1.2.0",
          "godot 0.7.27"
 
 task on_save, "Build on save":
@@ -32,4 +32,3 @@ task generate, "Generate Godot API binding":
 task clean, "Remove files produced by build":
   rm_dir GENERATED_DIR
   rm_dir ".nimcache"
-  rm_dir "_dlls"
