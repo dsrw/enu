@@ -1,8 +1,18 @@
-import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_container],
+import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_container, grid_map],
        godot,
        globals
 
+type
+  ToolMode* = enum
+    CodeMode = 0, BlockMode = 1, ObjectMode = 2
+
+proc onready(node: Node)
+
 gdobj Game of Node:
+  var
+    tool_mode* {.gdExport.} = BlockMode
+    grid_map: GridMap
+
   proc is_editing*():bool {.gdExport.} = globals.editing()
 
   proc `mouse_captured=`*(value: bool) =
@@ -12,6 +22,7 @@ gdobj Game of Node:
     get_mouse_mode() == MOUSE_MODE_CAPTURED
 
   method ready*() {.gdExport.} =
+    onready(self)
     self.mouse_captured = true
     globals.capture_mouse = proc() =
       self.mouse_captured = true
@@ -23,26 +34,34 @@ gdobj Game of Node:
     globals.pause = proc() =
       trigger("pause")
 
+    self.grid_map = self.find_node("GridMap").as(GridMap)
+
   method input*(event: InputEvent) =
-    if event.is_action_pressed("click"):
-      self.mouse_captured = true
-    if event.is_action_pressed("toggle_mouse_captured"):
+    if not self.mouse_captured and event.is_action_pressed("click") or
+       event.is_action_pressed("toggle_mouse_captured"):
       if globals.editing():
         hide_editor()
         for cb in selected_items:
           cb()
         selected_items = @[]
       self.mouse_captured = not self.mouse_captured
-
-      #let container = self.get_tree().root.get_node("Game/GameContainer").as(ViewportContainer)
-      #print("grabbing focus")
-      #container.grab_focus()
-      #self.get_tree().set_input_as_handled()
+      self.get_tree().set_input_as_handled()
 
     if event.is_action_pressed("toggle_fullscreen"):
       set_window_fullscreen not is_window_fullscreen()
-      self.get_tree().set_input_as_handled()
-    if event.is_action_pressed("save_and_reload"):
+    elif event.is_action_pressed("save_and_reload"):
       globals.save_and_reload()
-    if event.is_action_pressed("pause"):
+    elif event.is_action_pressed("pause"):
       globals.pause()
+    elif event.is_action_pressed("mode_1"):
+      self.tool_mode = CodeMode
+    elif event.is_action_pressed("mode_2"):
+      self.tool_mode =  BlockMode
+    elif event.is_action_pressed("mode_3"):
+      self.tool_mode =  ObjectMode
+
+var
+  current_game*: Game
+
+proc onready(node: Node) =
+  current_game = node.as(Game)

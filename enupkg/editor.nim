@@ -1,9 +1,7 @@
 import ../godotapi / [text_edit, scene_tree, node, input_event, input_event_key, global_constants],
        godot,
        globals,
-       nre,
-       strutils,
-       utils
+       strutils
 
 
 gdobj Editor of TextEdit:
@@ -13,7 +11,7 @@ gdobj Editor of TextEdit:
   method on_save*() =
     write_file(self.file_name, self.text)
 
-  method ready*() {.gdExport.} =
+  method ready*() =
     self.bind_signals("save")
     show_editor = proc(file_name: string) =
       self.file_name = file_name
@@ -24,7 +22,6 @@ gdobj Editor of TextEdit:
 
     editing = proc():bool =
       result = self.visible and self.has_focus
-      #print("editing: ", result)
 
     unfocus_editor = proc() =
       self.release_focus()

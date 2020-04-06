@@ -1,18 +1,16 @@
 import ../godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial, input_event],
-       godot, strutils, strformat, tables, math, sugar, sequtils,
+       godot,
+       math, sugar,
        engine, globals
 
 const
   MOVE_SPEED = 100.0
-  UP = vec3(0, 1, 0)
-  BACK = vec3(0, 0, 1)
 
 gdobj NimBot of KinematicBody:
   var
     name* {.gdExport.}: string
     enu_script* {.gdExport.}: string
-    material* {.gdExport.},
-      highlight_material* {.gdExport.},
+    material* {.gdExport.}, highlight_material* {.gdExport.},
       selected_material* {.gdExport.}: Material
 
     callback: proc(delta: float): bool
@@ -23,30 +21,29 @@ gdobj NimBot of KinematicBody:
     paused = false
     selected = false
     running = false
+    skin: Spatial
+    mesh: MeshInstance
 
   proc update_material*(value: Material) =
-    let
-      skin = self.get_node("Mannequiny").as(Spatial)
-      mesh = skin.get_node("root/Skeleton/body001").as(MeshInstance)
-    mesh.material_override = value
+    self.mesh.set_surface_material(0, value)
 
-  proc highlight*() {.gdExport.} =
+  proc highlight*() =
     if not self.selected:
       self.update_material(self.highlight_material)
 
-  proc stop_highlight*() {.gdExport.} =
+  proc set_default_material*() =
     if not self.selected:
       self.update_material(self.material)
 
-  proc stop_selected*() {.gdExport.} =
+  proc deselect*() =
     self.selected = false
-    self.stop_highlight()
+    self.set_default_material()
 
-  proc selected*() {.gdExport.} =
+  proc select*() =
     self.selected = true
     self.update_material(self.selected_material)
     show_editor(self.enu_script)
-    selected_items.add(proc() = self.stop_selected())
+    selected_items.add(proc() = self.deselect())
 
   proc print_error(msg: string) =
     if msg != self.last_error:
@@ -85,6 +82,7 @@ gdobj NimBot of KinematicBody:
 
   proc load_script() =
     self.enu_script = &"scripts/{self.name}.nim"
+    debug &"Loading {self.enu_script}"
     self.callback = nil
     if (self.engine = load(self.enu_script); self.engine != nil):
       let e = self.engine
@@ -95,17 +93,16 @@ gdobj NimBot of KinematicBody:
       e.expose("enu", "print", a => print(get_string(a, 0)))
       self.running = e.call("run")
     else:
-      print_error &"Unable to load {self.enu_script}"
+      self.running = false
+      err &"Unable to load {self.enu_script}"
 
   method ready*() =
     self.bind_signals("reload", "pause")
-    let
-      skin = self.get_node("Mannequiny").as(Spatial)
-
+    self.skin = self.get_node("Mannequiny").as(Spatial)
+    self.mesh = self.skin.get_node("root/Skeleton/body001").as(MeshInstance)
     self.orig_rotation = self.rotation
     self.orig_translation = self.translation
-
-    discard skin.callv("transition_to", new_array(1.new_variant))
+    self.set_default_material()
     self.load_script()
 
   method physics_process*(delta: float64) =
@@ -114,7 +111,8 @@ gdobj NimBot of KinematicBody:
         if self.running and (self.callback == nil or not self.callback(delta)):
           self.running = self.engine.resume()
       except:
-        print &"Error resuming {self.enu_script}:\n",
+        self.running = false
+        err &"Error resuming {self.enu_script}:\n" &
               get_current_exception_msg()
 
   method on_reload*() =
