@@ -8,7 +8,6 @@ const
   move_speed = 500.0
   gravity = -80.0
   jump_impulse = 25
-  aiming = false
 
 let
   sensitivity_gamepad = vec2(2.5, 2.5)
@@ -83,11 +82,13 @@ gdobj Player of KinematicBody:
 
   method physics_process*(delta: float) =
     if not editing():
-      var
+      let
         input_direction = self.get_input_direction()
         b = self.camera_rig.global_transform.basis
         forward = b.z * input_direction.z
         right = b.x * input_direction.x
+
+      var
         move_direction = forward + right
 
       if move_direction.length() > 1.0:
@@ -131,4 +132,3 @@ gdobj Player of KinematicBody:
         if current_game.tool_mode == BlockMode:
           place_block(self.aim_target.target_point, -self.aim_target.target_normal, -1)
           self.get_tree().set_input_as_handled()
-

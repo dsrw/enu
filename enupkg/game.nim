@@ -1,4 +1,4 @@
-import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_container, grid_map],
+import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_container, grid_map, packed_scene, resource_saver],
        godot,
        globals
 
@@ -31,6 +31,11 @@ gdobj Game of Node:
     globals.save_and_reload = proc() =
       trigger("save")
       trigger("reload")
+      globals.save_scene()
+    globals.save_scene = proc(scene_name: string) =
+      let packed_scene = gdnew[PackedScene]()
+      debug $packed_scene.pack(self.get_tree().current_scene)
+      debug $save(&"res://{scene_name}.tscn", packed_scene)
     globals.pause = proc() =
       trigger("pause")
 

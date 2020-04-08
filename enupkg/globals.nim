@@ -19,6 +19,7 @@ var
   capture_mouse*: proc()
   release_mouse*: proc()
   save_and_reload*: proc()
+  save_scene*: proc(file_name = "default")
   pause*: proc()
   place_block*: proc(point, normal: Vector3, index = 0)
   selected_items*: seq[proc()] = @[]

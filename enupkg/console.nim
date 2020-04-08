@@ -12,6 +12,4 @@ gdobj Console of RichTextLabel:
       self.log_text &= &"[b]{level.to_upper}[/b] {msg}\n"
 
   method process*(delta: float) =
-    if self.log_text != "":
-      self.bbcode_text = self.log_text
-      self.log_text = ""
+    self.bbcode_text = self.log_text
