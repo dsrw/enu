@@ -1,8 +1,11 @@
 bin/
 godotapi/
-.history
 tools/generate
-_dlls
+*.dylib
+*.dll
+*.so
+*.import
 enu
 enupkg/editor
 enupkg/utils
+.DS_Store

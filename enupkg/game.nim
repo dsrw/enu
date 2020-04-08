@@ -1,4 +1,4 @@
-import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_container, grid_map, packed_scene, resource_saver],
+import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_container, packed_scene, resource_saver],
        godot,
        globals
 
@@ -11,7 +11,6 @@ proc onready(node: Node)
 gdobj Game of Node:
   var
     tool_mode* {.gdExport.} = BlockMode
-    grid_map: GridMap
 
   proc is_editing*():bool {.gdExport.} = globals.editing()
 
@@ -33,13 +32,13 @@ gdobj Game of Node:
       trigger("reload")
       globals.save_scene()
     globals.save_scene = proc(scene_name: string) =
-      let packed_scene = gdnew[PackedScene]()
-      debug $packed_scene.pack(self.get_tree().current_scene)
+      let
+        packed_scene = gdnew[PackedScene]()
+        level = self.find_node("Level")
+      debug $packed_scene.pack(level)
       debug $save(&"res://scenes/{scene_name}.tscn", packed_scene)
     globals.pause = proc() =
       trigger("pause")
-
-    self.grid_map = self.find_node("GridMap").as(GridMap)
 
   method input*(event: InputEvent) =
     if not self.mouse_captured and event.is_action_pressed("click") or

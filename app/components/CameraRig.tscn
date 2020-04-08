@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://components/AimTarget.gdns" type="Script" id=1]
+[ext_resource path="res://textures/reticle.png" type="Texture" id=5]
+
+[node name="CameraRig" type="Spatial"]
+
+[node name="Camera" type="Camera" parent="."]
+visible = false
+current = true
+
+[node name="AimRay" type="RayCast" parent="Camera"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 0.999999, 0, 0, 0 )
+visible = false
+cast_to = Vector3( 0, 0, -20 )
+collision_mask = 17
+collide_with_areas = true
+
+[node name="AimTarget" type="Sprite3D" parent="."]
+pixel_size = 0.001
+texture = ExtResource( 5 )
+script = ExtResource( 1 )
