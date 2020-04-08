@@ -34,8 +34,8 @@ gdobj Game of Node:
     globals.save_scene = proc(scene_name: string) =
       let
         packed_scene = gdnew[PackedScene]()
-        level = self.find_node("Level")
-      debug $packed_scene.pack(level)
+        data = self.find_node("data")
+      debug $packed_scene.pack(data)
       debug $save(&"res://scenes/{scene_name}.tscn", packed_scene)
     globals.pause = proc() =
       trigger("pause")

@@ -1,0 +1,69 @@
+[gd_scene load_steps=8 format=2]
+
+[ext_resource path="res://scenes/default.tscn" type="PackedScene" id=1]
+[ext_resource path="res://components/Player.tscn" type="PackedScene" id=6]
+[ext_resource path="res://materials/default_ground.tres" type="Material" id=9]
+
+[sub_resource type="ProceduralSky" id=1]
+sky_top_color = Color( 0, 0, 0, 1 )
+sky_horizon_color = Color( 0.25098, 0.0705882, 0.415686, 1 )
+sky_curve = 0.00646143
+ground_bottom_color = Color( 0.25098, 0.0705882, 0.415686, 1 )
+ground_horizon_color = Color( 0.25098, 0.0705882, 0.415686, 1 )
+ground_energy = 0.98
+sun_color = Color( 0.0823529, 0.94902, 0.0509804, 1 )
+sun_latitude = 162.63
+sun_longitude = 47.96
+sun_angle_min = 24.19
+sun_angle_max = 33.44
+sun_curve = 0.0125
+sun_energy = 38.22
+
+[sub_resource type="Environment" id=2]
+background_mode = 2
+background_sky = SubResource( 1 )
+background_sky_orientation = Basis( 1, 0, 0, -10, 1, 0, 0, 0, 1 )
+background_energy = 0.68
+ambient_light_color = Color( 0.501961, 0.501961, 0.501961, 1 )
+ambient_light_energy = 0.47
+ambient_light_sky_contribution = 0.13
+tonemap_mode = 2
+tonemap_exposure = 2.1
+tonemap_white = 6.0
+dof_blur_far_quality = 0
+glow_enabled = true
+
+[sub_resource type="PlaneMesh" id=3]
+material = ExtResource( 9 )
+size = Vector2( 10000, 10000 )
+
+[sub_resource type="BoxShape" id=4]
+margin = 0.001
+extents = Vector3( 50, 1, 50 )
+
+[node name="Level" type="Node"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource( 2 )
+
+[node name="DirectionalLight" type="DirectionalLight" parent="WorldEnvironment"]
+transform = Transform( 0.6605, 0.450968, -0.600306, 0, 0.799527, 0.60063, 0.750826, -0.396716, 0.528088, 4.56468, 16.5997, 3.67729 )
+light_energy = 1.55
+shadow_enabled = true
+
+[node name="Ground" type="MeshInstance" parent="."]
+layers = 7
+mesh = SubResource( 3 )
+material/0 = null
+
+[node name="StaticBody" type="StaticBody" parent="Ground"]
+collision_mask = 0
+
+[node name="CollisionShape" type="CollisionShape" parent="Ground/StaticBody"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0 )
+shape = SubResource( 4 )
+
+[node name="Player" parent="." instance=ExtResource( 6 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.404087, 0.8765, 2.84939 )
+
+[node name="data" parent="." instance=ExtResource( 1 )]

@@ -1,6 +1,6 @@
 [gd_scene load_steps=8 format=2]
 
-[ext_resource path="res://scenes/default.tscn" type="PackedScene" id=1]
+[ext_resource path="res://scenes/world.tscn" type="PackedScene" id=1]
 [ext_resource path="res://components/Game.gdns" type="Script" id=2]
 [ext_resource path="res://components/Console.gdns" type="Script" id=5]
 [ext_resource path="res://components/TextEdit.gdns" type="Script" id=6]
