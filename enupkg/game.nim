@@ -20,6 +20,10 @@ gdobj Game of Node:
   proc mouse_captured*(): bool =
     get_mouse_mode() == MOUSE_MODE_CAPTURED
 
+  proc init*() =
+    for signal in ["pause", "save", "reload"]:
+      self.add_user_signal(signal)
+
   method ready*() {.gdExport.} =
     onready(self)
     self.mouse_captured = true

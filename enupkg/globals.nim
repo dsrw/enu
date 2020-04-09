@@ -1,6 +1,6 @@
 import ../godotapi / [node, scene_tree],
        godot,
-       strformat, math
+       strformat, math, strutils, sequtils
 
 export strformat.`&`
 
@@ -12,7 +12,7 @@ const
   FORWARD* = vec3(0, 0, -1)
 
 var
-  editing*: proc():bool
+  editing*: proc:bool
   show_editor*: proc(file: string)
   unfocus_editor*: proc()
   hide_editor*: proc()
@@ -22,30 +22,20 @@ var
   save_scene*: proc(file_name = "default")
   pause*: proc()
   place_block*: proc(point, normal: Vector3, index = 0)
+  logger*: proc(level, msg: string)
   selected_items*: seq[proc()] = @[]
   game_node*: Node
-  known_signals: seq[string] = @[]
-  last_debug_msg: string
-
-  logger*: proc(level, msg: string)
   init*: seq[proc()] = @[]
 
 proc join_args[T](args: varargs[T]): string =
-  if args.len == 1:
-    $args[0]
-  elif args.len > 1:
-    $args[0] & " " & $args[1..0]
-  else:
-    $args
+  args.map_it(&"'{it}'").join " "
 
-proc is_zero_approx(s: float): bool =
+proc roughly_zero(s: float): bool =
   abs(s) < CMP_EPSILON
 
 proc debug*[T](args: varargs[T]) =
   let msg = join_args(args)
-  if msg != last_debug_msg:
-    logger("debug", msg)
-    last_debug_msg = msg
+  logger("debug", msg)
 
 proc info*[T](args: varargs[T]) =
   logger("info", join_args(args))
@@ -53,14 +43,10 @@ proc info*[T](args: varargs[T]) =
 proc err*[T](args: varargs[T]) =
   logger("err", join_args(args))
 
-
 proc bind_signals*(node: Node, signals: varargs[string]) =
   debug("Binding " & $signals)
   if game_node == nil: game_node = node.get_tree().root.get_node("Game")
   for signal in signals:
-    if signal notin known_signals:
-      game_node.add_user_signal(signal)
-      known_signals.add(signal)
     let meth = "_on_" & signal
     discard game_node.connect(signal, node, meth)
 
@@ -72,7 +58,7 @@ proc lerp*(self, other, t: float): float {.inline.} =
 
 proc wrapf*(value, min, max: float): float =
   let range = max - min
-  if is_zero_approx(range):
+  if range.roughly_zero:
     min
   else:
     value - (range * floor((value - min) / range))

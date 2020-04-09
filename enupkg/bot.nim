@@ -1,15 +1,14 @@
 import ../godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial, input_event],
        godot,
        math, sugar,
-       engine, globals
+       globals, engine
 
 const
   MOVE_SPEED = 100.0
 
 gdobj NimBot of KinematicBody:
   var
-    name* {.gdExport.}: string
-    enu_script* {.gdExport.}: string
+    enu_script* {.gdExport.} = "scripts/scott.nim"
     material* {.gdExport.}, highlight_material* {.gdExport.},
       selected_material* {.gdExport.}: Material
 
@@ -18,11 +17,11 @@ gdobj NimBot of KinematicBody:
     last_error: string
     orig_rotation: Vector3
     orig_translation: Vector3
+    skin: Spatial
+    mesh: MeshInstance
     paused = false
     selected = false
     running = false
-    skin: Spatial
-    mesh: MeshInstance
 
   proc update_material*(value: Material) =
     self.mesh.set_surface_material(0, value)
@@ -41,9 +40,9 @@ gdobj NimBot of KinematicBody:
 
   proc select*() =
     self.selected = true
-    self.update_material(self.selected_material)
-    show_editor(self.enu_script)
-    selected_items.add(proc() = self.deselect())
+    self.update_material self.selected_material
+    show_editor self.enu_script
+    selected_items.add proc = self.deselect()
 
   proc print_error(msg: string) =
     if msg != self.last_error:
@@ -81,7 +80,6 @@ gdobj NimBot of KinematicBody:
   proc right(degrees: float): bool = self.turn(-degrees)
 
   proc load_script() =
-    self.enu_script = &"scripts/{self.name}.nim"
     debug &"Loading {self.enu_script}"
     self.callback = nil
     if (self.engine = load(self.enu_script); self.engine != nil):
