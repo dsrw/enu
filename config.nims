@@ -1,3 +1,5 @@
 --path:"vendor/nim"
 --define:nimOldCaseObjects
 --define:useRealtimeGC
+--noMain
+--app:lib
