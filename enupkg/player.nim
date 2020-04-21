@@ -21,7 +21,6 @@ gdobj Player of KinematicBody:
     aim_ray: RayCast
     aim_target: AimTarget
     flying = false
-    aiming = false
     velocity = vec3()
 
   proc get_look_direction(): Vector2 =
@@ -114,9 +113,6 @@ gdobj Player of KinematicBody:
         self.flying = true
       else:
         self.velocity += vec3(0, jump_impulse, 0)
-
-    if event.is_action_pressed("toggle_aim"):
-      self.aiming = not self.aiming
 
     if event.is_action_pressed("fire"):
       if self.aim_ray.is_colliding():
