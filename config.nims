@@ -1,5 +1,6 @@
 --path:"vendor/nim"
 --define:nimOldCaseObjects
 --define:useRealtimeGC
---noMain
---app:lib
+when defined windows:
+  --noMain
+  --app:lib
