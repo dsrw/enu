@@ -1,9 +1,8 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://meshlibs/block.meshlib" type="MeshLibrary" id=1]
 [ext_resource path="res://materials/highlight.tres" type="Material" id=2]
 [ext_resource path="res://materials/black.tres" type="Material" id=3]
-[ext_resource path="res://components/Bot.gdns" type="Script" id=4]
 [ext_resource path="res://components/LevelGrid.gdns" type="Script" id=5]
 [ext_resource path="res://components/Bot.tscn" type="PackedScene" id=6]
 
@@ -21,10 +20,8 @@ __meta__ = {
 "_editor_floor_": Vector3( 0, 6, 0 )
 }
 
-[node name="Bot" type="KinematicBody" parent="." instance=ExtResource( 6 )]
+[node name="Bot" parent="." instance=ExtResource( 6 )]
 transform = Transform( 1.0004, 0, 0, 0, 1, 0, 0, 0, 1.0004, -1.5, 0, 0.5 )
-collision_layer = 2
-script = ExtResource( 4 )
 material = ExtResource( 3 )
 highlight_material = ExtResource( 2 )
 selected_material = ExtResource( 3 )

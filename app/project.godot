@@ -171,3 +171,4 @@ mode_4={
 [rendering]
 
 quality/filters/msaa=3
+environment/default_environment="res://scenes/env.tres"

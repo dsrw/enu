@@ -1,7 +1,7 @@
 import ../godotapi / [sprite_3d, ray_cast, spatial],
        godot,
        strutils,
-       globals, game, bot, selection_area
+       globals, game, bot, selection_area, level_grid
 
 gdobj AimTarget of Sprite3D:
   var
@@ -29,6 +29,10 @@ gdobj AimTarget of Sprite3D:
         self.visible = false
         if body != nil and body != self.target_body:
           body.highlight()
+
+        if collider of LevelGrid:
+          let lg = collider.as(LevelGrid)
+          lg.highlight(self.target_point, self.target_normal)
 
       if current_game.tool_mode == BlockMode:
         if body == nil:

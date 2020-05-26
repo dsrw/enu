@@ -5,19 +5,19 @@ const
   API_JSON      = GENERATED_DIR & "/api.json"
   GENERATOR     = "tools/generate"
 
-
 version       = "0.1.0"
 author        = "Scott Wadden"
 description   = "Logo-like DSL for godot"
 license       = "MIT"
 install_files = @["enu.nim"]
+bin_dir       = "app/_dlls"
 when defined windows:
   bin = @["enu.dll"]
   const GODOT_BIN = "../godot/bin/godot.windows.tools.64.exe"
 else:
   bin = @["enu.dylib"]
-  const GODOT_BIN = "/Applications/Godot.app/Contents/MacOS/Godot"
-bin_dir       = "app/_dlls"
+  const GODOT_BIN = "../godot/bin/godot.osx.tools.64"
+
 requires "nim >= 1.2.0",
          "godot 0.7.27"
 
