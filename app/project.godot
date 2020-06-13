@@ -28,6 +28,10 @@ window/size/test_width=1280
 window/size/test_height=720
 window/vsync/use_vsync=false
 
+[editor_plugins]
+
+enabled=PoolStringArray( "fast_fur_skin" )
+
 [input]
 
 move_front={
