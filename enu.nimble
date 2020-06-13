@@ -36,3 +36,6 @@ task generate, "Generate Godot API binding":
 task clean, "Remove files produced by build":
   rm_dir GENERATED_DIR
   rm_dir ".nimcache"
+
+task godot, "Launch godot":
+  exec GODOT_BIN & " &"
