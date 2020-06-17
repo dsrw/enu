@@ -2,18 +2,7 @@ import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_cont
        godot,
        globals
 
-type
-  ToolMode* = enum
-    CodeMode = 0, BlockMode = 1, ObjectMode = 2
-
-proc onready(node: Node)
-
 gdobj Game of Node:
-  var
-    tool_mode* {.gdExport.} = BlockMode
-
-  proc is_editing*():bool {.gdExport.} = globals.editing()
-
   proc `mouse_captured=`*(value: bool) =
     set_mouse_mode(if value: MOUSE_MODE_CAPTURED else: MOUSE_MODE_VISIBLE)
 
@@ -25,7 +14,7 @@ gdobj Game of Node:
       self.add_user_signal(signal)
 
   method ready*() {.gdExport.} =
-    onready(self)
+    state.game = self
     self.mouse_captured = true
     globals.capture_mouse = proc() =
       self.mouse_captured = true
@@ -62,14 +51,10 @@ gdobj Game of Node:
     elif event.is_action_pressed("pause"):
       globals.pause()
     elif event.is_action_pressed("mode_1"):
-      self.tool_mode = CodeMode
+      tool_mode = CodeMode
     elif event.is_action_pressed("mode_2"):
-      self.tool_mode =  BlockMode
+      tool_mode =  BlockMode
     elif event.is_action_pressed("mode_3"):
-      self.tool_mode =  ObjectMode
+      tool_mode =  ObjectMode
 
-var
-  current_game*: Game
-
-proc onready(node: Node) =
-  current_game = node.as(Game)
+proc get_game*(): Game = state.game as Game

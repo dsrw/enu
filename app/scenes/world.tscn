@@ -1,8 +1,9 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=8 format=2]
 
 [ext_resource path="res://scenes/default.tscn" type="PackedScene" id=1]
 [ext_resource path="res://scenes/env.tres" type="Environment" id=2]
-[ext_resource path="res://materials/green.tres" type="Material" id=3]
+[ext_resource path="res://materials/default_ground.tres" type="Material" id=3]
+[ext_resource path="res://scenes/Ground.gdns" type="Script" id=4]
 [ext_resource path="res://components/Player.tscn" type="PackedScene" id=6]
 
 [sub_resource type="PlaneMesh" id=1]
@@ -30,6 +31,7 @@ material/0 = null
 
 [node name="StaticBody" type="StaticBody" parent="Ground"]
 collision_mask = 0
+script = ExtResource( 4 )
 
 [node name="CollisionShape" type="CollisionShape" parent="Ground/StaticBody"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0 )

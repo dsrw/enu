@@ -4,6 +4,14 @@ import ../godotapi / [node, scene_tree],
 
 export strformat.`&`
 
+type
+  ToolMode* = enum
+    CodeMode = 0, BlockMode = 1, ObjectMode = 2
+
+  StateRefs = ref object
+    player*: Node
+    game*: Node
+
 const
   CMP_EPSILON = 0.00001
   UP* = vec3(0, 1, 0)
@@ -21,16 +29,16 @@ var
   save_and_reload*: proc()
   save_scene*: proc(file_name = "default")
   pause*: proc()
-  place_block*: proc(point, normal: Vector3, index = 0)
   logger*: proc(level, msg: string)
   selected_items*: seq[proc()] = @[]
   game_node*: Node
-  init*: seq[proc()] = @[]
+  tool_mode* = BlockMode
+  state* = new StateRefs
 
 proc join_args[T](args: varargs[T]): string =
   args.map_it(&"'{it}'").join " "
 
-proc roughly_zero(s: float): bool =
+proc roughly_zero[T](s: T): bool =
   abs(s) < CMP_EPSILON
 
 proc debug*[T](args: varargs[T]) =
@@ -43,20 +51,32 @@ proc info*[T](args: varargs[T]) =
 proc err*[T](args: varargs[T]) =
   logger("err", join_args(args))
 
-proc bind_signals*(node: Node, signals: varargs[string]) =
+proc bind_signals*(receiver, sender: Node, signals: varargs[string]) =
   debug("Binding " & $signals)
-  if game_node == nil: game_node = node.get_tree().root.get_node("Game")
+  let send_node = if sender == nil:
+    if game_node == nil: game_node = receiver.get_tree().root.get_node("Game")
+    game_node
+  else:
+    sender
+
   for signal in signals:
     let meth = "_on_" & signal
-    discard game_node.connect(signal, node, meth)
+    discard send_node.connect(signal, receiver, meth)
+
+proc bind_signals*(receiver: Node, signals: varargs[string]) =
+  bind_signals(receiver, nil, signals)
+
+proc trigger*(node: Object, signal: string, args: varargs[Variant, `new_variant`]) =
+  if node.has_user_signal(signal):
+    node.emit_signal(signal, args)
 
 proc trigger*(signal: string, args: varargs[Variant]) =
-  game_node.emit_signal(signal, args)
+  trigger(game_node, signal, args)
 
 proc lerp*(self, other, t: float): float {.inline.} =
   self + t * (other - self)
 
-proc wrapf*(value, min, max: float): float =
+proc wrap*[T](value, min, max: T): float =
   let range = max - min
   if range.roughly_zero:
     min

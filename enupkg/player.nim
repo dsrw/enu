@@ -1,6 +1,6 @@
 import godot, ../godotapi / [kinematic_body, spatial, input, input_event, input_event_mouse_motion, ray_cast, scene_tree],
-       strutils, math,
-       globals, game, aim_target, bot
+       options, math,
+       globals, game, aim_target, level_grid
 const
   angle_x_min = -PI / 2.25
   angle_x_max = PI / 2.25
@@ -19,7 +19,7 @@ gdobj Player of KinematicBody:
     input_relative = vec2()
     camera_rig: Spatial
     aim_ray: RayCast
-    aim_target: AimTarget
+    aim_target*: AimTarget
     flying = false
     velocity = vec3()
 
@@ -51,6 +51,7 @@ gdobj Player of KinematicBody:
       result.y = velocity_current.y + gravity * delta
 
   method ready*() =
+    state.player = self
     self.camera_rig = self.get_node("CameraRig") as Spatial
     self.aim_ray  = self.camera_rig.get_node("Camera/AimRay") as RayCast
     self.aim_target = self.camera_rig.get_node("AimTarget") as AimTarget
@@ -70,7 +71,7 @@ gdobj Player of KinematicBody:
         self.update_rotation(look_direction * sensitivity_gamepad * delta)
 
       var r = self.camera_rig.rotation
-      r.y = wrapf(r.y, -PI, PI)
+      r.y = wrap(r.y, -PI, PI)
       self.camera_rig.rotation = r
 
       if self.aim_target != nil:
@@ -104,7 +105,7 @@ gdobj Player of KinematicBody:
         self.velocity = self.move_and_slide(self.velocity, UP)
 
   method input*(event: InputEvent) =
-    if event of InputEventMouseMotion and current_game.mouse_captured:
+    if event of InputEventMouseMotion and get_game().mouse_captured:
       self.input_relative += event.as(InputEventMouseMotion).relative()
     if event.is_action_pressed("jump"):
       if self.flying:
@@ -114,17 +115,25 @@ gdobj Player of KinematicBody:
       else:
         self.velocity += vec3(0, jump_impulse, 0)
 
+    if event.is_action_pressed("next"):
+      if tool_mode == BlockMode:
+        let grid = get_level_grid()
+        if grid != nil:
+          grid.next()
+
+    if event.is_action_pressed("previous"):
+      if tool_mode == BlockMode:
+        let grid = get_level_grid()
+        if grid != nil:
+          grid.previous()
+
     if event.is_action_pressed("fire"):
       if self.aim_ray.is_colliding():
-        if current_game.tool_mode == CodeMode and self.aim_target.target_body != nil:
-          self.aim_target.target_body.select()
-          self.get_tree().set_input_as_handled()
-        elif current_game.tool_mode == BlockMode:
-          place_block(self.aim_target.target_point, self.aim_target.target_normal)
-          self.get_tree().set_input_as_handled()
+        trigger(self.aim_ray.get_collider(), "target_fire")
+        self.get_tree().set_input_as_handled()
 
     if event.is_action_pressed("remove"):
       if self.aim_ray.is_colliding():
-        if current_game.tool_mode == BlockMode:
-          place_block(self.aim_target.target_point, -self.aim_target.target_normal, -1)
-          self.get_tree().set_input_as_handled()
+        trigger(self.aim_ray.get_collider(), "target_remove")
+
+proc get_player*(): Player = state.player as Player

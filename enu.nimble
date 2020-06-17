@@ -19,13 +19,13 @@ else:
   const GODOT_BIN = "../godot/bin/godot.osx.tools.64"
 
 requires "nim >= 1.2.0",
-         "godot 0.7.27"
+         "godot 0.8.0"
 
 task on_save, "Build on save":
   if get_env("SAVED_FILE").starts_with("scripts"):
     exec "bin/enu"
   else:
-    exec "nimble build --debugger:native"
+    exec "nimble build"
 
 task generate, "Generate Godot API binding":
   mk_dir GENERATED_DIR
