@@ -1,10 +1,10 @@
-import ../godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial, input_event],
+import ../godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial, input_event, animation_player],
        godot,
        math, sugar,
        globals, engine
 
 const
-  MOVE_SPEED = 100.0
+  MOVE_SPEED = 1.0
 
 gdobj NimBot of KinematicBody:
   var
@@ -22,6 +22,7 @@ gdobj NimBot of KinematicBody:
     paused = false
     selected = false
     running = false
+    animation_player: AnimationPlayer
 
   proc update_material*(value: Material) =
     self.mesh.set_surface_material(0, value)
@@ -50,19 +51,19 @@ gdobj NimBot of KinematicBody:
       print(msg)
 
   proc move(speed, steps: float): bool =
-    var last_change = vec3(float.high, float.high, float.high)
+    var duration = 0.0
     let
       facing = BACK.rotated(UP, self.rotation.y)
       finish = self.translation - facing * steps
+      finish_time = 1.0 / MOVE_SPEED * steps
 
     self.callback = proc(delta: float): bool =
-      let change = abs(finish - self.translation)
-      if change > last_change:
+      duration += delta
+      if duration >= finish_time:
         self.translation = finish
         return false
       else:
-        discard self.move_and_slide(facing * speed * delta, UP)
-        last_change = change
+        discard self.move_and_slide(facing * speed, UP)
         return true
     true
 
@@ -98,8 +99,10 @@ gdobj NimBot of KinematicBody:
     self.bind_signals("reload", "pause")
     self.skin = self.get_node("Mannequiny").as(Spatial)
     self.mesh = self.skin.get_node("root/Skeleton/body001").as(MeshInstance)
+    self.animation_player = self.skin.get_node("AnimationPlayer").as(AnimationPlayer)
     self.orig_rotation = self.rotation
     self.orig_translation = self.translation
+    self.animation_player.play("walk")
     self.set_default_material()
     self.load_script()
 
