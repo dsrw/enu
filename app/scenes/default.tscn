@@ -127,6 +127,7 @@ highlight_material = ExtResource( 2 )
 
 [node name="LevelGrid2" type="GridMap" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 10 )
+visible = false
 mesh_library = SubResource( 29 )
 cell_size = Vector3( 1, 1, 1 )
 data = {

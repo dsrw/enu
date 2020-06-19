@@ -47,26 +47,33 @@ gdobj LevelGrid of GridMap:
     self.direction = FORWARD
     self.position = vec3()
 
+  proc drop_block() =
+    self.set_cell_item(
+      self.position.x.to_int,
+      self.position.y.to_int,
+      self.position.z.to_int,
+      self.index
+    )
+
+
   proc move(direction: Vector3, steps: BiggestInt): bool =
     self.load_vars()
     var
       duration = 0.0
-      count = 1
-      position = self.position
-    self.set_cell_item(position.x.to_int, position.y.to_int, position.z.to_int, self.index)
+      count = 0
 
+    self.drop_block()
     self.callback = proc(delta: float): bool =
       duration += delta
       if duration >= self.speed:
-
-        position += direction
-        #print(position)
-        self.set_cell_item(position.x.to_int, position.y.to_int, position.z.to_int, self.index)
-
-        inc count
+        while count < steps and duration >= 0.0:
+          duration -= self.speed
+          self.position += direction
+          inc count
+          duration += delta
+          if count < steps:
+            self.drop_block()
         duration = 0.0
-        self.position = position
-
       return count < steps
     true
 
@@ -119,17 +126,16 @@ gdobj LevelGrid of GridMap:
       let mesh = lib.get_item_mesh(index)
       mesh.surface_set_material(0, self.highlight_material)
 
-  proc select*() =
-
-    #self.update_material self.selected_material
-    show_editor self.enu_script
-    selected_items.add proc = self.deselect()
-
   proc deselect() =
     let lib = self.mesh_library
     for index in lib.get_item_list():
       let mesh = lib.get_item_mesh(index)
       mesh.surface_set_material(0, self.original_materials[index])
+
+  proc select*() =
+    show_editor self.enu_script
+    selected_items.add proc = self.deselect()
+    self.deselect()
 
   proc next*() =
     inc self.index

@@ -19,7 +19,6 @@ gdobj NimBot of KinematicBody:
     skin: Spatial
     mesh: MeshInstance
     paused = false
-    selected = false
     running = false
     animation_player: AnimationPlayer
 
@@ -27,22 +26,18 @@ gdobj NimBot of KinematicBody:
     self.mesh.set_surface_material(0, value)
 
   proc highlight*() =
-    if not self.selected:
-      self.update_material(self.highlight_material)
+    self.update_material(self.highlight_material)
 
   proc set_default_material*() =
-    if not self.selected:
-      self.update_material(self.material)
+    self.update_material(self.material)
 
   proc deselect*() =
-    self.selected = false
     self.set_default_material()
 
   proc select*() =
-    self.selected = true
-    #self.update_material self.selected_material
     show_editor self.enu_script
     selected_items.add proc = self.deselect()
+    self.deselect()
 
   proc print_error(msg: string) =
     if msg != self.last_error:
@@ -63,7 +58,7 @@ gdobj NimBot of KinematicBody:
     self.callback = proc(delta: float): bool =
       duration += delta
       if duration >= finish_time:
-        self.translation = finish
+        #self.translation = finish
         return false
       else:
         discard self.move_and_slide(facing * (self.speed * direction), UP)

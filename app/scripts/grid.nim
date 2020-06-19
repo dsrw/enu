@@ -17,6 +17,12 @@ proc rt*(degrees = 90.0)   = right(degrees)
 proc print*(msg: string)   = discard
 proc echo*(msg: string)   = discard
 
+proc fill_square*(length = 1) =
+  for l in 0..length:
+    for i in 0..3:
+      forward(length - l)
+      left()
+
 template main*(rules) =
   proc main*() =
     rules
