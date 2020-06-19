@@ -10,6 +10,8 @@ gdobj Console of RichTextLabel:
   proc init*() =
     logger = proc(level, msg: string) =
       self.log_text &= &"[b]{level.to_upper}[/b] {msg}\n"
+    echo_console = proc(msg: string) =
+      self.log_text &= &"{msg}\n"
 
   method process*(delta: float) =
     self.bbcode_text = self.log_text

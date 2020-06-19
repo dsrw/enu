@@ -1,3 +1,5 @@
+import macros
+
 var
   speed* = 1.0
 
@@ -10,6 +12,7 @@ proc bk*(steps = 1.0)      = back(steps)
 proc lt*(degrees = 90.0)   = left(degrees)
 proc rt*(degrees = 90.0)   = right(degrees)
 proc print*(msg: string)   = discard
+proc echo*(msg: string)   = discard
 proc play*(animation_name: string)      = discard
 proc set_speed*(spd: float) = speed = spd
 proc walk*() =
@@ -24,3 +27,9 @@ template main*(rules) =
   proc main*() =
     rules
   proc get_speed*(): float   = speed
+
+macro debug*(x: typed): untyped =
+  let s = x.toStrLit
+  let r = quote do:
+    echo(`s` & " = " & $`x`)
+  return r

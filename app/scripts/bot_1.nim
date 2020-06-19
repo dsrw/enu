@@ -1,4 +1,4 @@
-import enu
+import bot
 
 main:
   while true:
@@ -8,5 +8,6 @@ main:
       else:
         play("run")
       speed = i.to_float()
-      forward(1)
+      debug speed
+      forward(2)
       left(45)

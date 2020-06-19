@@ -89,15 +89,15 @@ gdobj NimBot of KinematicBody:
     self.callback = nil
     if (self.engine = load(self.enu_script); self.engine != nil):
       let e = self.engine
-      e.expose("enu", "forward", a => self.forward(get_float(a, 0)))
-      e.expose("enu", "back", a => self.back(get_float(a, 0)))
-      e.expose("enu", "left", a => self.left(get_float(a, 0)))
-      e.expose("enu", "right", a => self.right(get_float(a, 0)))
-      e.expose("enu", "print", a => print(get_string(a, 0)))
-      e.expose("enu", "play", proc(a: VmArgs): bool =
+      e.expose("bot", "forward", a => self.forward(get_float(a, 0)))
+      e.expose("bot", "back", a => self.back(get_float(a, 0)))
+      e.expose("bot", "left", a => self.left(get_float(a, 0)))
+      e.expose("bot", "right", a => self.right(get_float(a, 0)))
+      e.expose("bot", "print", a => print(get_string(a, 0)))
+      e.expose("bot", "echo", a => echo_console(get_string(a, 0)))
+      e.expose("bot", "play", proc(a: VmArgs): bool =
         let animation_name = get_string(a, 0)
         self.animation_player.play(animation_name)
-        debug(&"animation: {animation_name}")
         return false
       )
       self.running = e.call("main")

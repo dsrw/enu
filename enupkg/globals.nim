@@ -30,6 +30,7 @@ var
   save_scene*: proc(file_name = "default")
   pause*: proc()
   logger*: proc(level, msg: string)
+  echo_console*: proc(msg: string)
   selected_items*: seq[proc()] = @[]
   game_node*: Node
   tool_mode* = BlockMode
@@ -98,5 +99,5 @@ proc round*(v: Vector3): Vector3 {.inline.} =
 macro dump*(x: typed): untyped =
   let s = x.toStrLit
   let r = quote do:
-    print(`s`, " = ", `x`)
+    print(`s` & " = " & `x`)
   return r

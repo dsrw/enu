@@ -5,7 +5,6 @@ import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_cont
 gdobj Game of Node:
   var reticle: Sprite
   proc `mouse_captured=`*(value: bool) =
-    print "mouse captured", value
     set_mouse_mode(if value: MOUSE_MODE_CAPTURED else: MOUSE_MODE_VISIBLE)
 
   proc mouse_captured*(): bool =

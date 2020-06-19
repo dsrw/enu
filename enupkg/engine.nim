@@ -1,5 +1,6 @@
 import compiler / [vm, vmdef, nimeval, options, lineinfos, ast]
 import os, strformat
+import globals
 
 export VmArgs, get_float, get_int, get_string, get_bool
 
@@ -16,7 +17,7 @@ let
   PAUSE* = PauseRequest()
 
 proc load*(script_file: string): Engine =
-  let source_paths = [STDLIB, parent_dir current_source_path]
+  let source_paths = [STDLIB, STDLIB & "/core", parent_dir current_source_path]
   result = Engine()
   result.intr = create_interpreter(script_file, source_paths)
   result.intr.graph.config.quit_handler = proc(msg: TMsgKind) =
@@ -26,7 +27,8 @@ proc load*(script_file: string): Engine =
     result.intr.eval_script()
 
   except VMQuit:
-    echo get_current_exception_msg()
+    #write_stack_trace()
+    debug get_current_exception_msg()
     return nil
 
 proc call_proc*(e: Engine, proc_name: string): Pauseable[PNode] =
