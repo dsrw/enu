@@ -40,7 +40,7 @@ gdobj NimBot of KinematicBody:
 
   proc select*() =
     self.selected = true
-    self.update_material self.selected_material
+    #self.update_material self.selected_material
     show_editor self.enu_script
     selected_items.add proc = self.deselect()
 
@@ -112,7 +112,6 @@ gdobj NimBot of KinematicBody:
     self.animation_player = self.skin.get_node("AnimationPlayer").as(AnimationPlayer)
     self.orig_rotation = self.rotation
     self.orig_translation = self.translation
-    self.animation_player.play("walk")
     self.set_default_material()
     self.load_script()
 
