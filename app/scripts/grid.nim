@@ -1,7 +1,7 @@
 import macros
 
 var
-  speed* = 1.0
+  speed* = 0.1
   index* = 0
 
 proc forward*(steps = 1) = discard
@@ -21,7 +21,7 @@ proc fill_square*(length = 1) =
   for l in 0..length:
     for i in 0..3:
       forward(length - l)
-      left()
+      right()
 
 template main*(rules) =
   proc main*() =

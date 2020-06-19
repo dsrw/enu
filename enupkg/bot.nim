@@ -121,11 +121,15 @@ gdobj NimBot of KinematicBody:
         err &"Error resuming {self.enu_script}:\n" &
               get_current_exception_msg()
 
-  method on_reload*() =
+  method reload() =
     self.translation = self.orig_translation
     self.rotation = self.orig_rotation
     self.paused = false
     self.load_script()
+
+  method on_reload*() =
+    if not editing() or open_file == self.enu_script:
+      self.reload()
 
   method on_pause*() =
     self.paused = not self.paused

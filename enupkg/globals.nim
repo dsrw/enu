@@ -35,6 +35,7 @@ var
   game_node*: Node
   tool_mode* = BlockMode
   state* = new StateRefs
+  open_file* = ""
 
 proc join_args[T](args: varargs[T]): string =
   args.map_it(&"'{it}'").join " "

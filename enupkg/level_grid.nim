@@ -182,11 +182,14 @@ gdobj LevelGrid of GridMap:
   method on_target_remove() =
     self.place_block(self.point, -self.normal, -1)
 
-  method on_reload*() =
+  method reload() =
     self.reset()
-    #self.rotation = self.orig_rotation
     self.paused = false
     self.load_script()
+
+  method on_reload*() =
+    if not editing() or open_file == self.enu_script:
+      self.reload()
 
   method on_pause*() =
     self.paused = not self.paused

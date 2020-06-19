@@ -26,9 +26,7 @@ gdobj Editor of TextEdit:
       self.text = read_file(file_name)
       self.grab_focus()
       release_mouse()
-
-
-
+      open_file = file_name
 
     editing = proc():bool = self.visible
 

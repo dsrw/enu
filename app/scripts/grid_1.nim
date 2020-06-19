@@ -4,13 +4,13 @@ import grid
 
 main:
   speed = 0.0
-  var 
+  var
     height = 5
-    length = 20
-  for z in 0..height:
-    for i in 0..4:
+    length = 10
+  for h in 0..height:
+    for sides in 0..3:
       forward(length)
-      left()
+      right()
     up()
   fill_square(length)
   
