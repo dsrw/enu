@@ -83,7 +83,6 @@ gdobj LevelGrid of GridMap:
     direction = direction.rotated(UP, deg_to_rad(degrees))
 
     self.direction = vec3(direction.x.round, direction.y.round, direction.z.round)
-    print(&"new direction {self.direction}")
     false
 
   proc forward(steps: BiggestInt): bool = self.move(self.direction, steps)
