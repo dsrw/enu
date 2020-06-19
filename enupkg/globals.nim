@@ -1,6 +1,6 @@
 import ../godotapi / [node, scene_tree],
        godot,
-       strformat, math, strutils, sequtils
+       strformat, math, strutils, sequtils, macros
 
 export strformat.`&`
 
@@ -22,10 +22,10 @@ const
 var
   editing*: proc:bool
   show_editor*: proc(file: string)
-  unfocus_editor*: proc()
   hide_editor*: proc()
   capture_mouse*: proc()
   release_mouse*: proc()
+  reload_scripts*: proc()
   save_and_reload*: proc()
   save_scene*: proc(file_name = "default")
   pause*: proc()
@@ -94,3 +94,9 @@ proc z*(b: Basis): Vector3 {.inline.} =
 
 proc round*(v: Vector3): Vector3 {.inline.} =
   vec3(v.x.round(), v.y.round(), v.z.round())
+
+macro dump*(x: typed): untyped =
+  let s = x.toStrLit
+  let r = quote do:
+    print(`s`, " = ", `x`)
+  return r

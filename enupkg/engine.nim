@@ -1,4 +1,4 @@
-import compiler / [vm, vmdef, nimeval, options, lineinfos]
+import compiler / [vm, vmdef, nimeval, options, lineinfos, ast]
 import os, strformat
 
 export VmArgs, get_float, get_int, get_string, get_bool
@@ -29,11 +29,14 @@ proc load*(script_file: string): Engine =
     echo get_current_exception_msg()
     return nil
 
-proc call*(e: Engine, proc_name = "main"): bool =
+proc call_proc*(e: Engine, proc_name: string): Pauseable[PNode] =
   let foreign_proc = select_routine(e.intr, proc_name)
   if foreign_proc == nil:
     quit &"script does not export a proc of the name: '{proc_name}'"
-  let call_result = e.intr.call_routine(foreign_proc, [])
+  return e.intr.call_routine(foreign_proc, [])
+
+proc call*(e: Engine, proc_name: string): bool =
+  let call_result = call_proc(e, proc_name)
   result = call_result.kind == pkPause
   if result:
     e.script_state = call_result.state
@@ -46,6 +49,13 @@ proc expose*(e: Engine, script_name, proc_name: string,
   e.intr.implement_routine "*", script_name, proc_name, proc(a: VmArgs) {.gcsafe.} =
     if routine(a):
       e.pause()
+
+proc call_float*(e: Engine, proc_name: string): float =
+  let result = call_proc(e, proc_name)
+  if result.kind == pkDefault:
+    get_float(result.default)
+  else:
+    -1.0
 
 proc resume*(e: Engine): bool =
   e.script_state = resume(e.script_state)

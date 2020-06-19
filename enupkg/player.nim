@@ -104,7 +104,7 @@ gdobj Player of KinematicBody:
       else:
         self.velocity = self.move_and_slide(self.velocity, UP)
 
-  method input*(event: InputEvent) =
+  method unhandled_input*(event: InputEvent) =
     if event of InputEventMouseMotion and get_game().mouse_captured:
       self.input_relative += event.as(InputEventMouseMotion).relative()
     if event.is_action_pressed("jump"):
@@ -130,7 +130,7 @@ gdobj Player of KinematicBody:
     if event.is_action_pressed("fire"):
       if self.aim_ray.is_colliding():
         trigger(self.aim_ray.get_collider(), "target_fire")
-        self.get_tree().set_input_as_handled()
+        #self.get_tree().set_input_as_handled()
 
     if event.is_action_pressed("remove"):
       if self.aim_ray.is_colliding():

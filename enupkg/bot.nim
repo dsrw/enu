@@ -3,11 +3,10 @@ import ../godotapi / [scene_tree, kinematic_body, material, mesh_instance, spati
        math, sugar,
        globals, engine
 
-const
-  MOVE_SPEED = 1.0
 
 gdobj NimBot of KinematicBody:
   var
+    speed = 1.0
     enu_script* {.gdExport.} = "scripts/scott.nim"
     material* {.gdExport.}, highlight_material* {.gdExport.},
       selected_material* {.gdExport.}: Material
@@ -50,12 +49,16 @@ gdobj NimBot of KinematicBody:
       self.last_error = msg
       print(msg)
 
-  proc move(speed, steps: float): bool =
+  proc load_vars() =
+    self.speed = self.engine.call_float("get_speed")
+
+  proc move(direction, steps: float): bool =
+    self.load_vars()
     var duration = 0.0
     let
       facing = BACK.rotated(UP, self.rotation.y)
       finish = self.translation - facing * steps
-      finish_time = 1.0 / MOVE_SPEED * steps
+      finish_time = 1.0 / self.speed * steps
 
     self.callback = proc(delta: float): bool =
       duration += delta
@@ -63,20 +66,21 @@ gdobj NimBot of KinematicBody:
         self.translation = finish
         return false
       else:
-        discard self.move_and_slide(facing * speed, UP)
+        discard self.move_and_slide(facing * (self.speed * direction), UP)
         return true
     true
 
   proc turn(degrees: float): bool =
+    self.load_vars()
     var duration = 0.0
     self.callback = proc(delta: float): bool =
       duration += delta
-      self.rotate(UP, deg_to_rad(degrees * delta))
-      duration <= 1
+      self.rotate(UP, deg_to_rad(degrees * delta * self.speed))
+      duration <= 1.0 / self.speed
     true
 
-  proc forward(steps: float): bool = self.move(-MOVE_SPEED, steps)
-  proc back(steps: float): bool = self.move(MOVE_SPEED, steps)
+  proc forward(steps: float): bool = self.move(-1.0, steps)
+  proc back(steps: float): bool = self.move(1.0, steps)
   proc left(degrees: float): bool = self.turn(degrees)
   proc right(degrees: float): bool = self.turn(-degrees)
 
@@ -90,7 +94,13 @@ gdobj NimBot of KinematicBody:
       e.expose("enu", "left", a => self.left(get_float(a, 0)))
       e.expose("enu", "right", a => self.right(get_float(a, 0)))
       e.expose("enu", "print", a => print(get_string(a, 0)))
-      self.running = e.call("run")
+      e.expose("enu", "play", proc(a: VmArgs): bool =
+        let animation_name = get_string(a, 0)
+        self.animation_player.play(animation_name)
+        debug(&"animation: {animation_name}")
+        return false
+      )
+      self.running = e.call("main")
     else:
       self.running = false
       err &"Unable to load {self.enu_script}"
@@ -110,6 +120,7 @@ gdobj NimBot of KinematicBody:
     if not self.paused:
       try:
         if self.running and (self.callback == nil or not self.callback(delta)):
+
           self.running = self.engine.resume()
       except:
         self.running = false

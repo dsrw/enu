@@ -21,12 +21,11 @@ config/icon="res://icon.png"
 
 [display]
 
-window/size/width=3840
-window/size/height=2160
+window/size/width=1920
+window/size/height=1080
 window/size/resizable=false
 window/size/test_width=1280
 window/size/test_height=720
-window/vsync/use_vsync=false
 
 [editor_plugins]
 
@@ -166,6 +165,11 @@ mode_4={
 "deadzone": 0.5,
 "events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":52,"unicode":0,"echo":false,"script":null)
 , Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":13,"pressure":0.0,"pressed":false,"script":null)
+ ]
+}
+reload_scripts={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":true,"command":true,"pressed":false,"scancode":82,"unicode":0,"echo":false,"script":null)
  ]
 }
 

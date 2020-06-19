@@ -18,7 +18,7 @@ gdobj AimTarget of Sprite3D:
       if self.last_collider != nil:
         self.last_collider.trigger("target_out")
       if collider != nil:
-        self.visible = tool_mode == BlockMode
+        self.visible = tool_mode != CodeMode
         collider.trigger("target_in")
       else:
         self.visible = false
