@@ -1,7 +1,7 @@
 import ../godotapi / [grid_map, mesh, mesh_library],
        godot,
-       strutils,
-       globals
+       math, sugar,
+       globals, engine
 
 const signals = ["target_in", "target_out", "target_move", "target_fire", "target_remove"]
 
@@ -9,10 +9,18 @@ var active*: Node
 
 gdobj LevelGrid of GridMap:
   var
+    speed = 1.0
     point, normal: Vector3
     index: int = 0
     highlight_material* {.gdExport.}: Material
     original_materials: seq[Material]
+    callback: proc(delta: float): bool
+    engine: Engine
+    paused = false
+    running = false
+    enu_script* {.gdExport.} = "scripts/grid_1.nim"
+    direction = FORWARD
+    position = vec3()
 
   proc init*() =
     for signal in signals:
@@ -22,6 +30,10 @@ gdobj LevelGrid of GridMap:
     let map_point = self.world_to_map(point + (normal * 0.5))
     self.set_cell_item(int(map_point.x), int(map_point.y), int(map_point.z), index)
 
+  proc load_vars() =
+    self.speed = self.engine.call_float("get_speed")
+    self.index = self.engine.call_int("get_index")
+
   proc build_unique_mesh_library() =
     self.mesh_library = self.mesh_library.duplicate().as(MeshLibrary)
     for index in self.mesh_library.get_item_list():
@@ -29,9 +41,76 @@ gdobj LevelGrid of GridMap:
       self.mesh_library.set_item_mesh(index, mesh)
       self.original_materials.add(mesh.surface_get_material(0))
 
+  proc reset() =
+    self.clear()
+    self.set_cell_item(0, 0, 0, 0)
+    self.direction = FORWARD
+    self.position = vec3()
+
+  proc move(direction: Vector3, steps: BiggestInt): bool =
+    self.load_vars()
+    var
+      duration = 0.0
+      count = 1
+      position = self.position
+    self.set_cell_item(position.x.to_int, position.y.to_int, position.z.to_int, self.index)
+
+    self.callback = proc(delta: float): bool =
+      duration += delta
+      if duration >= self.speed:
+
+        position += direction
+        #print(position)
+        self.set_cell_item(position.x.to_int, position.y.to_int, position.z.to_int, self.index)
+
+        inc count
+        duration = 0.0
+        self.position = position
+
+      return count < steps
+    true
+
+  proc turn(degrees: float): bool =
+    self.load_vars()
+    var direction = self.direction
+    direction = direction.rotated(UP, deg_to_rad(degrees))
+
+    self.direction = vec3(direction.x.round, direction.y.round, direction.z.round)
+    print(&"new direction {self.direction}")
+    false
+
+  proc forward(steps: BiggestInt): bool = self.move(self.direction, steps)
+  proc back(steps: BiggestInt): bool = self.move(-self.direction, steps)
+  proc up(steps: BiggestInt): bool = self.move(UP, steps)
+  proc down(steps: BiggestInt): bool = self.move(DOWN, steps)
+  proc left(degrees: float): bool = self.turn(degrees)
+  proc right(degrees: float): bool = self.turn(-degrees)
+
+  proc load_script() =
+    debug &"Loading {self.enu_script}"
+    self.callback = nil
+    if (self.engine = load(self.enu_script); self.engine != nil):
+      let e = self.engine
+      e.expose("grid", "up", a => self.up(get_int(a, 0)))
+      e.expose("grid", "down", a => self.down(get_int(a, 0)))
+      e.expose("grid", "forward", a => self.forward(get_int(a, 0)))
+      e.expose("grid", "back", a => self.back(get_int(a, 0)))
+      e.expose("grid", "left", a => self.left(get_float(a, 0)))
+      e.expose("grid", "right", a => self.right(get_float(a, 0)))
+      e.expose("grid", "print", a => print(get_string(a, 0)))
+      e.expose("grid", "echo", a => echo_console(get_string(a, 0)))
+
+      self.running = e.call("main")
+    else:
+      self.running = false
+      err &"Unable to load {self.enu_script}"
+
   method ready*() =
     bind_signals(self, self, signals)
+    self.bind_signals("reload", "pause")
     self.build_unique_mesh_library()
+    self.reset()
+    self.load_script()
     active = self
 
   proc highlight() =
@@ -39,6 +118,12 @@ gdobj LevelGrid of GridMap:
     for index in lib.get_item_list():
       let mesh = lib.get_item_mesh(index)
       mesh.surface_set_material(0, self.highlight_material)
+
+  proc select*() =
+
+    #self.update_material self.selected_material
+    show_editor self.enu_script
+    selected_items.add proc = self.deselect()
 
   proc deselect() =
     let lib = self.mesh_library
@@ -58,6 +143,17 @@ gdobj LevelGrid of GridMap:
     if self.index < 0: self.index = lib.get_item_list().len() - 1
     debug("Mesh: " & lib.get_item_name(self.index))
 
+  method physics_process*(delta: float64) =
+    if not self.paused:
+      try:
+        if self.running and (self.callback == nil or not self.callback(delta)):
+
+          self.running = self.engine.resume()
+      except:
+        self.running = false
+        err &"Error resuming {self.enu_script}:\n" &
+              get_current_exception_msg()
+
   method on_target_in() =
     active = self
     if tool_mode == CodeMode:
@@ -72,9 +168,21 @@ gdobj LevelGrid of GridMap:
 
 
   method on_target_fire() =
-    self.place_block(self.point, self.normal, self.index)
+    if tool_mode == BlockMode:
+      self.place_block(self.point, self.normal, self.index)
+    else:
+      self.select()
 
   method on_target_remove() =
     self.place_block(self.point, -self.normal, -1)
+
+  method on_reload*() =
+    self.reset()
+    #self.rotation = self.orig_rotation
+    self.paused = false
+    self.load_script()
+
+  method on_pause*() =
+    self.paused = not self.paused
 
 proc get_level_grid*(): LevelGrid = active as LevelGrid

@@ -1,13 +1,13 @@
-import bot
+import grid
+
+
 
 main:
-  while true:
-    for i in 1..8:
-      if i <= 4:
-        play("walk")
-      else:
-        play("run")
-      speed = i.to_float()
-      debug speed
-      forward(2)
-      left(45)
+  speed = 0.1
+  for floors in 0..5:
+    for i in 0..3:
+      forward(10)
+      left()
+    up()
+    
+    

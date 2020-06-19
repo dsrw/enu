@@ -53,11 +53,18 @@ proc expose*(e: Engine, script_name, proc_name: string,
       e.pause()
 
 proc call_float*(e: Engine, proc_name: string): float =
-  let result = call_proc(e, proc_name)
-  if result.kind == pkDefault:
-    get_float(result.default)
+  let res = call_proc(e, proc_name)
+  if res.kind == pkDefault:
+    get_float(res.default)
   else:
     -1.0
+
+proc call_int*(e: Engine, proc_name: string): int =
+  let res = call_proc(e, proc_name)
+  if res.kind == pkDefault:
+    get_int(res.default).to_int
+  else:
+    -1
 
 proc resume*(e: Engine): bool =
   e.script_state = resume(e.script_state)
