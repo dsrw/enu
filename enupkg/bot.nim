@@ -92,7 +92,10 @@ gdobj NimBot of KinematicBody:
       e.expose("bot", "echo", a => echo_console(get_string(a, 0)))
       e.expose("bot", "play", proc(a: VmArgs): bool =
         let animation_name = get_string(a, 0)
-        self.animation_player.play(animation_name)
+        if animation_name == "":
+          self.animation_player.stop(true)
+        else:
+          self.animation_player.play(animation_name)
         return false
       )
       self.running = e.call("main")
@@ -125,6 +128,7 @@ gdobj NimBot of KinematicBody:
     self.translation = self.orig_translation
     self.rotation = self.orig_rotation
     self.paused = false
+    self.animation_player.stop(true)
     self.load_script()
 
   method on_reload*() =
