@@ -1,7 +1,14 @@
 import bot
 
 main:
-  run()
+  var walking = true
   while true:
-    forward(10)
-    right(120)
+    if walking:
+      walk()
+    else:
+      run()
+    walking = not walking
+    
+    forward(7)
+    left()
+    

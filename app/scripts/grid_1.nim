@@ -1,17 +1,20 @@
 import grid
 
-
-
 main:
-  speed = 0.0
   var
+    length = 15
     height = 5
-    length = 10
-  for h in 0..height:
-    for sides in 0..3:
+  speed = 0.0
+  for step in 0..<height:
+    for wall in 0..<4:
       forward(length)
       right()
     up()
+    if index == 1:
+      index = 0
+    else:
+      index = 1 
+      
   fill_square(length)
   
     
