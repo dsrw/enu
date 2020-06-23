@@ -13,19 +13,13 @@ install_files = @["enu.nim"]
 bin_dir       = "app/_dlls"
 when defined windows:
   bin = @["enu.dll"]
-  const GODOT_BIN = "../godot/bin/godot.windows.tools.64.exe"
+  const GODOT_BIN = "vendor/godot/bin/godot.windows.tools.64.exe"
 else:
   bin = @["enu.dylib"]
-  const GODOT_BIN = "../godot/bin/godot.osx.tools.64"
+  const GODOT_BIN = "vendor/godot/bin/godot.osx.tools.64"
 
 requires "nim >= 1.2.0",
          "godot 0.8.0"
-
-task on_save, "Build on save":
-  if get_env("SAVED_FILE").starts_with("scripts"):
-    exec "bin/enu"
-  else:
-    exec "nimble build"
 
 task generate, "Generate Godot API binding":
   mk_dir GENERATED_DIR
