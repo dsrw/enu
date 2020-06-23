@@ -1,5 +1,4 @@
 bin/
-godotapi/
 tools/generate
 *.dylib
 *.dll
