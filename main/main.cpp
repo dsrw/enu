@@ -2163,22 +2163,37 @@ bool Main::iteration() {
 	if (fixed_fps != -1)
 		return exit;
 
-	if (OS::get_singleton()->is_in_low_processor_usage_mode() || !OS::get_singleton()->can_draw())
-		OS::get_singleton()->delay_usec(OS::get_singleton()->get_low_processor_usage_mode_sleep_usec()); //apply some delay to force idle time
-	else {
-		uint32_t frame_delay = Engine::get_singleton()->get_frame_delay();
-		if (frame_delay)
-			OS::get_singleton()->delay_usec(Engine::get_singleton()->get_frame_delay() * 1000);
+	const uint32_t frame_delay = Engine::get_singleton()->get_frame_delay();
+	if (frame_delay) {
+		// Add fixed frame delay to decrease CPU/GPU usage. This doesn't take
+		// the actual frame time into account.
+		// Due to the high fluctuation of the actual sleep duration, it's not recommended
+		// to use this as a FPS limiter.
+		OS::get_singleton()->delay_usec(frame_delay * 1000);
 	}
 
-	int target_fps = Engine::get_singleton()->get_target_fps();
+	// Add a dynamic frame delay to decrease CPU/GPU usage. This takes the
+	// previous frame time into account for a smoother result.
+	uint64_t dynamic_delay = 0;
+	if (OS::get_singleton()->is_in_low_processor_usage_mode() || !OS::get_singleton()->can_draw()) {
+		dynamic_delay = OS::get_singleton()->get_low_processor_usage_mode_sleep_usec();
+	}
+	const int target_fps = Engine::get_singleton()->get_target_fps();
 	if (target_fps > 0 && !Engine::get_singleton()->is_editor_hint()) {
-		uint64_t time_step = 1000000L / target_fps;
-		target_ticks += time_step;
+		// Override the low processor usage mode sleep delay if the target FPS is lower.
+		dynamic_delay = MAX(dynamic_delay, (uint64_t)(1000000 / target_fps));
+	}
+
+	if (dynamic_delay > 0) {
+		target_ticks += dynamic_delay;
 		uint64_t current_ticks = OS::get_singleton()->get_ticks_usec();
-		if (current_ticks < target_ticks) OS::get_singleton()->delay_usec(target_ticks - current_ticks);
+
+		if (current_ticks < target_ticks) {
+			OS::get_singleton()->delay_usec(target_ticks - current_ticks);
+		}
+
 		current_ticks = OS::get_singleton()->get_ticks_usec();
-		target_ticks = MIN(MAX(target_ticks, current_ticks - time_step), current_ticks + time_step);
+		target_ticks = MIN(MAX(target_ticks, current_ticks - dynamic_delay), current_ticks + dynamic_delay);
 	}
 
 #ifdef TOOLS_ENABLED
@@ -2219,8 +2234,8 @@ void Main::cleanup() {
 	ResourceLoader::remove_custom_loaders();
 	ResourceSaver::remove_custom_savers();
 
+	// Flush before uninitializing the scene, but delete the MessageQueue as late as possible.
 	message_queue->flush();
-	memdelete(message_queue);
 
 	if (script_debugger) {
 		if (use_debug_profiler) {
@@ -2296,6 +2311,10 @@ void Main::cleanup() {
 		OS::get_singleton()->execute(exec, args, false, &pid);
 		OS::get_singleton()->set_restart_on_exit(false, List<String>()); //clear list (uses memory)
 	}
+
+	// Now should be safe to delete MessageQueue (famous last words).
+	message_queue->flush();
+	memdelete(message_queue);
 
 	unregister_core_driver_types();
 	unregister_core_types();
