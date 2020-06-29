@@ -3822,22 +3822,14 @@ Ref<Texture> EditorNode::get_object_icon(const Object *p_object, const String &p
 Ref<Texture> EditorNode::get_class_icon(const String &p_class, const String &p_fallback) const {
 	ERR_FAIL_COND_V_MSG(p_class.empty(), NULL, "Class name cannot be empty.");
 
-	if (gui_base->has_icon(p_class, "EditorIcons")) {
-		return gui_base->get_icon(p_class, "EditorIcons");
-	}
-
 	if (ScriptServer::is_global_class(p_class)) {
-		String icon_path = EditorNode::get_editor_data().script_class_get_icon_path(p_class);
-		Ref<ImageTexture> icon = _load_custom_class_icon(icon_path);
-		if (icon.is_valid()) {
-			return icon;
-		}
-
-		Ref<Script> script = ResourceLoader::load(ScriptServer::get_global_class_path(p_class), "Script");
+		Ref<ImageTexture> icon;
+		Ref<Script> script = EditorNode::get_editor_data().script_class_load_script(p_class);
+		StringName name = p_class;
 
 		while (script.is_valid()) {
-			String current_icon_path;
-			script->get_language()->get_global_class_name(script->get_path(), NULL, &current_icon_path);
+			name = EditorNode::get_editor_data().script_class_get_name(script->get_path());
+			String current_icon_path = EditorNode::get_editor_data().script_class_get_icon_path(name);
 			icon = _load_custom_class_icon(current_icon_path);
 			if (icon.is_valid()) {
 				return icon;
@@ -3846,7 +3838,7 @@ Ref<Texture> EditorNode::get_class_icon(const String &p_class, const String &p_f
 		}
 
 		if (icon.is_null()) {
-			icon = gui_base->get_icon(ScriptServer::get_global_class_base(p_class), "EditorIcons");
+			icon = gui_base->get_icon(ScriptServer::get_global_class_base(name), "EditorIcons");
 		}
 
 		return icon;
@@ -3864,8 +3856,13 @@ Ref<Texture> EditorNode::get_class_icon(const String &p_class, const String &p_f
 		}
 	}
 
-	if (p_fallback.length() && gui_base->has_icon(p_fallback, "EditorIcons"))
+	if (gui_base->has_icon(p_class, "EditorIcons")) {
+		return gui_base->get_icon(p_class, "EditorIcons");
+	}
+
+	if (p_fallback.length() && gui_base->has_icon(p_fallback, "EditorIcons")) {
 		return gui_base->get_icon(p_fallback, "EditorIcons");
+	}
 
 	return NULL;
 }
