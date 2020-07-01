@@ -24,8 +24,8 @@ requires "nim >= 1.2.0",
 task generate, "Generate Godot API binding":
   mk_dir GENERATED_DIR
   exec &"{GODOT_BIN} --gdnative-generate-json-api {API_JSON}"
-  exec &"nimble c {GENERATOR}"
-  exec &"{GENERATOR} {GENERATED_DIR} {API_JSON}"
+  exec &"nimble c --skipParentCfg {GENERATOR}"
+  exec &"{find_exe GENERATOR} {GENERATED_DIR} {API_JSON}"
 
 task clean, "Remove files produced by build":
   rm_dir GENERATED_DIR

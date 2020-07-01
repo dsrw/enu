@@ -297,7 +297,7 @@ const
   KEY_MACRON* = 175'i64
   KEY_MASCULINE* = 186'i64
   KEY_MASK_ALT* = 67108864'i64
-  KEY_MASK_CMD* = 134217728'i64
+  KEY_MASK_CMD* = 268435456'i64
   KEY_MASK_CTRL* = 268435456'i64
   KEY_MASK_GROUP_SWITCH* = 1073741824'i64
   KEY_MASK_KPAD* = 536870912'i64
@@ -516,7 +516,7 @@ type
   GlobalConstants = ref object of NimGodotObject
     ## singleton: true
     ## instanciable: false
-    ## is_reference: false
+    ## is_reference: true
   
 registerClass(GlobalConstants, "GlobalConstants", true)
 var singletonGlobalConstants {.threadvar.}: GlobalConstants
