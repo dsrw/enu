@@ -11,12 +11,16 @@ description   = "Logo-like DSL for godot"
 license       = "MIT"
 install_files = @["enu.nim"]
 bin_dir       = "app/_dlls"
+
 when defined windows:
   bin = @["enu.dll"]
   const GODOT_BIN = "vendor/godot/bin/godot.windows.tools.64.exe"
-else:
+when defined osx:
   bin = @["enu.dylib"]
   const GODOT_BIN = "vendor/godot/bin/godot.osx.tools.64"
+when defined linux:
+  bin = @["enu.so"]
+  const GODOT_BIN = "godot" # Usually in PATH on Linux x86_64
 
 requires "nim >= 1.2.0",
          "godot 0.8.0"
