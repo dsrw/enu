@@ -34,24 +34,26 @@ $ nimble godot
 - [ ] Ability to place objects
 - [ ] Basic error handling
 
-### v0.1
+### v0.02
 
 - [ ] Better syntax highlighting (comment support at least)
 - [ ] Make object pick raycast longer
 - [ ] Mouse picking
 - [ ] Minecraft style flying
 - [ ] More block types
-- [ ] Windows binary release
-- [ ] Mac binary release
-- [ ] Test on Linux
+- [ ] Validate build and keybindings for Mac/Linux/Windows
 
-### v0.2
+### v0.1
 - [ ] `enu init` command (or similar) for creating a new project
 - [ ] Demo game
 - [ ] Script improvements required to support demo
+- [ ] Basic 1 page in-game help document
+- [ ] Windows binary release
+- [ ] Mac binary release
 
-### v0.3
+### v0.2
 - [ ] 2nd demo game
+- [ ] Basic UI
 - [ ] iPad release
 
 
