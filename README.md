@@ -30,6 +30,7 @@ $ nimble godot
 ### v0.01
 
 - [X] Simplify box object for performance
+- [ ] Add keybindings to README
 - [ ] Rework "deselect" behavior
 - [ ] Ability to place objects
 - [ ] Basic error handling
