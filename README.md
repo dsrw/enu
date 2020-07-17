@@ -57,6 +57,3 @@ $ nimble godot
 - [ ] Basic UI
 - [ ] Controller support
 - [ ] iPad release
-
-
-
