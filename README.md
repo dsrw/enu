@@ -54,6 +54,7 @@ $ nimble godot
 ### v0.2
 - [ ] 2nd demo game
 - [ ] Basic UI
+- [ ] Controller support
 - [ ] iPad release
 
 
