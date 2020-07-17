@@ -26,6 +26,7 @@ window/size/height=1080
 window/size/resizable=false
 window/size/test_width=1280
 window/size/test_height=720
+window/stretch/mode="viewport"
 
 [editor_plugins]
 

@@ -2,7 +2,7 @@ import grid
 
 main:
   var
-    length = 15
+    length = 20
     height = 5
   speed = 0.0
   for step in 0..<height:
