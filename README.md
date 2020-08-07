@@ -37,7 +37,7 @@ $ nimble godot
 
 ### v0.02
 
-- [ ] Better syntax highlighting (comment support at least)
+- [X] Better syntax highlighting (comment support at least)
 - [ ] Make object pick raycast longer
 - [ ] Mouse picking
 - [ ] Minecraft style flying

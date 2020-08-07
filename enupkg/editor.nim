@@ -34,3 +34,6 @@ gdobj Editor of TextEdit:
       self.release_focus()
       capture_mouse()
       self.visible = false
+
+    # simple comment support
+    self.add_color_region("#", "\n", init_color(0.5, 0.5, 0.5), true)
