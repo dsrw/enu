@@ -14,7 +14,7 @@ size = Vector2( 10000, 10000 )
 margin = 0.001
 extents = Vector3( 50, 1, 50 )
 
-[node name="Level" type="Node"]
+[node name="Level" type="Spatial"]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = ExtResource( 2 )

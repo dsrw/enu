@@ -1,0 +1,55 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://components/Console.gdns" type="Script" id=1]
+[ext_resource path="res://components/TextEdit.gdns" type="Script" id=2]
+[ext_resource path="res://themes/DarkTheme.tres" type="Theme" id=3]
+[ext_resource path="res://themes/AppleTheme.tres" type="Theme" id=4]
+
+[node name="GUI" type="MarginContainer"]
+anchor_right = 0.4
+anchor_bottom = 1.0
+mouse_filter = 2
+theme = ExtResource( 3 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+margin_right = 512.0
+margin_bottom = 720.0
+mouse_filter = 2
+theme = ExtResource( 4 )
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer"]
+margin_right = 512.0
+margin_bottom = 477.0
+mouse_filter = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.0
+
+[node name="Editor" type="TextEdit" parent="VBoxContainer/MarginContainer"]
+visible = false
+margin_right = 512.0
+margin_bottom = 477.0
+focus_mode = 0
+size_flags_vertical = 3
+indent_using_spaces = true
+indent_size = 2
+highlight_current_line = true
+syntax_highlighting = true
+show_line_numbers = true
+script = ExtResource( 2 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Console" type="RichTextLabel" parent="VBoxContainer"]
+margin_top = 481.0
+margin_right = 512.0
+margin_bottom = 720.0
+size_flags_vertical = 3
+bbcode_enabled = true
+scroll_following = true
+selection_enabled = true
+script = ExtResource( 1 )

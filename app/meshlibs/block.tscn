@@ -26,6 +26,9 @@ material = SubResource( 6 )
 size = Vector3( 1, 1, 1 )
 
 [sub_resource type="CylinderMesh" id=15]
+top_radius = 0.5
+bottom_radius = 0.5
+height = 1.0
 
 [sub_resource type="SpatialMaterial" id=10]
 albedo_color = Color( 0.0784314, 0.968627, 0.027451, 1 )
@@ -56,7 +59,7 @@ input_ray_pickable = false
 shape = SubResource( 3 )
 
 [node name="Pipe" type="MeshInstance" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -4 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4 )
 mesh = SubResource( 15 )
 material/0 = SubResource( 10 )
 

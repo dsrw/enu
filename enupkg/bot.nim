@@ -82,6 +82,7 @@ gdobj NimBot of KinematicBody:
   proc load_script() =
     debug &"Loading {self.enu_script}"
     self.callback = nil
+
     if (self.engine = load(self.enu_script); self.engine != nil):
       let e = self.engine
       e.expose("bot", "forward", a => self.forward(get_float(a, 0)))

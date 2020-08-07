@@ -12,7 +12,7 @@ gdobj Editor of TextEdit:
   method on_save*() =
     write_file(self.file_name, self.text)
 
-  method input*(event: InputEvent) =
+  method unhandled_input*(event: InputEvent) =
     if self.visible:
       if event.is_action_pressed("toggle_mouse_captured"):
         hide_editor()

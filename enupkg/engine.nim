@@ -26,9 +26,9 @@ proc load*(script_file: string): Engine =
   try:
     result.intr.eval_script()
 
-  except VMQuit:
-    #write_stack_trace()
-    debug get_current_exception_msg()
+  except VMQuit as e:
+    debug e.get_stack_trace()
+    debug e.msg
     return nil
 
 proc call_proc*(e: Engine, proc_name: string): Pauseable[PNode] =
