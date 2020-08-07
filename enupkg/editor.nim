@@ -1,6 +1,6 @@
 import ../godotapi / [text_edit, scene_tree, node, input_event, global_constants],
        godot,
-       globals, game,
+       globals,
        strutils
 
 
@@ -8,6 +8,7 @@ gdobj Editor of TextEdit:
   var
     file_name = ""
     ff = false
+    comment_color* {.gdExport.} = init_color(0.5, 0.5, 0.5)
 
   method on_save*() =
     write_file(self.file_name, self.text)
@@ -17,6 +18,12 @@ gdobj Editor of TextEdit:
       if event.is_action_pressed("toggle_mouse_captured"):
         hide_editor()
         self.get_tree().set_input_as_handled()
+
+  proc configure_highlighting() =
+    # block comments
+    self.add_color_region("#[", "]#", self.comment_color, false)
+    # line comments
+    self.add_color_region("#", "\n", self.comment_color, true)
 
   method ready*() =
     self.bind_signals("save")
@@ -35,5 +42,4 @@ gdobj Editor of TextEdit:
       capture_mouse()
       self.visible = false
 
-    # simple comment support
-    self.add_color_region("#", "\n", init_color(0.5, 0.5, 0.5), true)
+    self.configure_highlighting()
