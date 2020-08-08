@@ -5,7 +5,7 @@ import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_cont
 
 gdobj Game of Node:
   var
-    reticle: Sprite
+    reticle: Control
 
   proc `mouse_captured=`*(captured: bool) =
     set_mouse_mode if captured:
@@ -25,7 +25,7 @@ gdobj Game of Node:
   method ready*() {.gdExport.} =
     state.game = self
     #self.mouse_captured = true
-    self.reticle = self.find_node("reticle").as(Sprite)
+    self.reticle = self.find_node("Reticle").as(Control)
 
     globals.capture_mouse = proc() =
       self.mouse_captured = true
