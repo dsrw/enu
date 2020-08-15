@@ -38,6 +38,7 @@ gdobj Editor of TextEdit:
     editing = proc():bool = self.visible
 
     hide_editor = proc() =
+      trigger("retarget")
       self.release_focus()
       capture_mouse()
       self.visible = false

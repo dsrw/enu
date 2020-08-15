@@ -63,7 +63,7 @@ proc bind_signals*(receiver, sender: Node, signals: varargs[string]) =
   for signal in signals:
     let meth = "_on_" & signal
     if not send_node.has_user_signal(signal):
-      send_node.add_user_signal
+      send_node.add_user_signal(signal)
     discard send_node.connect(signal, receiver, meth)
 
 proc bind_signals*(receiver: Node, signals: varargs[string]) =

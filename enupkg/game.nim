@@ -70,12 +70,16 @@ gdobj Game of Node:
       elif event.is_action_pressed("pause"):
         globals.pause()
       elif event.is_action_pressed("mode_1"):
+        trigger("retarget")
         tool_mode = CodeMode
         self.reticle.visible = true
       elif event.is_action_pressed("mode_2"):
+        trigger("retarget")
         tool_mode =  BlockMode
         self.reticle.visible = false
+
       elif event.is_action_pressed("mode_3"):
+        trigger("retarget")
         tool_mode =  ObjectMode
         self.reticle.visible = false
 

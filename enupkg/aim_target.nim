@@ -9,6 +9,12 @@ gdobj AimTarget of Sprite3D:
 
   method ready*() =
     self.set_as_top_level(true)
+    self.bind_signals("retarget")
+
+  method on_retarget*() =
+    if self.last_collider != nil:
+      self.last_collider.trigger("target_out")
+      self.last_collider = nil
 
   proc update*(ray: RayCast) =
     ray.force_raycast_update()
@@ -50,3 +56,5 @@ gdobj AimTarget of Sprite3D:
       collider.trigger("target_move", target_point, target_normal)
 
     self.last_collider = collider
+
+
