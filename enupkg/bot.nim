@@ -36,8 +36,6 @@ gdobj NimBot of KinematicBody:
 
   proc select*() =
     show_editor self.enu_script
-    selected_items.add proc = self.deselect()
-    self.deselect()
 
   proc print_error(msg: string) =
     if msg != self.last_error:

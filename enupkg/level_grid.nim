@@ -129,7 +129,6 @@ gdobj LevelGrid of GridMap:
 
   proc select*() =
     show_editor self.enu_script
-    selected_items.add proc = self.deselect()
     self.deselect()
 
   proc next*() =

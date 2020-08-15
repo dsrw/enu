@@ -31,7 +31,6 @@ var
   pause*: proc()
   logger*: proc(level, msg: string)
   echo_console*: proc(msg: string)
-  selected_items*: seq[proc()] = @[]
   game_node*: Node
   tool_mode* = BlockMode
   state* = new StateRefs
