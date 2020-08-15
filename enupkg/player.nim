@@ -1,5 +1,5 @@
 import godot, ../godotapi / [kinematic_body, spatial, input, input_event, input_event_mouse_motion, ray_cast, scene_tree],
-       options, math,
+       math,
        globals, game, aim_target, level_grid
 const
   angle_x_min = -PI / 2.25
@@ -106,7 +106,7 @@ gdobj Player of KinematicBody:
 
   method unhandled_input*(event: InputEvent) =
     if event of InputEventMouseMotion and get_game().mouse_captured:
-      self.input_relative += event.as(InputEventMouseMotion).relative()
+      self.input_relative += event.as(InputEventMouseMotion).relative() * get_game().shrink
     if event.is_action_pressed("jump"):
       if self.flying:
         self.flying = false

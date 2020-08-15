@@ -6,6 +6,7 @@ import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_cont
 gdobj Game of Node:
   var
     reticle: Control
+    viewport_container: ViewportContainer
 
   proc `mouse_captured=`*(captured: bool) =
     set_mouse_mode if captured:
@@ -18,6 +19,9 @@ gdobj Game of Node:
   proc mouse_captured*(): bool =
     get_mouse_mode() == MOUSE_MODE_CAPTURED
 
+  proc shrink*(): float =
+    float(self.viewport_container.stretch_shrink)
+
   proc init*() =
     for signal in ["pause", "save", "reload", "mouse_captured", "mouse_released"]:
       self.add_user_signal(signal)
@@ -26,7 +30,7 @@ gdobj Game of Node:
     state.game = self
     #self.mouse_captured = true
     self.reticle = self.find_node("Reticle").as(Control)
-
+    self.viewport_container = self.get_node("ViewportContainer").as(ViewportContainer)
     globals.capture_mouse = proc() =
       self.mouse_captured = true
 
@@ -56,7 +60,7 @@ gdobj Game of Node:
         globals.save_and_reload()
         self.get_tree().set_input_as_handled()
 
-    if event.is_action_pressed("reload_scripts"):
+    if event.is_action_pressed("save"):
         globals.reload_scripts()
         self.get_tree().set_input_as_handled()
     elif not globals.editing():
