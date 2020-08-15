@@ -7,10 +7,6 @@ gdobj SelectionArea of Area:
   var
     bot*: NimBot
 
-  proc init*() =
-    for signal in signals:
-      self.add_user_signal(signal)
-
   method ready*() =
     self.bot = self.get_node("..") as NimBot
     bind_signals(self, self, signals)

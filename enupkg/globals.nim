@@ -63,14 +63,17 @@ proc bind_signals*(receiver, sender: Node, signals: varargs[string]) =
 
   for signal in signals:
     let meth = "_on_" & signal
+    if not send_node.has_user_signal(signal):
+      send_node.add_user_signal
     discard send_node.connect(signal, receiver, meth)
 
 proc bind_signals*(receiver: Node, signals: varargs[string]) =
   bind_signals(receiver, nil, signals)
 
 proc trigger*(node: Object, signal: string, args: varargs[Variant, `new_variant`]) =
-  if node.has_user_signal(signal):
-    node.emit_signal(signal, args)
+  if not node.has_user_signal(signal):
+    node.add_user_signal(signal)
+  node.emit_signal(signal, args)
 
 proc trigger*(signal: string, args: varargs[Variant]) =
   trigger(game_node, signal, args)

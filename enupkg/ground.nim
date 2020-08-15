@@ -8,10 +8,6 @@ gdobj Ground of MeshInstance:
   var
     point, normal: Vector3
 
-  proc init*() =
-    for signal in signals:
-      self.add_user_signal(signal)
-
   method ready*() =
     bind_signals(self, self, signals)
 

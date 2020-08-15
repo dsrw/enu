@@ -22,10 +22,6 @@ gdobj LevelGrid of GridMap:
     direction = FORWARD
     position = vec3()
 
-  proc init*() =
-    for signal in signals:
-      self.add_user_signal(signal)
-
   proc place_block*(point, normal: Vector3, index: int64 = 0) =
     let map_point = self.world_to_map(point + (normal * 0.5))
     self.set_cell_item(int(map_point.x), int(map_point.y), int(map_point.z), index)

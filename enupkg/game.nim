@@ -22,10 +22,6 @@ gdobj Game of Node:
   proc shrink*(): float =
     float(self.viewport_container.stretch_shrink)
 
-  proc init*() =
-    for signal in ["pause", "save", "reload", "mouse_captured", "mouse_released"]:
-      self.add_user_signal(signal)
-
   method ready*() {.gdExport.} =
     state.game = self
     #self.mouse_captured = true
