@@ -13,11 +13,6 @@ main:
     if index == 1:
       index = 0
     else:
-      index = 1 
+      index = 1
       
   fill_square(length)
-  
-    
-  
-    
-    
