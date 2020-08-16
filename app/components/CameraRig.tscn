@@ -12,7 +12,7 @@ current = true
 [node name="AimRay" type="RayCast" parent="Camera"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 0.999999, 0, 0, 0 )
 visible = false
-cast_to = Vector3( 0, 0, -20 )
+cast_to = Vector3( 0, 0, -50 )
 collision_mask = 17
 collide_with_areas = true
 

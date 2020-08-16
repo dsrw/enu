@@ -38,7 +38,7 @@ $ nimble godot
 ### v0.02
 
 - [X] Better syntax highlighting (comment support at least)
-- [ ] Make object pick raycast longer
+- [X] Make object pick raycast longer
 - [ ] Mouse picking
 - [ ] Minecraft style flying
 - [ ] More block types
