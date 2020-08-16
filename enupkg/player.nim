@@ -73,12 +73,7 @@ gdobj Player of KinematicBody:
       var r = self.camera_rig.rotation
       r.y = wrap(r.y, -PI, PI)
       self.camera_rig.rotation = r
-
-      if self.aim_target != nil:
-        self.aim_target.update(self.aim_ray)
-      else:
-        debug("aim target nil")
-        self.aim_target = self.camera_rig.get_node("AimTarget") as AimTarget
+      self.aim_target.update(self.aim_ray)
 
   method physics_process*(delta: float) =
     if not editing():
