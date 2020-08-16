@@ -50,13 +50,11 @@ gdobj NimBot of KinematicBody:
     var duration = 0.0
     let
       facing = BACK.rotated(UP, self.rotation.y)
-      finish = self.translation - facing * steps
       finish_time = 1.0 / self.speed * steps
 
     self.callback = proc(delta: float): bool =
       duration += delta
-      if duration >= finish_time:
-        #self.translation = finish
+      if duration > finish_time:
         return false
       else:
         discard self.move_and_slide(facing * (self.speed * direction), UP)
