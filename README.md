@@ -26,7 +26,7 @@ $ nimble godot
   (you dont need to Edit anything, is just to auto-import internal assets).
 - Press Play or F5, a new window with Enu should open.
 
-# TODO
+# Tasks
 ### v0.01
 
 - [X] Simplify box object for performance
@@ -43,6 +43,8 @@ $ nimble godot
 - [ ] Minecraft style flying
 - [ ] More block types
 - [ ] Validate build and keybindings for Mac/Linux/Windows
+- [ ] Support non-hidpi screens
+- [ ] Use Inconsolata on Windows/Linux
 
 ### v0.1
 - [ ] `enu init` command (or similar) for creating a new project
@@ -53,7 +55,15 @@ $ nimble godot
 - [ ] Mac binary release
 
 ### v0.2
+- [ ] Upstream Nim/Godot changes
 - [ ] 2nd demo game
 - [ ] Basic UI
 - [ ] Controller support
 - [ ] iPad release
+
+# Changelog
+
+- HiDPI support. Fonts should look like a proper native app. Use SF Mono.
+- Fixed input handling. Console now scrolls properly, and events should only be consumed in one place.
+- Render resolution can be scaled for performance. Set stretch_shrink on the ViewContainer.
+- Things should highlight more or less properly.
