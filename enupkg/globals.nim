@@ -1,12 +1,17 @@
 import ../godotapi / [node, scene_tree],
        godot,
-       strformat, math, strutils, sequtils, macros
+       strformat, math, strutils, sequtils, macros, compiler/lineinfos
 
 export strformat.`&`
 
 type
   ToolMode* = enum
     CodeMode = 0, BlockMode = 1, ObjectMode = 2
+
+  ScriptError* = tuple
+    file_name: string
+    msg: string
+    info: TLineInfo
 
   StateRefs = ref object
     player*: Node
@@ -21,6 +26,7 @@ const
 
 var
   editing*: proc:bool
+  errors*: seq[ScriptError]
   show_editor*: proc(file: string)
   hide_editor*: proc()
   capture_mouse*: proc()

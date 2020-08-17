@@ -5,8 +5,8 @@ import globals
 export VmArgs, get_float, get_int, get_string, get_bool
 
 type
-  VMQuit = object of CatchableError
-    info: TLineInfo
+  VMQuit* = object of CatchableError
+    info*: TLineInfo
   Engine* = ref object
     script_state: PauseState
     intr: Interpreter
@@ -35,12 +35,7 @@ proc load*(script_file: string): Engine =
   result.intr.graph.config.quit_handler = proc(msg: TMsgKind) =
     raise last_error
 
-  try:
-    result.intr.eval_script()
-
-  except VMQuit as e:
-    err &"{e.info} {e.msg}"
-    return nil
+  result.intr.eval_script()
 
 proc call_proc*(e: Engine, proc_name: string): Pauseable[PNode] =
   let foreign_proc = select_routine(e.intr, proc_name)

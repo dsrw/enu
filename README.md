@@ -67,4 +67,4 @@ $ nimble godot
 - Fixed input handling. Console now scrolls properly, and events should only be consumed in one place.
 - Render resolution can be scaled for performance. Set stretch_shrink on the ViewContainer.
 - Things should highlight more or less properly.
-- Better error handling. Still far from good.
+- Better error handling.

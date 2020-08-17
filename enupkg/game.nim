@@ -34,6 +34,7 @@ gdobj Game of Node:
       self.mouse_captured = false
 
     globals.reload_scripts = proc() =
+      errors = @[]
       trigger("save")
       trigger("reload")
 

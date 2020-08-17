@@ -3,7 +3,6 @@ import ../godotapi / [scene_tree, kinematic_body, material, mesh_instance, spati
        math, sugar,
        globals, engine
 
-
 gdobj NimBot of KinematicBody:
   var
     speed = 1.0
@@ -75,30 +74,37 @@ gdobj NimBot of KinematicBody:
   proc left(degrees: float): bool = self.turn(degrees)
   proc right(degrees: float): bool = self.turn(-degrees)
 
+  proc error(e: ref VMQuit) =
+    self.running = false
+    let err = (self.enu_script, e.msg, e.info)
+    errors.add err
+    err e.msg
+    trigger("script_error")
+
   proc load_script() =
     debug &"Loading {self.enu_script}"
     self.callback = nil
 
-    if (self.engine = load(self.enu_script); self.engine != nil):
-      let e = self.engine
-      e.expose("bot", "forward", a => self.forward(get_float(a, 0)))
-      e.expose("bot", "back", a => self.back(get_float(a, 0)))
-      e.expose("bot", "left", a => self.left(get_float(a, 0)))
-      e.expose("bot", "right", a => self.right(get_float(a, 0)))
-      e.expose("bot", "print", a => print(get_string(a, 0)))
-      e.expose("bot", "echo", a => echo_console(get_string(a, 0)))
-      e.expose("bot", "play", proc(a: VmArgs): bool =
-        let animation_name = get_string(a, 0)
-        if animation_name == "":
-          self.animation_player.stop(true)
-        else:
-          self.animation_player.play(animation_name)
-        return false
-      )
-      self.running = e.call("main")
-    else:
-      self.running = false
-      err &"Unable to load {self.enu_script}"
+    try:
+      if (self.engine = load(self.enu_script); self.engine != nil):
+        let e = self.engine
+        e.expose("bot", "forward", a => self.forward(get_float(a, 0)))
+        e.expose("bot", "back", a => self.back(get_float(a, 0)))
+        e.expose("bot", "left", a => self.left(get_float(a, 0)))
+        e.expose("bot", "right", a => self.right(get_float(a, 0)))
+        e.expose("bot", "print", a => print(get_string(a, 0)))
+        e.expose("bot", "echo", a => echo_console(get_string(a, 0)))
+        e.expose("bot", "play", proc(a: VmArgs): bool =
+          let animation_name = get_string(a, 0)
+          if animation_name == "":
+            self.animation_player.stop(true)
+          else:
+            self.animation_player.play(animation_name)
+          return false
+        )
+        self.running = e.call("main")
+    except VMQuit as e:
+      self.error(e)
 
   method ready*() =
     self.bind_signals("reload", "pause")
@@ -114,12 +120,9 @@ gdobj NimBot of KinematicBody:
     if not self.paused:
       try:
         if self.running and (self.callback == nil or not self.callback(delta)):
-
           self.running = self.engine.resume()
-      except:
-        self.running = false
-        err &"Error resuming {self.enu_script}:\n" &
-              get_current_exception_msg()
+      except VMQuit as e:
+        self.error(e)
 
   method reload() =
     self.translation = self.orig_translation
