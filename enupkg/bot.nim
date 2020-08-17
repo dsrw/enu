@@ -76,8 +76,7 @@ gdobj NimBot of KinematicBody:
 
   proc error(e: ref VMQuit) =
     self.running = false
-    let err = (self.enu_script, e.msg, e.info)
-    errors.add err
+    errors.add (self.enu_script, e.msg, e.info)
     err e.msg
     trigger("script_error")
 
@@ -86,23 +85,23 @@ gdobj NimBot of KinematicBody:
     self.callback = nil
 
     try:
-      if (self.engine = load(self.enu_script); self.engine != nil):
-        let e = self.engine
-        e.expose("bot", "forward", a => self.forward(get_float(a, 0)))
-        e.expose("bot", "back", a => self.back(get_float(a, 0)))
-        e.expose("bot", "left", a => self.left(get_float(a, 0)))
-        e.expose("bot", "right", a => self.right(get_float(a, 0)))
-        e.expose("bot", "print", a => print(get_string(a, 0)))
-        e.expose("bot", "echo", a => echo_console(get_string(a, 0)))
-        e.expose("bot", "play", proc(a: VmArgs): bool =
-          let animation_name = get_string(a, 0)
-          if animation_name == "":
-            self.animation_player.stop(true)
-          else:
-            self.animation_player.play(animation_name)
-          return false
-        )
-        self.running = e.call("main")
+      self.engine = load(self.enu_script)
+      let e = self.engine
+      e.expose("bot", "forward", a => self.forward(get_float(a, 0)))
+      e.expose("bot", "back", a => self.back(get_float(a, 0)))
+      e.expose("bot", "left", a => self.left(get_float(a, 0)))
+      e.expose("bot", "right", a => self.right(get_float(a, 0)))
+      e.expose("bot", "print", a => print(get_string(a, 0)))
+      e.expose("bot", "echo", a => echo_console(get_string(a, 0)))
+      e.expose("bot", "play", proc(a: VmArgs): bool =
+        let animation_name = get_string(a, 0)
+        if animation_name == "":
+          self.animation_player.stop(true)
+        else:
+          self.animation_player.play(animation_name)
+        return false
+      )
+      self.running = e.call("main")
     except VMQuit as e:
       self.error(e)
 

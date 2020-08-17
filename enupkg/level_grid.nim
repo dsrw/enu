@@ -88,10 +88,17 @@ gdobj LevelGrid of GridMap:
   proc left(degrees: float): bool = self.turn(degrees)
   proc right(degrees: float): bool = self.turn(-degrees)
 
+  proc error(e: ref VMQuit) =
+    self.running = false
+    errors.add (self.enu_script, e.msg, e.info)
+    err e.msg
+    trigger("script_error")
+
   proc load_script() =
     debug &"Loading {self.enu_script}"
     self.callback = nil
-    if (self.engine = load(self.enu_script); self.engine != nil):
+    try:
+      self.engine = load(self.enu_script)
       let e = self.engine
       e.expose("grid", "up", a => self.up(get_int(a, 0)))
       e.expose("grid", "down", a => self.down(get_int(a, 0)))
@@ -101,11 +108,9 @@ gdobj LevelGrid of GridMap:
       e.expose("grid", "right", a => self.right(get_float(a, 0)))
       e.expose("grid", "print", a => print(get_string(a, 0)))
       e.expose("grid", "echo", a => echo_console(get_string(a, 0)))
-
       self.running = e.call("main")
-    else:
-      self.running = false
-      err &"Unable to load {self.enu_script}"
+    except VMQuit as e:
+      self.error(e)
 
   method ready*() =
     bind_signals(self, self, signals)
@@ -147,12 +152,9 @@ gdobj LevelGrid of GridMap:
     if not self.paused:
       try:
         if self.running and (self.callback == nil or not self.callback(delta)):
-
           self.running = self.engine.resume()
-      except:
-        self.running = false
-        err &"Error resuming {self.enu_script}:\n" &
-              get_current_exception_msg()
+      except VMQuit as e:
+        self.error(e)
 
   method on_target_in() =
     active = self
