@@ -68,3 +68,4 @@ $ nimble godot
 - Render resolution can be scaled for performance. Set stretch_shrink on the ViewContainer.
 - Things should highlight more or less properly.
 - Better error handling.
+- Highlight errors in editor.
