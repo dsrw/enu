@@ -46,7 +46,6 @@ margin_bottom = 477.0
 size_flags_vertical = 3
 indent_using_spaces = true
 indent_size = 2
-highlight_current_line = true
 syntax_highlighting = true
 show_line_numbers = true
 script = ExtResource( 2 )
