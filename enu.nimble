@@ -36,4 +36,4 @@ task clean, "Remove files produced by build":
   rm_dir ".nimcache"
 
 task godot, "Launch godot":
-  exec GODOT_BIN & " &"
+  exec GODOT_BIN & " app/project.godot &"
