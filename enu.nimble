@@ -5,7 +5,7 @@ const
   API_JSON      = GENERATED_DIR & "/api.json"
   GENERATOR     = "tools/generate"
 
-version       = "0.1.0"
+version       = "0.0.0"
 author        = "Scott Wadden"
 description   = "Logo-like DSL for godot"
 license       = "MIT"
