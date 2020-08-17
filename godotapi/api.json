@@ -148031,6 +148031,31 @@
 				]
 			},
 			{
+				"name": "set_line_as_marked",
+				"return_type": "void",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": false,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+					{
+						"name": "line",
+						"type": "int",
+						"has_default_value": false,
+						"default_value": ""
+					},
+					{
+						"name": "marked",
+						"type": "bool",
+						"has_default_value": false,
+						"default_value": ""
+					}
+				]
+			},
+			{
 				"name": "set_minimap_width",
 				"return_type": "void",
 				"is_editor": false,

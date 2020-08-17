@@ -129,6 +129,7 @@ proc select*(self: TextEdit; fromLine: int64; fromColumn: int64; toLine: int64;
 proc selectAll*(self: TextEdit) {.gcsafe, locks: 0.}
 proc setLine*(self: TextEdit; line: int64; newText: string) {.gcsafe, locks: 0.}
 proc setLineAsHidden*(self: TextEdit; line: int64; enable: bool) {.gcsafe, locks: 0.}
+proc setLineAsMarked*(self: TextEdit; line: int64; marked: bool) {.gcsafe, locks: 0.}
 proc toggleFoldLine*(self: TextEdit; line: int64) {.gcsafe, locks: 0.}
 proc undo*(self: TextEdit) {.gcsafe, locks: 0.}
 proc unfoldLine*(self: TextEdit; line: int64) {.gcsafe, locks: 0.}
@@ -1313,6 +1314,20 @@ proc setLineAsHidden(self: TextEdit; line: int64; enable: bool) =
   argsToPassToGodot[][1] = unsafeAddr(enable)
   var ptrCallRet: pointer
   textEditSetLineAsHiddenMethodBind.ptrCall(self.godotObject, argsToPassToGodot,
+      ptrCallRet)
+
+var textEditSetLineAsMarkedMethodBind {.threadvar.}: ptr GodotMethodBind
+proc setLineAsMarked(self: TextEdit; line: int64; marked: bool) =
+  if isNil(textEditSetLineAsMarkedMethodBind):
+    textEditSetLineAsMarkedMethodBind = getMethod(cstring"TextEdit",
+        cstring"set_line_as_marked")
+  var
+    argsStatic: array[2, pointer]
+    argsToPassToGodot = cast[ptr array[MAX_ARG_COUNT, pointer]](addr argsStatic)
+  argsToPassToGodot[][0] = unsafeAddr(line)
+  argsToPassToGodot[][1] = unsafeAddr(marked)
+  var ptrCallRet: pointer
+  textEditSetLineAsMarkedMethodBind.ptrCall(self.godotObject, argsToPassToGodot,
       ptrCallRet)
 
 var textEditToggleFoldLineMethodBind {.threadvar.}: ptr GodotMethodBind
