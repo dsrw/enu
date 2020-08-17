@@ -6,6 +6,7 @@ export VmArgs, get_float, get_int, get_string, get_bool
 
 type
   VMQuit = object of CatchableError
+    info: TLineInfo
   Engine* = ref object
     script_state: PauseState
     intr: Interpreter
@@ -16,19 +17,29 @@ const
 let
   PAUSE* = PauseRequest()
 
+var
+  last_error: ref VMQuit
+
 proc load*(script_file: string): Engine =
   let source_paths = [STDLIB, STDLIB & "/core", parent_dir current_source_path]
   result = Engine()
   result.intr = create_interpreter(script_file, source_paths)
+
+  # TODO: There must be a better way to do this
+  result.intr.graph.config.structured_error_hook =
+    proc (config: ConfigRef, info: TLineInfo, msg: string, severity: Severity) {.gcsafe.} =
+      if severity == Error:
+        last_error = new_exception(VMQuit, msg)
+        last_error.info = info
+
   result.intr.graph.config.quit_handler = proc(msg: TMsgKind) =
-    raise new_exception(VMQuit, $msg)
+    raise last_error
 
   try:
     result.intr.eval_script()
 
   except VMQuit as e:
-    debug e.get_stack_trace()
-    debug e.msg
+    err &"{e.info} {e.msg}"
     return nil
 
 proc call_proc*(e: Engine, proc_name: string): Pauseable[PNode] =

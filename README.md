@@ -33,7 +33,7 @@ $ nimble godot
 - [ ] Add keybindings to README
 - [X] Rework "deselect" behavior
 - [ ] Ability to place objects
-- [ ] Basic error handling
+- [X] Basic error handling
 
 ### v0.02
 
@@ -67,3 +67,4 @@ $ nimble godot
 - Fixed input handling. Console now scrolls properly, and events should only be consumed in one place.
 - Render resolution can be scaled for performance. Set stretch_shrink on the ViewContainer.
 - Things should highlight more or less properly.
+- Better error handling. Still far from good.
