@@ -8,11 +8,6 @@ type
   ToolMode* = enum
     CodeMode = 0, BlockMode = 1, ObjectMode = 2
 
-  ScriptError* = tuple
-    file_name: string
-    msg: string
-    info: TLineInfo
-
   StateRefs = ref object
     player*: Node
     game*: Node
