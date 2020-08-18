@@ -11,3 +11,4 @@ enupkg/utils
 app/_dlls/enu.exp
 app/_dlls/enu.lib
 tools/generate.exe
+godotapi
