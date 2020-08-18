@@ -20,7 +20,7 @@ bin_dir       = "app/_dlls"
 bin           = @["enu" & lib_ext]
 
 requires "nim >= 1.2.0",
-         "godot 0.8.0"
+         "godot 0.8.1"
 
 task prereqs, "Generate Godot API binding":
   mk_dir generated_dir
