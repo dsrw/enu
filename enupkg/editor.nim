@@ -1,7 +1,7 @@
 import ../godotapi / [text_edit, scene_tree, node, input_event, global_constants],
        godot,
        globals,
-       strutils
+       strutils, tables
 
 gdobj Editor of TextEdit:
   var
@@ -26,9 +26,8 @@ gdobj Editor of TextEdit:
       self.set_line_as_marked(i, false)
 
   proc highlight_errors =
-    for err in errors:
-      if err.file_name == self.file_name:
-        self.set_line_as_marked(int64(err.info.line - 1), true)
+    for err in errors[self.file_name]:
+      self.set_line_as_marked(int64(err.info.line - 1), true)
 
   method ready* =
     self.bind_signals("save", "script_error")

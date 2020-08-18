@@ -1,6 +1,6 @@
 import ../godotapi / [grid_map, mesh, mesh_library],
        godot,
-       math, sugar,
+       math, sugar, tables,
        globals, engine
 
 const signals = ["target_in", "target_out", "target_move", "target_fire", "target_remove"]
@@ -90,12 +90,13 @@ gdobj LevelGrid of GridMap:
 
   proc error(e: ref VMQuit) =
     self.running = false
-    errors.add (self.enu_script, e.msg, e.info)
+    errors[self.enu_script] = @[(e.msg, e.info)]
     err e.msg
     trigger("script_error")
 
   proc load_script() =
     debug &"Loading {self.enu_script}"
+    errors[self.enu_script] = @[]
     self.callback = nil
     try:
       self.engine = load(self.enu_script)

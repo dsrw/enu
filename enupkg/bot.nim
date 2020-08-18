@@ -1,6 +1,6 @@
 import ../godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial, input_event, animation_player],
        godot,
-       math, sugar,
+       math, sugar, tables,
        globals, engine
 
 gdobj NimBot of KinematicBody:
@@ -76,12 +76,13 @@ gdobj NimBot of KinematicBody:
 
   proc error(e: ref VMQuit) =
     self.running = false
-    errors.add (self.enu_script, e.msg, e.info)
+    errors[self.enu_script] = @[(e.msg, e.info)]
     err e.msg
     trigger("script_error")
 
   proc load_script() =
     debug &"Loading {self.enu_script}"
+    errors[self.enu_script] = @[]
     self.callback = nil
 
     try:
