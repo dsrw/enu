@@ -1,9 +1,15 @@
 import strformat, strutils
 
-const
-  GENERATED_DIR = "godotapi"
-  API_JSON      = GENERATED_DIR & "/api.json"
-  GENERATOR     = "tools/generate"
+let
+  (target, lib_ext, exe_ext) = case hostOS
+    of "windows": ("windows", "dll", ".exe")
+    of "macosx" : ("osx", "dylib", "")
+    else        : ("linux", "so", "")
+  generated_dir   = "godotapi"
+  api_json        = generated_dir & "/api.json"
+  generator       = "tools/generate"
+  godot_bin       = &"vendor/godot/bin/godot.{target}.tools.64{exe_ext}"
+  godot_build_url = "https://docs.godotengine.org/en/stable/development/compiling/index.html"
 
 version       = "0.0.0"
 author        = "Scott Wadden"
@@ -11,29 +17,22 @@ description   = "Logo-like DSL for godot"
 license       = "MIT"
 install_files = @["enu.nim"]
 bin_dir       = "app/_dlls"
-
-when defined windows:
-  bin = @["enu.dll"]
-  const GODOT_BIN = "vendor/godot/bin/godot.windows.tools.64.exe"
-when defined osx:
-  bin = @["enu.dylib"]
-  const GODOT_BIN = "vendor/godot/bin/godot.osx.tools.64"
-when defined linux:
-  bin = @["enu.so"]
-  const GODOT_BIN = "godot" # Usually in PATH on Linux x86_64
+bin           = @["enu." & lib_ext]
 
 requires "nim >= 1.2.0",
          "godot 0.8.0"
 
-task generate, "Generate Godot API binding":
-  mk_dir GENERATED_DIR
-  exec &"{GODOT_BIN} --gdnative-generate-json-api {API_JSON}"
-  exec &"nimble c --skipParentCfg {GENERATOR}"
-  exec &"{find_exe GENERATOR} {GENERATED_DIR} {API_JSON}"
+task prereqs, "Generate Godot API binding":
+  mk_dir generated_dir
+  try: exec &"cd vendor/godot && scons platform={target}"
+  except: quit &"*** Unable to build Godot. See {godot_build_url}. ***"
+  exec &"{godot_bin} --gdnative-generate-json-api {api_json}"
+  exec &"nimble c --skipParentCfg {generator}"
+  exec &"{find_exe generator} {generated_dir} {api_json}"
 
 task clean, "Remove files produced by build":
-  rm_dir GENERATED_DIR
+  rm_dir generated_dir
   rm_dir ".nimcache"
 
 task godot, "Launch godot":
-  exec GODOT_BIN & " app/project.godot &"
+  exec godot_bin & " app/project.godot &"
