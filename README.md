@@ -5,7 +5,7 @@ Very alpha. See my talk from NimConf 2020.
 
 [![NimConf 2020 Demo](https://img.youtube.com/vi/3l6tsKM1cY8/maxresdefault.jpg)](https://youtu.be/3l6tsKM1cY8)
 
-# Install & Run
+# Install
 
 ```console
 $ nimble prereqs
@@ -23,12 +23,24 @@ See https://docs.godotengine.org/en/3.2/development/compiling/index.html
 
 Windows and Linux targets aren't well tested currently, and may not work.
 
+# Usage
+
+Move with WASD keys. Double jump to fly. Ctrl/Cmd+P to pause script evaluation, while still
+allowing movement. Ctrl/Cmd+F to toggle fullscreen. ESC to grab/release mouse, and close editors.
+Ctrl/Cmd+Q to quit. Number keys to switch modes:
+
+1. Code Mode. Select objects to modify their code. Ctrl/Cmd+S to save.
+2. Edit Mode. Modify an object manually. Currently this means adding/removing LevelGrid blocks.
+   Left click to add blocks, right click to remove. Mousewheel up/down or +/- keys to cycle through
+   block types.
+3. Object Mode. Place and destroy objects, such as LevelGrids and blocks.
+
 # Tasks
 
 ### v0.01
 
 - [X] Simplify box object for performance
-- [ ] Add keybindings to README
+- [X] Add keybindings to README
 - [X] Rework "deselect" behavior
 - [ ] Ability to place objects
 - [X] Basic error handling
