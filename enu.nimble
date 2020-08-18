@@ -7,7 +7,7 @@ let
     else        : ("linux", ".so", "")
   generated_dir   = "godotapi"
   api_json        = generated_dir & "/api.json"
-  generator       = "tools/generate"
+  generator       = "tools/generate_api"
   godot_bin       = &"vendor/godot/bin/godot.{target}.tools.64{exe_ext}"
   godot_build_url = "https://docs.godotengine.org/en/stable/development/compiling/index.html"
 

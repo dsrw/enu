@@ -1,5 +1,5 @@
 bin/
-tools/generate
+tools/generate_api
 *.dylib
 *.dll
 *.so
