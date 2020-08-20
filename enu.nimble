@@ -24,8 +24,11 @@ requires "nim >= 1.2.0",
 
 task prereqs, "Generate Godot API binding":
   mk_dir generated_dir
-  try: exec &"cd vendor/godot && scons platform={target}"
-  except: quit &"*** Unable to build Godot. See {godot_build_url}. ***"
+  let scons = find_exe "scons"
+  if scons == "":
+    quit &"*** scons not found on path, and is required to build Godot. See {godot_build_url} ***"
+  with_dir "vendor/godot":
+    exec &"{scons} platform={target}"
   exec &"{godot_bin} --gdnative-generate-json-api {api_json}"
   exec &"nimble c --skipParentCfg {generator}"
   exec &"{find_exe generator} {generated_dir} {api_json}"
