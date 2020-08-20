@@ -9,6 +9,7 @@ Very alpha. See my talk from NimConf 2020.
 
 ```console
 $ nimble prereqs
+$ nimble build
 $ nimble godot
 ```
 
