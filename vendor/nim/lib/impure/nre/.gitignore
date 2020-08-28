@@ -1,9 +1,0 @@
-# all executables
-*
-!*/
-!*.*
-*.exe
-
-# Wildcard patterns.
-*.swp
-nimcache

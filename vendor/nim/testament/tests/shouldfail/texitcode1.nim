@@ -1,3 +1,0 @@
-discard """
-exitcode: 1
-"""
