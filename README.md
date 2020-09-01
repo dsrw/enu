@@ -67,7 +67,7 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
 
 ### v0.2
 
-- [ ] Upstream Nim/Godot changes
+- [X] Upstream Nim changes
 - [ ] 2nd demo game
 - [ ] Basic UI
 - [ ] Controller support
@@ -83,3 +83,4 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
 - Better error handling.
 - Highlight errors in editor.
 - Build tweaks.
+- Switched to Nim devel 1.3
