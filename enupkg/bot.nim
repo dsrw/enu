@@ -11,7 +11,7 @@ gdobj NimBot of KinematicBody:
       selected_material* {.gdExport.}: Material
 
     callback: proc(delta: float): bool
-    vm: Interpreter
+    engine: Engine
     last_error: string
     orig_rotation: Vector3
     orig_translation: Vector3
@@ -42,7 +42,7 @@ gdobj NimBot of KinematicBody:
       print(msg)
 
   proc load_vars() =
-    self.speed = self.vm.call_float("get_speed")
+    self.speed = self.engine.call_float("get_speed")
 
   proc move(direction, steps: float): bool =
     self.load_vars()
@@ -86,8 +86,8 @@ gdobj NimBot of KinematicBody:
     self.callback = nil
 
     try:
-      self.vm = load(self.enu_script)
-      let e = self.vm
+      self.engine = load(self.enu_script)
+      let e = self.engine
       e.expose("bot", "forward", a => self.forward(get_float(a, 0)))
       e.expose("bot", "back", a => self.back(get_float(a, 0)))
       e.expose("bot", "left", a => self.left(get_float(a, 0)))
@@ -120,7 +120,7 @@ gdobj NimBot of KinematicBody:
     if not self.paused:
       try:
         if self.running and (self.callback == nil or not self.callback(delta)):
-          self.running = self.vm.resume()
+          self.running = self.engine.resume()
       except VMQuit as e:
         self.error(e)
 

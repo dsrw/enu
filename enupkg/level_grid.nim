@@ -15,7 +15,7 @@ gdobj LevelGrid of GridMap:
     highlight_material* {.gdExport.}: Material
     original_materials: seq[Material]
     callback: proc(delta: float): bool
-    vm: Interpreter
+    engine: Engine
     paused = false
     running = false
     enu_script* {.gdExport.} = "scripts/grid_1.nim"
@@ -27,8 +27,8 @@ gdobj LevelGrid of GridMap:
     self.set_cell_item(int(map_point.x), int(map_point.y), int(map_point.z), index)
 
   proc load_vars() =
-    self.speed = self.vm.call_float("get_speed")
-    self.index = self.vm.call_int("get_index")
+    self.speed = self.engine.call_float("get_speed")
+    self.index = self.engine.call_int("get_index")
 
   proc build_unique_mesh_library() =
     self.mesh_library = self.mesh_library.duplicate().as(MeshLibrary)
@@ -99,8 +99,8 @@ gdobj LevelGrid of GridMap:
     errors[self.enu_script] = @[]
     self.callback = nil
     try:
-      self.vm = load(self.enu_script)
-      let e = self.vm
+      self.engine = load(self.enu_script)
+      let e = self.engine
       e.expose("grid", "up", a => self.up(get_int(a, 0)))
       e.expose("grid", "down", a => self.down(get_int(a, 0)))
       e.expose("grid", "forward", a => self.forward(get_int(a, 0)))
@@ -153,7 +153,7 @@ gdobj LevelGrid of GridMap:
     if not self.paused:
       try:
         if self.running and (self.callback == nil or not self.callback(delta)):
-          self.running = self.vm.resume()
+          self.running = self.engine.resume()
       except VMQuit as e:
         self.error(e)
 

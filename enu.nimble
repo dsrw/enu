@@ -21,7 +21,7 @@ bin           = @["enu" & lib_ext]
 
 requires "nim >= 1.3.5",
          "godot 0.8.1",
-         "https://github.com/dsrw/Nim#e967428"
+         "https://github.com/dsrw/Nim#2ebc22a"
 
 task prereqs, "Generate Godot API binding":
   mk_dir generated_dir
