@@ -1,10 +1,11 @@
 import ../godotapi / [text_edit, scene_tree, node, input_event, global_constants],
        godot,
-       globals,
-       strutils, tables
+       globals, engine,
+       strutils, tables, compiler/lineinfos
 
 gdobj Editor of TextEdit:
   var
+    engine: Engine
     file_name = ""
     ff = false
     comment_color* {.gdExport.} = init_color(0.5, 0.5, 0.5)
@@ -31,7 +32,8 @@ gdobj Editor of TextEdit:
 
   method ready* =
     self.bind_signals("save", "script_error")
-    show_editor = proc(file_name: string) =
+    show_editor = proc(file_name: string, engine: Engine) =
+      self.engine = engine
       self.file_name = file_name
       self.visible = true
       self.text = read_file(file_name)
@@ -41,6 +43,10 @@ gdobj Editor of TextEdit:
       self.clear_errors()
       self.highlight_errors()
 
+      self.set_executing_line(int64 self.engine.current_line.line - 1)
+      self.engine.line_changed = proc(current: TLineInfo, previous: TLineInfo) =
+        self.set_executing_line(int64 current.line - 1)
+
     editing = proc: bool = self.visible
 
     hide_editor = proc =
@@ -48,6 +54,8 @@ gdobj Editor of TextEdit:
       self.release_focus()
       capture_mouse()
       self.visible = false
+      self.engine.line_changed = nil
+      self.engine = nil
 
     self.configure_highlighting()
 

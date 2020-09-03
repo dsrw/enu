@@ -13,25 +13,34 @@ type
     ctx: PCtx
     pc: int
     tos: PStackFrame
+    line_changed*: proc(current, previous: TLineInfo)
+    current_line*: TLineInfo
+    previous_line: TLineInfo
+
 
 const
   STDLIB = find_nim_std_lib_compile_time()
 
-proc load*(script_file: string): Engine =
+proc load*(e: Engine, script_file: string) =
   let source_paths = [STDLIB, STDLIB & "/core", parent_dir current_source_path]
-  let e = Engine(i: create_interpreter(script_file, source_paths))
+  e.i = create_interpreter(script_file, source_paths)
   with e.i:
-    register_error_hook proc(config: ConfigRef, info: TLineInfo, msg: string, severity: Severity) {.gcsafe.} =
+    register_error_hook proc(config, info, msg, severity: auto) {.gcsafe.} =
       if severity == Error and config.error_counter >= config.error_max:
         raise (ref VMQuit)(info: info, msg: msg)
 
-    register_exit_hook proc(c: PCtx, pc: int, tos: PStackFrame) =
+    register_exit_hook proc(c, pc, tos: auto) =
       e.ctx = c
       e.pc = pc
       e.tos = tos
 
+    register_enter_hook proc(c, pc, tos, instr: auto) =
+      let info = c.debug[pc]
+      if info.file_index.int == 0 and e.previous_line != info:
+        if e.line_changed != nil:
+          e.line_changed(info, e.previous_line)
+        (e.previous_line, e.current_line) = (e.current_line, info)
     eval_script()
-  return e
 
 proc call_proc*(e: Engine, proc_name: string): PNode =
   let foreign_proc = e.i.select_routine(proc_name)

@@ -98,8 +98,10 @@ gdobj LevelGrid of GridMap:
     debug &"Loading {self.enu_script}"
     errors[self.enu_script] = @[]
     self.callback = nil
+    if self.engine.is_nil: self.engine = Engine()
     try:
-      self.engine = dup load(self.enu_script):
+      with self.engine:
+        load(self.enu_script)
         expose("grid", "up", a => self.up(get_int(a, 0)))
         expose("grid", "down", a => self.down(get_int(a, 0)))
         expose("grid", "forward", a => self.forward(get_int(a, 0)))
@@ -134,7 +136,7 @@ gdobj LevelGrid of GridMap:
       mesh.surface_set_material(0, self.original_materials[index])
 
   proc select*() =
-    show_editor self.enu_script
+    show_editor self.enu_script, self.engine
     self.deselect()
 
   proc next*() =

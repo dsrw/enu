@@ -1,5 +1,6 @@
 import ../godotapi / [node, scene_tree],
        godot,
+       engine,
        strformat, math, strutils, sequtils, macros, compiler/lineinfos, tables
 
 export strformat.`&`
@@ -22,7 +23,7 @@ const
 var
   editing*: proc:bool
   errors*: Table[string, seq[tuple[msg: string, info: TLineInfo]]]
-  show_editor*: proc(file: string)
+  show_editor*: proc(file: string, engine: Engine)
   hide_editor*: proc()
   capture_mouse*: proc()
   release_mouse*: proc()

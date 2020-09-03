@@ -24,7 +24,6 @@ gdobj Game of Node:
 
   method ready*() {.gdExport.} =
     state.game = self
-    #self.mouse_captured = true
     self.reticle = self.find_node("Reticle").as(Control)
     self.viewport_container = self.get_node("ViewportContainer").as(ViewportContainer)
     globals.capture_mouse = proc() =

@@ -34,7 +34,7 @@ gdobj NimBot of KinematicBody:
     self.set_default_material()
 
   proc select*() =
-    show_editor self.enu_script
+    show_editor self.enu_script, self.engine
 
   proc print_error(msg: string) =
     if msg != self.last_error:
@@ -86,7 +86,9 @@ gdobj NimBot of KinematicBody:
     self.callback = nil
 
     try:
-      self.engine = dup load(self.enu_script):
+      if self.engine.is_nil: self.engine = Engine()
+      with self.engine:
+        load(self.enu_script)
         expose("bot", "forward", a => self.forward(get_float(a, 0)))
         expose("bot", "back", a => self.back(get_float(a, 0)))
         expose("bot", "left", a => self.left(get_float(a, 0)))
