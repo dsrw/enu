@@ -7151,6 +7151,7 @@ void TextEdit::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_indent_using_spaces"), &TextEdit::is_indent_using_spaces);
 
 	ClassDB::bind_method(D_METHOD("set_line_as_marked", "line", "marked"), &TextEdit::set_line_as_marked);
+	ClassDB::bind_method(D_METHOD("set_executing_line", "line"), &TextEdit::set_executing_line);
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "indent_using_spaces"), "set_indent_using_spaces", "is_indent_using_spaces");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "indent_size", PROPERTY_HINT_RANGE, "0,8,1,or_greater"), "set_indent_size", "get_indent_size");
