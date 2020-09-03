@@ -1,6 +1,6 @@
 import ../godotapi / [grid_map, mesh, mesh_library],
        godot,
-       math, sugar, tables,
+       math, sugar, tables, std/with,
        globals, engine
 
 const signals = ["target_in", "target_out", "target_move", "target_fire", "target_remove"]
@@ -38,10 +38,11 @@ gdobj LevelGrid of GridMap:
       self.original_materials.add(mesh.surface_get_material(0))
 
   proc reset() =
-    self.clear()
-    self.set_cell_item(0, 0, 0, 0)
-    self.direction = FORWARD
-    self.position = vec3()
+    with self:
+      clear()
+      set_cell_item(0, 0, 0, 0)
+      direction = FORWARD
+      position = vec3()
 
   proc drop_block() =
     self.set_cell_item(
@@ -50,7 +51,6 @@ gdobj LevelGrid of GridMap:
       self.position.z.to_int,
       self.index
     )
-
 
   proc move(direction: Vector3, steps: BiggestInt): bool =
     self.load_vars()
@@ -99,26 +99,26 @@ gdobj LevelGrid of GridMap:
     errors[self.enu_script] = @[]
     self.callback = nil
     try:
-      self.engine = load(self.enu_script)
-      let e = self.engine
-      e.expose("grid", "up", a => self.up(get_int(a, 0)))
-      e.expose("grid", "down", a => self.down(get_int(a, 0)))
-      e.expose("grid", "forward", a => self.forward(get_int(a, 0)))
-      e.expose("grid", "back", a => self.back(get_int(a, 0)))
-      e.expose("grid", "left", a => self.left(get_float(a, 0)))
-      e.expose("grid", "right", a => self.right(get_float(a, 0)))
-      e.expose("grid", "print", a => print(get_string(a, 0)))
-      e.expose("grid", "echo", a => echo_console(get_string(a, 0)))
-      self.running = e.call("main")
+      self.engine = dup load(self.enu_script):
+        expose("grid", "up", a => self.up(get_int(a, 0)))
+        expose("grid", "down", a => self.down(get_int(a, 0)))
+        expose("grid", "forward", a => self.forward(get_int(a, 0)))
+        expose("grid", "back", a => self.back(get_int(a, 0)))
+        expose("grid", "left", a => self.left(get_float(a, 0)))
+        expose("grid", "right", a => self.right(get_float(a, 0)))
+        expose("grid", "print", a => print(get_string(a, 0)))
+        expose("grid", "echo", a => echo_console(get_string(a, 0)))
+      self.running = self.engine.call("main")
     except VMQuit as e:
       self.error(e)
 
   method ready*() =
-    bind_signals(self, self, signals)
-    self.bind_signals("reload", "pause")
-    self.build_unique_mesh_library()
-    self.reset()
-    self.load_script()
+    with self:
+      bind_signals(self, signals)
+      bind_signals("reload", "pause")
+      build_unique_mesh_library()
+      reset()
+      load_script()
     active = self
 
   proc highlight() =
@@ -168,7 +168,6 @@ gdobj LevelGrid of GridMap:
 
   method on_target_move(point, normal: Vector3) =
     (self.point, self.normal) = (point, normal)
-
 
   method on_target_fire() =
     if tool_mode == BlockMode:

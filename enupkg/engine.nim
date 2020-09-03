@@ -1,5 +1,5 @@
 import compiler / [vm, vmdef, nimeval, options, lineinfos, ast]
-import os, strformat
+import os, strformat, std/with
 export Interpreter
 
 export VmArgs, get_float, get_int, get_string, get_bool
@@ -19,20 +19,19 @@ const
 
 proc load*(script_file: string): Engine =
   let source_paths = [STDLIB, STDLIB & "/core", parent_dir current_source_path]
-  let e = Engine()
-  e.i = create_interpreter(script_file, source_paths)
+  let e = Engine(i: create_interpreter(script_file, source_paths))
+  with e.i:
+    register_error_hook proc(config: ConfigRef, info: TLineInfo, msg: string, severity: Severity) {.gcsafe.} =
+      if severity == Error and config.error_counter >= config.error_max:
+        raise (ref VMQuit)(info: info, msg: msg)
 
-  e.i.register_error_hook proc(config: ConfigRef, info: TLineInfo, msg: string, severity: Severity) {.gcsafe.} =
-    if severity == Error and config.error_counter >= config.error_max:
-      raise (ref VMQuit)(info: info, msg: msg)
+    register_exit_hook proc(c: PCtx, pc: int, tos: PStackFrame) =
+      e.ctx = c
+      e.pc = pc
+      e.tos = tos
 
-  e.i.register_exit_hook proc(c: PCtx, pc: int, tos: PStackFrame) =
-    e.ctx = c
-    e.pc = pc
-    e.tos = tos
-
-  e.i.eval_script()
-  result = e
+    eval_script()
+  return e
 
 proc call_proc*(e: Engine, proc_name: string): PNode =
   let foreign_proc = e.i.select_routine(proc_name)

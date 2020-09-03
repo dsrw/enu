@@ -1,6 +1,6 @@
 import ../godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial, input_event, animation_player],
        godot,
-       math, sugar, tables,
+       math, sugar, tables, std/with,
        globals, engine
 
 gdobj NimBot of KinematicBody:
@@ -86,35 +86,35 @@ gdobj NimBot of KinematicBody:
     self.callback = nil
 
     try:
-      self.engine = load(self.enu_script)
-      let e = self.engine
-      e.expose("bot", "forward", a => self.forward(get_float(a, 0)))
-      e.expose("bot", "back", a => self.back(get_float(a, 0)))
-      e.expose("bot", "left", a => self.left(get_float(a, 0)))
-      e.expose("bot", "right", a => self.right(get_float(a, 0)))
-      e.expose("bot", "print", a => print(get_string(a, 0)))
-      e.expose("bot", "echo", a => echo_console(get_string(a, 0)))
-      e.expose("bot", "play", proc(a: VmArgs): bool =
-        let animation_name = get_string(a, 0)
-        if animation_name == "":
-          self.animation_player.stop(true)
-        else:
-          self.animation_player.play(animation_name)
-        return false
-      )
-      self.running = e.call("main")
+      self.engine = dup load(self.enu_script):
+        expose("bot", "forward", a => self.forward(get_float(a, 0)))
+        expose("bot", "back", a => self.back(get_float(a, 0)))
+        expose("bot", "left", a => self.left(get_float(a, 0)))
+        expose("bot", "right", a => self.right(get_float(a, 0)))
+        expose("bot", "print", a => print(get_string(a, 0)))
+        expose("bot", "echo", a => echo_console(get_string(a, 0)))
+        expose("bot", "play", proc(a: VmArgs): bool =
+          let animation_name = get_string(a, 0)
+          if animation_name == "":
+            self.animation_player.stop(true)
+          else:
+            self.animation_player.play(animation_name)
+          return false
+        )
+      self.running = self.engine.call("main")
     except VMQuit as e:
       self.error(e)
 
   method ready*() =
-    self.bind_signals("reload", "pause")
-    self.skin = self.get_node("Mannequiny").as(Spatial)
-    self.mesh = self.skin.get_node("root/Skeleton/body001").as(MeshInstance)
-    self.animation_player = self.skin.get_node("AnimationPlayer").as(AnimationPlayer)
-    self.orig_rotation = self.rotation
-    self.orig_translation = self.translation
-    self.set_default_material()
-    self.load_script()
+    with self:
+      bind_signals("reload", "pause")
+      skin = self.get_node("Mannequiny").as(Spatial)
+      mesh = self.skin.get_node("root/Skeleton/body001").as(MeshInstance)
+      animation_player = self.skin.get_node("AnimationPlayer").as(AnimationPlayer)
+      orig_rotation = self.rotation
+      orig_translation = self.translation
+      set_default_material()
+      load_script()
 
   method physics_process*(delta: float64) =
     if not self.paused:
@@ -125,11 +125,12 @@ gdobj NimBot of KinematicBody:
         self.error(e)
 
   method reload() =
-    self.translation = self.orig_translation
-    self.rotation = self.orig_rotation
-    self.paused = false
     self.animation_player.stop(true)
-    self.load_script()
+    with self:
+      translation = self.orig_translation
+      rotation = self.orig_rotation
+      paused = false
+      load_script()
 
   method on_reload*() =
     if not editing() or open_file == self.enu_script:
