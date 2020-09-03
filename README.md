@@ -84,3 +84,5 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
 - Highlight errors in editor.
 - Build tweaks.
 - Switched to Nim devel 1.3
+- Use [Nim VM execution hooks](https://github.com/nim-lang/RFCs/issues/249).
+- The currently executing line is highlighted if the editor is open.
