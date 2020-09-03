@@ -27,6 +27,7 @@ gdobj Editor of TextEdit:
       self.set_line_as_marked(i, false)
 
   proc highlight_errors =
+    self.clear_executing_line()
     for err in errors[self.file_name]:
       self.set_line_as_marked(int64(err.info.line - 1), true)
 
