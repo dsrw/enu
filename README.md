@@ -10,10 +10,8 @@ Very alpha. See my talk from NimConf 2020.
 ```console
 $ nimble prereqs
 $ nimble build
-$ nimble godot
+$ nimble start
 ```
-
-This will open Godot with the Enu project loaded. Press Play or F5 to launch.
 
 ### Notes
 
@@ -86,3 +84,4 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
 - Switched to Nim devel 1.3
 - Use [Nim VM execution hooks](https://github.com/nim-lang/RFCs/issues/249).
 - The currently executing line is highlighted if the editor is open.
+- Added `nimble start` command to launch directly into Enu.

@@ -8,7 +8,7 @@ let
   generated_dir   = "godotapi"
   api_json        = generated_dir & "/api.json"
   generator       = "tools/generate_api"
-  godot_bin       = &"vendor/godot/bin/godot.{target}.tools.64{exe_ext}"
+  godot_bin       = this_dir() & &"/vendor/godot/bin/godot.{target}.tools.64{exe_ext}"
   godot_build_url = "https://docs.godotengine.org/en/stable/development/compiling/index.html"
 
 version       = "0.0.0"
@@ -38,5 +38,9 @@ task clean, "Remove files produced by build":
   rm_dir generated_dir
   rm_dir ".nimcache"
 
-task godot, "Launch godot":
+task edit, "Edit project in Godot":
   exec godot_bin & " app/project.godot &"
+
+task start, "Run Enu":
+  cd "app"
+  exec godot_bin & " scenes/game.tscn"
