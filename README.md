@@ -24,8 +24,10 @@ Windows and Linux targets aren't well tested currently, and may not work.
 
 # Usage
 
-Move with WASD keys. Double jump to fly. Ctrl/Cmd+P to pause script evaluation, while still
-allowing movement. Ctrl/Cmd+F to toggle fullscreen. ESC to grab/release mouse, and close editors.
+Move with WASD keys. Double jump to toggle flying. Space and shift to go up
+and down while flying. Ctrl/Cmd+P to pause all scripts. Ctrl/Cmd+F to toggle
+fullscreen. ESC to grab/release mouse, and close editors.
+
 Ctrl/Cmd+Q to quit. Number keys to switch modes:
 
 1. Code Mode. Select objects to modify their code. Ctrl/Cmd+S to save.
@@ -49,7 +51,7 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
 - [X] Better syntax highlighting (comment support at least)
 - [X] Make object pick raycast longer
 - [ ] Mouse picking
-- [ ] Minecraft style flying
+- [X] Better flying
 - [ ] More block types
 - [ ] Validate build and keybindings for Mac/Linux/Windows
 - [ ] Support non-hidpi screens
@@ -65,7 +67,7 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
 
 ### v0.2
 
-- [X] Upstream Nim changes
+- [ ] Upstream Nim changes
 - [ ] 2nd demo game
 - [ ] Basic UI
 - [ ] Controller support
@@ -86,3 +88,4 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
 - The currently executing line is highlighted if the editor is open.
 - Added `nimble start` command to launch directly into Enu.
 - Scripts no longer require a `main:` section.
+- Flying is better, I think.
