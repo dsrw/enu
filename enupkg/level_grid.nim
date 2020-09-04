@@ -110,7 +110,7 @@ gdobj LevelGrid of GridMap:
         expose("grid", "right", a => self.right(get_float(a, 0)))
         expose("grid", "print", a => print(get_string(a, 0)))
         expose("grid", "echo", a => echo_console(get_string(a, 0)))
-      self.running = self.engine.call("main")
+      self.running = self.engine.run()
     except VMQuit as e:
       self.error(e)
 

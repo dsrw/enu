@@ -85,3 +85,4 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
 - Use [Nim VM execution hooks](https://github.com/nim-lang/RFCs/issues/249).
 - The currently executing line is highlighted if the editor is open.
 - Added `nimble start` command to launch directly into Enu.
+- Scripts no longer require a `main:` section.

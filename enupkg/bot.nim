@@ -112,7 +112,7 @@ gdobj NimBot of KinematicBody:
             self.animation_player.play(animation_name)
           return false
         )
-      self.running = self.engine.call("main")
+      self.running = self.engine.run()
     except VMQuit as e:
       self.error(e)
 

@@ -40,7 +40,13 @@ proc load*(e: Engine, script_file: string) =
         if e.line_changed != nil:
           e.line_changed(info, e.previous_line)
         (e.previous_line, e.current_line) = (e.current_line, info)
-    eval_script()
+
+proc run*(e: Engine): bool =
+  try:
+    e.i.eval_script()
+    false
+  except VMPause:
+    true
 
 proc call_proc*(e: Engine, proc_name: string): PNode =
   let foreign_proc = e.i.select_routine(proc_name)
