@@ -117,7 +117,7 @@ gdobj LevelGrid of GridMap:
   method ready*() =
     with self:
       bind_signals(self, signals)
-      bind_signals("reload", "pause")
+      bind_signals("reload", "pause", "reload_all")
       build_unique_mesh_library()
       reset()
       load_script()
@@ -188,6 +188,9 @@ gdobj LevelGrid of GridMap:
   method on_reload*() =
     if not editing() or open_file == self.enu_script:
       self.reload()
+
+  method on_reload_all*() =
+    self.reload()
 
   method on_pause*() =
     self.paused = not self.paused

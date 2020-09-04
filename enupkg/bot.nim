@@ -109,7 +109,7 @@ gdobj NimBot of KinematicBody:
 
   method ready*() =
     with self:
-      bind_signals("reload", "pause")
+      bind_signals("reload", "pause", "reload_all")
       skin = self.get_node("Mannequiny").as(Spatial)
       mesh = self.skin.get_node("root/Skeleton/body001").as(MeshInstance)
       animation_player = self.skin.get_node("AnimationPlayer").as(AnimationPlayer)
@@ -137,6 +137,9 @@ gdobj NimBot of KinematicBody:
   method on_reload*() =
     if not editing() or open_file == self.enu_script:
       self.reload()
+
+  method on_reload_all*() =
+    self.reload()
 
   method on_pause*() =
     self.paused = not self.paused

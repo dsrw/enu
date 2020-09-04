@@ -37,7 +37,8 @@ gdobj Game of Node:
       trigger("reload")
 
     globals.save_and_reload = proc() =
-      reload_scripts()
+      trigger("save")
+      trigger("reload_all")
       globals.save_scene()
 
     globals.save_scene = proc(scene_name: string) =
