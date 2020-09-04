@@ -1,17 +1,18 @@
 import godot, ../godotapi / [kinematic_body, spatial, input, input_event, input_event_mouse_motion, ray_cast, scene_tree],
        math,
-       globals, game, aim_target, level_grid
-const
+       core, globals, game, aim_target, level_grid
+
+let
   angle_x_min = -PI / 2.25
   angle_x_max = PI / 2.25
   max_speed = 50.0
   move_speed = 500.0
   gravity = -80.0
-  jump_impulse = 25
-
-let
+  jump_impulse = 25.0
+  fly_toggle = 0.3.seconds
   sensitivity_gamepad = vec2(2.5, 2.5)
   sensitivity_mouse = vec2(0.1, -0.1)
+  nil_time = none(DateTime)
 
 gdobj Player of KinematicBody:
   var
@@ -22,6 +23,7 @@ gdobj Player of KinematicBody:
     aim_target*: AimTarget
     flying = false
     velocity = vec3()
+    jump_time: Option[DateTime]
 
   proc get_look_direction(): Vector2 =
     vec2(get_action_strength("look_right") - get_action_strength("look_left"),
@@ -37,7 +39,8 @@ gdobj Player of KinematicBody:
     self.camera_rig.rotation = r
 
   proc get_input_direction(): Vector3 =
-    vec3(get_action_strength("move_right") - get_action_strength("move_left"), 0,
+    vec3(get_action_strength("move_right") - get_action_strength("move_left"),
+         get_action_strength("jump") - get_action_strength("crouch"),
          get_action_strength("move_back") - get_action_strength("move_front"))
 
   proc calculate_velocity(velocity_current: Vector3,
@@ -82,9 +85,10 @@ gdobj Player of KinematicBody:
         b = self.camera_rig.global_transform.basis
         forward = b.z * input_direction.z
         right = b.x * input_direction.x
+        up = UP * input_direction.y
 
       var
-        move_direction = forward + right
+        move_direction = forward + right + up
 
       if move_direction.length() > 1.0:
         move_direction = move_direction.normalized()
@@ -103,12 +107,18 @@ gdobj Player of KinematicBody:
     if event of InputEventMouseMotion and get_game().mouse_captured:
       self.input_relative += event.as(InputEventMouseMotion).relative() * get_game().shrink
     if event.is_action_pressed("jump"):
-      if self.flying:
-        self.flying = false
-      elif not self.is_on_floor():
-        self.flying = true
-      else:
+      let
+        time   = now()
+        toggle = self.jump_time.is_some and time < self.jump_time.get + fly_toggle
+
+      if toggle:
+        self.jump_time = nil_time
+        self.flying = not self.flying
+      elif self.is_on_floor():
         self.velocity += vec3(0, jump_impulse, 0)
+        self.jump_time = some time
+      else:
+        self.jump_time = some time
 
     if event.is_action_pressed("next"):
       if tool_mode == BlockMode:
