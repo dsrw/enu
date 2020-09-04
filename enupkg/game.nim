@@ -55,10 +55,11 @@ gdobj Game of Node:
     if event.is_action_pressed("save_and_reload"):
         globals.save_and_reload()
         self.get_tree().set_input_as_handled()
-
-    if event.is_action_pressed("save"):
+    elif event.is_action_pressed("save"):
         globals.reload_scripts()
         self.get_tree().set_input_as_handled()
+    elif event.is_action_pressed("pause"):
+        globals.pause()
     elif not globals.editing():
       if not self.mouse_captured and event.is_action_pressed("click") or
           event.is_action_pressed("toggle_mouse_captured"):
@@ -67,8 +68,6 @@ gdobj Game of Node:
 
       if event.is_action_pressed("toggle_fullscreen"):
         set_window_fullscreen not is_window_fullscreen()
-      elif event.is_action_pressed("pause"):
-        globals.pause()
       elif event.is_action_pressed("mode_1"):
         trigger("retarget")
         tool_mode = CodeMode
