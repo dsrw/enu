@@ -49,11 +49,13 @@ gdobj NimBot of KinematicBody:
     var duration = 0.0
     let
       facing = BACK.rotated(UP, self.rotation.y)
+      finish = self.translation - facing * steps
       finish_time = 1.0 / self.speed * steps
 
     self.callback = proc(delta: float): bool =
       duration += delta
-      if duration > finish_time:
+      if duration >= finish_time:
+        self.translation = finish
         return false
       else:
         discard self.move_and_slide(facing * (self.speed * direction), UP)
@@ -63,10 +65,17 @@ gdobj NimBot of KinematicBody:
   proc turn(degrees: float): bool =
     self.load_vars()
     var duration = 0.0
+    # TODO: Why can't this be a one liner?
+    var final_transform = self.transform
+    final_transform.basis.rotate(UP, deg_to_rad(degrees))
     self.callback = proc(delta: float): bool =
       duration += delta
       self.rotate(UP, deg_to_rad(degrees * delta * self.speed))
-      duration <= 1.0 / self.speed
+      if duration <= 1.0 / self.speed:
+        true
+      else:
+        self.transform = final_transform
+        false
     true
 
   proc forward(steps: float): bool = self.move(-1.0, steps)
