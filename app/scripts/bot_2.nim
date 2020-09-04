@@ -1,6 +1,6 @@
 import bot
 
-main:
+proc main* =
   var walking = true
   while true:
     if walking:
@@ -8,7 +8,6 @@ main:
     else:
       run()
     walking = not walking
-    
+
     forward(7)
     left()
-    

@@ -23,12 +23,6 @@ proc fill_square*(length = 1) =
       forward(length - l)
       right()
 
-template main*(rules) =
-  proc main*() =
-    rules
-  proc get_speed*(): float   = speed
-  proc get_index*(): int = index
-
 macro debug*(x: typed): untyped =
   let s = x.toStrLit
   let r = quote do:

@@ -42,7 +42,7 @@ gdobj NimBot of KinematicBody:
       print(msg)
 
   proc load_vars() =
-    self.speed = self.engine.call_float("get_speed")
+    self.speed = self.engine.get_float("speed", "bot")
 
   proc move(direction, steps: float): bool =
     self.load_vars()

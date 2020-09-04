@@ -27,8 +27,8 @@ gdobj LevelGrid of GridMap:
     self.set_cell_item(int(map_point.x), int(map_point.y), int(map_point.z), index)
 
   proc load_vars() =
-    self.speed = self.engine.call_float("get_speed")
-    self.index = self.engine.call_int("get_index")
+    self.speed = self.engine.get_float("speed", "grid")
+    self.index = self.engine.get_int("index", "grid")
 
   proc build_unique_mesh_library() =
     self.mesh_library = self.mesh_library.duplicate().as(MeshLibrary)

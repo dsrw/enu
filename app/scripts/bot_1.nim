@@ -1,6 +1,6 @@
 import bot
 
-main:
+proc main* =
   speed = 1.0
   play("walk")
   while true:

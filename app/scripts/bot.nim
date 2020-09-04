@@ -23,11 +23,6 @@ proc run*() =
   speed = 5.0
   play("run")
 
-template main*(rules) =
-  proc main*() =
-    rules
-  proc get_speed*(): float   = speed
-
 macro debug*(x: typed): untyped =
   let s = x.toStrLit
   let r = quote do:

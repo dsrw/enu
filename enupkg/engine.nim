@@ -67,6 +67,16 @@ proc expose*(e: Engine, script_name, proc_name: string,
 proc call_float*(e: Engine, proc_name: string): float =
   e.call_proc(proc_name).get_float()
 
+proc get_var*(e: Engine, var_name: string, module_name: string): PNode =
+  let sym = e.i.select_unique_symbol(var_name, module_name = module_name)
+  e.i.get_global_value(sym)
+
+proc get_float*(e: Engine, var_name: string, module_name = ""): float =
+  e.get_var(var_name, module_name).get_float
+
+proc get_int*(e: Engine, var_name: string, module_name = ""): int =
+  e.get_var(var_name, module_name).get_int.to_int
+
 proc call_int*(e: Engine, proc_name: string): int =
   e.call_proc(proc_name).get_int.to_int
 
