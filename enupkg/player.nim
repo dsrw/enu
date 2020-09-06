@@ -108,17 +108,17 @@ gdobj Player of KinematicBody:
       self.input_relative += event.as(InputEventMouseMotion).relative() * get_game().shrink
     if event.is_action_pressed("jump"):
       let
-        time   = now()
-        toggle = self.jump_time.is_some and time < self.jump_time.get + fly_toggle
+        time = now()
+        toggle = self.jump_time and time < self.jump_time.get + fly_toggle
 
       if toggle:
         self.jump_time = nil_time
         self.flying = not self.flying
       elif self.is_on_floor():
         self.velocity += vec3(0, jump_impulse, 0)
-        self.jump_time = some time
+        self.jump_time = time
       else:
-        self.jump_time = some time
+        self.jump_time = time
 
     if event.is_action_pressed("next"):
       if tool_mode == BlockMode:
