@@ -140,7 +140,6 @@ gdobj NimBot of KinematicBody:
     with self:
       translation = self.orig_translation
       rotation = self.orig_rotation
-      paused = false
       load_script()
 
   method on_reload*() =
