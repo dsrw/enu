@@ -23,7 +23,7 @@ proc run*() =
   speed = 5.0
   play("run")
 
-macro debug*(x: typed): untyped =
+macro dump*(x: typed): untyped =
   let s = x.toStrLit
   let r = quote do:
     echo(`s` & " = " & $`x`)

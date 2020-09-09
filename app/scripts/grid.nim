@@ -25,7 +25,7 @@ proc fill_square*(length = 1) =
       forward(length - l)
       right()
 
-macro debug*(x: typed): untyped =
+macro dump*(x: typed): untyped =
   let s = x.toStrLit
   let r = quote do:
     echo(`s` & " = " & $`x`)
