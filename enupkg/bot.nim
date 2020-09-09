@@ -1,6 +1,7 @@
-import ../godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial, input_event, animation_player],
+import ../godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
+                      input_event, animation_player, resource_loader, packed_scene],
        godot,
-       math, sugar, tables, std/with,
+       math, sugar, tables, std/with, times,
        globals, engine
 
 gdobj NimBot of KinematicBody:
@@ -95,23 +96,24 @@ gdobj NimBot of KinematicBody:
     self.callback = nil
 
     try:
-      if self.engine.is_nil: self.engine = Engine()
-      with self.engine:
-        load(self.enu_script)
-        expose("bot", "forward", a => self.forward(get_float(a, 0)))
-        expose("bot", "back", a => self.back(get_float(a, 0)))
-        expose("bot", "left", a => self.left(get_float(a, 0)))
-        expose("bot", "right", a => self.right(get_float(a, 0)))
-        expose("bot", "print", a => print(get_string(a, 0)))
-        expose("bot", "echo", a => echo_console(get_string(a, 0)))
-        expose("bot", "play", proc(a: VmArgs): bool =
-          let animation_name = get_string(a, 0)
-          if animation_name == "":
-            self.animation_player.stop(true)
-          else:
-            self.animation_player.play(animation_name)
-          return false
-        )
+      if self.engine.is_nil:
+        self.engine = Engine()
+        with self.engine:
+          load(self.enu_script)
+          expose("bot", "forward", a => self.forward(get_float(a, 0)))
+          expose("bot", "back", a => self.back(get_float(a, 0)))
+          expose("bot", "left", a => self.left(get_float(a, 0)))
+          expose("bot", "right", a => self.right(get_float(a, 0)))
+          expose("bot", "print", a => print(get_string(a, 0)))
+          expose("bot", "echo", a => echo_console(get_string(a, 0)))
+          expose("bot", "play", proc(a: VmArgs): bool =
+            let animation_name = get_string(a, 0)
+            if animation_name == "":
+              self.animation_player.stop(true)
+            else:
+              self.animation_player.play(animation_name)
+            return false
+          )
       self.running = self.engine.run()
     except VMQuit as e:
       self.error(e)

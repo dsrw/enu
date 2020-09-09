@@ -98,18 +98,19 @@ gdobj LevelGrid of GridMap:
     debug &"Loading {self.enu_script}"
     errors[self.enu_script] = @[]
     self.callback = nil
-    if self.engine.is_nil: self.engine = Engine()
     try:
-      with self.engine:
-        load(self.enu_script)
-        expose("grid", "up", a => self.up(get_int(a, 0)))
-        expose("grid", "down", a => self.down(get_int(a, 0)))
-        expose("grid", "forward", a => self.forward(get_int(a, 0)))
-        expose("grid", "back", a => self.back(get_int(a, 0)))
-        expose("grid", "left", a => self.left(get_float(a, 0)))
-        expose("grid", "right", a => self.right(get_float(a, 0)))
-        expose("grid", "print", a => print(get_string(a, 0)))
-        expose("grid", "echo", a => echo_console(get_string(a, 0)))
+      if self.engine.is_nil:
+        self.engine = Engine()
+        with self.engine:
+          load(self.enu_script)
+          expose("grid", "up", a => self.up(get_int(a, 0)))
+          expose("grid", "down", a => self.down(get_int(a, 0)))
+          expose("grid", "forward", a => self.forward(get_int(a, 0)))
+          expose("grid", "back", a => self.back(get_int(a, 0)))
+          expose("grid", "left", a => self.left(get_float(a, 0)))
+          expose("grid", "right", a => self.right(get_float(a, 0)))
+          expose("grid", "print", a => print(get_string(a, 0)))
+          expose("grid", "echo", a => echo_console(get_string(a, 0)))
       self.running = self.engine.run()
     except VMQuit as e:
       self.error(e)
