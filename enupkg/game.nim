@@ -77,9 +77,4 @@ gdobj Game of Node:
         tool_mode =  BlockMode
         self.reticle.visible = false
 
-      elif event.is_action_pressed("mode_3"):
-        trigger("retarget")
-        tool_mode =  ObjectMode
-        self.reticle.visible = false
-
 proc get_game*(): Game = state.game as Game

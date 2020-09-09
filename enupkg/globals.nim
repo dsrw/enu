@@ -7,7 +7,7 @@ export strformat.`&`
 
 type
   ToolMode* = enum
-    CodeMode = 0, BlockMode = 1, ObjectMode = 2
+    CodeMode = 0, BlockMode = 1
 
   StateRefs = ref object
     player*: Node
