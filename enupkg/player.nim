@@ -105,7 +105,8 @@ gdobj Player of KinematicBody:
 
   method unhandled_input*(event: InputEvent) =
     if event of InputEventMouseMotion and get_game().mouse_captured:
-      self.input_relative += event.as(InputEventMouseMotion).relative() * get_game().shrink
+      let shrink = get_game().shrink.float
+      self.input_relative += event.as(InputEventMouseMotion).relative() * shrink
     if event.is_action_pressed("jump"):
       let
         time = now()

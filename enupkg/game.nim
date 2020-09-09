@@ -19,13 +19,17 @@ gdobj Game of Node:
   proc mouse_captured*(): bool =
     get_mouse_mode() == MOUSE_MODE_CAPTURED
 
-  proc shrink*(): float =
-    float(self.viewport_container.stretch_shrink)
+  proc shrink*(): int =
+    self.viewport_container.stretch_shrink.int
+
+  proc `shrink=`*(val: int) =
+    self.viewport_container.stretch_shrink = val
 
   method ready*() {.gdExport.} =
     state.game = self
     self.reticle = self.find_node("Reticle").as(Control)
     self.viewport_container = self.get_node("ViewportContainer").as(ViewportContainer)
+    self.shrink = 2
     globals.capture_mouse = proc() =
       self.mouse_captured = true
 
