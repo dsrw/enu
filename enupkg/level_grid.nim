@@ -1,6 +1,6 @@
 import ../godotapi / [grid_map, mesh, mesh_library],
        godot,
-       math, sugar, tables, std/with,
+       math, sugar, tables, std/with, times,
        globals, engine
 
 const signals = ["target_in", "target_out", "target_move", "target_fire", "target_remove"]
@@ -9,9 +9,11 @@ var active*: Node
 
 gdobj LevelGrid of GridMap:
   var
-    speed = 1.0
+    speed = 0.0
     point, normal: Vector3
     index: int = 0
+    blocks_per_frame = 0.0
+    blocks_this_frame = 0.0
     highlight_material* {.gdExport.}: Material
     original_materials: seq[Material]
     callback: proc(delta: float): bool
@@ -27,8 +29,15 @@ gdobj LevelGrid of GridMap:
     self.set_cell_item(int(map_point.x), int(map_point.y), int(map_point.z), index)
 
   proc load_vars() =
+    var old_speed = self.speed
     self.speed = self.engine.get_float("speed", "grid")
     self.index = self.engine.get_int("index", "grid")
+    self.blocks_per_frame = if self.speed == 0:
+      float.high
+    else:
+      self.speed.float / 30.0
+    if self.speed != old_speed:
+      self.blocks_this_frame = 0
 
   proc build_unique_mesh_library() =
     self.mesh_library = self.mesh_library.duplicate().as(MeshLibrary)
@@ -37,9 +46,9 @@ gdobj LevelGrid of GridMap:
       self.mesh_library.set_item_mesh(index, mesh)
       self.original_materials.add(mesh.surface_get_material(0))
 
-  proc reset() =
+  proc reset(clear = true) =
+    if clear: self.clear()
     with self:
-      clear()
       set_cell_item(0, 0, 0, 0)
       direction = FORWARD
       position = vec3()
@@ -54,22 +63,14 @@ gdobj LevelGrid of GridMap:
 
   proc move(direction: Vector3, steps: BiggestInt): bool =
     self.load_vars()
-    var
-      duration = 0.0
-      count = 0
-
-    self.drop_block()
+    var count = 0
+    #self.drop_block()
     self.callback = proc(delta: float): bool =
-      duration += delta
-      if duration >= self.speed:
-        while count < steps and duration >= 0.0:
-          duration -= self.speed
-          self.position += direction
-          inc count
-          duration += delta
-          if count < steps:
-            self.drop_block()
-        duration = 0.0
+      while count < steps and self.blocks_this_frame >= 1:
+        self.drop_block()
+        self.position += direction
+        inc count
+        self.blocks_this_frame -= 1
       return count < steps
     true
 
@@ -80,6 +81,15 @@ gdobj LevelGrid of GridMap:
 
     self.direction = vec3(direction.x.round, direction.y.round, direction.z.round)
     false
+
+  proc sleep(seconds: float): bool =
+    var duration = 0.0
+    self.blocks_per_frame = 0.0
+    self.blocks_this_frame = 0.0
+    self.callback = proc(delta: float): bool =
+      duration += delta
+      return duration < seconds
+    true
 
   proc forward(steps: BiggestInt): bool = self.move(self.direction, steps)
   proc back(steps: BiggestInt): bool = self.move(-self.direction, steps)
@@ -98,6 +108,7 @@ gdobj LevelGrid of GridMap:
     debug &"Loading {self.enu_script}"
     errors[self.enu_script] = @[]
     self.callback = nil
+    self.blocks_this_frame = 0
     try:
       if self.engine.is_nil:
         self.engine = Engine()
@@ -111,6 +122,10 @@ gdobj LevelGrid of GridMap:
           expose("grid", "right", a => self.right(get_float(a, 0)))
           expose("grid", "print", a => print(get_string(a, 0)))
           expose("grid", "echo", a => echo_console(get_string(a, 0)))
+          expose("grid", "sleep", a => self.sleep(get_float(a, 0)))
+          expose "grid", "reset", proc(a: VmArgs): bool =
+            self.reset(false)
+            false
       self.running = self.engine.run()
     except VMQuit as e:
       self.error(e)
@@ -154,9 +169,15 @@ gdobj LevelGrid of GridMap:
 
   method physics_process*(delta: float64) =
     if not self.paused:
+      self.blocks_this_frame += self.blocks_per_frame
       try:
-        if self.running and (self.callback == nil or not self.callback(delta)):
-          self.running = self.engine.resume()
+        if self.blocks_per_frame > 0:
+          while self.running and self.blocks_this_frame >= 1:
+            if self.callback == nil or not self.callback(delta):
+              self.running = self.engine.resume()
+        else:
+          if self.running and (self.callback == nil or not self.callback(delta)):
+              self.running = self.engine.resume()
       except VMQuit as e:
         self.error(e)
 
