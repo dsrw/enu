@@ -48,11 +48,24 @@ proc run*(e: Engine): bool =
   except VMPause:
     true
 
-proc call_proc*(e: Engine, proc_name: string): PNode =
-  let foreign_proc = e.i.select_routine(proc_name)
+proc to_node*(val: int): PNode =
+  new_int_node(nk_int_lit, val)
+
+proc to_node*(val: float): PNode =
+  new_float_node(nk_float_lit, val)
+
+proc to_node*(val: string): PNode =
+  new_str_node(nk_str_lit, val)
+
+proc to_node*(val: bool): PNode =
+  let v = if val: 1 else: 0
+  new_int_node(nk_int_lit, v)
+
+proc call_proc*(e: Engine, proc_name: string, module_name = "", args: varargs[PNode, to_node]): PNode {.discardable.}=
+  let foreign_proc = e.i.select_routine(proc_name, module_name = module_name)
   if foreign_proc == nil:
     quit &"script does not export a proc of the name: '{proc_name}'"
-  return e.i.call_routine(foreign_proc, [])
+  return e.i.call_routine(foreign_proc, args)
 
 proc call*(e: Engine, proc_name: string): bool =
   try:
@@ -82,6 +95,10 @@ proc get_float*(e: Engine, var_name: string, module_name = ""): float =
 
 proc get_int*(e: Engine, var_name: string, module_name = ""): int =
   e.get_var(var_name, module_name).get_int.to_int
+
+proc get_bool*(e: Engine, var_name: string, module_name = ""): bool =
+  let b = e.get_var(var_name, module_name).get_int
+  return b == 1
 
 proc call_int*(e: Engine, proc_name: string): int =
   e.call_proc(proc_name).get_int.to_int
