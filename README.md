@@ -89,3 +89,9 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
 - Added `nimble start` command to launch directly into Enu.
 - Scripts no longer require a `main:` section.
 - Flying is better, I think.
+- Much faster script reloading
+- `grid.speed` now represents dropped blocks per second.
+- `grid.speed = 0` now works properly, running the entire script in a single frame
+- `grid.drawing = false` enables moving the pen without dropping blocks.
+- `grid.save()` and `grid.restore()` to save/restore position/direction/index/speed/drawing
+  state while drawing blocks. Pass a `name` argument to support multiple save points.
