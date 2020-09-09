@@ -3,6 +3,7 @@ import macros
 var
   speed* = 30.0
   index* = 0
+  drawing* = true
 
 proc forward*(steps = 1) = discard
 proc back*(steps = 1)    = discard
@@ -17,7 +18,14 @@ proc rt*(degrees = 90.0)   = right(degrees)
 proc print*(msg: string)   = discard
 proc echo*(msg: string)   = discard
 proc sleep*(seconds: float) = discard
-proc reset*() = discard
+proc reset*(clear = false) = discard
+proc save*(name = "default") = discard
+proc restore*(name = "default") = discard
+
+proc set_vars*(idx: int, drw: bool, spd: float) =
+  index = idx
+  drawing = drw
+  speed = spd
 
 proc fill_square*(length = 1) =
   for l in 0..length:

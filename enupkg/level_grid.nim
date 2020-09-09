@@ -1,6 +1,6 @@
 import ../godotapi / [grid_map, mesh, mesh_library],
        godot,
-       math, sugar, tables, std/with, times,
+       math, sugar, tables, std/with, tables,
        globals, engine
 
 const signals = ["target_in", "target_out", "target_move", "target_fire", "target_remove"]
@@ -23,6 +23,8 @@ gdobj LevelGrid of GridMap:
     enu_script* {.gdExport.} = "scripts/grid_1.nim"
     direction = FORWARD
     position = vec3()
+    drawing = true
+    save_points: Table[string, tuple[position: Vector3, direction: Vector3, index: int]]
 
   proc place_block*(point, normal: Vector3, index: int64 = 0) =
     let map_point = self.world_to_map(point + (normal * 0.5))
@@ -32,12 +34,17 @@ gdobj LevelGrid of GridMap:
     var old_speed = self.speed
     self.speed = self.engine.get_float("speed", "grid")
     self.index = self.engine.get_int("index", "grid")
+    self.drawing = self.engine.get_bool("drawing", "grid")
+
     self.blocks_per_frame = if self.speed == 0:
       float.high
     else:
       self.speed.float / 30.0
     if self.speed != old_speed:
       self.blocks_this_frame = 0
+
+  proc set_vars() =
+    self.engine.call_proc("set_vars", module_name = "grid", self.index, self.drawing, self.speed)
 
   proc build_unique_mesh_library() =
     self.mesh_library = self.mesh_library.duplicate().as(MeshLibrary)
@@ -47,30 +54,31 @@ gdobj LevelGrid of GridMap:
       self.original_materials.add(mesh.surface_get_material(0))
 
   proc reset(clear = true) =
-    if clear: self.clear()
-    with self:
-      set_cell_item(0, 0, 0, 0)
-      direction = FORWARD
-      position = vec3()
+    if clear:
+      self.clear()
+      self.set_cell_item(0, 0, 0, 0)
+    self.direction = FORWARD
+    self.position = vec3()
 
   proc drop_block() =
-    self.set_cell_item(
-      self.position.x.to_int,
-      self.position.y.to_int,
-      self.position.z.to_int,
-      self.index
-    )
+    if self.drawing:
+      self.set_cell_item(
+        self.position.x.to_int,
+        self.position.y.to_int,
+        self.position.z.to_int,
+        self.index
+      )
 
   proc move(direction: Vector3, steps: BiggestInt): bool =
     self.load_vars()
     var count = 0
-    #self.drop_block()
     self.callback = proc(delta: float): bool =
       while count < steps and self.blocks_this_frame >= 1:
-        self.drop_block()
+
         self.position += direction
         inc count
         self.blocks_this_frame -= 1
+        self.drop_block()
       return count < steps
     true
 
@@ -90,6 +98,19 @@ gdobj LevelGrid of GridMap:
       duration += delta
       return duration < seconds
     true
+
+  proc save(name: string): bool =
+    self.save_points[name] = (
+      position: self.position,
+      direction: self.direction,
+      index: self.index
+    )
+    false
+
+  proc restore(name: string): bool =
+    (self.position, self.direction, self.index) = self.save_points[name]
+    self.set_vars()
+    false
 
   proc forward(steps: BiggestInt): bool = self.move(self.direction, steps)
   proc back(steps: BiggestInt): bool = self.move(-self.direction, steps)
@@ -123,8 +144,10 @@ gdobj LevelGrid of GridMap:
           expose("grid", "print", a => print(get_string(a, 0)))
           expose("grid", "echo", a => echo_console(get_string(a, 0)))
           expose("grid", "sleep", a => self.sleep(get_float(a, 0)))
+          expose("grid", "save", a => self.save(get_string(a, 0)))
+          expose("grid", "restore", a => self.restore(get_string(a, 0)))
           expose "grid", "reset", proc(a: VmArgs): bool =
-            self.reset(false)
+            self.reset(get_bool(a, 0))
             false
       self.running = self.engine.run()
     except VMQuit as e:
