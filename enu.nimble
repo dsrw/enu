@@ -4,7 +4,7 @@ let
   (target, lib_ext, exe_ext) = case hostOS
     of "windows": ("windows", ".dll", ".exe")
     of "macosx" : ("osx", ".dylib", "")
-    else        : ("linux", ".so", "")
+    else        : ("x11", ".so", "")
   generated_dir   = "godotapi"
   api_json        = generated_dir & "/api.json"
   generator       = "tools/generate_api"
