@@ -10,8 +10,9 @@ Very alpha. See my talk from NimConf 2020.
 ```console
 $ nimble prereqs
 $ nimble build
-$ nimble start
+$ nimble edit
 ```
+Launch Enu with the play button in the upper right, or by pressing the F5 key.
 
 ### Notes
 
@@ -95,3 +96,4 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
 - `grid.drawing = false` enables moving the pen without dropping blocks.
 - `grid.save()` and `grid.restore()` to save/restore position/direction/index/speed/drawing
   state while drawing blocks. Pass a `name` argument to support multiple save points.
+- Fixed build/run on Linux. Input is still broken.
