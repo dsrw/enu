@@ -1,4 +1,4 @@
-import godot, ../godotapi / [kinematic_body, spatial, input, input_event, input_event_mouse_motion, ray_cast, scene_tree],
+import godot, ../godotapi / [kinematic_body, spatial, input, input_event, input_event_mouse_motion, ray_cast, scene_tree, input_event_pan_gesture],
        math,
        core, globals, game, aim_target, level_grid
 
@@ -14,6 +14,7 @@ let
   sensitivity_mouse = vec2(0.1, -0.1)
   nil_time = none(DateTime)
 
+
 gdobj Player of KinematicBody:
   var
     position_start: Vector3
@@ -24,6 +25,7 @@ gdobj Player of KinematicBody:
     flying = false
     velocity = vec3()
     jump_time: Option[DateTime]
+    pan_delta = 0.0
 
   proc get_look_direction(): Vector2 =
     vec2(get_action_strength("look_right") - get_action_strength("look_left"),
@@ -120,6 +122,17 @@ gdobj Player of KinematicBody:
         self.jump_time = time
       else:
         self.jump_time = time
+
+    if event of InputEventPanGesture and tool_mode == BlockMode:
+      let pan = event as InputEventPanGesture
+      let grid = get_level_grid()
+      self.pan_delta += pan.delta.y
+      if self.pan_delta > 1 and grid != nil:
+        grid.next()
+        self.pan_delta = 0
+      elif self.pan_delta < -1 and grid != nil:
+        grid.previous()
+        self.pan_delta = 0
 
     if event.is_action_pressed("next"):
       if tool_mode == BlockMode:
