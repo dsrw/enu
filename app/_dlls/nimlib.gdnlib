@@ -1,8 +1,3 @@
-[entry]
-
-Windows.64="res://_dlls/enu.dll"
-OSX.64="res://_dlls/enu.dylib"
-
 [general]
 
 singleton=false
@@ -10,6 +5,14 @@ load_once=true
 symbol_prefix="godot_"
 reloadable=true
 
+[entry]
+
+OSX.64="res://_dlls/enu.dylib"
+Windows.64="res://_dlls/enu.dll"
+X11.64="res://_dlls/enu.so"
+
 [dependencies]
 
-Windows=PoolStringArray(  )
+OSX.64=[  ]
+Windows.64=[  ]
+X11.64=[  ]
