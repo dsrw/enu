@@ -27,7 +27,7 @@ requires "nim >= 1.3.5",
 task prereqs, "Generate Godot API binding":
   mk_dir generated_dir
   exec "git submodule update --init"
-  exec "ln -sfh vendor/godot_voxel vendor/godot/modules/voxel"
+  exec "ln -sfh ../../godot_voxel vendor/godot/modules/voxel"
   exec &"nimble c --skipParentCfg {generator}"
   let
     gen = find_exe generator
