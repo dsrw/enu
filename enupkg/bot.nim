@@ -1,8 +1,8 @@
 import ../godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
                       input_event, animation_player, resource_loader, packed_scene],
        godot,
-       math, sugar, tables, std/with, times,
-       globals, engine
+       math, tables, std/with, times, sugar,
+       globals, core, engine
 
 gdobj NimBot of KinematicBody:
   var

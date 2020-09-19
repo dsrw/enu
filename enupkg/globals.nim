@@ -1,7 +1,7 @@
-import ../godotapi / [node, scene_tree],
+import ../godotapi / [node, scene_tree, voxel_buffer],
        godot,
        engine,
-       strformat, math, strutils, sequtils, macros, compiler/lineinfos, tables
+       strformat, math, strutils, sequtils, compiler/lineinfos, tables
 
 export strformat.`&`
 
@@ -52,10 +52,10 @@ proc info*[T](args: varargs[T]) =
   logger("info", join_args(args))
 
 proc err*[T](args: varargs[T]) =
-  logger("err", join_args(args))
+  let joined = join_args(args)
+  logger "err", joined
 
 proc bind_signals*(receiver, sender: Node, signals: varargs[string]) =
-  debug("Binding " & $signals)
   let send_node = if sender == nil:
     if game_node == nil: game_node = receiver.get_tree().root.get_node("Game")
     game_node
@@ -64,7 +64,7 @@ proc bind_signals*(receiver, sender: Node, signals: varargs[string]) =
 
   for signal in signals:
     let meth = "_on_" & signal
-    if not send_node.has_user_signal(signal):
+    if not send_node.has_signal(signal):
       send_node.add_user_signal(signal)
     discard send_node.connect(signal, receiver, meth)
 
@@ -100,9 +100,3 @@ proc z*(b: Basis): Vector3 {.inline.} =
 
 proc round*(v: Vector3): Vector3 {.inline.} =
   vec3(v.x.round(), v.y.round(), v.z.round())
-
-macro dump*(x: typed): untyped =
-  let s = x.toStrLit
-  let r = quote do:
-    print(`s` & " = " & `x`)
-  return r

@@ -38,18 +38,22 @@ gdobj AimTarget of Sprite3D:
       var
         target_point: Vector3
         block_point: Vector3
+        block_normal: Vector3
         transform = self.global_transform
 
       #TODO: This could be better
       if target_normal == UP or target_normal == DOWN:
-        block_point = (collision_point + vec3(0.5, 0, 0.5)).round()
-        target_point = block_point - vec3(0.5, 0.0, 0.5)
+        block_normal = vec3(0.5, 0, 0.5)
+        block_point = (collision_point + block_normal).round()
+        target_point = block_point - block_normal
       elif target_normal == FORWARD or target_normal == BACK:
-        block_point = (collision_point + vec3(0.5, 0.5, 0.0)).round()
-        target_point =  block_point - vec3(0.5, 0.5, 0.0)
+        block_normal = vec3(0.5, 0.5, 0.0)
+        block_point = (collision_point + block_normal).round()
+        target_point =  block_point - block_normal
       else:
-        block_point = (collision_point + vec3(0, 0.5, 0.5)).round()
-        target_point = block_point - vec3(0.0, 0.5, 0.5)
+        block_normal = vec3(0, 0.5, 0.5)
+        block_point = (collision_point + block_normal).round()
+        target_point = block_point - block_normal
       transform.origin = target_point + collision_normal * 0.01
       self.global_transform = transform
       self.rotation_degrees = vec3(target_normal.y, target_normal.x, target_normal.z) * 90

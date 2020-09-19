@@ -1,5 +1,7 @@
 bin/
-tools/generate_api
+tools/build_helpers
+tools/build_helpers.exe
+logs/
 *.dylib
 *.dll
 *.so
@@ -10,5 +12,5 @@ enupkg/utils
 .DS_Store
 app/_dlls/enu.exp
 app/_dlls/enu.lib
-tools/generate.exe
 godotapi
+app/state

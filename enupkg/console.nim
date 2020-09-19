@@ -2,7 +2,7 @@ import ../godotapi / [text_edit, scene_tree, node, input_event, input_event_key,
                       rich_text_label, global_constants],
        godot,
        strutils,
-       globals
+       globals, core
 
 gdobj Console of RichTextLabel:
   var
@@ -11,6 +11,7 @@ gdobj Console of RichTextLabel:
 
   proc init*() =
     logger = proc(level, msg: string) =
+      echo msg
       self.log_text &= &"[b]{level.to_upper}[/b] {msg}\n"
     echo_console = proc(msg: string) =
       self.log_text &= &"{msg}\n"

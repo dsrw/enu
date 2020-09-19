@@ -1,12 +1,17 @@
 import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_container,
-                      packed_scene, resource_saver, sprite, control],
+                      packed_scene, resource_saver, sprite, control,
+                      #[voxel_terrain, voxel_generator, voxel_buffer]#],
        godot,
-       globals
+       core, globals
 
 gdobj Game of Node:
   var
     reticle: Control
     viewport_container: ViewportContainer
+    #terrain*: Terrain
+    triggered = false
+    ready = false
+    frame_skip = 90
 
   proc `mouse_captured=`*(captured: bool) =
     set_mouse_mode if captured:
@@ -29,6 +34,7 @@ gdobj Game of Node:
     state.game = self
     self.reticle = self.find_node("Reticle").as(Control)
     self.viewport_container = self.get_node("ViewportContainer").as(ViewportContainer)
+
     self.shrink = 2
     globals.capture_mouse = proc() =
       self.mouse_captured = true
@@ -54,6 +60,15 @@ gdobj Game of Node:
 
     globals.pause = proc() =
       trigger("pause")
+    self.ready = true
+    #trigger "game_ready"
+
+  method physics_process*(delta: int) =
+    if self.ready and not self.triggered and self.frame_skip == 0:
+      self.triggered = true
+      trigger "game_ready"
+    elif self.ready and self.frame_skip > 0:
+      self.frame_skip -= 1
 
   method unhandled_input*(event: InputEvent) =
     if event.is_action_pressed("save_and_reload"):

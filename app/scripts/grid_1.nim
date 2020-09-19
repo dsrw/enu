@@ -1,39 +1,60 @@
 import grid
 
 var
-  length = 15
+  length = 25
   width = 5
-  loops = 10
-  wall_height = 4
+  loops = 2
+  wall_height = 2
   level_height = 2
+  default_block = 1
+  wall_block = 2
 
-speed = 0
-
-for i in 0..<loops:
-  for y in 0..<4:
-    for x in 0..<length:
-      index = 0
-      if x > 0: forward()
-      save()
-      if length - width == x:
-        save("next_level")
-      elif length - width > x:
-        index = 1
+speed = 200
+#while true:
+block:
+  for i in 0..<loops:
+    for y in 0..<4:
+      for x in 0..<length:
+        index = default_block
+        if x > 0: forward()
+        save()
+        if length - width == x:
+          save("next_level")
+        elif length - width > x:
+          index = wall_block
+          up(wall_height)
+        else:
+          up(level_height)
+        restore()
+        right()
+        forward(width)
+        index = wall_block
         up(wall_height)
-      else:
-        up(level_height)
-      restore()
+        restore()
+
+      up()
       right()
       forward(width)
-      index = 1
-      up(wall_height)
-      restore()
+      up()
+      back(width)
+      restore("next_level")
+      left()
+      up(level_height)
 
-    up()
-    right()
-    forward(width)
-    up()
-    back(width)
-    restore("next_level")
+  drawing = false
+  up(5)
+  drawing = true
+  index = 3
+  for t in 0..5:
+    forward()
     left()
-    up(level_height)
+    forward()
+    left()
+    forward()
+    up()
+
+  #sleep(5)
+  #echo "clearing"
+  #sleep(1)
+  #reset(true)
+  #sleep(5)
