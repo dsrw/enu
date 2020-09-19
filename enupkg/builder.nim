@@ -27,13 +27,13 @@ gdobj Builder of Spatial:
     if not val:
       debug(self.enu_script & " done.")
 
-  proc running: bool = self.is_running
+  proc running*: bool = self.is_running
 
   method ready*() =
     self.voxes = VoxSet()
     self.grid = self.get_node("Grid")
     assert self.grid != nil
-    self.bind_signals self.grid, "selected"
+    self.bind_signals self, "selected"
     self.bind_signals "game_ready", "reload", "pause", "reload_all"
     self.pen = self.draw_mode.init(self, self.enu_script)
     self.pen.voxes = self.voxes

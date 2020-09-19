@@ -35,7 +35,7 @@ gdobj Grid of GridMap:
       mesh.surface_set_material(0, self.original_materials[index])
 
   proc select*() =
-    self.trigger("selected")
+    self.pen.builder.trigger("selected")
     self.deselect()
 
   method on_target_in() =
@@ -67,10 +67,11 @@ method clear*(self: GridPen): bool =
   self.grid.clear()
   true
 
-proc init*(typ:typedesc[GridPen], node: Node, id: string): GridPen =
-  let grid = node.get_node("Grid") as Grid
+proc init*(typ:typedesc[GridPen], builder: Node, id: string): GridPen =
+  let grid = builder.get_node("Grid") as Grid
   assert grid != nil
-  result = GridPen(grid: grid, id: id)
+  result = GridPen(grid: grid, builder: builder, id: id)
+  grid.pen = result
 
 method draw*(self: GridPen, location: Vector3, index: int) =
   let

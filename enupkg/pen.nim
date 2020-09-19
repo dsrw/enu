@@ -8,7 +8,8 @@ type
 
   Pen* = ref object of RootObj
     id*: string
-    voxes*: VoxSet
+    builder*: Node
+    voxes*: VoxSet # XXX find a better name
 
 method draw*(self: Pen, location: Vector3, index: int) =
   raise new_exception(AssertionDefect, "You shouldn't be here")
@@ -18,7 +19,7 @@ method clear*(self: Pen): bool = false
 import grid, terrain
 export draw, clear
 
-proc init*(mode: DrawMode, node: Node, id: string): Pen =
+proc init*(mode: DrawMode, builder: Node, id: string): Pen =
   result = case mode:
-  of VoxelMode: VoxelPen.init("voxel-" & id)
-  of GridMode: GridPen.init(node, "grid-" & id)
+  of VoxelMode: VoxelPen.init(builder, "voxel-" & id)
+  of GridMode: GridPen.init(builder, "grid-" & id)
