@@ -2,3 +2,7 @@
 	path = vendor/godot_voxel
 	url = https://github.com/dsrw/godot_voxel.git
 	branch = enu-changes
+[submodule "vendor/godot"]
+	path = vendor/godot
+	url = https://github.com/dsrw/godot.git
+	branch = enu
