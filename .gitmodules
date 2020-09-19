@@ -6,3 +6,4 @@
 	path = vendor/godot
 	url = https://github.com/dsrw/godot.git
 	branch = enu
+	ignore = untracked
