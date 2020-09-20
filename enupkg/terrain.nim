@@ -5,7 +5,9 @@ import ../godotapi / [mesh, voxel_terrain, voxel_tool, voxel_library,
 
 gdobj Terrain of VoxelTerrain:
   var
-    targeted_point: Vector3
+    targeted_voxel: Vector3
+    current_normal: Vector3
+    current_point: Vector3
     pens: Table[string, Pen]
     selected_voxes: VoxSet
     pending_locations: seq[Vector3]
@@ -17,7 +19,7 @@ gdobj Terrain of VoxelTerrain:
 
   method ready*() =
     self.bind_signals(self, ["target_in", "target_out", "target_move",
-                             "block_loaded", "target_fire"])
+                             "block_loaded", "target_fire", "target_remove"])
     self.bind_signals("game_ready")
 
   method on_game_ready() =
@@ -28,29 +30,26 @@ gdobj Terrain of VoxelTerrain:
     for vox in voxes.blocks:
       tool.set_voxel(vox.vec3, vox.index + 1)
 
-  proc find_targeted_point(point, normal: Vector3): Vector3 =
+  proc find_targeted_voxel(point, normal: Vector3): Vector3 =
     let diffed = (vec3(1, 1, 1) + normal) * 0.5
     result = point - diffed
 
-  proc find_pen(targeted_point: Vector3): Pen =
+  proc find_pen(targeted_voxel: Vector3): Option[Pen] =
     for pen in self.pens.values:
-      if targeted_point.to_vox in pen.voxes.blocks:
-        return pen
+      if targeted_voxel.to_vox in pen.voxes.blocks:
+        return some(pen)
 
-  proc highlight(point, normal: Vector3) =
-    let targeted_point = self.find_targeted_point(point, normal)
-    if targeted_point != self.targeted_point:
-      self.targeted_point = targeted_point
-
-      let
-        pen = self.find_pen(targeted_point)
-        voxes = pen.voxes
-        blocks = voxes.blocks
-        tool = self.get_voxel_tool()
-      if voxes != self.selected_voxes:
-        self.selected_voxes = voxes
-        for vox in blocks:
-          tool.set_voxel(vox.vec3, 1)
+  proc highlight(targeted_voxel: Vector3) =
+    let pen = self.find_pen(targeted_voxel)
+    assert pen.is_some
+    let
+      voxes = pen.get.voxes
+      blocks = voxes.blocks
+      tool = self.get_voxel_tool()
+    if voxes != self.selected_voxes:
+      self.selected_voxes = voxes
+      for vox in blocks:
+        tool.set_voxel(vox.vec3, 1)
 
   method process*(delta: float) =
     if self.game_ready:
@@ -67,10 +66,7 @@ gdobj Terrain of VoxelTerrain:
         self.dirty = true
 
   method on_block_loaded(location: Vector3, buffer: VoxelBuffer) =
-    let
-      t = now()
-      uniform = buffer.is_uniform(0)
-
+    let uniform = buffer.is_uniform(0)
     if not uniform or (uniform and buffer.get_voxel(0, 0, 0) != 0):
       let
         size_x = buffer.get_size_x
@@ -98,35 +94,41 @@ gdobj Terrain of VoxelTerrain:
               else:
                 self.voxels_to_clear.add(voxel_location)
 
-    self.duration += now() - t
-
   method on_target_move(point, normal: Vector3) =
-    if tool_mode == CodeMode:
-      self.highlight(point, normal)
+    self.current_point = point
+    self.current_normal = normal
+    let targeted_voxel = self.find_targeted_voxel(point, normal)
+    if targeted_voxel != self.targeted_voxel:
+      self.targeted_voxel = targeted_voxel
+      if tool_mode == CodeMode:
+        self.highlight(targeted_voxel)
 
   method on_target_out() =
-    self.targeted_point = vec3()
+    self.targeted_voxel = vec3()
     if self.selected_voxes != nil:
       self.rebuild(self.selected_voxes)
       self.selected_voxes = nil
 
   method on_target_in() =
+    # we don't need this right now. Thanks for the memories.
     discard
 
   method on_target_fire() =
-    # if tool_mode == BlockMode:
-    #  #self.place_block(self.point, self.normal, self.index)
+    if tool_mode == BlockMode:
+      let pen = self.find_pen(self.targeted_voxel)
+      assert pen.is_some
+      pen.get.draw(self.targeted_voxel + self.current_normal, 1)
+
     if tool_mode == CodeMode:
-      let pen = self.find_pen(self.targeted_point)
-      if pen != nil:
-        debug "triggering"
-        pen.builder.trigger("selected")
-      else:
-        debug "no pen"
+      let pen = self.find_pen(self.targeted_voxel)
+      assert pen.is_some
+      pen.get.builder.trigger("selected")
 
   method on_target_remove() =
-    discard
-    #self.place_block(self.point, -self.normal, 0)
+    if tool_mode == BlockMode:
+      let pen = self.find_pen(self.targeted_voxel)
+      assert pen.is_some
+      pen.get.draw(self.targeted_voxel, -1)
 
 type
   VoxelPen* = ref object of Pen
@@ -141,7 +143,7 @@ proc init*(typ:typedesc[VoxelPen], builder: Node, id: string): VoxelPen =
   result = VoxelPen(builder: builder, terrain: terrain, voxel_tool: tool, id: id)
   terrain.pens[id] = result
 
-method draw*(self: VoxelPen, location: Vector3, index: int) =
+method draw*(self: VoxelPen, location: Vector3, index: int, save = true) =
   self.terrain.dirty = true
   let metadata = self.id & ":" & $index
   let variant = if index == -1:
@@ -151,3 +153,5 @@ method draw*(self: VoxelPen, location: Vector3, index: int) =
 
   self.voxel_tool.set_voxel_metadata(location, variant)
   self.voxel_tool.set_voxel(location, index + 1)
+  if save:
+    self.voxes.blocks.incl location.to_vox(index)

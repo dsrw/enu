@@ -11,7 +11,7 @@ type
     builder*: Node
     voxes*: VoxSet # XXX find a better name
 
-method draw*(self: Pen, location: Vector3, index: int) =
+method draw*(self: Pen, location: Vector3, index: int, save = true) =
   raise new_exception(AssertionDefect, "You shouldn't be here")
 
 method clear*(self: Pen): bool = false

@@ -127,7 +127,7 @@ gdobj Builder of Spatial:
   proc clear() =
     if not self.pen.clear():
       for v in self.voxes.blocks:
-        self.pen.draw(v.vec3, -1)
+        self.pen.draw(v.vec3, -1, save = false)
     self.voxes.blocks.clear()
 
   proc reset(clear = true) =
@@ -135,12 +135,10 @@ gdobj Builder of Spatial:
     self.position = vec3()
     if clear:
       self.clear()
-      self.voxes.blocks.incl self.position.to_vox(1)
       self.pen.draw(self.position, 1)
 
   proc drop_block() =
     if self.drawing:
-      self.voxes.blocks.incl self.position.to_vox(self.index)
       self.pen.draw(self.position, self.index)
 
   method on_game_ready*() =
