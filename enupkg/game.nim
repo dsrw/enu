@@ -81,6 +81,8 @@ gdobj Game of Node:
       globals.pause()
     elif event.is_action_pressed("clear_console"):
       trigger("clear_console")
+    elif event.is_action_pressed("toggle_console"):
+      trigger("toggle_console")
     elif not globals.editing():
       if not self.mouse_captured and event.is_action_pressed("click") or
           event.is_action_pressed("toggle_mouse_captured"):

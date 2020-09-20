@@ -37,6 +37,13 @@ gdobj Builder of Spatial:
     self.bind_signals "game_ready", "reload", "pause", "reload_all"
     self.pen = self.draw_mode.init(self, self.enu_script, self.voxes)
 
+  proc set_defaults() =
+    self.direction = FORWARD
+    self.position = vec3()
+    self.speed = 30.0
+    self.index = 0
+    self.drawing = true
+
   proc load_vars() =
     var old_speed = self.speed
     self.speed = self.engine.get_float("speed", "grid")
@@ -98,6 +105,7 @@ gdobj Builder of Spatial:
     true
 
   proc save(name: string): bool =
+    self.load_vars()
     self.save_points[name] = (
       position: self.position,
       direction: self.direction,
@@ -130,19 +138,20 @@ gdobj Builder of Spatial:
     self.voxes.blocks.clear()
 
   proc reset(clear = true) =
-    self.direction = FORWARD
-    self.position = vec3()
+    self.set_defaults()
+    self.set_vars()
     if clear:
       self.clear()
-      self.pen.draw(self.position, 1)
+      self.pen.draw(self.position, 1, save = true)
 
   proc drop_block() =
     if self.drawing:
-      self.pen.draw(self.position, self.index)
+      self.pen.draw(self.position, self.index, save = true)
 
   method on_game_ready*() =
     if self.draw_mode == VoxelMode and self.voxes.blocks.len > 0:
       self.paused = true
+    self.pen.draw(self.position, 1, save = true)
     self.load_script()
 
   proc load_script() =

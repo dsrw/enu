@@ -103,11 +103,14 @@ gdobj Terrain of VoxelTerrain:
       if tool_mode == CodeMode:
         self.highlight(targeted_voxel)
 
-  method on_target_out() =
+  proc deselect() =
     self.targeted_voxel = vec3()
     if self.selected_voxes != nil:
       self.rebuild(self.selected_voxes)
       self.selected_voxes = nil
+
+  method on_target_out() =
+    self.deselect()
 
   method on_target_in() =
     # we don't need this right now. Thanks for the memories.
@@ -123,6 +126,7 @@ gdobj Terrain of VoxelTerrain:
       let pen = self.find_pen(self.targeted_voxel)
       assert pen.is_some
       pen.get.builder.trigger("selected")
+      self.deselect()
 
   method on_target_remove() =
     if tool_mode == BlockMode:

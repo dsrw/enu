@@ -73,7 +73,6 @@ proc init*(typ:typedesc[GridPen], builder: Node, id: string): GridPen =
   grid.pen = result
 
 method draw*(self: GridPen, location: Vector3, index: int, save = false) =
-  assert not save
   let
     index = index - 1
     grid = self.grid
