@@ -1,10 +1,13 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=8 format=2]
 
 [ext_resource path="res://components/Console.gdns" type="Script" id=1]
 [ext_resource path="res://components/TextEdit.gdns" type="Script" id=2]
-[ext_resource path="res://themes/DarkTheme.tres" type="Theme" id=3]
+[ext_resource path="res://components/ToolButton.tscn" type="PackedScene" id=3]
 [ext_resource path="res://themes/AppleTheme.tres" type="Theme" id=4]
 [ext_resource path="res://textures/reticle.png" type="Texture" id=5]
+[ext_resource path="res://themes/DarkTheme.tres" type="Theme" id=6]
+
+[sub_resource type="ButtonGroup" id=1]
 
 [node name="GUI" type="Control"]
 anchor_right = 1.0
@@ -14,11 +17,36 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="Toolbar" type="HBoxContainer" parent="."]
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 0
+alignment = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ToolButton" parent="Toolbar" instance=ExtResource( 3 )]
+margin_left = 486.0
+margin_right = 586.0
+group = SubResource( 1 )
+
+[node name="ToolButton2" parent="Toolbar" instance=ExtResource( 3 )]
+group = SubResource( 1 )
+
+[node name="ToolButton3" parent="Toolbar" instance=ExtResource( 3 )]
+margin_left = 694.0
+margin_right = 794.0
+group = SubResource( 1 )
+
 [node name="Panels" type="MarginContainer" parent="."]
 anchor_right = 0.4
 anchor_bottom = 1.0
 mouse_filter = 2
-theme = ExtResource( 3 )
+theme = ExtResource( 6 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -33,7 +61,7 @@ theme = ExtResource( 4 )
 
 [node name="MarginContainer" type="MarginContainer" parent="Panels/VBoxContainer"]
 margin_right = 512.0
-margin_bottom = 477.0
+margin_bottom = 720.0
 mouse_filter = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -42,7 +70,7 @@ size_flags_stretch_ratio = 2.0
 [node name="Editor" type="TextEdit" parent="Panels/VBoxContainer/MarginContainer"]
 visible = false
 margin_right = 512.0
-margin_bottom = 477.0
+margin_bottom = 720.0
 size_flags_vertical = 3
 custom_colors/selection_color = Color( 0.184314, 0.0117647, 0.686275, 1 )
 custom_colors/executing_line_color = Color( 0.0392157, 0, 0.168627, 1 )
@@ -56,6 +84,7 @@ __meta__ = {
 }
 
 [node name="Console" type="RichTextLabel" parent="Panels/VBoxContainer"]
+visible = false
 margin_top = 481.0
 margin_right = 512.0
 margin_bottom = 720.0
