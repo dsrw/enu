@@ -117,7 +117,7 @@ gdobj Terrain of VoxelTerrain:
     if tool_mode == BlockMode:
       let pen = self.find_pen(self.targeted_voxel)
       assert pen.is_some
-      pen.get.draw(self.targeted_voxel + self.current_normal, 1)
+      pen.get.draw(self.targeted_voxel + self.current_normal, 1, save = true)
 
     if tool_mode == CodeMode:
       let pen = self.find_pen(self.targeted_voxel)
@@ -128,7 +128,7 @@ gdobj Terrain of VoxelTerrain:
     if tool_mode == BlockMode:
       let pen = self.find_pen(self.targeted_voxel)
       assert pen.is_some
-      pen.get.draw(self.targeted_voxel, -1)
+      pen.get.draw(self.targeted_voxel, -1, save = true)
 
 type
   VoxelPen* = ref object of Pen
@@ -144,7 +144,7 @@ proc init*(typ:typedesc[VoxelPen], builder: Node, id: string, voxes: VoxSet): Vo
                     id: id, voxes: voxes)
   terrain.pens[id] = result
 
-method draw*(self: VoxelPen, location: Vector3, index: int, save = true) =
+method draw*(self: VoxelPen, location: Vector3, index: int, save = false) =
   self.terrain.dirty = true
   let metadata = self.id & ":" & $index
   let variant = if index == -1:
