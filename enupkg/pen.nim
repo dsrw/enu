@@ -11,7 +11,7 @@ type
     builder*: Node
     voxes*: VoxSet # XXX find a better name
 
-method draw*(self: Pen, location: Vector3, index: int, save = true) =
+method draw*(self: Pen, location: Vector3, index: int, save = false) =
   raise new_exception(AssertionDefect, "You shouldn't be here")
 
 method clear*(self: Pen): bool = false
@@ -19,7 +19,7 @@ method clear*(self: Pen): bool = false
 import grid, terrain
 export draw, clear
 
-proc init*(mode: DrawMode, builder: Node, id: string): Pen =
+proc init*(mode: DrawMode, builder: Node, id: string, voxes: VoxSet): Pen =
   result = case mode:
-  of VoxelMode: VoxelPen.init(builder, "voxel-" & id)
+  of VoxelMode: VoxelPen.init(builder, "voxel-" & id, voxes)
   of GridMode: GridPen.init(builder, "grid-" & id)

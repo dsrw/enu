@@ -72,12 +72,10 @@ proc init*(typ:typedesc[GridPen], builder: Node, id: string): GridPen =
   result = GridPen(grid: grid, builder: builder, id: id)
   grid.pen = result
 
-method draw*(self: GridPen, location: Vector3, index: int, save = true) =
+method draw*(self: GridPen, location: Vector3, index: int, save = false) =
+  assert not save
   let
     index = index - 1
     grid = self.grid
     map_point = grid.world_to_map(location)
   grid.set_cell_item(int(map_point.x), int(map_point.y), int(map_point.z), index)
-  if save:
-    self.voxes.blocks.incl location.to_vox(index)
-

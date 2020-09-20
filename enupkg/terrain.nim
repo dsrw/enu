@@ -135,12 +135,13 @@ type
     voxel_tool: VoxelTool
     terrain: Terrain
 
-proc init*(typ:typedesc[VoxelPen], builder: Node, id: string): VoxelPen =
+proc init*(typ:typedesc[VoxelPen], builder: Node, id: string, voxes: VoxSet): VoxelPen =
   let terrain = game_node.find_node("Terrain") as Terrain
   assert terrain != nil
   let tool = terrain.get_voxel_tool()
   assert tool != nil
-  result = VoxelPen(builder: builder, terrain: terrain, voxel_tool: tool, id: id)
+  result = VoxelPen(builder: builder, terrain: terrain, voxel_tool: tool,
+                    id: id, voxes: voxes)
   terrain.pens[id] = result
 
 method draw*(self: VoxelPen, location: Vector3, index: int, save = true) =

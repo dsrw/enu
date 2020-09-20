@@ -35,8 +35,7 @@ gdobj Builder of Spatial:
     assert self.grid != nil
     self.bind_signals self, "selected"
     self.bind_signals "game_ready", "reload", "pause", "reload_all"
-    self.pen = self.draw_mode.init(self, self.enu_script)
-    self.pen.voxes = self.voxes
+    self.pen = self.draw_mode.init(self, self.enu_script, self.voxes)
 
   proc load_vars() =
     var old_speed = self.speed
