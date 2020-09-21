@@ -1,6 +1,5 @@
 import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_container,
-                      packed_scene, resource_saver, sprite, control,
-                      #[voxel_terrain, voxel_generator, voxel_buffer]#],
+                      packed_scene, resource_saver, sprite, control],
        godot,
        core, globals
 
@@ -8,7 +7,6 @@ gdobj Game of Node:
   var
     reticle: Control
     viewport_container: ViewportContainer
-    #terrain*: Terrain
     triggered = false
     ready = false
     frame_skip = 90
