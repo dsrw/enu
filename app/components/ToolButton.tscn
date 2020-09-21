@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=2]
 
-[ext_resource path="res://textures/reticle.png" type="Texture" id=1]
+[ext_resource path="res://textures/code.png" type="Texture" id=1]
 
 [sub_resource type="StyleBoxFlat" id=1]
 bg_color = Color( 0, 0, 0, 0.290196 )
@@ -38,7 +38,7 @@ custom_styles/hover = SubResource( 1 )
 custom_styles/pressed = SubResource( 2 )
 custom_styles/focus = SubResource( 1 )
 custom_styles/normal = SubResource( 1 )
-custom_constants/hseparation = 4
+custom_constants/hseparation = 0
 toggle_mode = true
 shortcut_in_tooltip = false
 action_mode = 0

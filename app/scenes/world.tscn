@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=2]
+[gd_scene load_steps=25 format=2]
 
 [ext_resource path="res://scenes/default.tscn" type="PackedScene" id=1]
 [ext_resource path="res://scenes/env.tres" type="Environment" id=2]
@@ -8,6 +8,9 @@
 [ext_resource path="res://components/Player.tscn" type="PackedScene" id=6]
 [ext_resource path="res://textures/tile_nrm.png" type="Texture" id=7]
 [ext_resource path="res://materials/highlight.tres" type="Material" id=8]
+[ext_resource path="res://textures/red_block.png" type="Texture" id=9]
+[ext_resource path="res://textures/blue_block.png" type="Texture" id=10]
+[ext_resource path="res://textures/green_block.png" type="Texture" id=11]
 
 [sub_resource type="PlaneMesh" id=1]
 material = ExtResource( 3 )
@@ -107,20 +110,23 @@ voxels/4 = SubResource( 9 )
 
 [sub_resource type="SpatialMaterial" id=11]
 albedo_color = Color( 0, 0.403922, 1, 1 )
+albedo_texture = ExtResource( 10 )
 normal_enabled = true
-normal_scale = 1.0
+normal_scale = 2.0
 normal_texture = ExtResource( 7 )
 uv1_triplanar = true
 
 [sub_resource type="SpatialMaterial" id=12]
 albedo_color = Color( 0.988235, 0.054902, 0.0431373, 1 )
+albedo_texture = ExtResource( 9 )
 normal_enabled = true
-normal_scale = 1.0
+normal_scale = 2.0
 normal_texture = ExtResource( 7 )
 uv1_triplanar = true
 
 [sub_resource type="SpatialMaterial" id=13]
 albedo_color = Color( 0.0784314, 0.968627, 0.027451, 1 )
+albedo_texture = ExtResource( 11 )
 uv1_triplanar = true
 
 [node name="Level" type="Spatial"]
@@ -129,8 +135,7 @@ uv1_triplanar = true
 environment = ExtResource( 2 )
 
 [node name="DirectionalLight" type="DirectionalLight" parent="WorldEnvironment"]
-transform = Transform( 0.6605, 0.450968, -0.600306, 0, 0.799527, 0.60063, 0.750826, -0.396716, 0.528088, 4.56468, 16.5997, 3.67729 )
-light_energy = 1.55
+transform = Transform( 0.642787, 0.663414, -0.383022, 0, 0.5, 0.866026, 0.766044, -0.55667, 0.321394, 4.56468, 16.5997, 3.67729 )
 shadow_enabled = true
 
 [node name="Ground" type="MeshInstance" parent="."]

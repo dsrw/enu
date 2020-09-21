@@ -19,3 +19,4 @@ material = ExtResource( 2 )
 highlight_material = ExtResource( 1 )
 
 [node name="Builder" parent="." instance=ExtResource( 4 )]
+draw_mode = 0

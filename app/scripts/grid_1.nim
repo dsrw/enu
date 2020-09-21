@@ -9,7 +9,7 @@ var
   default_block = 1
   wall_block = 2
 
-speed = 200
+#speed = 30
 #while true:
 block:
   for i in 0..<loops:
