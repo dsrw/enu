@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=2]
+[gd_scene load_steps=15 format=2]
 
 [ext_resource path="res://components/Console.gdns" type="Script" id=1]
 [ext_resource path="res://components/TextEdit.gdns" type="Script" id=2]
@@ -13,20 +13,17 @@
 
 [sub_resource type="ButtonGroup" id=1]
 
-[sub_resource type="AtlasTexture" id=4]
+[sub_resource type="AtlasTexture" id=2]
 
-[sub_resource type="CubeMesh" id=5]
+[sub_resource type="CubeMesh" id=3]
 lightmap_size_hint = Vector2( 1, 1 )
 material = ExtResource( 7 )
 size = Vector3( 1, 1, 1 )
 
-[sub_resource type="MeshTexture" id=6]
-mesh = SubResource( 5 )
-base_texture = SubResource( 4 )
+[sub_resource type="MeshTexture" id=4]
+mesh = SubResource( 3 )
+base_texture = SubResource( 2 )
 image_size = Vector2( 100, 100 )
-
-[sub_resource type="ViewportTexture" id=7]
-viewport_path = NodePath("PreviewMaker")
 
 [node name="GUI" type="Control"]
 anchor_right = 1.0
@@ -71,7 +68,7 @@ icon = null
 margin_left = 746.0
 margin_right = 846.0
 group = SubResource( 1 )
-icon = SubResource( 6 )
+icon = SubResource( 4 )
 
 [node name="Panels" type="MarginContainer" parent="."]
 anchor_right = 0.4
@@ -92,7 +89,7 @@ theme = ExtResource( 4 )
 
 [node name="MarginContainer" type="MarginContainer" parent="Panels/VBoxContainer"]
 margin_right = 512.0
-margin_bottom = 477.0
+margin_bottom = 720.0
 mouse_filter = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -101,7 +98,7 @@ size_flags_stretch_ratio = 2.0
 [node name="Editor" type="TextEdit" parent="Panels/VBoxContainer/MarginContainer"]
 visible = false
 margin_right = 512.0
-margin_bottom = 477.0
+margin_bottom = 720.0
 size_flags_vertical = 3
 custom_colors/selection_color = Color( 0.184314, 0.0117647, 0.686275, 1 )
 custom_colors/executing_line_color = Color( 0.0392157, 0, 0.168627, 1 )
@@ -115,6 +112,7 @@ __meta__ = {
 }
 
 [node name="Console" type="RichTextLabel" parent="Panels/VBoxContainer"]
+visible = false
 margin_top = 481.0
 margin_right = 512.0
 margin_bottom = 720.0
@@ -152,13 +150,3 @@ render_target_update_mode = 0
 script = ExtResource( 10 )
 
 [node name="PreviewWorld" parent="PreviewMaker" instance=ExtResource( 9 )]
-
-[node name="PreviewDebugView" type="TextureRect" parent="."]
-visible = false
-margin_right = 100.0
-margin_bottom = 100.0
-texture = SubResource( 7 )
-expand = true
-__meta__ = {
-"_edit_use_anchors_": false
-}
