@@ -38,6 +38,7 @@ var
   state* = new StateRefs
   open_file* = ""
   action_index* = 1
+  action_count* = 4
 
 proc join_args[T](args: varargs[T]): string =
   args.map_it(&"'{it}'").join " "

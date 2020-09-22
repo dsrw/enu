@@ -61,10 +61,26 @@ gdobj Game of Node:
     self.ready = true
     #trigger "game_ready"
 
+  proc update_action_index*(change: int) =
+    action_index += change
+    if action_index < 0: action_index = action_count - 1
+    if action_index >= action_count: action_index = 0
+    if action_index == 0:
+      self.code_mode()
+    else:
+      self.block_mode(action_index)
+
+  proc next_action*() =
+    self.update_action_index(1)
+
+  proc prev_action*() =
+    self.update_action_index(-1)
+
   proc code_mode*(update_actionbar = true) =
     tool_mode = CodeMode
     self.trigger("retarget")
     self.reticle.visible = true
+    action_index = 0
     if update_actionbar:
       self.trigger("update_actionbar", 0)
 

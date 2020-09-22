@@ -130,19 +130,15 @@ gdobj Player of KinematicBody:
       let pan = event as InputEventPanGesture
       self.pan_delta += pan.delta.y
       if self.pan_delta > 1:
-        self.next_block()
-        self.pan_delta = 0
+        get_game().next_action()
       elif self.pan_delta < -1:
-        self.prev_block()
-        self.pan_delta = 0
+        get_game().prev_action()
 
     if event.is_action_pressed("next"):
-      if tool_mode == BlockMode:
-        self.next_block()
+      get_game().next_action()
 
     if event.is_action_pressed("previous"):
-      if tool_mode == BlockMode:
-        self.prev_block()
+      get_game().prev_action()
 
     if event.is_action_pressed("fire"):
       if self.aim_ray.is_colliding():
