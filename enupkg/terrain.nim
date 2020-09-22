@@ -120,7 +120,7 @@ gdobj Terrain of VoxelTerrain:
     if tool_mode == BlockMode:
       let pen = self.find_pen(self.targeted_voxel)
       assert pen.is_some
-      pen.get.draw(self.targeted_voxel + self.current_normal, 1, save = true)
+      pen.get.draw(self.targeted_voxel + self.current_normal, action_index, save = true)
 
     if tool_mode == CodeMode:
       let pen = self.find_pen(self.targeted_voxel)

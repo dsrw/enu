@@ -2,7 +2,7 @@
 
 [ext_resource path="res://components/Console.gdns" type="Script" id=1]
 [ext_resource path="res://components/TextEdit.gdns" type="Script" id=2]
-[ext_resource path="res://components/ToolButton.tscn" type="PackedScene" id=3]
+[ext_resource path="res://components/ActionButton.tscn" type="PackedScene" id=3]
 [ext_resource path="res://themes/AppleTheme.tres" type="Theme" id=4]
 [ext_resource path="res://textures/reticle.png" type="Texture" id=5]
 [ext_resource path="res://themes/DarkTheme.tres" type="Theme" id=6]

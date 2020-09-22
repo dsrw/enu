@@ -5,7 +5,7 @@ import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_cont
 
 gdobj Game of Node:
   var
-    reticle: Control
+    reticle*: Control
     viewport_container: ViewportContainer
     triggered = false
     ready = false
@@ -61,6 +61,21 @@ gdobj Game of Node:
     self.ready = true
     #trigger "game_ready"
 
+  proc code_mode*(update_actionbar = true) =
+    tool_mode = CodeMode
+    self.trigger("retarget")
+    self.reticle.visible = true
+    if update_actionbar:
+      self.trigger("update_actionbar", 0)
+
+  proc block_mode*(index: int, update_actionbar = true) =
+    tool_mode = BlockMode
+    self.trigger("retarget")
+    self.reticle.visible = false
+    action_index = index
+    if update_actionbar:
+      self.trigger("update_actionbar", index)
+
   method physics_process*(delta: int) =
     if self.ready and not self.triggered and self.frame_skip == 0:
       self.triggered = true
@@ -90,12 +105,12 @@ gdobj Game of Node:
       if event.is_action_pressed("toggle_fullscreen"):
         set_window_fullscreen not is_window_fullscreen()
       elif event.is_action_pressed("mode_1"):
-        trigger("retarget")
-        tool_mode = CodeMode
-        self.reticle.visible = true
+        self.code_mode()
       elif event.is_action_pressed("mode_2"):
-        trigger("retarget")
-        tool_mode =  BlockMode
-        self.reticle.visible = false
+        self.block_mode(1)
+      elif event.is_action_pressed("mode_3"):
+        self.block_mode(2)
+      elif event.is_action_pressed("mode_4"):
+        self.block_mode(3)
 
 proc get_game*(): Game = state.game as Game

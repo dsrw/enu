@@ -51,7 +51,7 @@ gdobj Grid of GridMap:
 
   method on_target_fire() =
     if tool_mode == BlockMode:
-      self.pen.draw(self.point + (self.normal * 0.5), 1)
+      self.pen.draw(self.point + (self.normal * 0.5), action_index)
     else:
       self.select()
 

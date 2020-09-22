@@ -1,6 +1,6 @@
 import ../godotapi / [h_box_container, scene_tree, button, image_texture],
        godot,
-       core, globals, preview_maker
+       core, globals, preview_maker, game
 type
   PreviewResult = tuple[color: string, preview: Image]
 
@@ -12,6 +12,8 @@ gdobj Toolbar of HBoxContainer:
     waiting = false
 
   method ready*() =
+    self.bind_signals self, "action_changed"
+    self.bind_signals "update_actionbar"
     self.preview_maker = self.get_node("../PreviewMaker") as PreviewMaker
     assert not self.preview_maker.is_nil
 
@@ -31,3 +33,14 @@ gdobj Toolbar of HBoxContainer:
       self.preview_maker.generate_block_preview &"{color}-block-grid", proc(preview: Image) =
         self.preview_result = some (color: color, preview: preview)
         self.waiting = false
+
+  method on_update_actionbar(index: int) =
+    let b = self.get_child(index) as Button
+    b.set_pressed true
+
+  method on_action_changed*(button_name: string) =
+    case button_name[7..^1]:
+    of "code": get_game().code_mode(false)
+    of "blue": get_game().block_mode(1, false)
+    of "red": get_game().block_mode(2, false)
+    of "green": get_game().block_mode(3, false)
