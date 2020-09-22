@@ -78,16 +78,21 @@ gdobj Terrain of VoxelTerrain:
           for z in 0..<size_z:
             let v = buffer.get_voxel(x, y, z)
             if v > 0:
-              let m = buffer.get_voxel_metadata(vec3(float x, float y, float z))
-              assert m.get_type == VariantType.String
+              let
+                m = buffer.get_voxel_metadata(vec3(float x, float y, float z))
+                offset = self.block_to_voxel(location)
+                voxel_location = offset + vec3(float x, float y, float z)
+
+              if m.get_type != VariantType.String:
+                # no/bad metadata. Clear it. This shouldn't happen, but it does.
+                # Not sure if it's my bug, or something in godot_voxel.
+                self.voxels_to_clear.add(voxel_location)
+                continue
               let
                 metadata = m.as_string
                 parts = metadata.split(":")
                 id = parts[0]
                 index = parts[1].parse_int
-
-                offset = self.block_to_voxel(location)
-                voxel_location = offset + vec3(float x, float y, float z)
               if id in self.pens:
                 let p = self.pens[id]
                 p.voxes.blocks.incl voxel_location.to_vox(index)
