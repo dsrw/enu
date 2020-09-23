@@ -7,10 +7,11 @@ export dup, with, strformat, strutils, sequtils, sets, tables
 import godot, ../godotapi/node, hashes, sets
 
 type
-  Vox* = array[4, int]
+  Vox* = array[5, int]
   VoxSet* = ref object
     blocks*: HashSet[Vox]
-
+  VoxelSaveKind* = enum
+    SaveNone, SaveBuilder, SaveUser
   DrawMode* = enum
     GridMode, VoxelMode
 
@@ -23,13 +24,14 @@ proc x*(v: Vox): int {.inline.} = v[0]
 proc y*(v: Vox): int {.inline.} = v[1]
 proc z*(v: Vox): int {.inline.} = v[2]
 proc index*(v: Vox): int {.inline.} = v[3]
+proc save_kind*(v: Vox): VoxelSaveKind {.inline.} = VoxelSaveKind v[4]
 
 proc hash*(v: Vox): Hash {.inline.} = v[0..2].hash
 proc `==`*(v1, v2: Vox): bool = v1[0..2] == v2[0..2]
 
-proc to_vox*(v: Vector3, index: int): Vox {.inline.} =
-  [int v.x, int v.y, int v.z, index]
-proc to_vox*(v: Vector3): Vox {.inline.} = v.to_vox(0)
+proc to_vox*(v: Vector3, index: int, save_kind: VoxelSaveKind): Vox {.inline.} =
+  [int v.x, int v.y, int v.z, index, int save_kind]
+proc to_vox*(v: Vector3): Vox {.inline.} = v.to_vox(0, SaveNone)
 proc vec3*(v: Vox): Vector3 {.inline.} =
   vec3(float v.x, float v.y, float v.z)
 proc split*(v: Vox): (Vector3, int) = (vec3(v), v.index)

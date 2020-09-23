@@ -2,10 +2,10 @@ import ../godotapi/[node],
        sets,
        godot, globals, core, options
 
-method draw*(self: Pen, location: Vector3, index: int, save = false) =
-  raise new_exception(AssertionDefect, "You shouldn't be here")
 
-method clear*(self: Pen): bool = false
+
+method draw*(self: Pen, location: Vector3, index: int, save = SaveNone) =
+  raise new_exception(AssertionDefect, "You shouldn't be here")
 
 import grid, terrain
 export draw, clear

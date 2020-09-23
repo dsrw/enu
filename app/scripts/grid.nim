@@ -1,9 +1,15 @@
 import macros
 
+type
+  ColorIndex* = enum
+    blue,
+    red,
+    green
+
 var
   speed* = 30.0
-  index* = 0
   drawing* = true
+  color*: ColorIndex
 
 proc forward*(steps = 1) = discard
 proc back*(steps = 1)    = discard
@@ -22,8 +28,22 @@ proc reset*(clear = false) = discard
 proc save*(name = "default") = discard
 proc restore*(name = "default") = discard
 
-proc set_vars*(idx: int, drw: bool, spd: float) =
-  index = idx
+proc change_color*(amount: int) =
+  var color_index = int color
+  color_index += amount
+  if color_index > int ColorIndex.high:
+    color_index = int ColorIndex.low
+  elif color_index < int ColorIndex.low:
+    color_index = int ColorIndex.high
+  color = ColorIndex color_index
+
+proc next_color*() = change_color 1
+proc prev_color*() = change_color -1
+proc nc*() = next_color()
+proc pc*() = prev_color()
+
+proc set_vars*(color_index: int, drw: bool, spd: float) =
+  color = ColorIndex color_index
   drawing = drw
   speed = spd
 
@@ -32,6 +52,10 @@ proc fill_square*(length = 1) =
     for i in 0..3:
       forward(length - l)
       right()
+
+template times*(count: int, body: untyped): untyped =
+  for x in 0..<count:
+    body
 
 macro dump*(x: typed): untyped =
   let s = x.toStrLit

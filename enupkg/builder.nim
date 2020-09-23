@@ -4,16 +4,17 @@ import ../godotapi / [spatial],
 
 gdobj Builder of Spatial:
   var
-    engine: Engine
     draw_mode* {.gdExport.}: DrawMode
     script_index* {.gdExport.} = 0
     enu_script* {.gdExport.} = "none"
+    paused* = true
+    schedule_save* = false
+    engine: Engine
     callback: proc(delta: float): bool
-    paused = false
     is_running = false
     index: int = 1
     blocks_per_frame = 0.0
-    blocks_this_frame = 0.0
+    blocks_remaining_this_frame = 0.0
     speed = 0.0
     direction = FORWARD
     position = vec3()
@@ -22,7 +23,6 @@ gdobj Builder of Spatial:
     voxes: VoxSet
     pen: Pen
     grid: Node
-    schedule_save* = false
 
   proc `running=`*(val: bool) =
     self.is_running = val
@@ -41,25 +41,24 @@ gdobj Builder of Spatial:
   proc load_vars() =
     var old_speed = self.speed
     self.speed = self.engine.get_float("speed", "grid")
-    self.index = self.engine.get_int("index", "grid")
+    self.index = self.engine.get_int("color", "grid")
     self.drawing = self.engine.get_bool("drawing", "grid")
-
     self.blocks_per_frame = if self.speed == 0:
       float.high
     else:
       self.speed.float / 30.0
     if self.speed != old_speed:
-      self.blocks_this_frame = 0
+      self.blocks_remaining_this_frame = 0
 
   method physics_process*(delta: float64) =
     if not self.paused:
-      self.blocks_this_frame += self.blocks_per_frame
+      self.blocks_remaining_this_frame += self.blocks_per_frame
       try:
         if self.engine.is_nil:
           # if we load paused we won't have a script engine yet
           self.load_script()
         if self.blocks_per_frame > 0:
-          while self.running and self.blocks_this_frame >= 1:
+          while self.running and self.blocks_remaining_this_frame >= 1:
             if self.callback == nil or not self.callback(delta):
               self.running = self.engine.resume()
         else:
@@ -80,10 +79,10 @@ gdobj Builder of Spatial:
     self.load_vars()
     var count = 0
     self.callback = proc(delta: float): bool =
-      while count < steps and self.blocks_this_frame >= 1:
+      while count < steps and self.blocks_remaining_this_frame >= 1:
         self.position += direction
         inc count
-        self.blocks_this_frame -= 1
+        self.blocks_remaining_this_frame -= 1
         self.drop_block()
       return count < steps
     true
@@ -99,7 +98,7 @@ gdobj Builder of Spatial:
   proc sleep(seconds: float): bool =
     var duration = 0.0
     self.blocks_per_frame = 0.0
-    self.blocks_this_frame = 0.0
+    self.blocks_remaining_this_frame = 0.0
     self.callback = proc(delta: float): bool =
       duration += delta
       return duration < seconds
@@ -133,33 +132,32 @@ gdobj Builder of Spatial:
     trigger("script_error")
 
   proc clear() =
-    if not self.pen.clear():
-      for v in self.voxes.blocks:
-        self.pen.draw(v.vec3, -1, save = false)
-    self.voxes.blocks.clear()
+    var removing: seq[Vox]
+    for v in self.voxes.blocks:
+      if v.save_kind == SaveBuilder:
+        self.pen.draw(v.vec3, -1, save = SaveNone)
+        removing.add v
+    for v in removing: self.voxes.blocks.excl v
 
   proc reset(clear = true) =
     self.set_defaults()
-    self.set_vars()
+    if self.engine.initialized: self.set_vars()
     if clear:
       self.clear()
-      self.pen.draw(self.position, 1, save = true)
+      self.pen.draw(self.position, 1, save = SaveUser)
 
   proc drop_block() =
     if self.drawing:
-      self.pen.draw(self.position, self.index, save = true)
+      self.pen.draw(self.position, self.index, save = SaveBuilder)
 
   proc build() =
-    echo "building"
-
     if not file_exists(self.enu_script):
       os.copy_file "scripts/default_grid.nim", self.enu_script
 
     if self.draw_mode == VoxelMode and self.voxes.blocks.len > 0:
       self.paused = true
     self.position = self.translation
-    echo &"drawing at {self.position}"
-    self.pen.draw(self.position, action_index - 1, save = true)
+    self.pen.draw(self.position, action_index - 1, save = SaveUser)
     self.load_script()
 
   method on_game_ready*() =
@@ -193,7 +191,7 @@ gdobj Builder of Spatial:
     debug &"Loading {self.enu_script}. Paused {self.paused}"
     errors[self.enu_script] = @[]
     self.callback = nil
-    self.blocks_this_frame = 0
+    self.blocks_remaining_this_frame = 0
     try:
       #if self.engine.is_nil:
       self.engine = Engine()
@@ -222,8 +220,7 @@ gdobj Builder of Spatial:
     show_editor self.enu_script, self.engine
 
   method reload() =
-    if self.engine.initialized:
-      self.reset()
+    self.reset()
     self.paused = false
     self.load_script()
 

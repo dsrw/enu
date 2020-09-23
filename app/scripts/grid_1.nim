@@ -1,13 +1,15 @@
 import grid
 
+#forward(50)
+
 var
   length = 25
   width = 5
   loops = 2
   wall_height = 2
   level_height = 2
-  default_block = 1
-  wall_block = 2
+  default_color = blue
+  wall_color = red
 
 speed = 300
 #while true:
@@ -15,20 +17,20 @@ block:
   for i in 0..<loops:
     for y in 0..<4:
       for x in 0..<length:
-        index = default_block
+        color = default_color
         if x > 0: forward()
         save()
         if length - width == x:
           save("next_level")
         elif length - width > x:
-          index = wall_block
+          color = wall_color
           up(wall_height)
         else:
           up(level_height)
         restore()
         right()
         forward(width)
-        index = wall_block
+        color = wall_color
         up(wall_height)
         restore()
 
@@ -44,7 +46,7 @@ block:
   drawing = false
   up(5)
   drawing = true
-  index = 3
+  color = green
   for t in 0..5:
     forward()
     left()
@@ -52,9 +54,3 @@ block:
     left()
     forward()
     up()
-
-  #sleep(5)
-  #echo "clearing"
-  #sleep(1)
-  #reset(true)
-  #sleep(5)

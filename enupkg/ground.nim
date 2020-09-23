@@ -24,9 +24,9 @@ gdobj Ground of MeshInstance:
       for x in -2..2:
         for z in -2..2:
           let v = [int x.float + p.x, 0,
-                   int z.float + p.z, 0]
+                   int z.float + p.z, 0, 0]
           if v in pen.voxes.blocks:
-            pen.draw(p, action_index - 1, save = true)
+            pen.draw(p, action_index - 1, save = SaveUser)
             return
     var t = now()
     let
@@ -36,6 +36,7 @@ gdobj Ground of MeshInstance:
     b.translation = p
     b.name = "Builder" & $max_grid_index
     b.schedule_save = true
+    b.paused = true
     self.data.add_child(b)
     b.owner = self.data
 

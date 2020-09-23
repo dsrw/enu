@@ -1,12 +1,14 @@
 import ../godotapi / [mesh, voxel_terrain, voxel_tool, voxel_library,
                       voxel_buffer, voxel_map, voxel],
-       godot,
+       godot, sets,
        globals, core, pen
 
 gdobj Terrain of VoxelTerrain:
   var
     targeted_voxel: Vector3
+    last_pen: Option[Pen]
     current_normal: Vector3
+    highlighted_vox: Option[Vox]
     current_point: Vector3
     pens: Table[string, Pen]
     selected_voxes: VoxSet
@@ -16,6 +18,7 @@ gdobj Terrain of VoxelTerrain:
     dirty = false
     voxels_to_clear: seq[Vector3]
     game_ready = false
+    next_highlight = now() # naive rate limiter
 
   method ready*() =
     self.bind_signals(self, ["target_in", "target_out", "target_move",
@@ -40,24 +43,39 @@ gdobj Terrain of VoxelTerrain:
         return some(pen)
 
   proc highlight(targeted_voxel: Vector3) =
-    let pen = self.find_pen(targeted_voxel)
+    var pen = self.last_pen
+    if pen.is_some:
+      if targeted_voxel.to_vox notin pen.get.voxes.blocks:
+        pen = self.find_pen(targeted_voxel)
+    else:
+      pen = self.find_pen(targeted_voxel)
     assert pen.is_some
-    let
+    self.last_pen = pen
+    var
       voxes = pen.get.voxes
       blocks = voxes.blocks
       tool = self.get_voxel_tool()
-    if voxes != self.selected_voxes:
+    if self.targeted_voxel.is_some or voxes != self.selected_voxes:
+      self.deselect()
       self.selected_voxes = voxes
-      for vox in blocks:
-        tool.set_voxel(vox.vec3, 1)
+      var step = 1
+      if blocks.len >= 10000:
+        var vox = blocks[targeted_voxel.to_vox]
+        self.next_highlight = now() + 0.05.seconds
+        tool.set_voxel(targeted_voxel, 1)
+        self.highlighted_vox  = some(vox)
+      else:
+        self.next_highlight = now() + 0.25.seconds
+        for vox in blocks:
+          tool.set_voxel(vox.vec3, 1)
 
   method process*(delta: float) =
     if self.game_ready:
+
       if self.dirty:
         self.save_modified_blocks()
         self.dirty = false
       elif self.voxels_to_clear.len > 0:
-        echo &"clearing {self.voxels_to_clear.len} voxels"
         let tool = self.get_voxel_tool()
         for loc in self.voxels_to_clear:
           tool.set_voxel_metadata(loc, new_variant())
@@ -83,37 +101,46 @@ gdobj Terrain of VoxelTerrain:
                 offset = self.block_to_voxel(location)
                 voxel_location = offset + vec3(float x, float y, float z)
 
-              if m.get_type != VariantType.String:
+              assert m.get_type == VariantType.String
                 # no/bad metadata. Clear it. This shouldn't happen, but it does.
                 # Not sure if it's my bug, or something in godot_voxel.
-                self.voxels_to_clear.add(voxel_location)
-                continue
+                # self.voxels_to_clear.add(voxel_location)
+                # continue
               let
                 metadata = m.as_string
                 parts = metadata.split(":")
                 id = parts[0]
                 index = parts[1].parse_int
+                save_kind = VoxelSaveKind parts[2].parse_int
               if id in self.pens:
                 let p = self.pens[id]
-                p.voxes.blocks.incl voxel_location.to_vox(index)
+                p.voxes.blocks.incl voxel_location.to_vox(index, save_kind)
               else:
                 self.voxels_to_clear.add(voxel_location)
 
   method on_target_move(point, normal: Vector3) =
-    self.current_point = point
-    self.current_normal = normal
-    let targeted_voxel = self.find_targeted_voxel(point, normal)
-    if targeted_voxel != self.targeted_voxel:
-      self.deselect()
-      self.targeted_voxel = targeted_voxel
-      if tool_mode == CodeMode:
-        self.highlight(targeted_voxel)
+    if not editing() and now() > self.next_highlight:
+      self.current_point = point
+      self.current_normal = normal
+      let targeted_voxel = self.find_targeted_voxel(point, normal)
+      if targeted_voxel != self.targeted_voxel:
+        #self.deselect()
+        self.targeted_voxel = targeted_voxel
+        if tool_mode == CodeMode:
+          self.highlight(targeted_voxel)
 
   proc deselect() =
-    self.targeted_voxel = vec3()
-    if self.selected_voxes != nil:
-      self.rebuild(self.selected_voxes)
-      self.selected_voxes = nil
+    if self.highlighted_vox.is_some:
+      let
+        vox = self.highlighted_vox.get
+        tool = self.get_voxel_tool()
+      tool.set_voxel(vox.vec3, vox.index + 2)
+      self.highlighted_vox = none(Vox)
+    else:
+      self.targeted_voxel = vec3()
+      if self.selected_voxes != nil:
+        self.rebuild(self.selected_voxes)
+        self.selected_voxes = nil
 
   method on_target_out() =
     self.deselect()
@@ -128,7 +155,7 @@ gdobj Terrain of VoxelTerrain:
       if not pen.is_some:
         err &"No pen found for {self.targeted_voxel}. Pen count {self.pens.len}"
         return
-      pen.get.draw(self.targeted_voxel + self.current_normal, action_index - 1, save = true)
+      pen.get.draw(self.targeted_voxel + self.current_normal, action_index - 1, save = SaveUser)
 
     if tool_mode == CodeMode:
       let pen = self.find_pen(self.targeted_voxel)
@@ -140,7 +167,7 @@ gdobj Terrain of VoxelTerrain:
     if tool_mode == BlockMode:
       let pen = self.find_pen(self.targeted_voxel)
       assert pen.is_some
-      pen.get.draw(self.targeted_voxel, -1, save = true)
+      pen.get.draw(self.targeted_voxel, -1, save = SaveUser)
 
 type
   VoxelPen* = ref object of Pen
@@ -157,9 +184,9 @@ proc init*(typ:typedesc[VoxelPen], builder: Node, id: string, voxes: VoxSet): Vo
   debug &"adding pen {id}"
   terrain.pens[id] = result
 
-method draw*(self: VoxelPen, location: Vector3, index: int, save = false) =
+method draw*(self: VoxelPen, location: Vector3, index: int, save_kind = SaveNone) =
   self.terrain.dirty = true
-  let metadata = self.id & ":" & $index
+  let metadata = &"{self.id}:{index}:{int save_kind}"
   let variant = if index == -1:
     new_variant()
   else:
@@ -169,16 +196,13 @@ method draw*(self: VoxelPen, location: Vector3, index: int, save = false) =
 
   # not good. Fix me.
   if index == -2:
-    # highlighting
     self.voxel_tool.set_voxel(location, 1)
   elif index == -1:
-    # clearing
     self.voxel_tool.set_voxel(location, 0)
   else:
-    # drawing
     self.voxel_tool.set_voxel(location, index + 2)
-  if save and index != -2:
+  if save_kind != SaveNone and index != -2:
     if index == -1:
-      self.voxes.blocks.excl location.to_vox(index)
+      self.voxes.blocks.excl location.to_vox(index, save_kind)
     else:
-      self.voxes.blocks.incl location.to_vox(index)
+      self.voxes.blocks.incl location.to_vox(index, save_kind)

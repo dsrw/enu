@@ -1,3 +1,55 @@
-[gd_scene format=2]
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://components/Builder.gdns" type="Script" id=1]
+[ext_resource path="res://components/Builder.tscn" type="PackedScene" id=2]
 
 [node name="data" type="Spatial"]
+
+[node name="Builder0" type="Spatial" parent="." instance=ExtResource( 2 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -8 )
+script = ExtResource( 1 )
+draw_mode = 1
+script_index = 1
+enu_script = "scripts/grid_1.nim"
+
+[node name="Builder1" type="Spatial" parent="." instance=ExtResource( 2 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 8 )
+script = ExtResource( 1 )
+draw_mode = 1
+script_index = 2
+enu_script = "scripts/grid_2.nim"
+
+[node name="Builder2" type="Spatial" parent="." instance=ExtResource( 2 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 11 )
+script = ExtResource( 1 )
+draw_mode = 1
+script_index = 3
+enu_script = "scripts/grid_3.nim"
+
+[node name="Builder3" type="Spatial" parent="." instance=ExtResource( 2 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0, 17 )
+script = ExtResource( 1 )
+draw_mode = 1
+script_index = 4
+enu_script = "scripts/grid_4.nim"
+
+[node name="Builder4" type="Spatial" parent="." instance=ExtResource( 2 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 0, -18 )
+script = ExtResource( 1 )
+draw_mode = 1
+script_index = 5
+enu_script = "scripts/grid_5.nim"
+
+[node name="Builder5" type="Spatial" parent="." instance=ExtResource( 2 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 79, 0, -53 )
+script = ExtResource( 1 )
+draw_mode = 1
+script_index = 6
+enu_script = "scripts/grid_6.nim"
+
+[node name="Builder6" type="Spatial" parent="." instance=ExtResource( 2 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -1 )
+script = ExtResource( 1 )
+draw_mode = 1
+script_index = 7
+enu_script = "scripts/grid_7.nim"
