@@ -35,6 +35,8 @@ gdobj Game of Node:
       trigger("mouse_captured")
       warp_mouse_position(center)
       set_mouse_mode MOUSE_MODE_CAPTURED
+      echo "skipping next mouse move"
+      skip_next_mouse_move = true
     else:
       trigger("mouse_released")
       set_mouse_mode MOUSE_MODE_VISIBLE

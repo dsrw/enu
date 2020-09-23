@@ -146,7 +146,7 @@ gdobj Terrain of VoxelTerrain:
       tool.set_voxel(vox.vec3, vox.index + 2)
       self.highlighted_vox = none(Vox)
     else:
-      #self.targeted_voxel = vec3()
+      self.targeted_voxel = vec3()
       if self.selected_voxes != nil:
         self.rebuild(self.selected_voxes)
         self.selected_voxes = nil

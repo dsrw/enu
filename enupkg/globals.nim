@@ -41,6 +41,7 @@ var
   action_count* = 4
   pens*: seq[Pen]
   max_grid_index* = 0
+  skip_next_mouse_move* = false
 
 proc join_args[T](args: varargs[T]): string =
   args.map_it(&"'{it}'").join " "

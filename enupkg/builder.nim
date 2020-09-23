@@ -154,7 +154,7 @@ gdobj Builder of Spatial:
     if not file_exists(self.enu_script):
       os.copy_file "scripts/default_grid.nim", self.enu_script
 
-    if self.draw_mode == VoxelMode and self.voxes.blocks.len <= 1:
+    if not self.schedule_save and self.draw_mode == VoxelMode and self.voxes.blocks.len <= 1:
       self.paused = false
     self.position = self.translation
     self.pen.draw(self.position, action_index - 1, save = SaveUser)
