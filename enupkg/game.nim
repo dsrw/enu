@@ -1,6 +1,6 @@
 import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_container,
-                      packed_scene, resource_saver, sprite, control],
-       godot,
+                      packed_scene, resource_saver, sprite, control, viewport],
+       godot, threadpool,
        core, globals
 
 gdobj Game of Node:
@@ -10,14 +10,34 @@ gdobj Game of Node:
     triggered = false
     ready = false
     frame_skip = 90
+    pack: FlowVar[PackedScene]
+    save_requested: Option[string]
+
+  proc pack_scene(scene: Node): PackedScene =
+    result = gdnew[PackedScene]()
+    debug $result.pack(scene)
+
+  method process*(delta: float) =
+    if not self.pack.is_nil and self.pack.is_ready:
+      let
+        scene_name = self.save_requested.get
+        full_path = &"res://scenes/{scene_name}.tscn"
+      self.save_requested = none(string)
+      debug $save(full_path, ^self.pack)
+      self.pack = nil
+    elif self.pack.is_nil and self.save_requested.is_some:
+      self.pack = spawn self.pack_scene(self.find_node("data"))
 
   proc `mouse_captured=`*(captured: bool) =
-    set_mouse_mode if captured:
+    if captured:
+      # center mouse before capturing to ensure clicks are handled on macos
+      let center = self.get_viewport().get_visible_rect().size * 0.5
       trigger("mouse_captured")
-      MOUSE_MODE_CAPTURED
+      warp_mouse_position(center)
+      set_mouse_mode MOUSE_MODE_CAPTURED
     else:
       trigger("mouse_released")
-      MOUSE_MODE_VISIBLE
+      set_mouse_mode MOUSE_MODE_VISIBLE
 
   proc mouse_captured*(): bool =
     get_mouse_mode() == MOUSE_MODE_CAPTURED
@@ -30,6 +50,7 @@ gdobj Game of Node:
 
   method ready*() {.gdExport.} =
     state.game = self
+    self.mouse_captured = true
     self.reticle = self.find_node("Reticle").as(Control)
     self.viewport_container = self.get_node("ViewportContainer").as(ViewportContainer)
 
@@ -50,11 +71,7 @@ gdobj Game of Node:
       globals.save_scene()
 
     globals.save_scene = proc(scene_name: string) =
-      let
-        packed_scene = gdnew[PackedScene]()
-        data = self.find_node("data")
-      debug $packed_scene.pack(data)
-      debug $save(&"res://scenes/{scene_name}.tscn", packed_scene)
+      self.save_requested = some(scene_name)
 
     globals.pause = proc() =
       trigger("pause")

@@ -1,15 +1,6 @@
 import ../godotapi/[node],
        sets,
-       godot, core, options
-
-type
-  DrawMode* = enum
-    GridMode, VoxelMode
-
-  Pen* = ref object of RootObj
-    id*: string
-    builder*: Node
-    voxes*: VoxSet # XXX find a better name
+       godot, globals, core, options
 
 method draw*(self: Pen, location: Vector3, index: int, save = false) =
   raise new_exception(AssertionDefect, "You shouldn't be here")
@@ -23,3 +14,4 @@ proc init*(mode: DrawMode, builder: Node, id: string, voxes: VoxSet): Pen =
   result = case mode:
   of VoxelMode: VoxelPen.init(builder, "voxel-" & id, voxes)
   of GridMode: GridPen.init(builder, "grid-" & id)
+  pens.add result

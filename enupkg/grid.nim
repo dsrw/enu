@@ -51,7 +51,7 @@ gdobj Grid of GridMap:
 
   method on_target_fire() =
     if tool_mode == BlockMode:
-      self.pen.draw(self.point + (self.normal * 0.5), action_index)
+      self.pen.draw(self.point + (self.normal * 0.5), action_index + 1)
     else:
       self.select()
 
@@ -74,7 +74,6 @@ proc init*(typ:typedesc[GridPen], builder: Node, id: string): GridPen =
 
 method draw*(self: GridPen, location: Vector3, index: int, save = false) =
   let
-    index = index - 1
     grid = self.grid
     map_point = grid.world_to_map(location)
   grid.set_cell_item(int(map_point.x), int(map_point.y), int(map_point.z), index)

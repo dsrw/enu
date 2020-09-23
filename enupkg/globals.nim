@@ -1,7 +1,7 @@
 import ../godotapi / [node, scene_tree, voxel_buffer],
        godot,
-       engine,
-       strformat, math, strutils, sequtils, compiler/lineinfos, tables
+       engine, core,
+       strformat, math, strutils, sequtils, compiler/lineinfos, tables, sets
 
 export strformat.`&`
 
@@ -39,6 +39,8 @@ var
   open_file* = ""
   action_index* = 1
   action_count* = 4
+  pens*: seq[Pen]
+  max_grid_index* = 0
 
 proc join_args[T](args: varargs[T]): string =
   args.map_it(&"'{it}'").join " "

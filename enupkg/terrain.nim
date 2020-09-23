@@ -28,14 +28,14 @@ gdobj Terrain of VoxelTerrain:
   proc rebuild(voxes: VoxSet) =
     let tool = self.get_voxel_tool()
     for vox in voxes.blocks:
-      tool.set_voxel(vox.vec3, vox.index + 1)
+      tool.set_voxel(vox.vec3, vox.index + 2)
 
   proc find_targeted_voxel(point, normal: Vector3): Vector3 =
     let diffed = (vec3(1, 1, 1) + normal) * 0.5
     result = point - diffed
 
   proc find_pen(targeted_voxel: Vector3): Option[Pen] =
-    for pen in self.pens.values:
+    for id, pen in self.pens:
       if targeted_voxel.to_vox in pen.voxes.blocks:
         return some(pen)
 
@@ -104,6 +104,7 @@ gdobj Terrain of VoxelTerrain:
     self.current_normal = normal
     let targeted_voxel = self.find_targeted_voxel(point, normal)
     if targeted_voxel != self.targeted_voxel:
+      self.deselect()
       self.targeted_voxel = targeted_voxel
       if tool_mode == CodeMode:
         self.highlight(targeted_voxel)
@@ -124,8 +125,10 @@ gdobj Terrain of VoxelTerrain:
   method on_target_fire() =
     if tool_mode == BlockMode:
       let pen = self.find_pen(self.targeted_voxel)
-      assert pen.is_some
-      pen.get.draw(self.targeted_voxel + self.current_normal, action_index, save = true)
+      if not pen.is_some:
+        err &"No pen found for {self.targeted_voxel}. Pen count {self.pens.len}"
+        return
+      pen.get.draw(self.targeted_voxel + self.current_normal, action_index - 1, save = true)
 
     if tool_mode == CodeMode:
       let pen = self.find_pen(self.targeted_voxel)
@@ -151,6 +154,7 @@ proc init*(typ:typedesc[VoxelPen], builder: Node, id: string, voxes: VoxSet): Vo
   assert tool != nil
   result = VoxelPen(builder: builder, terrain: terrain, voxel_tool: tool,
                     id: id, voxes: voxes)
+  debug &"adding pen {id}"
   terrain.pens[id] = result
 
 method draw*(self: VoxelPen, location: Vector3, index: int, save = false) =
@@ -162,6 +166,19 @@ method draw*(self: VoxelPen, location: Vector3, index: int, save = false) =
     metadata.to_variant
 
   self.voxel_tool.set_voxel_metadata(location, variant)
-  self.voxel_tool.set_voxel(location, index + 1)
-  if save:
-    self.voxes.blocks.incl location.to_vox(index)
+
+  # not good. Fix me.
+  if index == -2:
+    # highlighting
+    self.voxel_tool.set_voxel(location, 1)
+  elif index == -1:
+    # clearing
+    self.voxel_tool.set_voxel(location, 0)
+  else:
+    # drawing
+    self.voxel_tool.set_voxel(location, index + 2)
+  if save and index != -2:
+    if index == -1:
+      self.voxes.blocks.excl location.to_vox(index)
+    else:
+      self.voxes.blocks.incl location.to_vox(index)

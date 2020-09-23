@@ -1,12 +1,13 @@
 import ../godotapi / [spatial],
-       godot, tables, math, sets, sugar, sequtils, hashes,
+       godot, tables, math, sets, sugar, sequtils, hashes, os,
        core, globals, engine, pen
 
 gdobj Builder of Spatial:
   var
     engine: Engine
     draw_mode* {.gdExport.}: DrawMode
-    enu_script* {.gdExport.} = "scripts/grid_1.nim"
+    script_index* {.gdExport.} = 0
+    enu_script* {.gdExport.} = "none"
     callback: proc(delta: float): bool
     paused = false
     is_running = false
@@ -21,6 +22,7 @@ gdobj Builder of Spatial:
     voxes: VoxSet
     pen: Pen
     grid: Node
+    schedule_save* = false
 
   proc `running=`*(val: bool) =
     self.is_running = val
@@ -29,17 +31,9 @@ gdobj Builder of Spatial:
 
   proc running*: bool = self.is_running
 
-  method ready*() =
-    self.voxes = VoxSet()
-    self.grid = self.get_node("Grid")
-    assert self.grid != nil
-    self.bind_signals self, "selected"
-    self.bind_signals "game_ready", "reload", "pause", "reload_all"
-    self.pen = self.draw_mode.init(self, self.enu_script, self.voxes)
-
   proc set_defaults() =
     self.direction = FORWARD
-    self.position = vec3()
+    self.position = self.translation
     self.speed = 30.0
     self.index = 0
     self.drawing = true
@@ -61,6 +55,9 @@ gdobj Builder of Spatial:
     if not self.paused:
       self.blocks_this_frame += self.blocks_per_frame
       try:
+        if self.engine.is_nil:
+          # if we load paused we won't have a script engine yet
+          self.load_script()
         if self.blocks_per_frame > 0:
           while self.running and self.blocks_this_frame >= 1:
             if self.callback == nil or not self.callback(delta):
@@ -71,6 +68,10 @@ gdobj Builder of Spatial:
 
       except VMQuit as e:
         self.error(e)
+
+    if self.schedule_save:
+      self.schedule_save = false
+      save_scene()
 
   proc set_vars() =
     self.engine.call_proc("set_vars", module_name = "grid", self.index, self.drawing, self.speed)
@@ -148,20 +149,55 @@ gdobj Builder of Spatial:
     if self.drawing:
       self.pen.draw(self.position, self.index, save = true)
 
-  method on_game_ready*() =
+  proc build() =
+    echo "building"
+
+    if not file_exists(self.enu_script):
+      os.copy_file "scripts/default_grid.nim", self.enu_script
+
     if self.draw_mode == VoxelMode and self.voxes.blocks.len > 0:
       self.paused = true
-    self.pen.draw(self.position, 1, save = true)
+    self.position = self.translation
+    echo &"drawing at {self.position}"
+    self.pen.draw(self.position, action_index - 1, save = true)
     self.load_script()
 
+  method on_game_ready*() =
+    self.build()
+
+  method ready*() =
+    self.voxes = VoxSet()
+    self.grid = self.get_node("Grid")
+    assert self.grid != nil
+    self.bind_signals self, "selected"
+    self.bind_signals "game_ready", "reload", "pause", "reload_all"
+    if self.script_index == 0:
+      inc max_grid_index
+      self.script_index = max_grid_index
+      self.paused = true
+    elif self.script_index > max_grid_index:
+      max_grid_index = self.script_index
+
+    self.enu_script = &"scripts/grid_{self.script_index}.nim"
+    self.pen = self.draw_mode.init(self, self.enu_script, self.voxes)
+
+    if self.schedule_save:
+      self.build()
+
   proc load_script() =
+    if self.enu_script == "none":# or self.paused:
+      # can't use empty string because it gets set as nil, which is no longer valid nim.
+      # can probably be fixed in godot-nim
+      return
+    var t = now()
     debug &"Loading {self.enu_script}. Paused {self.paused}"
     errors[self.enu_script] = @[]
     self.callback = nil
     self.blocks_this_frame = 0
     try:
-      if self.engine.is_nil:
-        self.engine = Engine()
+      #if self.engine.is_nil:
+      self.engine = Engine()
+      if not (self.paused or self.engine.initialized):
         with self.engine:
           load(self.enu_script)
           expose("grid", "up", a => self.up(get_int(a, 0)))
@@ -178,29 +214,16 @@ gdobj Builder of Spatial:
           expose "grid", "reset", proc(a: VmArgs): bool =
             self.reset(get_bool(a, 0))
             false
-      self.running = self.engine.run()
+        self.running = self.engine.run()
     except VMQuit as e:
       self.error(e)
-
-  proc highlight() =
-    discard
-    # let lib = self.mesh_library
-    # for index in lib.get_item_list():
-    #   let mesh = lib.get_item_mesh(index)
-    #   mesh.surface_set_material(0, self.highlight_material)
-
-  proc deselect() =
-    discard
-    # let lib = self.mesh_library
-    # for index in lib.get_item_list():
-    #   let mesh = lib.get_item_mesh(index)
-    #   mesh.surface_set_material(0, self.original_materials[index])
 
   method on_selected() =
     show_editor self.enu_script, self.engine
 
   method reload() =
-    self.reset()
+    if self.engine.initialized:
+      self.reset()
     self.paused = false
     self.load_script()
 

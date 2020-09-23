@@ -4,12 +4,20 @@ import std/with, strformat, strutils, sequtils, sets, tables
 export dup, with, strformat, strutils, sequtils, sets, tables
 
 ### Vox ###
-import godot, hashes, sets
+import godot, ../godotapi/node, hashes, sets
 
 type
   Vox* = array[4, int]
   VoxSet* = ref object
     blocks*: HashSet[Vox]
+
+  DrawMode* = enum
+    GridMode, VoxelMode
+
+  Pen* = ref object of RootObj
+    id*: string
+    builder*: Node
+    voxes*: VoxSet # XXX find a better name
 
 proc x*(v: Vox): int {.inline.} = v[0]
 proc y*(v: Vox): int {.inline.} = v[1]

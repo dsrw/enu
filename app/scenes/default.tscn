@@ -1,21 +1,3 @@
-[gd_scene load_steps=5 format=2]
-
-[ext_resource path="res://materials/highlight.tres" type="Material" id=1]
-[ext_resource path="res://materials/black.tres" type="Material" id=2]
-[ext_resource path="res://components/Builder.tscn" type="PackedScene" id=4]
-[ext_resource path="res://components/Bot.tscn" type="PackedScene" id=6]
+[gd_scene format=2]
 
 [node name="data" type="Spatial"]
-
-[node name="Bot1" parent="." instance=ExtResource( 6 )]
-transform = Transform( 1.00044, 0, 0, 0, 1, 0, 0, 0, 1.00044, -1.5, 0, 0.5 )
-enu_script = "scripts/bot_1.nim"
-highlight_material = ExtResource( 1 )
-
-[node name="Bot2" parent="." instance=ExtResource( 6 )]
-transform = Transform( -1.00043, 0, -3.25184e-06, 0, 1, 0, 3.25184e-06, 0, -1.00043, -17.4167, 0.00150002, -0.466575 )
-enu_script = "scripts/bot_2.nim"
-material = ExtResource( 2 )
-highlight_material = ExtResource( 1 )
-
-[node name="Builder" parent="." instance=ExtResource( 4 )]
