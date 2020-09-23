@@ -2,7 +2,7 @@ import ../godotapi / [text_edit, scene_tree, node, input_event, input_event_key,
                       rich_text_label, global_constants],
        godot,
        strutils,
-       globals
+       globals, core
 
 gdobj Console of RichTextLabel:
   var
@@ -11,13 +11,14 @@ gdobj Console of RichTextLabel:
 
   proc init*() =
     logger = proc(level, msg: string) =
+      echo msg
       self.log_text &= &"[b]{level.to_upper}[/b] {msg}\n"
     echo_console = proc(msg: string) =
       self.log_text &= &"{msg}\n"
     self.default_mouse_filter = self.mouse_filter
 
   method ready*() =
-    self.bind_signals("mouse_captured", "mouse_released", "clear_console")
+    self.bind_signals("mouse_captured", "mouse_released", "clear_console", "toggle_console")
 
   method process*(delta: float) =
     if not self.log_text.is_empty():
@@ -32,3 +33,6 @@ gdobj Console of RichTextLabel:
 
   method on_clear_console() =
     self.clear()
+
+  method on_toggle_console() =
+    self.visible = not self.visible

@@ -1,6 +1,6 @@
 import ../godotapi / [text_edit, scene_tree, node, input_event, global_constants],
        godot,
-       globals, engine,
+       core, globals, engine,
        strutils, tables, compiler/lineinfos
 
 gdobj Editor of TextEdit:
@@ -28,8 +28,13 @@ gdobj Editor of TextEdit:
 
   proc highlight_errors =
     self.clear_executing_line()
-    for err in errors[self.file_name]:
-      self.set_line_as_marked(int64(err.info.line - 1), true)
+    if self.file_name in errors:
+      for err in errors[self.file_name]:
+        self.set_line_as_marked(int64(err.info.line - 1), true)
+
+  proc `executing_line=`*(line: int) =
+    if self.get_line_count >= line:
+      self.set_executing_line(line)
 
   method ready* =
     self.bind_signals("save", "script_error")
@@ -44,9 +49,9 @@ gdobj Editor of TextEdit:
       self.clear_errors()
       self.highlight_errors()
 
-      self.set_executing_line(int64 self.engine.current_line.line - 1)
+      self.executing_line = int self.engine.current_line.line - 1
       self.engine.line_changed = proc(current: TLineInfo, previous: TLineInfo) =
-        self.set_executing_line(int64 current.line - 1)
+        self.executing_line = int current.line - 1
 
     editing = proc: bool = self.visible
 

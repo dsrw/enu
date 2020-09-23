@@ -1,20 +1,43 @@
 import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_container,
-                      packed_scene, resource_saver, sprite, control],
-       godot,
-       globals
+                      packed_scene, resource_saver, sprite, control, viewport],
+       godot, threadpool,
+       core, globals
 
 gdobj Game of Node:
   var
-    reticle: Control
+    reticle*: Control
     viewport_container: ViewportContainer
+    triggered = false
+    ready = false
+    frame_skip = 90
+    pack: FlowVar[PackedScene]
+    save_requested: Option[string]
+
+  proc pack_scene(scene: Node): PackedScene =
+    result = gdnew[PackedScene]()
+    debug $result.pack(scene)
+
+  method process*(delta: float) =
+    if not self.pack.is_nil and self.pack.is_ready:
+      let
+        scene_name = self.save_requested.get
+        full_path = &"res://scenes/{scene_name}.tscn"
+      self.save_requested = none(string)
+      debug $save(full_path, ^self.pack)
+      self.pack = nil
+    elif self.pack.is_nil and self.save_requested.is_some:
+      self.pack = spawn self.pack_scene(self.find_node("data"))
 
   proc `mouse_captured=`*(captured: bool) =
-    set_mouse_mode if captured:
+    if captured:
+      # center mouse before capturing to ensure clicks are handled on macos
+      let center = self.get_viewport().get_visible_rect().size * 0.5
       trigger("mouse_captured")
-      MOUSE_MODE_CAPTURED
+      warp_mouse_position(center)
+      set_mouse_mode MOUSE_MODE_CAPTURED
     else:
       trigger("mouse_released")
-      MOUSE_MODE_VISIBLE
+      set_mouse_mode MOUSE_MODE_VISIBLE
 
   proc mouse_captured*(): bool =
     get_mouse_mode() == MOUSE_MODE_CAPTURED
@@ -27,8 +50,10 @@ gdobj Game of Node:
 
   method ready*() {.gdExport.} =
     state.game = self
+    self.mouse_captured = true
     self.reticle = self.find_node("Reticle").as(Control)
     self.viewport_container = self.get_node("ViewportContainer").as(ViewportContainer)
+
     self.shrink = 2
     globals.capture_mouse = proc() =
       self.mouse_captured = true
@@ -46,14 +71,50 @@ gdobj Game of Node:
       globals.save_scene()
 
     globals.save_scene = proc(scene_name: string) =
-      let
-        packed_scene = gdnew[PackedScene]()
-        data = self.find_node("data")
-      debug $packed_scene.pack(data)
-      debug $save(&"res://scenes/{scene_name}.tscn", packed_scene)
+      self.save_requested = some(scene_name)
 
     globals.pause = proc() =
       trigger("pause")
+    self.ready = true
+    #trigger "game_ready"
+
+  proc update_action_index*(change: int) =
+    action_index += change
+    if action_index < 0: action_index = action_count - 1
+    if action_index >= action_count: action_index = 0
+    if action_index == 0:
+      self.code_mode()
+    else:
+      self.block_mode(action_index)
+
+  proc next_action*() =
+    self.update_action_index(1)
+
+  proc prev_action*() =
+    self.update_action_index(-1)
+
+  proc code_mode*(update_actionbar = true) =
+    tool_mode = CodeMode
+    self.trigger("retarget")
+    self.reticle.visible = true
+    action_index = 0
+    if update_actionbar:
+      self.trigger("update_actionbar", 0)
+
+  proc block_mode*(index: int, update_actionbar = true) =
+    tool_mode = BlockMode
+    self.trigger("retarget")
+    self.reticle.visible = false
+    action_index = index
+    if update_actionbar:
+      self.trigger("update_actionbar", index)
+
+  method physics_process*(delta: int) =
+    if self.ready and not self.triggered and self.frame_skip == 0:
+      self.triggered = true
+      trigger "game_ready"
+    elif self.ready and self.frame_skip > 0:
+      self.frame_skip -= 1
 
   method unhandled_input*(event: InputEvent) =
     if event.is_action_pressed("save_and_reload"):
@@ -66,6 +127,8 @@ gdobj Game of Node:
       globals.pause()
     elif event.is_action_pressed("clear_console"):
       trigger("clear_console")
+    elif event.is_action_pressed("toggle_console"):
+      trigger("toggle_console")
     elif not globals.editing():
       if not self.mouse_captured and event.is_action_pressed("click") or
           event.is_action_pressed("toggle_mouse_captured"):
@@ -75,12 +138,12 @@ gdobj Game of Node:
       if event.is_action_pressed("toggle_fullscreen"):
         set_window_fullscreen not is_window_fullscreen()
       elif event.is_action_pressed("mode_1"):
-        trigger("retarget")
-        tool_mode = CodeMode
-        self.reticle.visible = true
+        self.code_mode()
       elif event.is_action_pressed("mode_2"):
-        trigger("retarget")
-        tool_mode =  BlockMode
-        self.reticle.visible = false
+        self.block_mode(1)
+      elif event.is_action_pressed("mode_3"):
+        self.block_mode(2)
+      elif event.is_action_pressed("mode_4"):
+        self.block_mode(3)
 
 proc get_game*(): Game = state.game as Game

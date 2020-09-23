@@ -16,6 +16,7 @@ type
     line_changed*: proc(current, previous: TLineInfo)
     current_line*: TLineInfo
     previous_line: TLineInfo
+    initialized*: bool
 
 
 const
@@ -40,7 +41,7 @@ proc load*(e: Engine, script_file: string) =
         if e.line_changed != nil:
           e.line_changed(info, e.previous_line)
         (e.previous_line, e.current_line) = (e.current_line, info)
-
+  e.initialized = true
 proc run*(e: Engine): bool =
   try:
     e.i.eval_script()
@@ -78,7 +79,7 @@ proc pause*(e: Engine) =
   raise new_exception(VMPause, "vm paused")
 
 proc expose*(e: Engine, script_name, proc_name: string,
-             routine: proc(a: VmArgs): bool) =
+             routine: proc(a: VmArgs): bool) {.gcsafe.} =
   e.i.implement_routine "*", script_name, proc_name, proc(a: VmArgs) {.gcsafe.} =
     if routine(a):
       e.pause()

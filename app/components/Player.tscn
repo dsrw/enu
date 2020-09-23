@@ -17,3 +17,7 @@ shape = SubResource( 1 )
 
 [node name="CameraRig" parent="." instance=ExtResource( 8 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0 )
+
+[node name="VoxelViewer" type="VoxelViewer" parent="."]
+view_distance = 256
+requires_collisions = true

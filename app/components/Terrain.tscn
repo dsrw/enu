@@ -1,0 +1,30 @@
+[gd_scene load_steps=6 format=2]
+
+[ext_resource path="res://components/Terrain.gdns" type="Script" id=1]
+
+[sub_resource type="VoxelGenerator" id=7]
+
+[sub_resource type="Voxel" id=8]
+voxel_name = "air"
+transparent = true
+
+[sub_resource type="Voxel" id=9]
+voxel_name = "solid"
+geometry_type = 1
+collision_aabbs = [ AABB( 0, 0, 0, 1, 1, 1 ) ]
+cube_geometry/padding_y = null
+cube_tiles/left = Vector2( 0, 0 )
+cube_tiles/right = Vector2( 0, 0 )
+cube_tiles/bottom = Vector2( 0, 0 )
+cube_tiles/top = Vector2( 0, 0 )
+cube_tiles/back = Vector2( 0, 0 )
+cube_tiles/front = Vector2( 0, 0 )
+
+[sub_resource type="VoxelLibrary" id=10]
+voxels/0 = SubResource( 8 )
+voxels/1 = SubResource( 9 )
+
+[node name="Terrain" type="VoxelTerrain"]
+stream = SubResource( 7 )
+voxel_library = SubResource( 10 )
+script = ExtResource( 1 )

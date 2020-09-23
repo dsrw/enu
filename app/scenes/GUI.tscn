@@ -1,10 +1,29 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=15 format=2]
 
 [ext_resource path="res://components/Console.gdns" type="Script" id=1]
 [ext_resource path="res://components/TextEdit.gdns" type="Script" id=2]
-[ext_resource path="res://themes/DarkTheme.tres" type="Theme" id=3]
+[ext_resource path="res://components/ActionButton.tscn" type="PackedScene" id=3]
 [ext_resource path="res://themes/AppleTheme.tres" type="Theme" id=4]
 [ext_resource path="res://textures/reticle.png" type="Texture" id=5]
+[ext_resource path="res://themes/DarkTheme.tres" type="Theme" id=6]
+[ext_resource path="res://materials/red-block.tres" type="Material" id=7]
+[ext_resource path="res://scenes/PreviewWorld.tscn" type="PackedScene" id=9]
+[ext_resource path="res://components/PreviewMaker.gdns" type="Script" id=10]
+[ext_resource path="res://components/Toolbar.gdns" type="Script" id=11]
+
+[sub_resource type="ButtonGroup" id=1]
+
+[sub_resource type="AtlasTexture" id=2]
+
+[sub_resource type="CubeMesh" id=3]
+lightmap_size_hint = Vector2( 1, 1 )
+material = ExtResource( 7 )
+size = Vector3( 1, 1, 1 )
+
+[sub_resource type="MeshTexture" id=4]
+mesh = SubResource( 3 )
+base_texture = SubResource( 2 )
+image_size = Vector2( 100, 100 )
 
 [node name="GUI" type="Control"]
 anchor_right = 1.0
@@ -14,11 +33,48 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="Toolbar" type="HBoxContainer" parent="."]
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 0
+alignment = 1
+script = ExtResource( 11 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Button-code" parent="Toolbar" instance=ExtResource( 3 )]
+margin_left = 434.0
+margin_right = 534.0
+group = SubResource( 1 )
+
+[node name="Button-blue" parent="Toolbar" instance=ExtResource( 3 )]
+margin_left = 538.0
+margin_right = 638.0
+pressed = true
+group = SubResource( 1 )
+icon = null
+
+[node name="Button-red" parent="Toolbar" instance=ExtResource( 3 )]
+margin_left = 642.0
+margin_right = 742.0
+group = SubResource( 1 )
+icon = null
+
+[node name="Button-green" parent="Toolbar" instance=ExtResource( 3 )]
+margin_left = 746.0
+margin_right = 846.0
+group = SubResource( 1 )
+icon = SubResource( 4 )
+
 [node name="Panels" type="MarginContainer" parent="."]
 anchor_right = 0.4
 anchor_bottom = 1.0
 mouse_filter = 2
-theme = ExtResource( 3 )
+theme = ExtResource( 6 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -33,7 +89,7 @@ theme = ExtResource( 4 )
 
 [node name="MarginContainer" type="MarginContainer" parent="Panels/VBoxContainer"]
 margin_right = 512.0
-margin_bottom = 477.0
+margin_bottom = 720.0
 mouse_filter = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -42,7 +98,7 @@ size_flags_stretch_ratio = 2.0
 [node name="Editor" type="TextEdit" parent="Panels/VBoxContainer/MarginContainer"]
 visible = false
 margin_right = 512.0
-margin_bottom = 477.0
+margin_bottom = 720.0
 size_flags_vertical = 3
 custom_colors/selection_color = Color( 0.184314, 0.0117647, 0.686275, 1 )
 custom_colors/executing_line_color = Color( 0.0392157, 0, 0.168627, 1 )
@@ -56,6 +112,7 @@ __meta__ = {
 }
 
 [node name="Console" type="RichTextLabel" parent="Panels/VBoxContainer"]
+visible = false
 margin_top = 481.0
 margin_right = 512.0
 margin_bottom = 720.0
@@ -75,6 +132,7 @@ anchor_right = 0.5
 anchor_bottom = 0.5
 margin_right = 40.0
 margin_bottom = 40.0
+mouse_filter = 2
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -83,3 +141,13 @@ __meta__ = {
 modulate = Color( 0, 0, 0, 1 )
 scale = Vector2( 0.14, 0.14 )
 texture = ExtResource( 5 )
+
+[node name="PreviewMaker" type="Viewport" parent="."]
+size = Vector2( 200, 200 )
+own_world = true
+transparent_bg = true
+render_target_v_flip = true
+render_target_update_mode = 0
+script = ExtResource( 10 )
+
+[node name="PreviewWorld" parent="PreviewMaker" instance=ExtResource( 9 )]

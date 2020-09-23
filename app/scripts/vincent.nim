@@ -1,17 +1,17 @@
 import grid
 
 var
-  length = 25
+  length = 15
   width = 5
-  loops = 2
+  loops = 10
   wall_height = 2
   level_height = 2
   default_block = 1
   wall_block = 2
 
-speed = 300
-#while true:
+speed = 200
 block:
+#while true:
   for i in 0..<loops:
     for y in 0..<4:
       for x in 0..<length:
@@ -53,8 +53,6 @@ block:
     forward()
     up()
 
-  #sleep(5)
-  #echo "clearing"
   #sleep(1)
   #reset(true)
-  #sleep(5)
+  #sleep(2)
