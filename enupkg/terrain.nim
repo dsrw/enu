@@ -41,33 +41,42 @@ gdobj Terrain of VoxelTerrain:
     for id, pen in self.pens:
       if targeted_voxel.to_vox in pen.voxes.blocks:
         return some(pen)
+      else:
+        echo "Not in " & id
+    # try metadata. We shouldn't need this. There's a bug somewhere.
+    let
+      tool = self.get_voxel_tool()
+      metadata = tool.get_voxel_metadata(targeted_voxel)
+    if metadata.get_type == VariantType.String:
+      echo "!!!!!found metadata: " & metadata.as_string
 
   proc highlight(targeted_voxel: Vector3) =
-    var pen = self.last_pen
-    if pen.is_some:
-      if targeted_voxel.to_vox notin pen.get.voxes.blocks:
-        pen = self.find_pen(targeted_voxel)
-    else:
-      pen = self.find_pen(targeted_voxel)
-    assert pen.is_some
-    self.last_pen = pen
-    var
-      voxes = pen.get.voxes
-      blocks = voxes.blocks
-      tool = self.get_voxel_tool()
-    if self.targeted_voxel.is_some or voxes != self.selected_voxes:
-      self.deselect()
-      self.selected_voxes = voxes
-      var step = 1
-      if blocks.len >= 10000:
-        var vox = blocks[targeted_voxel.to_vox]
-        self.next_highlight = now() + 0.05.seconds
-        tool.set_voxel(targeted_voxel, 1)
-        self.highlighted_vox  = some(vox)
+    if not editing() and now() > self.next_highlight:
+      var pen = self.last_pen
+      if pen.is_some:
+        if targeted_voxel.to_vox notin pen.get.voxes.blocks:
+          pen = self.find_pen(targeted_voxel)
       else:
-        self.next_highlight = now() + 0.25.seconds
-        for vox in blocks:
-          tool.set_voxel(vox.vec3, 1)
+        pen = self.find_pen(targeted_voxel)
+      assert pen.is_some
+      self.last_pen = pen
+      var
+        voxes = pen.get.voxes
+        blocks = voxes.blocks
+        tool = self.get_voxel_tool()
+      if self.targeted_voxel.is_some or voxes != self.selected_voxes:
+        self.deselect()
+        self.selected_voxes = voxes
+        var step = 1
+        if blocks.len >= 10000:
+          var vox = blocks[targeted_voxel.to_vox]
+          self.next_highlight = now() + 0.05.seconds
+          tool.set_voxel(targeted_voxel, 1)
+          self.highlighted_vox  = some(vox)
+        else:
+          self.next_highlight = now() + 0.25.seconds
+          for vox in blocks:
+            tool.set_voxel(vox.vec3, 1)
 
   method process*(delta: float) =
     if self.game_ready:
@@ -119,15 +128,15 @@ gdobj Terrain of VoxelTerrain:
                 self.voxels_to_clear.add(voxel_location)
 
   method on_target_move(point, normal: Vector3) =
-    if not editing() and now() > self.next_highlight:
-      self.current_point = point
-      self.current_normal = normal
-      let targeted_voxel = self.find_targeted_voxel(point, normal)
-      if targeted_voxel != self.targeted_voxel:
-        #self.deselect()
-        self.targeted_voxel = targeted_voxel
-        if tool_mode == CodeMode:
-          self.highlight(targeted_voxel)
+    self.current_point = point
+    self.current_normal = normal
+    let targeted_voxel = self.find_targeted_voxel(point, normal)
+    if targeted_voxel != self.targeted_voxel:
+      #self.deselect()
+      self.targeted_voxel = targeted_voxel
+      #dump self.targeted_voxel
+      if tool_mode == CodeMode:
+        self.highlight(targeted_voxel)
 
   proc deselect() =
     if self.highlighted_vox.is_some:
@@ -137,7 +146,7 @@ gdobj Terrain of VoxelTerrain:
       tool.set_voxel(vox.vec3, vox.index + 2)
       self.highlighted_vox = none(Vox)
     else:
-      self.targeted_voxel = vec3()
+      #self.targeted_voxel = vec3()
       if self.selected_voxes != nil:
         self.rebuild(self.selected_voxes)
         self.selected_voxes = nil
@@ -150,16 +159,15 @@ gdobj Terrain of VoxelTerrain:
     discard
 
   method on_target_fire() =
+    let pen = self.find_pen(self.targeted_voxel)
+    if not pen.is_some:
+      err &"No pen found for {self.targeted_voxel}. Pen count {self.pens.len}"
+      return
+
     if tool_mode == BlockMode:
-      let pen = self.find_pen(self.targeted_voxel)
-      if not pen.is_some:
-        err &"No pen found for {self.targeted_voxel}. Pen count {self.pens.len}"
-        return
       pen.get.draw(self.targeted_voxel + self.current_normal, action_index - 1, save = SaveUser)
 
     if tool_mode == CodeMode:
-      let pen = self.find_pen(self.targeted_voxel)
-      assert pen.is_some
       pen.get.builder.trigger("selected")
       self.deselect()
 

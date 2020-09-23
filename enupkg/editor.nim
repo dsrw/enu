@@ -66,8 +66,9 @@ gdobj Editor of TextEdit:
     self.configure_highlighting()
 
   method on_save* =
-    self.clear_errors()
-    write_file(self.file_name, self.text)
+    if self.file_name != "":
+      self.clear_errors()
+      write_file(self.file_name, self.text)
 
   method on_script_error* =
     self.highlight_errors()

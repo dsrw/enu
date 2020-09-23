@@ -36,7 +36,6 @@ gdobj Ground of MeshInstance:
     b.translation = p
     b.name = "Builder" & $max_grid_index
     b.schedule_save = true
-    b.paused = true
     self.data.add_child(b)
     b.owner = self.data
 
