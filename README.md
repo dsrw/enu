@@ -97,3 +97,16 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
 - `grid.save()` and `grid.restore()` to save/restore position/direction/index/speed/drawing
   state while drawing blocks. Pass a `name` argument to support multiple save points.
 - Fixed build/run on Linux. Input is still broken.
+- Added a dock for actions, objects and block types. Statically populated for now.
+- Console can be toggled with ` or ~, or cleared with Cmd+K.
+- Added a preview generator, for taking images of blocks and objects for placement on the
+  dock. Must be manually configured per object for now. This will be automatic in the future.
+- Now uses https://github.com/Zylann/godot_voxel for static voxels. Much better performance.
+  Scaled or moving objects will use the old gridmap approach for now.
+- Voxel painting support. Press ESC to toggle mouse capture. If the mouse is uncaptured, the
+  cursor can be used to paint or select.
+- Added a "Builder" object that can create objects based on gridmaps, or voxel terrains.
+  Builders are automatically created when you start constructing a new object 2+ blocks from
+  an existing object. Each builder can be scripted. Builders are NOT currently removed when
+  their voxels are destroyed, but they will be in the future. Delete builders (and everything
+  else) with `nimble reset`.
