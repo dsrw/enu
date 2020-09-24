@@ -47,26 +47,30 @@ __meta__ = {
 }
 
 [node name="Button-code" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 434.0
-margin_right = 534.0
+margin_left = 382.0
+margin_right = 482.0
 group = SubResource( 1 )
 
 [node name="Button-blue" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 538.0
-margin_right = 638.0
+margin_left = 486.0
+margin_right = 586.0
 pressed = true
 group = SubResource( 1 )
 icon = null
 
 [node name="Button-red" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 642.0
-margin_right = 742.0
 group = SubResource( 1 )
 icon = null
 
 [node name="Button-green" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 746.0
-margin_right = 846.0
+margin_left = 694.0
+margin_right = 794.0
+group = SubResource( 1 )
+icon = SubResource( 4 )
+
+[node name="Button-bot" parent="Toolbar" instance=ExtResource( 3 )]
+margin_left = 798.0
+margin_right = 898.0
 group = SubResource( 1 )
 icon = SubResource( 4 )
 

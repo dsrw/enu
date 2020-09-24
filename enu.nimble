@@ -50,3 +50,8 @@ task edit, "Edit project in Godot":
 task start, "Run Enu":
   cd "app"
   exec godot_bin & " scenes/game.tscn"
+
+task reset, "Reset level state":
+  let gen = find_exe generator
+  exec &"{gen} reset_state"
+  

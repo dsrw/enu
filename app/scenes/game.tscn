@@ -26,3 +26,5 @@ shadow_atlas_size = 100
 [node name="Level" parent="ViewportContainer/Viewport" instance=ExtResource( 1 )]
 
 [node name="GUI" parent="." instance=ExtResource( 3 )]
+
+[node name="WorldRay" type="RayCast" parent="."]

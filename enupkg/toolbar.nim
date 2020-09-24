@@ -8,6 +8,7 @@ gdobj Toolbar of HBoxContainer:
   var
     preview_maker: PreviewMaker
     blocks = @["green", "red", "blue"]
+    objects = @["bot"]
     preview_result: Option[PreviewResult]
     waiting = false
 
@@ -33,6 +34,11 @@ gdobj Toolbar of HBoxContainer:
       self.preview_maker.generate_block_preview &"{color}-block-grid", proc(preview: Image) =
         self.preview_result = some (color: color, preview: preview)
         self.waiting = false
+    if not self.waiting and self.blocks.len == 0 and self.objects.len > 0:
+      let obj = self.objects.pop()
+      self.waiting = true
+      self.preview_maker.generate_object_preview obj, proc(preview: Image) =
+        self.preview_result = some (color: obj, preview: preview)
 
   method on_update_actionbar(index: int) =
     let b = self.get_child(index) as Button
@@ -44,3 +50,4 @@ gdobj Toolbar of HBoxContainer:
     of "blue": get_game().block_mode(1, false)
     of "red": get_game().block_mode(2, false)
     of "green": get_game().block_mode(3, false)
+    of "bot": get_game().obj_mode(4, false)

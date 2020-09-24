@@ -9,6 +9,7 @@ gdobj Editor of TextEdit:
     file_name = ""
     ff = false
     comment_color* {.gdExport.} = init_color(0.5, 0.5, 0.5)
+    command_mode_enabled = false
 
   method unhandled_input*(event: InputEvent) =
     if self.visible:
@@ -37,7 +38,7 @@ gdobj Editor of TextEdit:
       self.set_executing_line(line)
 
   method ready* =
-    self.bind_signals("save", "script_error")
+    self.bind_signals("save", "script_error", "command_mode_enabled", "command_mode_disabled")
     show_editor = proc(file_name: string, engine: Engine) =
       self.engine = engine
       self.file_name = file_name
@@ -53,7 +54,8 @@ gdobj Editor of TextEdit:
       self.engine.line_changed = proc(current: TLineInfo, previous: TLineInfo) =
         self.executing_line = int current.line - 1
 
-    editing = proc: bool = self.visible
+    editing = proc: bool =
+      not self.command_mode_enabled and self.visible
 
     hide_editor = proc =
       trigger("retarget")
@@ -72,3 +74,13 @@ gdobj Editor of TextEdit:
 
   method on_script_error* =
     self.highlight_errors()
+
+  method on_command_mode_enabled =
+    self.mouse_filter = MOUSE_FILTER_IGNORE
+    self.command_mode_enabled = true
+    self.shortcut_keys_enabled = false
+
+  method on_command_mode_disabled =
+    self.mouse_filter = MOUSE_FILTER_STOP
+    self.command_mode_enabled = false
+    self.shortcut_keys_enabled = true

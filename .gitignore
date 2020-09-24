@@ -12,5 +12,7 @@ enupkg/utils
 .DS_Store
 app/_dlls/enu.exp
 app/_dlls/enu.lib
+app/scripts/.backups
+app/scenes/default.tscn
 godotapi
 app/state

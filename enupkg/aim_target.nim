@@ -1,7 +1,7 @@
 import ../godotapi / [sprite_3d, ray_cast, spatial],
        godot,
        strutils,
-       globals
+       globals, core
 
 gdobj AimTarget of Sprite3D:
   var
@@ -9,12 +9,15 @@ gdobj AimTarget of Sprite3D:
 
   method ready*() =
     self.set_as_top_level(true)
-    self.bind_signals("retarget")
+    self.bind_signals("retarget", "hide_target", "show_target")
 
   method on_retarget*() =
     if self.last_collider != nil:
       self.last_collider.trigger("target_out")
       self.last_collider = nil
+
+  method on_hide_target() = self.visible = false
+  method on_show_target() = self.visible = true
 
   proc update*(ray: RayCast) =
     ray.force_raycast_update()
@@ -33,9 +36,8 @@ gdobj AimTarget of Sprite3D:
       let
         collision_point = ray.get_collision_point()
         collision_normal = ray.get_collision_normal()
-        target_normal = collision_normal.round()
-
       var
+        target_normal = collision_normal.round()
         target_point: Vector3
         block_point: Vector3
         block_normal: Vector3

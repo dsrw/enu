@@ -7,7 +7,7 @@ export strformat.`&`
 
 type
   ToolMode* = enum
-    CodeMode = 0, BlockMode = 1
+    CodeMode, BlockMode, ObjectMode
 
   StateRefs = ref object
     player*: Node
@@ -42,6 +42,8 @@ var
   pens*: seq[Pen]
   max_grid_index* = 0
   skip_next_mouse_move* = false
+  fire_down* = false
+  remove_down* = false
 
 proc join_args[T](args: varargs[T]): string =
   args.map_it(&"'{it}'").join " "

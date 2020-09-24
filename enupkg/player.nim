@@ -1,4 +1,6 @@
-import godot, ../godotapi / [kinematic_body, spatial, input, input_event, input_event_mouse_motion, ray_cast, scene_tree, input_event_pan_gesture],
+import godot, ../godotapi / [kinematic_body, spatial, input, input_event,
+                             input_event_mouse_motion, ray_cast, scene_tree,
+                             input_event_pan_gesture, viewport, camera],
        math,
        core, globals, game, aim_target
 
@@ -19,7 +21,9 @@ gdobj Player of KinematicBody:
     position_start: Vector3
     input_relative = vec2()
     camera_rig: Spatial
+    camera: Camera
     aim_ray: RayCast
+    world_ray: RayCast
     aim_target*: AimTarget
     flying = false
     velocity = vec3()
@@ -58,9 +62,17 @@ gdobj Player of KinematicBody:
   method ready*() =
     state.player = self
     self.camera_rig = self.get_node("CameraRig") as Spatial
+    self.camera = self.camera_rig.get_node("Camera") as Camera
     self.aim_ray  = self.camera_rig.get_node("Camera/AimRay") as RayCast
+    self.world_ray = game_node.get_node("WorldRay") as RayCast
     self.aim_target = self.camera_rig.get_node("AimTarget") as AimTarget
     self.position_start = self.camera_rig.translation
+
+  proc current_raycast*: RayCast =
+    if get_game().mouse_captured:
+      self.aim_ray
+    else:
+      self.world_ray
 
   method process*(delta: float) {.gdExport.} =
     if not editing():
@@ -78,7 +90,19 @@ gdobj Player of KinematicBody:
       var r = self.camera_rig.rotation
       r.y = wrap(r.y, -PI, PI)
       self.camera_rig.rotation = r
-      self.aim_target.update(self.aim_ray)
+      if not get_game().mouse_captured:
+        let
+          mouse_pos = self.get_viewport()
+                          .get_mouse_position() / float get_game()
+                          .shrink
+          cast_from = self.camera.project_ray_origin(mouse_pos)
+          cast_to = self.aim_ray.translation + self.camera.project_ray_normal(mouse_pos) * 100
+        self.world_ray.cast_to = cast_to
+        self.world_ray.translation = cast_from
+        self.aim_target.update(self.world_ray)
+      else:
+        self.aim_ray.cast_to = vec3(0, 0, -100)
+        self.aim_target.update(self.aim_ray)
 
   method physics_process*(delta: float) =
     if not editing():
@@ -144,13 +168,19 @@ gdobj Player of KinematicBody:
     if event.is_action_pressed("previous"):
       get_game().prev_action()
 
+    let ray = self.current_raycast
     if event.is_action_pressed("fire"):
-      if self.aim_ray.is_colliding():
-        trigger(self.aim_ray.get_collider(), "target_fire")
-        #self.get_tree().set_input_as_handled()
+      fire_down = true
+      if ray.is_colliding():
+        trigger(ray.get_collider(), "target_fire")
+    elif fire_down and event.is_action_released("fire"):
+      fire_down = false
 
     if event.is_action_pressed("remove"):
-      if self.aim_ray.is_colliding():
-        trigger(self.aim_ray.get_collider(), "target_remove")
+      remove_down = true
+      if ray.is_colliding():
+        trigger(ray.get_collider(), "target_remove")
+    elif remove_down and event.is_action_released("remove"):
+      remove_down = false
 
 proc get_player*(): Player = state.player as Player

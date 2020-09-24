@@ -1,6 +1,7 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://materials/blue-block-grid.tres" type="Material" id=1]
+[ext_resource path="res://components/Bot.tscn" type="PackedScene" id=2]
 
 [sub_resource type="CubeMesh" id=1]
 size = Vector3( 1, 1, 1 )
@@ -44,3 +45,6 @@ light_energy = 4.0
 voxel_library = SubResource( 4 )
 
 [node name="VoxelViewer" type="VoxelViewer" parent="."]
+
+[node name="bot" parent="." instance=ExtResource( 2 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.8, 0 )

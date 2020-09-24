@@ -13,9 +13,7 @@ gdobj Ground of MeshInstance:
     self.data = self.get_parent.get_parent.get_node("data")
     self.bind_signals(self, "target_move", "target_fire")
 
-  method on_target_move(point, normal: Vector3) =
-    self.point = point
-    self.normal = normal
+
 
   method on_target_fire() =
     # create builder
@@ -40,3 +38,9 @@ gdobj Ground of MeshInstance:
     b.owner = self.data
 
     echo &"{self.data.name} children {self.data.get_children.len}"
+
+  method on_target_move(point, normal: Vector3) =
+    self.point = point
+    self.normal = normal
+    if fire_down and tool_mode == BlockMode:
+      self.on_target_fire()

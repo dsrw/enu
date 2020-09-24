@@ -12,6 +12,7 @@ gdobj Game of Node:
     frame_skip = 90
     pack: FlowVar[PackedScene]
     save_requested: Option[string]
+    saved_mouse_captured_state = false
 
   proc pack_scene(scene: Node): PackedScene =
     result = gdnew[PackedScene]()
@@ -82,12 +83,9 @@ gdobj Game of Node:
 
   proc update_action_index*(change: int) =
     action_index += change
-    if action_index < 0: action_index = action_count - 1
-    if action_index >= action_count: action_index = 0
-    if action_index == 0:
-      self.code_mode()
-    else:
-      self.block_mode(action_index)
+    if action_index < 1: action_index = action_count - 1
+    if action_index >= action_count: action_index = 1
+    self.block_mode(action_index)
 
   proc next_action*() =
     self.update_action_index(1)
@@ -98,13 +96,21 @@ gdobj Game of Node:
   proc code_mode*(update_actionbar = true) =
     tool_mode = CodeMode
     self.trigger("retarget")
-    self.reticle.visible = true
+    self.reticle.visible = self.mouse_captured
     action_index = 0
     if update_actionbar:
       self.trigger("update_actionbar", 0)
 
   proc block_mode*(index: int, update_actionbar = true) =
     tool_mode = BlockMode
+    self.trigger("retarget")
+    self.reticle.visible = false
+    action_index = index
+    if update_actionbar:
+      self.trigger("update_actionbar", index)
+
+  proc obj_mode*(index: int, update_actionbar = true) =
+    tool_mode = ObjectMode
     self.trigger("retarget")
     self.reticle.visible = false
     action_index = index
@@ -119,7 +125,14 @@ gdobj Game of Node:
       self.frame_skip -= 1
 
   method unhandled_input*(event: InputEvent) =
-    if event.is_action_pressed("save_and_reload"):
+    if event.is_action_pressed("command_mode"):
+      self.saved_mouse_captured_state = self.mouse_captured
+      self.mouse_captured = true
+      self.trigger("command_mode_enabled")
+    elif event.is_action_released("command_mode"):
+      self.mouse_captured = self.saved_mouse_captured_state
+      self.trigger("command_mode_disabled")
+    elif event.is_action_pressed("save_and_reload"):
       globals.save_and_reload()
       self.get_tree().set_input_as_handled()
     elif event.is_action_pressed("save"):
@@ -132,9 +145,13 @@ gdobj Game of Node:
     elif event.is_action_pressed("toggle_console"):
       trigger("toggle_console")
     elif not globals.editing():
-      if not self.mouse_captured and event.is_action_pressed("click") or
-          event.is_action_pressed("toggle_mouse_captured"):
+      if event.is_action_pressed("toggle_mouse_captured"):
         self.mouse_captured = not self.mouse_captured
+        if not self.mouse_captured:
+          set_custom_mouse_cursor(nil)
+          self.reticle.visible = false
+        elif tool_mode == CodeMode:
+          self.reticle.visible = true
         self.get_tree().set_input_as_handled()
 
       if event.is_action_pressed("toggle_fullscreen"):
@@ -147,5 +164,7 @@ gdobj Game of Node:
         self.block_mode(2)
       elif event.is_action_pressed("mode_4"):
         self.block_mode(3)
+      elif event.is_action_pressed("mode_5"):
+        self.obj_mode(4)
 
 proc get_game*(): Game = state.game as Game

@@ -8,6 +8,7 @@ gdobj Terrain of VoxelTerrain:
     targeted_voxel: Vector3
     last_pen: Option[Pen]
     current_normal: Vector3
+    draw_plane: Vector3
     highlighted_vox: Option[Vox]
     current_point: Vector3
     pens: Table[string, Pen]
@@ -41,14 +42,6 @@ gdobj Terrain of VoxelTerrain:
     for id, pen in self.pens:
       if targeted_voxel.to_vox in pen.voxes.blocks:
         return some(pen)
-      else:
-        echo "Not in " & id
-    # try metadata. We shouldn't need this. There's a bug somewhere.
-    let
-      tool = self.get_voxel_tool()
-      metadata = tool.get_voxel_metadata(targeted_voxel)
-    if metadata.get_type == VariantType.String:
-      echo "!!!!!found metadata: " & metadata.as_string
 
   proc highlight(targeted_voxel: Vector3) =
     if not editing() and now() > self.next_highlight:
@@ -74,7 +67,7 @@ gdobj Terrain of VoxelTerrain:
           tool.set_voxel(targeted_voxel, 1)
           self.highlighted_vox  = some(vox)
         else:
-          self.next_highlight = now() + 0.25.seconds
+          self.next_highlight = now() + 0.05.seconds
           for vox in blocks:
             tool.set_voxel(vox.vec3, 1)
 
@@ -128,15 +121,27 @@ gdobj Terrain of VoxelTerrain:
                 self.voxels_to_clear.add(voxel_location)
 
   method on_target_move(point, normal: Vector3) =
+    let
+      prev_point = self.current_point
+      prev_normal = self.current_normal
     self.current_point = point
     self.current_normal = normal
     let targeted_voxel = self.find_targeted_voxel(point, normal)
     if targeted_voxel != self.targeted_voxel:
-      #self.deselect()
       self.targeted_voxel = targeted_voxel
-      #dump self.targeted_voxel
       if tool_mode == CodeMode:
         self.highlight(targeted_voxel)
+
+    if fire_down and tool_mode == BlockMode:
+      let plane = point * normal
+      if self.draw_plane == plane:
+        self.on_target_fire()
+    if remove_down and tool_mode == BlockMode:
+      let plane = point * normal
+      if self.draw_plane == plane:
+        self.on_target_remove()
+    elif not remove_down and not fire_down:
+      self.draw_plane = vec3()
 
   proc deselect() =
     if self.highlighted_vox.is_some:
@@ -152,11 +157,14 @@ gdobj Terrain of VoxelTerrain:
         self.selected_voxes = nil
 
   method on_target_out() =
-    self.deselect()
+    if tool_mode == CodeMode:
+      self.deselect()
+    if tool_mode == ObjectMode:
+      game_node.trigger("show_target")
 
   method on_target_in() =
-    # we don't need this right now. Thanks for the memories.
-    discard
+    if tool_mode == ObjectMode:
+      game_node.trigger("hide_target")
 
   method on_target_fire() =
     let pen = self.find_pen(self.targeted_voxel)
@@ -165,7 +173,9 @@ gdobj Terrain of VoxelTerrain:
       return
 
     if tool_mode == BlockMode:
+      dump self.targeted_voxel + self.current_normal
       pen.get.draw(self.targeted_voxel + self.current_normal, action_index - 1, save = SaveUser)
+      self.draw_plane = self.current_point * self.current_normal
 
     if tool_mode == CodeMode:
       pen.get.builder.trigger("selected")
@@ -174,8 +184,9 @@ gdobj Terrain of VoxelTerrain:
   method on_target_remove() =
     if tool_mode == BlockMode:
       let pen = self.find_pen(self.targeted_voxel)
-      assert pen.is_some
-      pen.get.draw(self.targeted_voxel, -1, save = SaveUser)
+      if pen.is_some:
+        pen.get.draw(self.targeted_voxel, -1, save = SaveUser)
+        self.draw_plane = self.current_point * self.current_normal
 
 type
   VoxelPen* = ref object of Pen
