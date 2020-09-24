@@ -128,9 +128,11 @@ gdobj Game of Node:
     if event.is_action_pressed("command_mode"):
       self.saved_mouse_captured_state = self.mouse_captured
       self.mouse_captured = true
+      command_mode = true
       self.trigger("command_mode_enabled")
     elif event.is_action_released("command_mode"):
       self.mouse_captured = self.saved_mouse_captured_state
+      command_mode = false
       self.trigger("command_mode_disabled")
     elif event.is_action_pressed("save_and_reload"):
       globals.save_and_reload()

@@ -44,6 +44,7 @@ var
   skip_next_mouse_move* = false
   fire_down* = false
   remove_down* = false
+  command_mode* = false
 
 proc join_args[T](args: varargs[T]): string =
   args.map_it(&"'{it}'").join " "
