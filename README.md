@@ -5,7 +5,7 @@ Very alpha. See my [intro video](https://youtu.be/QfAzuX7-y0Y):
 
 [![Enu Demo](https://img.youtube.com/vi/AW0PT9j976s/hqdefault.jpg)](https://youtu.be/AW0PT9j976s)
 
-Or [my talk from NimConf 2020](https://youtu.be/3l6tsKM1cY8).
+Or my somewhat outdated [talk from NimConf 2020](https://youtu.be/3l6tsKM1cY8).
 
 [![NimConf 2020 Demo](https://img.youtube.com/vi/3l6tsKM1cY8/maxresdefault.jpg)](https://youtu.be/3l6tsKM1cY8)
 
@@ -48,14 +48,14 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
 - [X] Simplify box object for performance
 - [X] Add keybindings to README
 - [X] Rework "deselect" behavior
-- [ ] Ability to place objects
+- [X] Ability to place objects
 - [X] Basic error handling
 
 ### v0.02
 
 - [X] Better syntax highlighting (comment support at least)
 - [X] Make object pick raycast longer
-- [ ] Mouse picking
+- [X] Mouse picking
 - [X] Better flying
 - [ ] More block types
 - [ ] Validate build and keybindings for Mac/Linux/Windows
