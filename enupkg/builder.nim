@@ -187,13 +187,11 @@ gdobj Builder of Spatial:
       # can't use empty string because it gets set as nil, which is no longer valid nim.
       # can probably be fixed in godot-nim
       return
-    var t = now()
     debug &"Loading {self.enu_script}. Paused {self.paused}"
     errors[self.enu_script] = @[]
     self.callback = nil
     self.blocks_remaining_this_frame = 0
     try:
-      #if self.engine.is_nil:
       self.engine = Engine()
       if not (self.paused or self.engine.initialized):
         with self.engine:
