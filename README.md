@@ -1,7 +1,11 @@
 # Enu
 
 3D live coding, implemented in Nim.
-Very alpha. See [my talk from NimConf 2020](https://youtu.be/3l6tsKM1cY8).
+Very alpha. See my [intro video](https://youtu.be/QfAzuX7-y0Y):
+
+[![Enu Demo](https://img.youtube.com/vi/QfAzuX7-y0Y/maxresdefault.jpg)](https://youtu.be/QfAzuX7-y0Y)
+
+Or [my talk from NimConf 2020](https://youtu.be/3l6tsKM1cY8).
 
 [![NimConf 2020 Demo](https://img.youtube.com/vi/3l6tsKM1cY8/maxresdefault.jpg)](https://youtu.be/3l6tsKM1cY8)
 
