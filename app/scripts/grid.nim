@@ -2,6 +2,7 @@ import macros
 
 type
   ColorIndex* = enum
+    starting,
     blue,
     red,
     green
@@ -32,8 +33,8 @@ proc change_color*(amount: int) =
   var color_index = int color
   color_index += amount
   if color_index > int ColorIndex.high:
-    color_index = int ColorIndex.low
-  elif color_index < int ColorIndex.low:
+    color_index = ColorIndex.low.int + 1
+  elif color_index < ColorIndex.low.int + 1:
     color_index = int ColorIndex.high
   color = ColorIndex color_index
 

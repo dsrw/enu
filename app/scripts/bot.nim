@@ -23,6 +23,10 @@ proc run*() =
   speed = 5.0
   play("run")
 
+template times*(count: int, body: untyped): untyped =
+  for x in 0..<count:
+    body
+
 macro dump*(x: typed): untyped =
   let s = x.toStrLit
   let r = quote do:

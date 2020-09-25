@@ -1,13 +1,12 @@
 import ../godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
                       input_event, animation_player, resource_loader, packed_scene],
-       godot,
-       math, tables, std/with, times, sugar,
+       godot, math, tables, std/with, times, sugar, os,
        globals, core, engine
 
 gdobj NimBot of KinematicBody:
   var
     speed = 1.0
-    enu_script* {.gdExport.} = "scripts/scott.nim"
+    enu_script* {.gdExport.} = "none"
     material* {.gdExport.}, highlight_material* {.gdExport.},
       selected_material* {.gdExport.}: Material
 
@@ -18,9 +17,10 @@ gdobj NimBot of KinematicBody:
     orig_translation: Vector3
     skin: Spatial
     mesh: MeshInstance
-    paused = false
+    paused = true
     running = false
     animation_player: AnimationPlayer
+    schedule_save* = false
 
   proc update_material*(value: Material) =
     self.mesh.set_surface_material(0, value)
@@ -91,13 +91,14 @@ gdobj NimBot of KinematicBody:
     trigger("script_error")
 
   proc load_script() =
-    debug &"Loading {self.enu_script}"
     errors[self.enu_script] = @[]
     self.callback = nil
 
     try:
       if self.engine.is_nil:
         self.engine = Engine()
+      if not self.paused and not self.engine.initialized:
+        debug &"Loading {self.enu_script}"
         with self.engine:
           load(self.enu_script)
           expose("bot", "forward", a => self.forward(get_float(a, 0)))
@@ -114,11 +115,16 @@ gdobj NimBot of KinematicBody:
               self.animation_player.play(animation_name)
             return false
           )
-      self.running = self.engine.run()
+      if not self.paused:
+        self.running = self.engine.run()
     except VMQuit as e:
       self.error(e)
 
   method ready*() =
+    if self.enu_script == "none":
+      self.enu_script = &"scripts/{self.name}.nim"
+    if not file_exists(self.enu_script):
+      copy_file "scripts/default_bot.nim", self.enu_script
     with self:
       bind_signals("reload", "pause", "reload_all")
       skin = self.get_node("Mannequiny").as(Spatial)
@@ -136,6 +142,9 @@ gdobj NimBot of KinematicBody:
           self.running = self.engine.resume()
       except VMQuit as e:
         self.error(e)
+    if self.schedule_save:
+      self.schedule_save = false
+      save_scene()
 
   method reload() =
     self.animation_player.stop(true)
@@ -146,6 +155,7 @@ gdobj NimBot of KinematicBody:
 
   method on_reload*() =
     if not editing() or open_file == self.enu_script:
+      self.paused = false
       self.reload()
 
   method on_reload_all*() =

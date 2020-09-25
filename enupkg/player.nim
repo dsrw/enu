@@ -111,10 +111,7 @@ gdobj Player of KinematicBody:
         b = self.camera_rig.global_transform.basis
         right = b.x * input_direction.x
         up = UP * input_direction.y
-        forward = if command_mode:
-          b.z * input_direction.z
-        else:
-          (b.z * input_direction.z * vec3(1, 0, 1)).normalized()
+        forward = (b.z * input_direction.z * vec3(1, 0, 1)).normalized()
 
       var
         move_direction = forward + right + up

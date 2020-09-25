@@ -7,6 +7,7 @@ gdobj Builder of Spatial:
     draw_mode* {.gdExport.}: DrawMode
     script_index* {.gdExport.} = 0
     enu_script* {.gdExport.} = "none"
+    initial_index* {.gdExport} = 0
     paused* = true
     schedule_save* = false
     engine: Engine
@@ -144,11 +145,12 @@ gdobj Builder of Spatial:
     if self.engine.initialized: self.set_vars()
     if clear:
       self.clear()
-      self.pen.draw(self.position, 1, save = SaveUser)
+      self.pen.draw(self.position, self.initial_index, save = SaveUser)
 
   proc drop_block() =
     if self.drawing:
-      self.pen.draw(self.position, self.index, save = SaveBuilder)
+      let idx = if self.index == 0: self.initial_index else: self.index - 1
+      self.pen.draw(self.position, idx, save = SaveBuilder)
 
   proc build() =
     if not file_exists(self.enu_script):
@@ -192,7 +194,7 @@ gdobj Builder of Spatial:
     self.callback = nil
     self.blocks_remaining_this_frame = 0
     try:
-      self.engine = Engine()
+      if self.engine.is_nil: self.engine = Engine()
       if not (self.paused or self.engine.initialized):
         with self.engine:
           load(self.enu_script)
@@ -210,6 +212,7 @@ gdobj Builder of Spatial:
           expose "grid", "reset", proc(a: VmArgs): bool =
             self.reset(get_bool(a, 0))
             false
+      if not self.paused:
         self.running = self.engine.run()
     except VMQuit as e:
       self.error(e)

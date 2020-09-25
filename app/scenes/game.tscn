@@ -28,3 +28,6 @@ shadow_atlas_size = 100
 [node name="GUI" parent="." instance=ExtResource( 3 )]
 
 [node name="WorldRay" type="RayCast" parent="."]
+visible = false
+collision_mask = 17
+collide_with_areas = true
