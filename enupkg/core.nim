@@ -3,39 +3,6 @@ from sugar import dup
 import std/with, strformat, strutils, sequtils, sets, tables
 export dup, with, strformat, strutils, sequtils, sets, tables
 
-### Vox ###
-import godot, ../godotapi/node, hashes, sets
-
-type
-  Vox* = array[5, int]
-  VoxSet* = ref object
-    blocks*: HashSet[Vox]
-  VoxelSaveKind* = enum
-    SaveNone, SaveBuilder, SaveUser
-  DrawMode* = enum
-    GridMode, VoxelMode
-
-  Pen* = ref object of RootObj
-    id*: string
-    builder*: Node
-    voxes*: VoxSet # XXX find a better name
-
-proc x*(v: Vox): int {.inline.} = v[0]
-proc y*(v: Vox): int {.inline.} = v[1]
-proc z*(v: Vox): int {.inline.} = v[2]
-proc index*(v: Vox): int {.inline.} = v[3]
-proc save_kind*(v: Vox): VoxelSaveKind {.inline.} = VoxelSaveKind v[4]
-
-proc hash*(v: Vox): Hash {.inline.} = v[0..2].hash
-proc `==`*(v1, v2: Vox): bool = v1[0..2] == v2[0..2]
-
-proc to_vox*(v: Vector3, index: int, save_kind: VoxelSaveKind): Vox {.inline.} =
-  [int v.x, int v.y, int v.z, index, int save_kind]
-proc to_vox*(v: Vector3): Vox {.inline.} = v.to_vox(0, SaveNone)
-proc vec3*(v: Vox): Vector3 {.inline.} =
-  vec3(float v.x, float v.y, float v.z)
-proc split*(v: Vox): (Vector3, int) = (vec3(v), v.index)
-
 ### Debug
 from sugar import dump
 import parseutils
@@ -72,3 +39,12 @@ converter to_option*[T](val: T): Option[T] =
 
 converter to_bool*[T](option: Option[T]): bool =
   option.is_some
+
+### Vector3 ###
+import godot, math
+
+proc vec3*(x, y, z: int): Vector3 {.inline.} =
+  vec3(x.float, y.float, z.float)
+
+proc trunc*(self: Vector3): Vector3 {.inline.} =
+  vec3(trunc(self.x), trunc(self.y), trunc(self.z))

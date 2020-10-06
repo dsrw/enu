@@ -1,13 +1,13 @@
 import ../godotapi / [spatial],
        godot, tables, math, sets, sugar, sequtils, hashes, os,
-       core, globals, engine, pen
+       core, globals, engine, terrain, grid
 
 gdobj Builder of Spatial:
   var
     draw_mode* {.gdExport.}: DrawMode
     script_index* {.gdExport.} = 0
     enu_script* {.gdExport.} = "none"
-    initial_index* {.gdExport} = 0
+    initial_index* {.gdExport} = 1
     paused* = true
     schedule_save* = false
     engine: Engine
@@ -21,9 +21,15 @@ gdobj Builder of Spatial:
     position = vec3()
     drawing = true
     save_points: Table[string, tuple[position: Vector3, direction: Vector3, index: int]]
-    voxes: VoxSet
-    pen: Pen
-    grid: Node
+    grid: Grid
+    terrain: Terrain
+
+
+  proc draw(x, y, z: float, index: int) =
+    if self.draw_mode == VoxelMode:
+      self.terrain.draw(x, y, z, index)
+    else:
+      raise new_exception(Defect, "Not implemented")
 
   proc `running=`*(val: bool) =
     self.is_running = val
@@ -36,7 +42,7 @@ gdobj Builder of Spatial:
     self.direction = FORWARD
     self.position = self.translation
     self.speed = 30.0
-    self.index = 0
+    self.index = 1
     self.drawing = true
 
   proc load_vars() =
@@ -133,44 +139,41 @@ gdobj Builder of Spatial:
     trigger("script_error")
 
   proc clear() =
-    var removing: seq[Vox]
-    for v in self.voxes.blocks:
-      if v.save_kind == SaveBuilder:
-        self.pen.draw(v.vec3, -1, save = SaveNone)
-        removing.add v
-    for v in removing: self.voxes.blocks.excl v
+    if self.draw_mode == VoxelMode:
+      self.terrain.clear()
 
   proc reset(clear = true) =
     self.set_defaults()
     if self.engine.initialized: self.set_vars()
     if clear:
       self.clear()
-      self.pen.draw(self.position, self.initial_index, save = SaveUser)
+      let p = self.position
+      self.draw(p.x, p.y, p.z, self.initial_index)
 
   proc drop_block() =
     if self.drawing:
-      let idx = if self.index == 0: self.initial_index else: self.index - 1
-      self.pen.draw(self.position, idx, save = SaveBuilder)
+      let p = self.position
+      self.draw(p.x, p.y, p.z, self.index)
 
   proc build() =
     if not file_exists(self.enu_script):
       os.copy_file "scripts/default_grid.nim", self.enu_script
 
-    if not self.schedule_save and self.draw_mode == VoxelMode and self.voxes.blocks.len <= 1:
-      self.paused = false
+    #if not self.schedule_save and self.draw_mode == VoxelMode and self.voxes.blocks.len <= 1:
+    self.paused = false
     self.position = self.translation
-    self.pen.draw(self.position, action_index - 1, save = SaveUser)
+    let p = self.position
+    self.draw(p.x, p.y, p.z, action_index)
     self.load_script()
 
-  method on_game_ready*() =
-    self.build()
-
   method ready*() =
-    self.voxes = VoxSet()
-    self.grid = self.get_node("Grid")
+    self.grid = self.get_node("Grid") as Grid
+    self.terrain = self.get_node("Terrain") as Terrain
     assert self.grid != nil
-    self.bind_signals self, "selected"
-    self.bind_signals "game_ready", "reload", "pause", "reload_all"
+    assert self.terrain != nil
+
+    self.bind_signals self.terrain, "selected"
+    self.bind_signals "reload", "pause", "reload_all"
     if self.script_index == 0:
       inc max_grid_index
       self.script_index = max_grid_index
@@ -179,10 +182,12 @@ gdobj Builder of Spatial:
       max_grid_index = self.script_index
 
     self.enu_script = &"scripts/grid_{self.script_index}.nim"
-    self.pen = self.draw_mode.init(self, self.enu_script, self.voxes)
+    #if self.draw_mode == VoxelMode:
+    #  self.terrain.data_directory = &"user://state/voxels/{self.script_index}"
+    #self.pen = self.draw_mode.init(self, self.enu_script, self.voxes)
 
-    if self.schedule_save:
-      self.build()
+    #if self.schedule_save:
+    self.build()
 
   proc load_script() =
     if self.enu_script == "none":# or self.paused:

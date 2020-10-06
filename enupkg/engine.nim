@@ -18,12 +18,11 @@ type
     previous_line: TLineInfo
     initialized*: bool
 
-
 const
   STDLIB = find_nim_std_lib_compile_time()
 
 proc load*(e: Engine, script_file: string) =
-  let source_paths = [STDLIB, STDLIB & "/core", parent_dir current_source_path]
+  let source_paths = [STDLIB, STDLIB & "/core", STDLIB & "/pure", parent_dir current_source_path]
   e.i = create_interpreter(script_file, source_paths)
   with e.i:
     register_error_hook proc(config, info, msg, severity: auto) {.gcsafe.} =

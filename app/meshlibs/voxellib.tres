@@ -1,0 +1,64 @@
+[gd_resource type="VoxelLibrary" load_steps=5 format=2]
+
+[sub_resource type="Voxel" id=1]
+voxel_name = "air"
+transparent = true
+geometry_type = 1
+collision_aabbs = [ AABB( 0, 0, 0, 1, 1, 1 ) ]
+collision_mask = 2147483655
+cube_geometry/padding_y = null
+cube_tiles/left = Vector2( 0, 0 )
+cube_tiles/right = Vector2( 0, 0 )
+cube_tiles/bottom = Vector2( 0, 0 )
+cube_tiles/top = Vector2( 0, 0 )
+cube_tiles/back = Vector2( 0, 0 )
+cube_tiles/front = Vector2( 0, 0 )
+
+[sub_resource type="Voxel" id=2]
+voxel_name = "blue"
+color = Color( 0, 0.403922, 1, 1 )
+geometry_type = 1
+collision_aabbs = [ AABB( 0, 0, 0, 1, 1, 1 ) ]
+collision_mask = 7
+cube_geometry/padding_y = null
+cube_tiles/left = Vector2( 0, 0 )
+cube_tiles/right = Vector2( 0, 0 )
+cube_tiles/bottom = Vector2( 0, 0 )
+cube_tiles/top = Vector2( 0, 0 )
+cube_tiles/back = Vector2( 0, 0 )
+cube_tiles/front = Vector2( 0, 0 )
+
+[sub_resource type="Voxel" id=3]
+voxel_name = "red"
+color = Color( 0.988235, 0.054902, 0.0431373, 1 )
+material_id = 1
+geometry_type = 1
+collision_aabbs = [ AABB( 0, 0, 0, 1, 1, 1 ) ]
+collision_mask = 2147483655
+cube_geometry/padding_y = null
+cube_tiles/left = Vector2( 0, 0 )
+cube_tiles/right = Vector2( 0, 0 )
+cube_tiles/bottom = Vector2( 0, 0 )
+cube_tiles/top = Vector2( 0, 0 )
+cube_tiles/back = Vector2( 0, 0 )
+cube_tiles/front = Vector2( 0, 0 )
+
+[sub_resource type="Voxel" id=4]
+color = Color( 0.0784314, 0.968627, 0.027451, 1 )
+material_id = 2
+geometry_type = 1
+collision_aabbs = [ AABB( 0, 0, 0, 1, 1, 1 ) ]
+collision_mask = 7
+cube_geometry/padding_y = null
+cube_tiles/left = Vector2( 0, 0 )
+cube_tiles/right = Vector2( 0, 0 )
+cube_tiles/bottom = Vector2( 0, 0 )
+cube_tiles/top = Vector2( 0, 0 )
+cube_tiles/back = Vector2( 0, 0 )
+cube_tiles/front = Vector2( 0, 0 )
+
+[resource]
+voxels/0 = SubResource( 1 )
+voxels/1 = SubResource( 2 )
+voxels/2 = SubResource( 3 )
+voxels/3 = SubResource( 4 )

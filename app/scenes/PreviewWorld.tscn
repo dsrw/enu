@@ -44,7 +44,5 @@ light_energy = 4.0
 [node name="TerrainPreview" type="VoxelTerrain" parent="."]
 voxel_library = SubResource( 4 )
 
-[node name="VoxelViewer" type="VoxelViewer" parent="."]
-
 [node name="bot" parent="." instance=ExtResource( 2 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.8, 0 )

@@ -36,7 +36,6 @@ gdobj Game of Node:
       trigger("mouse_captured")
       warp_mouse_position(center)
       set_mouse_mode MOUSE_MODE_CAPTURED
-      echo "skipping next mouse move"
       skip_next_mouse_move = true
     else:
       trigger("mouse_released")
@@ -57,7 +56,7 @@ gdobj Game of Node:
     self.reticle = self.find_node("Reticle").as(Control)
     self.viewport_container = self.get_node("ViewportContainer").as(ViewportContainer)
 
-    self.shrink = 2
+    self.shrink = 1
     globals.capture_mouse = proc() =
       self.mouse_captured = true
 

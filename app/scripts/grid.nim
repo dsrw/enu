@@ -1,11 +1,10 @@
-import macros
+import macros, strformat
 
 type
   ColorIndex* = enum
-    starting,
-    blue,
-    red,
-    green
+    blue = 1,
+    red = 2,
+    green = 3
 
 var
   speed* = 30.0
@@ -33,8 +32,8 @@ proc change_color*(amount: int) =
   var color_index = int color
   color_index += amount
   if color_index > int ColorIndex.high:
-    color_index = ColorIndex.low.int + 1
-  elif color_index < ColorIndex.low.int + 1:
+    color_index = ColorIndex.low.int
+  elif color_index < ColorIndex.low.int:
     color_index = int ColorIndex.high
   color = ColorIndex color_index
 

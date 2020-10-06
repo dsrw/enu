@@ -39,7 +39,6 @@ var
   open_file* = ""
   action_index* = 1
   action_count* = 4
-  pens*: seq[Pen]
   max_grid_index* = 0
   skip_next_mouse_move* = false
   fire_down* = false
