@@ -13,7 +13,7 @@ let
   jump_impulse = 25.0
   fly_toggle = 0.3.seconds
   sensitivity_gamepad = vec2(2.5, 2.5)
-  sensitivity_mouse = vec2(0.1, -0.1)
+  sensitivity_mouse = vec2(0.005, -0.005)
   nil_time = none(DateTime)
 
 gdobj Player of KinematicBody:
@@ -82,7 +82,7 @@ gdobj Player of KinematicBody:
       var look_direction = self.get_look_direction()
 
       if self.input_relative.length() > 0:
-        self.update_rotation(self.input_relative * sensitivity_mouse * delta)
+        self.update_rotation(self.input_relative * sensitivity_mouse)
         self.input_relative = vec2()
       elif look_direction.length() > 0:
         self.update_rotation(look_direction * sensitivity_gamepad * delta)
