@@ -48,3 +48,8 @@ proc vec3*(x, y, z: int): Vector3 {.inline.} =
 
 proc trunc*(self: Vector3): Vector3 {.inline.} =
   vec3(trunc(self.x), trunc(self.y), trunc(self.z))
+
+proc first*[T](arr: openArray[T], test: proc(x: T): bool): Option[T] =
+  for item in arr:
+    if test(item):
+      return some(item)

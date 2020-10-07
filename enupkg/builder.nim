@@ -25,7 +25,7 @@ gdobj Builder of Spatial:
     terrain: Terrain
 
 
-  proc draw(x, y, z: float, index: int) =
+  proc draw*(x, y, z: float, index: int) =
     if self.draw_mode == VoxelMode:
       self.terrain.draw(x, y, z, index)
     else:
@@ -154,6 +154,10 @@ gdobj Builder of Spatial:
     if self.drawing:
       let p = self.position
       self.draw(p.x, p.y, p.z, self.index)
+
+  proc contains_any*(voxels: seq[Vector3]): bool =
+    if self.draw_mode == VoxelMode:
+      result = self.terrain.contains_any(voxels)
 
   proc build() =
     if not file_exists(self.enu_script):

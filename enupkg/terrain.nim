@@ -113,6 +113,12 @@ gdobj Terrain of VoxelTerrain:
 
       self.loading_buffers = @[]
 
+  proc contains_any*(voxels: seq[Vector3]): bool =
+    for voxel in voxels:
+      let blk = self.voxel_to_block(voxel)
+      if blk in self.buffer and (voxel, 1) in self.buffer[blk]:
+        return true
+
   proc try_draw(loc: Vector3, idx: int): bool =
     result = if self.in_view(loc):
       self.voxel_tool.set_voxel(loc, idx)
