@@ -17,7 +17,7 @@ gdobj NimBot of KinematicBody:
     orig_translation: Vector3
     skin: Spatial
     mesh: MeshInstance
-    paused = true
+    paused* = true
     running = false
     animation_player: AnimationPlayer
     schedule_save* = false

@@ -1,40 +1,9 @@
-[gd_scene load_steps=15 format=2]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://components/Builder.gdns" type="Script" id=1]
 [ext_resource path="res://meshlibs/block.meshlib" type="MeshLibrary" id=2]
 [ext_resource path="res://components/Grid.gdns" type="Script" id=3]
 [ext_resource path="res://materials/highlight.tres" type="Material" id=4]
-[ext_resource path="res://components/Terrain.gdns" type="Script" id=5]
-[ext_resource path="res://meshlibs/voxellib.tres" type="VoxelLibrary" id=6]
-[ext_resource path="res://textures/red_block.png" type="Texture" id=7]
-[ext_resource path="res://textures/blue_block.png" type="Texture" id=8]
-[ext_resource path="res://textures/tile_nrm.png" type="Texture" id=9]
-[ext_resource path="res://textures/green_block.png" type="Texture" id=10]
-
-[sub_resource type="VoxelGeneratorFlat" id=1]
-channel = 0
-voxel_type = 0
-
-[sub_resource type="SpatialMaterial" id=2]
-albedo_color = Color( 0, 0.403922, 1, 1 )
-albedo_texture = ExtResource( 8 )
-normal_enabled = true
-normal_scale = 2.0
-normal_texture = ExtResource( 9 )
-uv1_triplanar = true
-
-[sub_resource type="SpatialMaterial" id=3]
-albedo_color = Color( 0.988235, 0.054902, 0.0431373, 1 )
-albedo_texture = ExtResource( 7 )
-normal_enabled = true
-normal_scale = 1.0
-normal_texture = ExtResource( 9 )
-uv1_triplanar = true
-
-[sub_resource type="SpatialMaterial" id=4]
-albedo_color = Color( 0.0784314, 0.968627, 0.027451, 1 )
-albedo_texture = ExtResource( 10 )
-uv1_triplanar = true
 
 [node name="Builder" type="Spatial"]
 script = ExtResource( 1 )
@@ -51,12 +20,3 @@ __meta__ = {
 "_editor_clip_": 0
 }
 highlight_material = ExtResource( 4 )
-
-[node name="Terrain" type="VoxelTerrain" parent="."]
-stream = SubResource( 1 )
-voxel_library = ExtResource( 6 )
-max_view_distance = 256
-material/0 = SubResource( 2 )
-material/1 = SubResource( 3 )
-material/2 = SubResource( 4 )
-script = ExtResource( 5 )

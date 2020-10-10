@@ -40,6 +40,12 @@ converter to_option*[T](val: T): Option[T] =
 converter to_bool*[T](option: Option[T]): bool =
   option.is_some
 
+proc optional_get*[T](self: var HashSet[T], key: T): Option[T] =
+  if key in self:
+    result = some(self[key])
+  else:
+    result = none(T)
+
 ### Vector3 ###
 import godot, math
 

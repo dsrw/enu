@@ -8,7 +8,7 @@ gdobj Builder of Spatial:
     script_index* {.gdExport.} = 0
     enu_script* {.gdExport.} = "none"
     initial_index* {.gdExport} = 1
-    paused* = true
+    paused* = false
     schedule_save* = false
     engine: Engine
     callback: proc(delta: float): bool
@@ -27,7 +27,9 @@ gdobj Builder of Spatial:
 
   proc draw*(x, y, z: float, index: int) =
     if self.draw_mode == VoxelMode:
-      self.terrain.draw(x, y, z, index)
+      if self.script_index > 1:
+        dump self.script_index
+      self.terrain.draw(x, y, z, index, self.script_index)
     else:
       raise new_exception(Defect, "Not implemented")
 
@@ -155,16 +157,10 @@ gdobj Builder of Spatial:
       let p = self.position
       self.draw(p.x, p.y, p.z, self.index)
 
-  proc contains_any*(voxels: seq[Vector3]): bool =
-    if self.draw_mode == VoxelMode:
-      result = self.terrain.contains_any(voxels)
-
   proc build() =
     if not file_exists(self.enu_script):
       os.copy_file "scripts/default_grid.nim", self.enu_script
 
-    #if not self.schedule_save and self.draw_mode == VoxelMode and self.voxes.blocks.len <= 1:
-    self.paused = false
     self.position = self.translation
     let p = self.position
     self.draw(p.x, p.y, p.z, action_index)
@@ -172,29 +168,20 @@ gdobj Builder of Spatial:
 
   method ready*() =
     self.grid = self.get_node("Grid") as Grid
-    self.terrain = self.get_node("Terrain") as Terrain
+    self.terrain = game_node.find_node("Terrain") as Terrain
     assert self.grid != nil
     assert self.terrain != nil
 
     self.bind_signals self.terrain, "selected"
     self.bind_signals "reload", "pause", "reload_all"
-    if self.script_index == 0:
-      inc max_grid_index
-      self.script_index = max_grid_index
-      self.paused = true
-    elif self.script_index > max_grid_index:
-      max_grid_index = self.script_index
+    self.script_index = max_grid_index
+    inc max_grid_index
 
     self.enu_script = &"scripts/grid_{self.script_index}.nim"
-    #if self.draw_mode == VoxelMode:
-    #  self.terrain.data_directory = &"user://state/voxels/{self.script_index}"
-    #self.pen = self.draw_mode.init(self, self.enu_script, self.voxes)
-
-    #if self.schedule_save:
     self.build()
 
   proc load_script() =
-    if self.enu_script == "none":# or self.paused:
+    if self.enu_script == "none":
       # can't use empty string because it gets set as nil, which is no longer valid nim.
       # can probably be fixed in godot-nim
       return
