@@ -5,7 +5,7 @@ import ../godotapi / [mesh, voxel_terrain, voxel_tool, voxel, voxel_library, spa
 type
   DrawMode* = enum
     GridMode, VoxelMode
-  Vox = tuple[location: Vector3, index: int, offset: int]
+  Vox = tuple[location: Vector3, index: int, offset: int, keep: bool]
   Buffers = Table[Vector3, HashSet[Vox]]
 
 const MAX_MATERIALS = 512
@@ -81,7 +81,7 @@ gdobj Terrain of VoxelTerrain:
     let idx = offset * (self.voxel_count - 1) + index
     self.voxel_tool.set_voxel(loc, idx)
 
-  proc draw*(x, y, z: float, index, offset: int) =
+  proc draw*(x, y, z: float, index, offset: int, keep = false) =
     if self.voxel_tool.is_nil:
       self.voxel_tool = self.get_voxel_tool()
 
@@ -89,20 +89,21 @@ gdobj Terrain of VoxelTerrain:
       loc = vec3(x, y, z)
       blk = self.voxel_to_block(loc)
 
+    let vox = (loc, index, offset, keep)
     if self.in_view(loc):
       self.set_voxel(loc, index, offset)
     elif blk in self.visible_buffers:
       self.lost_voxels.mget_or_put(blk, @[])
-                      .add (loc, index, offset)
+                      .add vox
     if blk notin self.buffers:
       self.buffers[blk] = init_hash_set[Vox]()
     if index == 0:
-      self.buffers[blk].excl (loc, index, offset)
+      self.buffers[blk].excl vox
     else:
-      self.buffers[blk].incl (loc, index, offset)
+      self.buffers[blk].incl vox
 
-  proc draw*(loc: Vector3, index, offset: int) =
-    self.draw(loc.x, loc.y, loc.z, index, offset)
+  proc draw*(loc: Vector3, index, offset: int, keep = false) =
+    self.draw(loc.x, loc.y, loc.z, index, offset, keep)
 
   proc find_targeted_voxel(point, normal: Vector3): Vector3 =
     let diffed = (vec3(1, 1, 1) + normal) * 0.5
@@ -111,15 +112,15 @@ gdobj Terrain of VoxelTerrain:
   proc get_vox*(point: Vector3): Option[Vox] =
     let blk = self.voxel_to_block(point)
     if blk in self.buffers:
-      result = self.buffers[blk].optional_get (point, 0, 0)
+      result = self.buffers[blk].optional_get (point, 0, 0, false)
 
   method process*(delta: float) =
     if self.loading_buffers.len > 0:
       let lost_voxels = self.lost_voxels
       for blk, voxels in lost_voxels:
         var remaining_voxels: seq[Vox]
-        for (loc, idx, offset) in voxels:
-          self.try_draw(loc, idx, offset, remaining_voxels)
+        for (loc, idx, offset, keep) in voxels:
+          self.try_draw(loc, idx, offset, keep, remaining_voxels)
         if remaining_voxels.len > 0:
           self.lost_voxels[blk] = remaining_voxels
         else:
@@ -128,10 +129,10 @@ gdobj Terrain of VoxelTerrain:
       for blk in self.loading_buffers:
         if blk in self.buffers:
           let voxels = self.buffers[blk]
-          for (loc, idx, offset) in voxels:
+          for (loc, idx, offset, keep) in voxels:
             if not self.try_draw(loc, idx, offset):
               self.lost_voxels.mget_or_put(blk, @[])
-                              .add (loc, idx, offset)
+                              .add (loc, idx, offset, keep)
 
       self.loading_buffers = @[]
 
@@ -142,21 +143,21 @@ gdobj Terrain of VoxelTerrain:
     else:
       false
 
-  proc try_draw(loc: Vector3, idx, offset: int, buffers: var seq[Vox]) =
+  proc try_draw(loc: Vector3, idx, offset: int, keep = false, buffers: var seq[Vox]) =
     if not self.try_draw(loc, idx, offset):
-      buffers.add (loc, idx, offset)
+      buffers.add (loc, idx, offset, keep)
 
   proc clear*(offset: int) =
     for blk in self.visible_buffers:
       if blk in self.buffers:
-        for (loc, idx, blk_offset) in self.buffers[blk]:
-          if offset == blk_offset:
+        for (loc, idx, blk_offset, keep) in self.buffers[blk]:
+          if not keep and offset == blk_offset:
             self.voxel_tool.set_voxel(loc, 0)
 
     var buffers: Buffers
     for blk, bu in self.buffers:
       for vox in bu:
-        if vox.offset != offset:
+        if vox.keep or vox.offset != offset:
           if blk notin buffers:
             buffers[blk] = init_hash_set[Vox]()
           buffers[blk].incl vox
@@ -164,7 +165,7 @@ gdobj Terrain of VoxelTerrain:
 
     let lost_voxels = self.lost_voxels
     for blk, voxes in lost_voxels:
-      self.lost_voxels[blk] = voxes.filter_it it.offset != offset
+      self.lost_voxels[blk] = voxes.filter_it it.keep or it.offset != offset
 
   proc highlight() =
     let
@@ -234,7 +235,7 @@ gdobj Terrain of VoxelTerrain:
     let vox = self.get_vox(self.targeted_voxel)
     if vox:
       if tool_mode == BlockMode:
-        self.draw(self.targeted_voxel + self.current_normal, action_index, vox.get.offset)
+        self.draw(self.targeted_voxel + self.current_normal, action_index, vox.get.offset, true)
         self.draw_plane = self.current_point * self.current_normal
 
       if tool_mode == CodeMode:
