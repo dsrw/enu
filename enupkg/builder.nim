@@ -142,7 +142,7 @@ gdobj Builder of Spatial:
 
   proc clear() =
     if self.draw_mode == VoxelMode:
-      self.terrain.clear()
+      self.terrain.clear(self.script_index)
 
   proc reset(clear = true) =
     self.set_defaults()
@@ -172,7 +172,7 @@ gdobj Builder of Spatial:
     assert self.grid != nil
     assert self.terrain != nil
 
-    self.bind_signals self.terrain, "selected"
+    self.bind_signals self.terrain, "block_selected"
     self.bind_signals "reload", "pause", "reload_all"
     self.script_index = max_grid_index
     inc max_grid_index
@@ -213,8 +213,9 @@ gdobj Builder of Spatial:
     except VMQuit as e:
       self.error(e)
 
-  method on_selected() =
-    show_editor self.enu_script, self.engine
+  method on_block_selected(offset: int) =
+    if offset == self.script_index:
+      show_editor self.enu_script, self.engine
 
   method reload() =
     self.reset()

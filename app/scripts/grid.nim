@@ -7,7 +7,7 @@ type
     green = 3
 
 var
-  speed* = 30.0
+  speed*: 0.0..250.0 = 30.0
   drawing* = true
   color*: ColorIndex
 
