@@ -172,7 +172,7 @@ gdobj Builder of Spatial:
     assert self.grid != nil
     assert self.terrain != nil
 
-    self.bind_signals self.terrain, "block_selected"
+    self.bind_signals self.terrain, "block_selected", "delete"
     self.bind_signals "reload", "pause", "reload_all"
     self.script_index = max_grid_index
     inc max_grid_index
@@ -231,3 +231,8 @@ gdobj Builder of Spatial:
 
   method on_pause*() =
     self.paused = not self.paused
+
+  method on_delete*(offset: int) =
+    if offset == self.script_index:
+      self.get_parent.remove_child(self)
+      save_scene()

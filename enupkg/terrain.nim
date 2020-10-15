@@ -22,6 +22,7 @@ gdobj Terrain of VoxelTerrain:
     current_point: Vector3
     voxel_tool: VoxelTool
     buffers: Buffers
+    offset_buffers: Table[int, Buffers]
     visible_buffers: HashSet[Vector3]
     loading_buffers: seq[Vector3]
     highlighted_offset = -1
@@ -78,7 +79,8 @@ gdobj Terrain of VoxelTerrain:
     self.voxel_tool.is_area_editable(init_aabb(loc, vec3(1,1,1)))
 
   proc set_voxel(loc: Vector3, index, offset: int) =
-    let idx = offset * (self.voxel_count - 1) + index
+    let idx = if index == 0: 0 else:
+      offset * (self.voxel_count - 1) + index
     self.voxel_tool.set_voxel(loc, idx)
 
   proc draw*(x, y, z: float, index, offset: int, keep = false) =
@@ -95,12 +97,10 @@ gdobj Terrain of VoxelTerrain:
     elif blk in self.visible_buffers:
       self.lost_voxels.mget_or_put(blk, @[])
                       .add vox
-    if blk notin self.buffers:
-      self.buffers[blk] = init_hash_set[Vox]()
     if index == 0:
-      self.buffers[blk].excl vox
+      self.del_voxel(blk, vox)
     else:
-      self.buffers[blk].incl vox
+      self.add_voxel(blk, vox)
 
   proc draw*(loc: Vector3, index, offset: int, keep = false) =
     self.draw(loc.x, loc.y, loc.z, index, offset, keep)
@@ -147,6 +147,28 @@ gdobj Terrain of VoxelTerrain:
     if not self.try_draw(loc, idx, offset):
       buffers.add (loc, idx, offset, keep)
 
+  proc add_voxel(blk: Vector3, vox: Vox) =
+    if vox.offset notin self.offset_buffers:
+      self.offset_buffers[vox.offset] = Buffers()
+    if blk notin self.offset_buffers[vox.offset]:
+      self.offset_buffers[vox.offset][blk] = HashSet[Vox]()
+    if blk notin self.buffers:
+      self.buffers[blk] = HashSet[Vox]()
+
+    self.offset_buffers[vox.offset][blk].incl vox
+    self.buffers[blk].incl vox
+
+  proc del_voxel(blk: Vector3, vox: Vox) =
+    self.offset_buffers[vox.offset][blk].excl vox
+    self.buffers[blk].excl vox
+
+    if self.offset_buffers[vox.offset][blk].len == 0:
+      self.offset_buffers[vox.offset].del(blk)
+    if self.offset_buffers[vox.offset].len == 0:
+      self.offset_buffers.del(vox.offset)
+    if self.buffers[blk].len == 0:
+      self.buffers.del(blk)
+
   proc clear*(offset: int) =
     for blk in self.visible_buffers:
       if blk in self.buffers:
@@ -154,14 +176,15 @@ gdobj Terrain of VoxelTerrain:
           if not keep and offset == blk_offset:
             self.voxel_tool.set_voxel(loc, 0)
 
-    var buffers: Buffers
-    for blk, bu in self.buffers:
-      for vox in bu:
-        if vox.keep or vox.offset != offset:
-          if blk notin buffers:
-            buffers[blk] = init_hash_set[Vox]()
-          buffers[blk].incl vox
-    self.buffers = buffers
+    var offset_buffers: Buffers
+    for blk, buf in self.offset_buffers[offset]:
+      for vox in buf:
+        if vox.keep:
+          if blk notin offset_buffers:
+            offset_buffers[blk] = HashSet[Vox]()
+        else:
+          self.buffers[blk].excl vox
+    self.offset_buffers[offset] = offset_buffers
 
     let lost_voxels = self.lost_voxels
     for blk, voxes in lost_voxels:
@@ -246,5 +269,8 @@ gdobj Terrain of VoxelTerrain:
     if tool_mode == BlockMode:
       let vox = self.get_vox(self.targeted_voxel)
       if vox:
-        self.draw(self.targeted_voxel, 0, 0)
+        let offset = vox.get.offset
+        self.draw(self.targeted_voxel, 0, offset)
+        if offset notin self.offset_buffers:
+          self.trigger("delete", offset)
       self.draw_plane = self.current_point * self.current_normal
