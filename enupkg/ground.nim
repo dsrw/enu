@@ -33,17 +33,27 @@ gdobj Ground of MeshInstance:
 
   method on_target_fire() =
     var p = self.point
-    if tool_mode == BlockMode:
-      p = (p - vec3(0.5, 0, 0.5)).trunc
+    p = (p - vec3(0.5, 0, 0.5)).trunc
+    let voxels = collect(new_seq):
       for x in 0..2:
         for y in 0..2:
           for z in 0..2:
-            let
-              loc = p + vec3(x - 1, y - 1, z - 1)
-              vox = self.terrain.get_vox(loc)
-            if vox:
-              self.terrain.draw(p.x, p.y, p.z, action_index, vox.get.offset)
-              return
+            p + vec3(x - 1, y - 1, z - 1)
+
+    if tool_mode == BlockMode:
+      for loc in voxels:
+        let vox = self.terrain.get_vox(loc)
+        if vox:
+          self.terrain.draw(p.x, p.y, p.z, action_index, vox.get.offset)
+          return
+      for c in self.data.get_children():
+        let b = c.as_object(Builder)
+        assert not b.is_nil
+        if b.includes_any_location(voxels):
+          let point = p - b.translation
+          b.draw(point.x, point.y, point.z, action_index)
+          return
+
       self.create_builder(p)
 
     elif tool_mode == ObjectMode:

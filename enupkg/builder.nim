@@ -1,4 +1,4 @@
-import ../godotapi / [spatial],
+import ../godotapi / [spatial, grid_map],
        godot, tables, math, sets, sugar, sequtils, hashes, os,
        core, globals, engine, terrain, grid
 
@@ -51,6 +51,14 @@ gdobj Builder of Spatial:
       debug(self.enu_script & " done.")
 
   proc running*: bool = self.is_running
+
+  proc includes_any_location*(locations: seq[Vector3]): bool =
+    if self.draw_mode == GridMode:
+      for l in self.grid.get_used_cells():
+        let loc = l.asVector3() + self.translation
+        if loc in locations:
+          return true
+    return false
 
   proc set_defaults() =
     self.direction = FORWARD
