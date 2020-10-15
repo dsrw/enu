@@ -114,3 +114,6 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
   an existing object. Each builder can be scripted. Builders are NOT currently removed when
   their voxels are destroyed, but they will be in the future. Delete builders (and everything
   else) with `nimble reset`.
+- Drawing outside the visible area now works properly.
+- Better voxel highlighting. Each object gets its own materials.
+- Deleting the last block in an object deletes the builder.
