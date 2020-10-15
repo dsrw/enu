@@ -24,14 +24,14 @@ gdobj Builder of Spatial:
     grid: Grid
     terrain: Terrain
 
-  method ready*() =
+  method ready() =
     self.grid = self.get_node("Grid") as Grid
     self.terrain = game_node.find_node("Terrain") as Terrain
     assert self.grid != nil
     assert self.terrain != nil
 
-    self.bind_signals self.terrain, "block_selected", "delete"
-    self.bind_signals self.grid, "selected"
+    self.bind_signals self.terrain, "block_selected", "block_deleted"
+    self.bind_signals self.grid, "selected", "deleted"
     self.bind_signals "reload", "pause", "reload_all"
     self.script_index = max_grid_index
     inc max_grid_index
@@ -75,7 +75,7 @@ gdobj Builder of Spatial:
     if self.speed != old_speed:
       self.blocks_remaining_this_frame = 0
 
-  method physics_process*(delta: float64) =
+  method physics_process(delta: float64) =
     if not self.paused:
       self.blocks_remaining_this_frame += self.blocks_per_frame
       try:
@@ -231,17 +231,20 @@ gdobj Builder of Spatial:
     self.paused = false
     self.load_script()
 
-  method on_reload*() =
+  method on_reload() =
     if not editing() or open_file == self.enu_script:
       self.reload()
 
-  method on_reload_all*() =
+  method on_reload_all() =
     self.reload()
 
   method on_pause*() =
     self.paused = not self.paused
 
-  method on_delete*(offset: int) =
+  method on_deleted() =
+    self.get_parent.remove_child(self)
+    save_scene()
+
+  method on_block_deleted(offset: int) =
     if offset == self.script_index:
-      self.get_parent.remove_child(self)
-      save_scene()
+      self.on_deleted()

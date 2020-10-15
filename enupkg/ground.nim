@@ -27,7 +27,7 @@ gdobj Ground of MeshInstance:
     b.name = "Builder" & $max_grid_index
     b.schedule_save = true
     b.paused = true
-    b.initial_index = action_index - 1
+    b.initial_index = action_index
     self.data.add_child(b)
     b.owner = self.data
 

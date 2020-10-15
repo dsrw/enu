@@ -13,6 +13,8 @@ type
     player*: Node
     game*: Node
 
+  Vox* = tuple[location: Vector3, index: int, offset: int, keep: bool]
+
 const
   CMP_EPSILON = 0.00001
   UP* = vec3(0, 1, 0)

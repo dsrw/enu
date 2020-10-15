@@ -1,13 +1,12 @@
 import ../godotapi/[grid_map, mesh_library, mesh, spatial],
-       godot,
+       godot, sets,
        core, globals, builder
-
-export grid_map.clear
 
 gdobj Grid of GridMap:
   var
     highlight_material* {.gdExport}: Material
     original_materials: seq[Material]
+    kept_blocks: HashSet[Vox]
     point, normal: Vector3
 
   proc build_unique_mesh_library() =
@@ -35,18 +34,28 @@ gdobj Grid of GridMap:
       let mesh = lib.get_item_mesh(index)
       mesh.surface_set_material(0, self.original_materials[index])
 
-  proc draw*(x, y, z: float, index: int) =
+  proc draw*(x, y, z: float, index: int, keep = false) =
     var index = index - 1
     let map_point = self.world_to_map(vec3(x, y, z))
     self.set_cell_item(int(map_point.x), int(map_point.y), int(map_point.z), index)
+    let vox = (map_point, index, 0, keep)
+    if keep and index > -1:
+      self.kept_blocks.incl vox
+    else:
+      self.kept_blocks.excl vox
+
+  proc clear*() =
+    self.as(GridMap).clear()
+    for vox in self.kept_blocks:
+      let loc = vox.location
+      self.set_cell_item(int loc.x, int loc.y, int loc.z, vox.index)
 
   method on_target_in() =
     if tool_mode == CodeMode:
       self.highlight()
 
   method on_target_out() =
-    if tool_mode == CodeMode:
-      self.clear_highlight()
+    self.clear_highlight()
 
   method on_target_move(point, normal: Vector3) =
     self.point = point - self.get_parent.as(Spatial).translation
@@ -55,7 +64,7 @@ gdobj Grid of GridMap:
   method on_target_fire() =
     if tool_mode == BlockMode:
       let point = (self.point + self.normal * 0.5)
-      self.draw(point.x, point.y, point.z, action_index)
+      self.draw(point.x, point.y, point.z, action_index, true)
     else:
       self.clear_highlight()
       self.trigger("selected")
@@ -63,3 +72,5 @@ gdobj Grid of GridMap:
   method on_target_remove() =
     let point = self.point - (self.normal * 0.5)
     self.draw(point.x, point.y, point.z, 0)
+    if self.get_used_cells().len == 0:
+      self.trigger("deleted")

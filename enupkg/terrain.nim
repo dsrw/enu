@@ -5,7 +5,6 @@ import ../godotapi / [mesh, voxel_terrain, voxel_tool, voxel, voxel_library, spa
 type
   DrawMode* = enum
     GridMode, VoxelMode
-  Vox = tuple[location: Vector3, index: int, offset: int, keep: bool]
   Buffers = Table[Vector3, HashSet[Vox]]
 
 const MAX_MATERIALS = 512
@@ -272,5 +271,5 @@ gdobj Terrain of VoxelTerrain:
         let offset = vox.get.offset
         self.draw(self.targeted_voxel, 0, offset)
         if offset notin self.offset_buffers:
-          self.trigger("delete", offset)
+          self.trigger("block_deleted", offset)
       self.draw_plane = self.current_point * self.current_normal
