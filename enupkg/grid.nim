@@ -7,7 +7,7 @@ gdobj Grid of GridMap:
     highlight_material* {.gdExport}: Material
     original_materials: seq[Material]
     kept_blocks: HashSet[Vox]
-    point, normal: Vector3
+    point, normal, draw_plane: Vector3
 
   proc build_unique_mesh_library() =
     self.mesh_library = self.mesh_library.duplicate().as(MeshLibrary)
@@ -36,7 +36,7 @@ gdobj Grid of GridMap:
 
   proc draw*(x, y, z: float, index: int, keep = false) =
     var index = index - 1
-    let map_point = self.world_to_map(vec3(x, y, z))
+    let map_point = vec3(x, y, z)
     self.set_cell_item(int(map_point.x), int(map_point.y), int(map_point.z), index)
     let vox = (map_point, index, 0, keep)
     if keep and index > -1:
@@ -61,16 +61,32 @@ gdobj Grid of GridMap:
     self.point = point - self.get_parent.as(Spatial).translation
     self.normal = normal
 
+    if fire_down and tool_mode == BlockMode:
+      let plane = self.point * self.normal
+      dump (self.draw_plane, plane)
+      if self.draw_plane == plane:
+        self.on_target_fire()
+    elif remove_down and tool_mode == BlockMode:
+      let plane = self.point * self.normal
+      dump (self.draw_plane, plane)
+      if self.draw_plane == plane:
+        self.on_target_remove()
+    elif not remove_down and not fire_down:
+      self.draw_plane = vec3()
+
   method on_target_fire() =
     if tool_mode == BlockMode:
-      let point = (self.point + self.normal * 0.5)
+      let point = self.world_to_map(self.point + self.normal * 0.5)
       self.draw(point.x, point.y, point.z, action_index, true)
+      self.draw_plane = self.point * self.normal
     else:
       self.clear_highlight()
       self.trigger("selected")
 
   method on_target_remove() =
-    let point = self.point - (self.normal * 0.5)
-    self.draw(point.x, point.y, point.z, 0)
-    if self.get_used_cells().len == 0:
-      self.trigger("deleted")
+    if tool_mode == BlockMode:
+      let point = self.world_to_map(self.point - (self.normal * 0.5))
+      self.draw(point.x, point.y, point.z, 0)
+      self.draw_plane = self.point * self.normal
+      if self.get_used_cells().len == 0:
+        self.trigger("deleted")

@@ -236,7 +236,7 @@ gdobj Terrain of VoxelTerrain:
       let plane = point * normal
       if self.draw_plane == plane:
         self.on_target_fire()
-    if remove_down and tool_mode == BlockMode:
+    elif remove_down and tool_mode == BlockMode:
       let plane = point * normal
       if self.draw_plane == plane:
         self.on_target_remove()
