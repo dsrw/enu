@@ -24,14 +24,26 @@ gdobj Builder of Spatial:
     grid: Grid
     terrain: Terrain
 
+  method ready*() =
+    self.grid = self.get_node("Grid") as Grid
+    self.terrain = game_node.find_node("Terrain") as Terrain
+    assert self.grid != nil
+    assert self.terrain != nil
+
+    self.bind_signals self.terrain, "block_selected", "delete"
+    self.bind_signals self.grid, "selected"
+    self.bind_signals "reload", "pause", "reload_all"
+    self.script_index = max_grid_index
+    inc max_grid_index
+
+    self.enu_script = &"scripts/grid_{self.script_index}.nim"
+    self.build()
 
   proc draw*(x, y, z: float, index: int) =
     if self.draw_mode == VoxelMode:
-      if self.script_index > 1:
-        dump self.script_index
       self.terrain.draw(x, y, z, index, self.script_index)
     else:
-      raise new_exception(Defect, "Not implemented")
+      self.grid.draw(x, y, z, index)
 
   proc `running=`*(val: bool) =
     self.is_running = val
@@ -42,7 +54,11 @@ gdobj Builder of Spatial:
 
   proc set_defaults() =
     self.direction = FORWARD
-    self.position = self.translation
+    self.position = if self.draw_mode == VoxelMode:
+      self.translation
+    else:
+      vec3()
+
     self.speed = 30.0
     self.index = 1
     self.drawing = true
@@ -143,6 +159,8 @@ gdobj Builder of Spatial:
   proc clear() =
     if self.draw_mode == VoxelMode:
       self.terrain.clear(self.script_index)
+    else:
+      self.grid.clear()
 
   proc reset(clear = true) =
     self.set_defaults()
@@ -161,24 +179,12 @@ gdobj Builder of Spatial:
     if not file_exists(self.enu_script):
       os.copy_file "scripts/default_grid.nim", self.enu_script
 
-    self.position = self.translation
+    if self.draw_mode == VoxelMode:
+      self.position = self.translation
+
     let p = self.position
     self.draw(p.x, p.y, p.z, action_index)
     self.load_script()
-
-  method ready*() =
-    self.grid = self.get_node("Grid") as Grid
-    self.terrain = game_node.find_node("Terrain") as Terrain
-    assert self.grid != nil
-    assert self.terrain != nil
-
-    self.bind_signals self.terrain, "block_selected", "delete"
-    self.bind_signals "reload", "pause", "reload_all"
-    self.script_index = max_grid_index
-    inc max_grid_index
-
-    self.enu_script = &"scripts/grid_{self.script_index}.nim"
-    self.build()
 
   proc load_script() =
     if self.enu_script == "none":
@@ -216,6 +222,9 @@ gdobj Builder of Spatial:
   method on_block_selected(offset: int) =
     if offset == self.script_index:
       show_editor self.enu_script, self.engine
+
+  method on_selected() =
+    show_editor self.enu_script, self.engine
 
   method reload() =
     self.reset()

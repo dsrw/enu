@@ -2,6 +2,8 @@ import ../godotapi/[grid_map, mesh_library, mesh, spatial],
        godot,
        core, globals, builder
 
+export grid_map.clear
+
 gdobj Grid of GridMap:
   var
     highlight_material* {.gdExport}: Material
@@ -27,15 +29,16 @@ gdobj Grid of GridMap:
       let mesh = lib.get_item_mesh(index)
       mesh.surface_set_material(0, self.highlight_material)
 
-  proc deselect() =
+  proc clear_highlight() =
     let lib = self.mesh_library
     for index in lib.get_item_list():
       let mesh = lib.get_item_mesh(index)
       mesh.surface_set_material(0, self.original_materials[index])
 
-  # proc select*() =
-  #   self.pen.builder.trigger("selected")
-  #   self.deselect()
+  proc draw*(x, y, z: float, index: int) =
+    var index = index - 1
+    let map_point = self.world_to_map(vec3(x, y, z))
+    self.set_cell_item(int(map_point.x), int(map_point.y), int(map_point.z), index)
 
   method on_target_in() =
     if tool_mode == CodeMode:
@@ -43,16 +46,20 @@ gdobj Grid of GridMap:
 
   method on_target_out() =
     if tool_mode == CodeMode:
-      self.deselect()
+      self.clear_highlight()
 
   method on_target_move(point, normal: Vector3) =
-    (self.point, self.normal) = (point, normal)
+    self.point = point - self.get_parent.as(Spatial).translation
+    self.normal = normal
 
-  # method on_target_fire() =
-  #   if tool_mode == BlockMode:
-  #     self.pen.draw(self.point + (self.normal * 0.5), action_index + 1)
-  #   else:
-  #     self.select()
+  method on_target_fire() =
+    if tool_mode == BlockMode:
+      let point = (self.point + self.normal * 0.5)
+      self.draw(point.x, point.y, point.z, action_index)
+    else:
+      self.clear_highlight()
+      self.trigger("selected")
 
-  # method on_target_remove() =
-  #   self.pen.draw(self.point - (self.normal * 0.5), -1)
+  method on_target_remove() =
+    let point = self.point - (self.normal * 0.5)
+    self.draw(point.x, point.y, point.z, 0)
