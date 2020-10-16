@@ -44,14 +44,14 @@ gdobj Ground of MeshInstance:
       for loc in voxels:
         let vox = self.terrain.get_vox(loc)
         if vox:
-          self.terrain.draw(p.x, p.y, p.z, action_index, vox.get.offset)
+          self.terrain.draw(p.x, p.y, p.z, action_index, vox.get.offset, true)
           return
       for c in self.data.get_children():
         let b = c.as_object(Builder)
         assert not b.is_nil
         if b.includes_any_location(voxels):
           let point = p - b.translation
-          b.draw(point.x, point.y, point.z, action_index)
+          b.draw(point.x, point.y, point.z, action_index, true)
           return
 
       self.create_builder(p)

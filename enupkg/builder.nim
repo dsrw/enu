@@ -39,11 +39,11 @@ gdobj Builder of Spatial:
     self.enu_script = &"scripts/grid_{self.script_index}.nim"
     self.build()
 
-  proc draw*(x, y, z: float, index: int) =
+  proc draw*(x, y, z: float, index: int, keep = false) =
     if self.draw_mode == VoxelMode:
-      self.terrain.draw(x, y, z, index, self.script_index)
+      self.terrain.draw(x, y, z, index, self.script_index, keep)
     else:
-      self.grid.draw(x, y, z, index)
+      self.grid.draw(x, y, z, index, keep)
 
   proc `running=`*(val: bool) =
     self.is_running = val
