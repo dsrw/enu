@@ -1,5 +1,5 @@
 import ../godotapi / [node, scene_tree, voxel_buffer],
-       godot,
+       godot, hashes,
        engine, core,
        strformat, math, strutils, sequtils, compiler/lineinfos, tables, sets
 
@@ -12,8 +12,6 @@ type
   StateRefs = ref object
     player*: Node
     game*: Node
-
-  Vox* = tuple[location: Vector3, index: int, offset: int, keep: bool]
 
 const
   CMP_EPSILON = 0.00001
@@ -46,6 +44,13 @@ var
   fire_down* = false
   remove_down* = false
   command_mode* = false
+
+type
+  Vox* = tuple[location: Vector3, index: int, offset: int, keep: bool]
+
+# We use loc for the hash so we can be sure we only have one per location
+proc hash*(voxel: Vox): Hash = voxel.location.hash
+proc `==`*(voxel, other: Vox): bool = voxel.location == other.location
 
 proc join_args[T](args: varargs[T]): string =
   args.map_it(&"'{it}'").join " "

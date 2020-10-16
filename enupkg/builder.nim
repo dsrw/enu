@@ -48,6 +48,7 @@ gdobj Builder of Spatial:
   proc `running=`*(val: bool) =
     self.is_running = val
     if not val:
+      self.load_vars()
       debug(self.enu_script & " done.")
 
   proc running*: bool = self.is_running
@@ -71,8 +72,24 @@ gdobj Builder of Spatial:
     self.index = 1
     self.drawing = true
 
+  proc switch_mode(mode: DrawMode) =
+    if mode != self.draw_mode:
+      let offset = self.script_index
+      if self.draw_mode == VoxelMode:
+        let data = self.terrain.export_data(offset, self.translation)
+        self.terrain.clear(offset, all = true)
+        self.position -= self.translation
+        self.grid.import_data(data)
+      else:
+        let data = self.grid.export_data()
+        self.grid.clear(all = true)
+        self.position += self.translation
+        self.terrain.import_data(data, offset, self.translation)
+      self.draw_mode = mode
+
   proc load_vars() =
     var old_speed = self.speed
+    let mode = DrawMode self.engine.get_int("mode", "grid")
     self.speed = self.engine.get_float("speed", "grid")
     self.index = self.engine.get_int("color", "grid")
     self.drawing = self.engine.get_bool("drawing", "grid")
@@ -82,6 +99,8 @@ gdobj Builder of Spatial:
       self.speed.float / 30.0
     if self.speed != old_speed:
       self.blocks_remaining_this_frame = 0
+
+    self.switch_mode(mode)
 
   method physics_process(delta: float64) =
     if not self.paused:
@@ -106,7 +125,7 @@ gdobj Builder of Spatial:
       save_scene()
 
   proc set_vars() =
-    self.engine.call_proc("set_vars", module_name = "grid", self.index, self.drawing, self.speed)
+    self.engine.call_proc("set_vars", module_name = "grid", self.index, self.drawing, self.speed, int self.draw_mode)
 
   proc move(direction: Vector3, steps: BiggestInt): bool =
     self.load_vars()
@@ -221,6 +240,12 @@ gdobj Builder of Spatial:
           expose("grid", "restore", a => self.restore(get_string(a, 0)))
           expose "grid", "reset", proc(a: VmArgs): bool =
             self.reset(get_bool(a, 0))
+            false
+          expose "grid", "pause", proc(a: VmArgs): bool =
+            self.paused = true
+            true
+          expose "grid", "load_defaults", proc(a: VmArgs): bool =
+            self.set_vars()
             false
       if not self.paused:
         self.running = self.engine.run()

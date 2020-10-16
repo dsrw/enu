@@ -9,10 +9,6 @@ type
 
 const MAX_MATERIALS = 512
 
-# We use loc for the hash so we can be sure we only have one per location
-proc hash(voxel: Vox): Hash = voxel.location.hash
-proc `==`(voxel, other: Vox): bool = voxel.location == other.location
-
 gdobj Terrain of VoxelTerrain:
   var
     targeted_voxel: Vector3
@@ -168,26 +164,39 @@ gdobj Terrain of VoxelTerrain:
     if self.buffers[blk].len == 0:
       self.buffers.del(blk)
 
-  proc clear*(offset: int) =
+  proc export_data*(offset: int, location: Vector3): seq[Vox] =
+    for blk, buf in self.offset_buffers[offset]:
+      for vox in buf:
+        var vox = vox
+        vox.location -= location
+        result.add vox
+
+  proc import_data*(data: seq[Vox], offset: int, location: Vector3) =
+    for vox in data:
+      self.draw(vox.location + location, vox.index, offset, vox.keep)
+
+  proc clear*(offset: int, all = false) =
     for blk in self.visible_buffers:
       if blk in self.buffers:
         for (loc, idx, blk_offset, keep) in self.buffers[blk]:
-          if not keep and offset == blk_offset:
+          if (all or not keep) and offset == blk_offset:
             self.voxel_tool.set_voxel(loc, 0)
 
     var offset_buffers: Buffers
     for blk, buf in self.offset_buffers[offset]:
       for vox in buf:
-        if vox.keep:
+        if not all and vox.keep:
           if blk notin offset_buffers:
             offset_buffers[blk] = HashSet[Vox]()
+          offset_buffers[blk].incl vox
         else:
           self.buffers[blk].excl vox
     self.offset_buffers[offset] = offset_buffers
 
     let lost_voxels = self.lost_voxels
     for blk, voxes in lost_voxels:
-      self.lost_voxels[blk] = voxes.filter_it it.keep or it.offset != offset
+      self.lost_voxels[blk] = voxes.filter_it:
+        it.offset != offset or it.keep and not all
 
   proc highlight() =
     let

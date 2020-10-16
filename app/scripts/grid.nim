@@ -6,10 +6,14 @@ type
     red = 2,
     green = 3
 
+  DrawMode* = enum
+    GridMode, VoxelMode
+
 var
   speed*: 0.0..250.0 = 30.0
   drawing* = true
   color*: ColorIndex
+  mode* = VoxelMode
 
 proc forward*(steps = 1) = discard
 proc back*(steps = 1)    = discard
@@ -27,6 +31,8 @@ proc sleep*(seconds: float) = discard
 proc reset*(clear = false) = discard
 proc save*(name = "default") = discard
 proc restore*(name = "default") = discard
+proc pause*() = discard
+proc load_defaults() = discard
 
 proc change_color*(amount: int) =
   var color_index = int color
@@ -42,10 +48,11 @@ proc prev_color*() = change_color -1
 proc nc*() = next_color()
 proc pc*() = prev_color()
 
-proc set_vars*(color_index: int, drw: bool, spd: float) =
+proc set_vars*(color_index: int, drw: bool, spd: float, draw_mode: int) =
   color = ColorIndex color_index
   drawing = drw
   speed = spd
+  mode = DrawMode draw_mode
 
 proc fill_square*(length = 1) =
   for l in 0..length:
@@ -62,3 +69,5 @@ macro dump*(x: typed): untyped =
   let r = quote do:
     echo(`s` & " = " & $`x`)
   return r
+
+load_defaults()

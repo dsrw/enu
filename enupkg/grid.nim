@@ -44,11 +44,30 @@ gdobj Grid of GridMap:
     else:
       self.kept_blocks.excl vox
 
-  proc clear*() =
+  proc clear*(all = false) =
     self.as(GridMap).clear()
-    for vox in self.kept_blocks:
-      let loc = vox.location
-      self.set_cell_item(int loc.x, int loc.y, int loc.z, vox.index)
+    if all:
+      self.kept_blocks.clear()
+    else:
+      for vox in self.kept_blocks:
+        let loc = vox.location
+        self.set_cell_item(int loc.x, int loc.y, int loc.z, vox.index)
+
+  proc export_data*(): seq[Vox] =
+    for v in self.get_used_cells():
+      let
+        loc = v.asVector3()
+        index = self.get_cell_item(int loc.x, int loc.y, int loc.z)
+
+      var vox: Vox = (loc, int index + 1, 0, false)
+      if vox in self.kept_blocks:
+        vox.keep = true
+      result.add(vox)
+
+  proc import_data*(data: seq[Vox]) =
+    for vox in data:
+      let l = vox.location
+      self.draw(l.x, l.y, l.z, vox.index, vox.keep)
 
   method on_target_in() =
     if tool_mode == CodeMode:
@@ -63,12 +82,10 @@ gdobj Grid of GridMap:
 
     if fire_down and tool_mode == BlockMode:
       let plane = self.point * self.normal
-      dump (self.draw_plane, plane)
       if self.draw_plane == plane:
         self.on_target_fire()
     elif remove_down and tool_mode == BlockMode:
       let plane = self.point * self.normal
-      dump (self.draw_plane, plane)
       if self.draw_plane == plane:
         self.on_target_remove()
     elif not remove_down and not fire_down:
