@@ -9,7 +9,7 @@ gdobj AimTarget of Sprite3D:
 
   method ready*() =
     self.set_as_top_level(true)
-    self.bind_signals("retarget", "hide_target", "show_target")
+    self.bind_signals(w"retarget hide_target show_target")
 
   method on_retarget*() =
     if self.last_collider != nil:
@@ -62,5 +62,3 @@ gdobj AimTarget of Sprite3D:
       collider.trigger("target_move", target_point, target_normal)
 
     self.last_collider = collider
-
-

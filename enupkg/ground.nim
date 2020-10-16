@@ -16,7 +16,7 @@ gdobj Ground of MeshInstance:
     assert not self.data.is_nil
     assert not self.terrain.is_nil
     self.bot_proto = load("res://components/bot.tscn") as PackedScene
-    self.bind_signals(self, "target_move", "target_fire")
+    self.bind_signals(self, w"target_move target_fire")
 
   proc create_builder(point: Vector3) =
     let

@@ -59,3 +59,6 @@ proc first*[T](arr: openArray[T], test: proc(x: T): bool): Option[T] =
   for item in arr:
     if test(item):
       return some(item)
+
+### string ###
+proc w*(str: string): seq[string] = str.split_whitespace()

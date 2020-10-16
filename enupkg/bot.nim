@@ -126,7 +126,7 @@ gdobj NimBot of KinematicBody:
     if not file_exists(self.enu_script):
       copy_file "scripts/default_bot.nim", self.enu_script
     with self:
-      bind_signals("reload", "pause", "reload_all")
+      bind_signals(w"reload pause reload_all")
       skin = self.get_node("Mannequiny").as(Spatial)
       mesh = self.skin.get_node("root/Skeleton/body001").as(MeshInstance)
       animation_player = self.skin.get_node("AnimationPlayer").as(AnimationPlayer)

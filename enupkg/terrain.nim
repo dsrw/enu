@@ -65,9 +65,10 @@ gdobj Terrain of VoxelTerrain:
     l.bake()
 
   method ready*() =
-    self.bind_signals(self, ["target_in", "target_out", "target_move",
-                             "target_fire", "target_remove", "block_loaded",
-                             "block_unloaded"])
+    self.bind_signals(self, w"""
+      target_in target_out target_move
+      target_fire target_remove block_loaded
+      block_unloaded""")
     self.prep_voxels_and_materials()
 
   proc in_view(loc: Vector3, log = false): bool =
@@ -85,8 +86,8 @@ gdobj Terrain of VoxelTerrain:
     let
       loc = vec3(x, y, z)
       blk = self.voxel_to_block(loc)
+      vox = (loc, index, offset, keep)
 
-    let vox = (loc, index, offset, keep)
     if self.in_view(loc):
       self.set_voxel(loc, index, offset)
     elif blk in self.visible_buffers:

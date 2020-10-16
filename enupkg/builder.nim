@@ -30,9 +30,9 @@ gdobj Builder of Spatial:
     assert self.grid != nil
     assert self.terrain != nil
 
-    self.bind_signals self.terrain, "block_selected", "block_deleted"
-    self.bind_signals self.grid, "selected", "deleted"
-    self.bind_signals "reload", "pause", "reload_all"
+    self.bind_signals self.terrain, w"block_selected block_deleted"
+    self.bind_signals self.grid, w"selected deleted"
+    self.bind_signals w"reload pause reload_all"
     self.script_index = max_grid_index
     inc max_grid_index
 

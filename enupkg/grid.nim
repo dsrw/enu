@@ -17,8 +17,7 @@ gdobj Grid of GridMap:
       self.original_materials.add(mesh.surface_get_material(0))
 
   method ready*() =
-    let signals = ["target_in", "target_out", "target_move", "target_fire",
-                   "target_remove"]
+    let signals = w"target_in target_out target_move target_fire target_remove"
     self.bind_signals(self, signals)
     self.build_unique_mesh_library()
 

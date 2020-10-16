@@ -38,7 +38,7 @@ gdobj Editor of TextEdit:
       self.set_executing_line(line)
 
   method ready* =
-    self.bind_signals("save", "script_error", "command_mode_enabled", "command_mode_disabled")
+    self.bind_signals w"save script_error command_mode_enabled command_mode_disabled"
     show_editor = proc(file_name: string, engine: Engine) =
       self.engine = engine
       self.file_name = file_name
