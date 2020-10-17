@@ -11,7 +11,7 @@ let
   godot_bin       = this_dir() & &"/vendor/godot/bin/godot.{target}.tools.64{exe_ext}"
   godot_build_url = "https://docs.godotengine.org/en/stable/development/compiling/index.html"
 
-version       = "0.0.0"
+version       = "0.0.1"
 author        = "Scott Wadden"
 description   = "Logo-like DSL for Godot"
 license       = "MIT"
@@ -19,10 +19,10 @@ install_files = @["enu.nim"]
 bin_dir       = "app/_dlls"
 bin           = @["enu" & lib_ext]
 
-requires "nim >= 1.3.5",
+requires "nim >= 1.4.0",
          "https://github.com/dsrw/godot-nim#7c2f345",
-         "https://github.com/dsrw/Nim#e7a625d",
-         "cligen 1.2.0"
+         "https://github.com/dsrw/Nim#7633a23",
+         "cligen 1.2.2"
 
 task prereqs, "Generate Godot API binding":
   mk_dir generated_dir
@@ -54,4 +54,3 @@ task start, "Run Enu":
 task reset, "Reset level state":
   let gen = find_exe generator
   exec &"{gen} reset_state"
-  
