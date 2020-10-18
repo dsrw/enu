@@ -13,6 +13,10 @@ type
     player*: Node
     game*: Node
 
+  VoxData* = tuple[index, offset: int, keep: bool]
+  Vox* = tuple[location: Vector3, data: VoxData]
+  VoxTable* = Table[Vector3, VoxData]
+
 const
   CMP_EPSILON = 0.00001
   UP* = vec3(0, 1, 0)
@@ -44,13 +48,6 @@ var
   fire_down* = false
   remove_down* = false
   command_mode* = false
-
-type
-  Vox* = tuple[location: Vector3, index: int, offset: int, keep: bool]
-
-# We use loc for the hash so we can be sure we only have one per location
-proc hash*(voxel: Vox): Hash = voxel.location.hash
-proc `==`*(voxel, other: Vox): bool = voxel.location == other.location
 
 proc join_args[T](args: varargs[T]): string =
   args.map_it(&"'{it}'").join " "

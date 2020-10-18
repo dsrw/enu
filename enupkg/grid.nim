@@ -6,7 +6,7 @@ gdobj Grid of GridMap:
   var
     highlight_material* {.gdExport}: Material
     original_materials: seq[Material]
-    kept_blocks: HashSet[Vox]
+    kept_blocks: VoxTable
     point, normal, draw_plane: Vector3
 
   proc build_unique_mesh_library() =
@@ -34,24 +34,24 @@ gdobj Grid of GridMap:
       mesh.surface_set_material(0, self.original_materials[index])
 
   proc draw*(x, y, z: float, index: int, keep = false) =
-    var index = index - 1
     let map_point = vec3(x, y, z)
+    if keep:
+      self.trigger("grid_block_added", map_point, index)
+    var index = index - 1
     self.set_cell_item(int(map_point.x), int(map_point.y), int(map_point.z), index)
-    let vox = (map_point, index, 0, keep)
+    let data = (index, 0, keep)
     if keep and index > -1:
-      self.kept_blocks.excl vox
-      self.kept_blocks.incl vox
+      self.kept_blocks[map_point] = data
     else:
-      self.kept_blocks.excl vox
+      self.kept_blocks.del map_point
 
   proc clear*(all = false) =
     self.as(GridMap).clear()
     if all:
       self.kept_blocks.clear()
     else:
-      for vox in self.kept_blocks:
-        let loc = vox.location
-        self.set_cell_item(int loc.x, int loc.y, int loc.z, vox.index)
+      for loc, data in self.kept_blocks:
+        self.set_cell_item(int loc.x, int loc.y, int loc.z, data.index)
 
   proc export_data*(): seq[Vox] =
     for v in self.get_used_cells():
@@ -59,15 +59,14 @@ gdobj Grid of GridMap:
         loc = v.asVector3()
         index = self.get_cell_item(int loc.x, int loc.y, int loc.z)
 
-      var vox: Vox = (loc, int index + 1, 0, false)
-      if vox in self.kept_blocks:
-        vox.keep = true
+      var vox: Vox = (loc, (int index + 1, 0, false))
+      if loc in self.kept_blocks:
+        vox.data.keep = true
       result.add(vox)
 
   proc import_data*(data: seq[Vox]) =
-    for vox in data:
-      let l = vox.location
-      self.draw(l.x, l.y, l.z, vox.index, vox.keep)
+    for (loc, data) in data:
+      self.draw(loc.x, loc.y, loc.z, data.index, data.keep)
 
   method on_target_in() =
     if tool_mode == CodeMode:
@@ -96,7 +95,6 @@ gdobj Grid of GridMap:
       let point = self.world_to_map(self.point + self.normal * 0.5)
       self.draw(point.x, point.y, point.z, action_index, true)
       self.draw_plane = self.point * self.normal
-      self.trigger("grid_block_added", point, action_index)
     else:
       self.clear_highlight()
       self.trigger("selected")
@@ -110,5 +108,5 @@ gdobj Grid of GridMap:
       if self.get_used_cells().len == 0:
         self.trigger("deleted")
       else:
-        let keep = (point, 0, 0, false) in self.kept_blocks
+        let keep = point in self.kept_blocks
         self.trigger("grid_block_removed", point, index, keep)

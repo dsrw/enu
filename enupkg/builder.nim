@@ -23,7 +23,7 @@ gdobj Builder of Spatial:
     save_points: Table[string, tuple[position: Vector3, direction: Vector3, index: int]]
     grid: Grid
     terrain: Terrain
-    skip_blocks, next_skip_blocks: Table[Vector3, int]
+    holes, kept_holes: Table[Vector3, int]
     overwrite = false
 
   method ready() =
@@ -44,8 +44,9 @@ gdobj Builder of Spatial:
 
   proc draw*(x, y, z: float, index: int, keep = false) =
     let loc = vec3(x, y, z)
-    if not self.overwrite and loc in self.skip_blocks and index == self.skip_blocks[loc]:
-      self.next_skip_blocks[loc] = index
+    if not keep and loc in self.holes and
+       not self.overwrite and index != self.holes[loc]:
+      self.kept_holes[loc] = self.holes[loc]
     else:
       if self.draw_mode == VoxelMode:
         self.terrain.draw(x, y, z, index, self.script_index, keep)
@@ -55,8 +56,8 @@ gdobj Builder of Spatial:
   proc `running=`*(val: bool) =
     self.is_running = val
     if not val:
-      self.skip_blocks = self.next_skip_blocks
-      self.next_skip_blocks.clear()
+      self.holes = self.kept_holes
+      self.kept_holes.clear()
       self.load_vars()
       debug(self.enu_script & " done.")
 
@@ -68,6 +69,12 @@ gdobj Builder of Spatial:
         let loc = l.asVector3() + self.translation
         if loc in locations:
           return true
+    for loc in self.holes.keys:
+      var loc = loc
+      if self.draw_mode == GridMode:
+        loc += self.translation
+      if loc in locations:
+        return true
     return false
 
   proc set_defaults() =
@@ -80,19 +87,27 @@ gdobj Builder of Spatial:
     self.speed = 30.0
     self.index = 1
     self.drawing = true
+    self.overwrite = false
 
   proc switch_mode(mode: DrawMode) =
     if mode != self.draw_mode:
       let offset = self.script_index
+      var holes: Table[Vector3, int]
       if self.draw_mode == VoxelMode:
         let data = self.terrain.export_data(offset, self.translation)
         self.terrain.clear(offset, all = true)
         self.position -= self.translation
+        for loc, index in self.holes:
+          holes[loc - self.translation] = index
+        self.holes = holes
         self.grid.import_data(data)
       else:
         let data = self.grid.export_data()
         self.grid.clear(all = true)
         self.position += self.translation
+        for loc, index in self.holes:
+          holes[loc + self.translation] = index
+        self.holes = holes
         self.terrain.import_data(data, offset, self.translation)
       self.draw_mode = mode
 
@@ -102,6 +117,7 @@ gdobj Builder of Spatial:
     self.speed = self.engine.get_float("speed", "grid")
     self.index = self.engine.get_int("color", "grid")
     self.drawing = self.engine.get_bool("drawing", "grid")
+    self.overwrite = self.engine.get_bool("overwrite", "grid")
     self.blocks_per_frame = if self.speed == 0:
       float.high
     else:
@@ -134,7 +150,8 @@ gdobj Builder of Spatial:
       save_scene()
 
   proc set_vars() =
-    self.engine.call_proc("set_vars", module_name = "grid", self.index, self.drawing, self.speed, int self.draw_mode)
+    self.engine.call_proc("set_vars", module_name = "grid", self.index, self.drawing,
+                          self.speed, int self.draw_mode, self.overwrite)
 
   proc move(direction: Vector3, steps: BiggestInt): bool =
     self.load_vars()
@@ -292,13 +309,12 @@ gdobj Builder of Spatial:
       self.on_deleted()
 
   method on_grid_block_added(loc: Vector3, index: int) =
-    dump (loc, index)
-    if loc in self.skip_blocks and self.skip_blocks[loc] == index:
-      echo "deleting ", loc
-      self.skip_blocks.del(loc)
+    if loc in self.holes:
+      self.holes[loc] = index
 
   method on_grid_block_removed(loc: Vector3, index: int, keep: bool) =
-    self.skip_blocks[loc] = index
+    if not keep:
+      self.holes[loc] = -1
 
   method on_terrain_block_added(offset: int, loc: Vector3, index: int) =
     if offset == self.script_index:

@@ -50,8 +50,10 @@ gdobj Ground of MeshInstance:
         let b = c.as_object(Builder)
         assert not b.is_nil
         if b.includes_any_location(voxels):
-          let point = p - b.translation
-          b.draw(point.x, point.y, point.z, action_index, true)
+          if b.draw_mode == GridMode:
+            # TODO get rid of this
+            p -= b.translation
+          b.draw(p.x, p.y, p.z, action_index, true)
           return
 
       self.create_builder(p)

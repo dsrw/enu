@@ -14,6 +14,7 @@ var
   drawing* = true
   color*: ColorIndex
   mode* = VoxelMode
+  overwrite* = false
 
 proc forward*(steps = 1) = discard
 proc back*(steps = 1)    = discard
@@ -48,11 +49,12 @@ proc prev_color*() = change_color -1
 proc nc*() = next_color()
 proc pc*() = prev_color()
 
-proc set_vars*(color_index: int, drw: bool, spd: float, draw_mode: int) =
+proc set_vars*(color_index: int, drw: bool, spd: float, draw_mode: int, ow: bool) =
   color = ColorIndex color_index
   drawing = drw
   speed = spd
   mode = DrawMode draw_mode
+  overwrite = ow
 
 proc fill_square*(length = 1) =
   for l in 0..length:
