@@ -39,6 +39,7 @@ gdobj Grid of GridMap:
     self.set_cell_item(int(map_point.x), int(map_point.y), int(map_point.z), index)
     let vox = (map_point, index, 0, keep)
     if keep and index > -1:
+      self.kept_blocks.excl vox
       self.kept_blocks.incl vox
     else:
       self.kept_blocks.excl vox
@@ -95,6 +96,7 @@ gdobj Grid of GridMap:
       let point = self.world_to_map(self.point + self.normal * 0.5)
       self.draw(point.x, point.y, point.z, action_index, true)
       self.draw_plane = self.point * self.normal
+      self.trigger("grid_block_added", point, action_index)
     else:
       self.clear_highlight()
       self.trigger("selected")
@@ -102,7 +104,11 @@ gdobj Grid of GridMap:
   method on_target_remove() =
     if tool_mode == BlockMode:
       let point = self.world_to_map(self.point - (self.normal * 0.5))
+      let index = self.get_cell_item(int point.x, int point.y, int point.z).int
       self.draw(point.x, point.y, point.z, 0)
       self.draw_plane = self.point * self.normal
       if self.get_used_cells().len == 0:
         self.trigger("deleted")
+      else:
+        let keep = (point, 0, 0, false) in self.kept_blocks
+        self.trigger("grid_block_removed", point, index, keep)

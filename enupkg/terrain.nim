@@ -151,7 +151,9 @@ gdobj Terrain of VoxelTerrain:
     if blk notin self.buffers:
       self.buffers[blk] = HashSet[Vox]()
 
+    self.offset_buffers[vox.offset][blk].excl vox
     self.offset_buffers[vox.offset][blk].incl vox
+    self.buffers[blk].excl vox
     self.buffers[blk].incl vox
 
   proc del_voxel(blk: Vector3, vox: Vox) =
@@ -182,6 +184,8 @@ gdobj Terrain of VoxelTerrain:
         for (loc, idx, blk_offset, keep) in self.buffers[blk]:
           if (all or not keep) and offset == blk_offset:
             self.voxel_tool.set_voxel(loc, 0)
+          elif keep:
+            echo "keeping ", loc, idx
 
     var offset_buffers: Buffers
     for blk, buf in self.offset_buffers[offset]:
@@ -267,8 +271,10 @@ gdobj Terrain of VoxelTerrain:
     let vox = self.get_vox(self.targeted_voxel)
     if vox:
       if tool_mode == BlockMode:
-        self.draw(self.targeted_voxel + self.current_normal, action_index, vox.get.offset, true)
+        let point = self.targeted_voxel + self.current_normal
+        self.draw(point, action_index, vox.get.offset, true)
         self.draw_plane = self.current_point * self.current_normal
+        self.trigger("terrain_block_added", vox.get.offset, point, action_index)
 
       if tool_mode == CodeMode:
         self.trigger("block_selected", vox.get.offset)
@@ -278,8 +284,10 @@ gdobj Terrain of VoxelTerrain:
     if tool_mode == BlockMode:
       let vox = self.get_vox(self.targeted_voxel)
       if vox:
-        let offset = vox.get.offset
-        self.draw(self.targeted_voxel, 0, offset)
-        if offset notin self.offset_buffers:
-          self.trigger("block_deleted", offset)
+        let vox = vox.get
+        self.draw(self.targeted_voxel, 0, vox.offset)
+        if vox.offset notin self.offset_buffers:
+          self.trigger("last_block_deleted", vox.offset)
+        else:
+          self.trigger("terrain_block_removed", vox.offset, vox.location, vox.index, vox.keep)
       self.draw_plane = self.current_point * self.current_normal

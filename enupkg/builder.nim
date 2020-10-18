@@ -23,6 +23,8 @@ gdobj Builder of Spatial:
     save_points: Table[string, tuple[position: Vector3, direction: Vector3, index: int]]
     grid: Grid
     terrain: Terrain
+    skip_blocks, next_skip_blocks: Table[Vector3, int]
+    overwrite = false
 
   method ready() =
     self.grid = self.get_node("Grid") as Grid
@@ -30,8 +32,9 @@ gdobj Builder of Spatial:
     assert self.grid != nil
     assert self.terrain != nil
 
-    self.bind_signals self.terrain, w"block_selected block_deleted"
-    self.bind_signals self.grid, w"selected deleted"
+    self.bind_signals self.terrain,
+      w"block_selected last_block_deleted terrain_block_added terrain_block_removed"
+    self.bind_signals self.grid, w"selected deleted grid_block_added grid_block_removed"
     self.bind_signals w"reload pause reload_all"
     self.script_index = max_grid_index
     inc max_grid_index
@@ -40,14 +43,20 @@ gdobj Builder of Spatial:
     self.build()
 
   proc draw*(x, y, z: float, index: int, keep = false) =
-    if self.draw_mode == VoxelMode:
-      self.terrain.draw(x, y, z, index, self.script_index, keep)
+    let loc = vec3(x, y, z)
+    if not self.overwrite and loc in self.skip_blocks and index == self.skip_blocks[loc]:
+      self.next_skip_blocks[loc] = index
     else:
-      self.grid.draw(x, y, z, index, keep)
+      if self.draw_mode == VoxelMode:
+        self.terrain.draw(x, y, z, index, self.script_index, keep)
+      else:
+        self.grid.draw(x, y, z, index, keep)
 
   proc `running=`*(val: bool) =
     self.is_running = val
     if not val:
+      self.skip_blocks = self.next_skip_blocks
+      self.next_skip_blocks.clear()
       self.load_vars()
       debug(self.enu_script & " done.")
 
@@ -278,6 +287,23 @@ gdobj Builder of Spatial:
     self.get_parent.remove_child(self)
     save_scene()
 
-  method on_block_deleted(offset: int) =
+  method on_last_block_deleted(offset: int) =
     if offset == self.script_index:
       self.on_deleted()
+
+  method on_grid_block_added(loc: Vector3, index: int) =
+    dump (loc, index)
+    if loc in self.skip_blocks and self.skip_blocks[loc] == index:
+      echo "deleting ", loc
+      self.skip_blocks.del(loc)
+
+  method on_grid_block_removed(loc: Vector3, index: int, keep: bool) =
+    self.skip_blocks[loc] = index
+
+  method on_terrain_block_added(offset: int, loc: Vector3, index: int) =
+    if offset == self.script_index:
+      self.on_grid_block_added(loc, index)
+
+  method on_terrain_block_removed(offset: int, loc: Vector3, index: int, keep: bool) =
+    if offset == self.script_index:
+      self.on_grid_block_removed(loc, index, keep)
