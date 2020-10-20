@@ -3,7 +3,7 @@
 [ext_resource path="res://textures/tile_nrm.png" type="Texture" id=1]
 
 [resource]
-albedo_color = Color( 0.25098, 0.0705882, 0.415686, 1 )
+albedo_color = Color( 0.113725, 0, 0.180392, 1 )
 normal_enabled = true
 normal_scale = 1.0
 normal_texture = ExtResource( 1 )
