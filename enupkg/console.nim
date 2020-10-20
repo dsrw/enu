@@ -21,9 +21,10 @@ gdobj Console of RichTextLabel:
     self.bind_signals w"mouse_captured mouse_released clear_console toggle_console"
 
   method process*(delta: float) =
-    if not self.log_text.is_empty():
-      discard self.append_bbcode(self.log_text)
-      self.log_text = ""
+    trace:
+      if not self.log_text.is_empty():
+        discard self.append_bbcode(self.log_text)
+        self.log_text = ""
 
   method on_mouse_captured() =
     self.mouse_filter = MOUSE_FILTER_IGNORE

@@ -75,59 +75,61 @@ gdobj Player of KinematicBody:
       self.world_ray
 
   method process*(delta: float) {.gdExport.} =
-    if not editing():
-      var transform = self.camera_rig.global_transform
-      transform.origin = self.global_transform.origin + self.position_start
+    trace:
+      if not editing():
+        var transform = self.camera_rig.global_transform
+        transform.origin = self.global_transform.origin + self.position_start
 
-      var look_direction = self.get_look_direction()
+        var look_direction = self.get_look_direction()
 
-      if self.input_relative.length() > 0:
-        self.update_rotation(self.input_relative * sensitivity_mouse)
-        self.input_relative = vec2()
-      elif look_direction.length() > 0:
-        self.update_rotation(look_direction * sensitivity_gamepad * delta)
+        if self.input_relative.length() > 0:
+          self.update_rotation(self.input_relative * sensitivity_mouse)
+          self.input_relative = vec2()
+        elif look_direction.length() > 0:
+          self.update_rotation(look_direction * sensitivity_gamepad * delta)
 
-      var r = self.camera_rig.rotation
-      r.y = wrap(r.y, -PI, PI)
-      self.camera_rig.rotation = r
-      if not get_game().mouse_captured:
-        let
-          mouse_pos = self.get_viewport()
-                          .get_mouse_position() / float get_game()
-                          .shrink
-          cast_from = self.camera.project_ray_origin(mouse_pos)
-          cast_to = self.aim_ray.translation + self.camera.project_ray_normal(mouse_pos) * 100
-        self.world_ray.cast_to = cast_to
-        self.world_ray.translation = cast_from
-        self.aim_target.update(self.world_ray)
-      else:
-        self.aim_ray.cast_to = vec3(0, 0, -100)
-        self.aim_target.update(self.aim_ray)
+        var r = self.camera_rig.rotation
+        r.y = wrap(r.y, -PI, PI)
+        self.camera_rig.rotation = r
+        if not get_game().mouse_captured:
+          let
+            mouse_pos = self.get_viewport()
+                            .get_mouse_position() / float get_game()
+                            .shrink
+            cast_from = self.camera.project_ray_origin(mouse_pos)
+            cast_to = self.aim_ray.translation + self.camera.project_ray_normal(mouse_pos) * 100
+          self.world_ray.cast_to = cast_to
+          self.world_ray.translation = cast_from
+          self.aim_target.update(self.world_ray)
+        else:
+          self.aim_ray.cast_to = vec3(0, 0, -100)
+          self.aim_target.update(self.aim_ray)
 
   method physics_process*(delta: float) =
-    if not editing():
-      let
-        input_direction = self.get_input_direction()
-        b = self.camera_rig.global_transform.basis
-        right = b.x * input_direction.x
-        up = UP * input_direction.y
-        forward = (b.z * input_direction.z * vec3(1, 0, 1)).normalized()
+    trace:
+      if not editing():
+        let
+          input_direction = self.get_input_direction()
+          b = self.camera_rig.global_transform.basis
+          right = b.x * input_direction.x
+          up = UP * input_direction.y
+          forward = (b.z * input_direction.z * vec3(1, 0, 1)).normalized()
 
-      var
-        move_direction = forward + right + up
+        var
+          move_direction = forward + right + up
 
-      if move_direction.length() > 1.0:
-        move_direction = move_direction.normalized()
+        if move_direction.length() > 1.0:
+          move_direction = move_direction.normalized()
 
-      if not self.flying:
-        move_direction.y = 0
+        if not self.flying:
+          move_direction.y = 0
 
-      self.velocity = self.calculate_velocity(self.velocity, move_direction, delta, self.flying)
+        self.velocity = self.calculate_velocity(self.velocity, move_direction, delta, self.flying)
 
-      if self.flying:
-        discard self.move_and_collide(self.velocity * delta)
-      else:
-        self.velocity = self.move_and_slide(self.velocity, UP)
+        if self.flying:
+          discard self.move_and_collide(self.velocity * delta)
+        else:
+          self.velocity = self.move_and_slide(self.velocity, UP)
 
   proc next_block() = discard
   proc prev_block() = discard

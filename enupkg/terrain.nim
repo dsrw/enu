@@ -115,26 +115,27 @@ gdobj Terrain of VoxelTerrain:
         result = some(buf[point])
 
   method process*(delta: float) =
-    if self.loading_buffers.len > 0:
-      let lost_voxels = self.lost_voxels
-      for blk, voxels in lost_voxels:
-        var remaining_voxels: seq[Vox]
-        for (loc, data) in voxels:
-          self.try_draw(loc, data.index, data.offset, data.keep, remaining_voxels)
-        if remaining_voxels.len > 0:
-          self.lost_voxels[blk] = remaining_voxels
-        else:
-          self.lost_voxels.del(blk)
+    trace:
+      if self.loading_buffers.len > 0:
+        let lost_voxels = self.lost_voxels
+        for blk, voxels in lost_voxels:
+          var remaining_voxels: seq[Vox]
+          for (loc, data) in voxels:
+            self.try_draw(loc, data.index, data.offset, data.keep, remaining_voxels)
+          if remaining_voxels.len > 0:
+            self.lost_voxels[blk] = remaining_voxels
+          else:
+            self.lost_voxels.del(blk)
 
-      for blk in self.loading_buffers:
-        if blk in self.buffers:
-          let voxels = self.buffers[blk]
-          for loc, data in voxels:
-            if not self.try_draw(loc, data.index, data.offset):
-              self.lost_voxels.mget_or_put(blk, @[])
-                              .add (loc, data)
+        for blk in self.loading_buffers:
+          if blk in self.buffers:
+            let voxels = self.buffers[blk]
+            for loc, data in voxels:
+              if not self.try_draw(loc, data.index, data.offset):
+                self.lost_voxels.mget_or_put(blk, @[])
+                                .add (loc, data)
 
-      self.loading_buffers = @[]
+        self.loading_buffers = @[]
 
   proc try_draw(loc: Vector3, idx, offset: int): bool =
     result = if self.in_view(loc):

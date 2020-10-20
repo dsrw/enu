@@ -128,26 +128,27 @@ gdobj Builder of Spatial:
     self.switch_mode(mode)
 
   method physics_process(delta: float64) =
-    if not self.paused:
-      self.blocks_remaining_this_frame += self.blocks_per_frame
-      try:
-        if self.engine.is_nil:
-          # if we load paused we won't have a script engine yet
-          self.load_script()
-        if self.blocks_per_frame > 0:
-          while self.running and self.blocks_remaining_this_frame >= 1:
-            if self.callback == nil or not self.callback(delta):
-              self.running = self.engine.resume()
-        else:
-          if self.running and (self.callback == nil or not self.callback(delta)):
-              self.running = self.engine.resume()
+    trace:
+      if not self.paused:
+        self.blocks_remaining_this_frame += self.blocks_per_frame
+        try:
+          if self.engine.is_nil:
+            # if we load paused we won't have a script engine yet
+            self.load_script()
+          if self.blocks_per_frame > 0:
+            while self.running and self.blocks_remaining_this_frame >= 1:
+              if self.callback == nil or not self.callback(delta):
+                self.running = self.engine.resume()
+          else:
+            if self.running and (self.callback == nil or not self.callback(delta)):
+                self.running = self.engine.resume()
 
-      except VMQuit as e:
-        self.error(e)
+        except VMQuit as e:
+          self.error(e)
 
-    if self.schedule_save:
-      self.schedule_save = false
-      save_scene()
+      if self.schedule_save:
+        self.schedule_save = false
+        save_scene()
 
   proc set_vars() =
     self.engine.call_proc("set_vars", module_name = "grid", self.index, self.drawing,

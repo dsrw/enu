@@ -1,12 +1,14 @@
 ### Sugar ###
 from sugar import dup
-import std/with, strformat, strutils, sequtils, sets, tables
+import std/with, strformat, strutils, sequtils, sets, tables, times
 export dup, with, strformat, strutils, sequtils, sets, tables
 
 ### Debug
 from sugar import dump
 import parseutils
 export dump
+
+var durations*: Table[string, Duration]
 
 template trace*(body: untyped): untyped =
   # https://github.com/nim-lang/Nim/issues/8212#issuecomment-657202258
@@ -18,10 +20,10 @@ template trace*(body: untyped): untyped =
   #/
   var proc_name = realProcNameButShouldnotBeUsed
   let file = instantiation_info().filename
-  echo "Starting " & proc_name & " in file " & file & ":"
-  let n = now()
+  let start_time = now()
   body
-  echo "Finished " & proc_name & ". Took " & $(now() - n) & "."
+  let name = file & "#" & proc_name
+  durations[name] = durations.get_or_default(name) + (now() - start_time)
 
 ### times ###
 import times

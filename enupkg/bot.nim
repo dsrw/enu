@@ -136,15 +136,16 @@ gdobj NimBot of KinematicBody:
       load_script()
 
   method physics_process*(delta: float64) =
-    if not self.paused:
-      try:
-        if self.running and (self.callback == nil or not self.callback(delta)):
-          self.running = self.engine.resume()
-      except VMQuit as e:
-        self.error(e)
-    if self.schedule_save:
-      self.schedule_save = false
-      save_scene()
+    trace:
+      if not self.paused:
+        try:
+          if self.running and (self.callback == nil or not self.callback(delta)):
+            self.running = self.engine.resume()
+        except VMQuit as e:
+          self.error(e)
+      if self.schedule_save:
+        self.schedule_save = false
+        save_scene()
 
   method reload() =
     self.animation_player.stop(true)

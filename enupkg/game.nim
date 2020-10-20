@@ -1,8 +1,11 @@
 import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_container,
-                      packed_scene, resource_saver, sprite, control, viewport],
-       godot, threadpool,
+                      packed_scene, resource_saver, sprite, control, viewport,
+                      performance, label],
+       godot, threadpool, times,
        core, globals
 
+var
+  timer = 0.0
 gdobj Game of Node:
   var
     reticle*: Control
@@ -13,21 +16,37 @@ gdobj Game of Node:
     pack: FlowVar[PackedScene]
     save_requested: Option[string]
     saved_mouse_captured_state = false
+    perf: Label
 
   proc pack_scene(scene: Node): PackedScene =
     result = gdnew[PackedScene]()
     debug $result.pack(scene)
 
   method process*(delta: float) =
-    if not self.pack.is_nil and self.pack.is_ready:
-      let
-        scene_name = self.save_requested.get
-        full_path = &"res://scenes/{scene_name}.tscn"
-      self.save_requested = none(string)
-      debug $save(full_path, ^self.pack)
-      self.pack = nil
-    elif self.pack.is_nil and self.save_requested.is_some:
-      self.pack = spawn self.pack_scene(self.find_node("data"))
+    timer += delta
+    if timer >= 1:
+      timer = 0
+      var
+        total: Duration
+        highest: tuple[name: string, duration: Duration]
+      for name, dur in durations:
+        if dur > highest.duration:
+          highest = (name, dur)
+        total += dur
+      let fps = get_monitor(TIME_FPS)
+      self.perf.text = &"FPS: {fps}\nUser: {total}\n{highest.name}: {highest.duration}"
+      durations.clear()
+
+    trace:
+      if not self.pack.is_nil and self.pack.is_ready:
+        let
+          scene_name = self.save_requested.get
+          full_path = &"res://scenes/{scene_name}.tscn"
+        self.save_requested = none(string)
+        debug $save(full_path, ^self.pack)
+        self.pack = nil
+      elif self.pack.is_nil and self.save_requested.is_some:
+        self.pack = spawn self.pack_scene(self.find_node("data"))
 
   proc `mouse_captured=`*(captured: bool) =
     if captured:
@@ -55,8 +74,8 @@ gdobj Game of Node:
     self.mouse_captured = true
     self.reticle = self.find_node("Reticle").as(Control)
     self.viewport_container = self.get_node("ViewportContainer").as(ViewportContainer)
-
-    self.shrink = 1
+    self.perf = self.find_node("perf").as(Label)
+    self.shrink = 2
     globals.capture_mouse = proc() =
       self.mouse_captured = true
 
@@ -117,11 +136,12 @@ gdobj Game of Node:
       self.trigger("update_actionbar", index)
 
   method physics_process*(delta: int) =
-    if self.ready and not self.triggered and self.frame_skip == 0:
-      self.triggered = true
-      trigger "game_ready"
-    elif self.ready and self.frame_skip > 0:
-      self.frame_skip -= 1
+    trace:
+      if self.ready and not self.triggered and self.frame_skip == 0:
+        self.triggered = true
+        trigger "game_ready"
+      elif self.ready and self.frame_skip > 0:
+        self.frame_skip -= 1
 
   method unhandled_input*(event: InputEvent) =
     if event.is_action_pressed("command_mode"):

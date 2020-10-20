@@ -20,11 +20,12 @@ gdobj PreviewMaker of Viewport:
     assert not self.bot.is_nil
 
   method process*(delta: float) =
-    if not self.skip_next and not self.callback.is_nil:
-     let image = self.get_texture().get_data()
-     self.callback(image)
-     self.callback = nil
-    self.skip_next = false
+    trace:
+      if not self.skip_next and not self.callback.is_nil:
+        let image = self.get_texture().get_data()
+        self.callback(image)
+        self.callback = nil
+      self.skip_next = false
 
   proc generate_block_preview*(material_name: string, callback: proc(preview: Image)) =
     let material = load(&"res://materials/{material_name}.tres") as Material
