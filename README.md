@@ -117,3 +117,5 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
 - Drawing outside the visible area now works properly.
 - Better voxel highlighting. Each object gets its own materials.
 - Deleting the last block in an object deletes the builder.
+- CC0 space skybox from
+  https://www.reddit.com/r/blender/comments/3ebzwz/free_space_hdrs_1/
