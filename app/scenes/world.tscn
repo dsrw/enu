@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=2]
+[gd_scene load_steps=21 format=2]
 
 [ext_resource path="res://scenes/default.tscn" type="PackedScene" id=1]
 [ext_resource path="res://scenes/env.tres" type="Environment" id=2]
@@ -12,6 +12,8 @@
 [ext_resource path="res://textures/green_block.png" type="Texture" id=10]
 [ext_resource path="res://meshlibs/voxellib.tres" type="VoxelLibrary" id=11]
 [ext_resource path="res://shaders/terrain_voxel.shader" type="Shader" id=12]
+[ext_resource path="res://materials/black-block.tres" type="Material" id=13]
+[ext_resource path="res://materials/white-block.tres" type="Material" id=14]
 
 [sub_resource type="PlaneMesh" id=1]
 material = ExtResource( 3 )
@@ -121,4 +123,6 @@ max_view_distance = 256
 material/0 = SubResource( 4 )
 material/1 = SubResource( 5 )
 material/2 = SubResource( 6 )
+material/3 = ExtResource( 13 )
+material/4 = ExtResource( 14 )
 script = ExtResource( 9 )

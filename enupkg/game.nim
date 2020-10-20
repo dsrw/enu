@@ -186,6 +186,10 @@ gdobj Game of Node:
       elif event.is_action_pressed("mode_4"):
         self.block_mode(3)
       elif event.is_action_pressed("mode_5"):
-        self.obj_mode(4)
+        self.block_mode(4)
+      elif event.is_action_pressed("mode_6"):
+        self.block_mode(5)
+      elif event.is_action_pressed("mode_7"):
+        self.obj_mode(6)
 
 proc get_game*(): Game = state.game as Game

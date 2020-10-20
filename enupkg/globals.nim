@@ -42,7 +42,7 @@ var
   state* = new StateRefs
   open_file* = ""
   action_index* = 1
-  action_count* = 4
+  action_count* = 6
   max_grid_index* = 0
   skip_next_mouse_move* = false
   fire_down* = false

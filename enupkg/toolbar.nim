@@ -7,8 +7,8 @@ type
 gdobj Toolbar of HBoxContainer:
   var
     preview_maker: PreviewMaker
-    blocks = @["green", "red", "blue"]
-    objects = @["bot"]
+    blocks = w"green red blue black white"
+    objects = w"bot"
     preview_result: Option[PreviewResult]
     waiting = false
 
@@ -51,4 +51,6 @@ gdobj Toolbar of HBoxContainer:
     of "blue": get_game().block_mode(1, false)
     of "red": get_game().block_mode(2, false)
     of "green": get_game().block_mode(3, false)
-    of "bot": get_game().obj_mode(4, false)
+    of "black": get_game().block_mode(4, false)
+    of "white": get_game().block_mode(5, false)
+    of "bot": get_game().obj_mode(6, false)

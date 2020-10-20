@@ -1,4 +1,4 @@
-[gd_resource type="VoxelLibrary" load_steps=5 format=2]
+[gd_resource type="VoxelLibrary" load_steps=7 format=2]
 
 [sub_resource type="Voxel" id=1]
 voxel_name = "air"
@@ -57,8 +57,37 @@ cube_tiles/top = Vector2( 0, 0 )
 cube_tiles/back = Vector2( 0, 0 )
 cube_tiles/front = Vector2( 0, 0 )
 
+[sub_resource type="Voxel" id=5]
+color = Color( 0, 0, 0, 1 )
+material_id = 3
+geometry_type = 1
+collision_aabbs = [ AABB( 0, 0, 0, 1, 1, 1 ) ]
+collision_mask = 7
+cube_geometry/padding_y = null
+cube_tiles/left = Vector2( 0, 0 )
+cube_tiles/right = Vector2( 0, 0 )
+cube_tiles/bottom = Vector2( 0, 0 )
+cube_tiles/top = Vector2( 0, 0 )
+cube_tiles/back = Vector2( 0, 0 )
+cube_tiles/front = Vector2( 0, 0 )
+
+[sub_resource type="Voxel" id=6]
+material_id = 4
+geometry_type = 1
+collision_aabbs = [ AABB( 0, 0, 0, 1, 1, 1 ) ]
+collision_mask = 7
+cube_geometry/padding_y = null
+cube_tiles/left = Vector2( 0, 0 )
+cube_tiles/right = Vector2( 0, 0 )
+cube_tiles/bottom = Vector2( 0, 0 )
+cube_tiles/top = Vector2( 0, 0 )
+cube_tiles/back = Vector2( 0, 0 )
+cube_tiles/front = Vector2( 0, 0 )
+
 [resource]
 voxels/0 = SubResource( 1 )
 voxels/1 = SubResource( 2 )
 voxels/2 = SubResource( 3 )
 voxels/3 = SubResource( 4 )
+voxels/4 = SubResource( 5 )
+voxels/5 = SubResource( 6 )
