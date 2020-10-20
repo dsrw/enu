@@ -57,7 +57,7 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
 - [X] Make object pick raycast longer
 - [X] Mouse picking
 - [X] Better flying
-- [ ] More block types
+- [X] More block types
 - [ ] Validate build and keybindings for Mac/Linux/Windows
 - [ ] Support non-hidpi screens
 - [ ] Use Inconsolata on Windows/Linux
@@ -74,7 +74,7 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
 
 - [ ] Upstream Nim changes
 - [ ] 2nd demo game
-- [ ] Basic UI
+- [X] Basic UI
 - [ ] Controller support
 - [ ] iPad release
 
