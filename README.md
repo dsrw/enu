@@ -117,5 +117,9 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
 - Drawing outside the visible area now works properly.
 - Better voxel highlighting. Each object gets its own materials.
 - Deleting the last block in an object deletes the builder.
+- "Hole" support. If you delete blocks from a scripted build, they'll stay
+  deleted during future runs. Fill them in with their proper blocks (or set
+  `overwrite = true` in your script) and the hole will be forgotten on the next
+  run.
 - CC0 space skybox from
   https://www.reddit.com/r/blender/comments/3ebzwz/free_space_hdrs_1/
