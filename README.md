@@ -123,3 +123,4 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
   run.
 - CC0 space skybox from
   https://www.reddit.com/r/blender/comments/3ebzwz/free_space_hdrs_1/
+- Added fog and a shader based distance fade
