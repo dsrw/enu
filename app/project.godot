@@ -21,10 +21,10 @@ config/icon="res://icon.png"
 
 [display]
 
-window/size/width=1280
-window/size/height=720
-window/size/test_width=1280
-window/size/test_height=720
+window/size/width=2560
+window/size/height=1440
+window/size/test_width=2560
+window/size/test_height=1440
 window/dpi/allow_hidpi=true
 window/stretch/aspect="expand"
 
@@ -201,5 +201,5 @@ mode_5={
 
 [rendering]
 
-quality/filters/msaa=3
+quality/depth_prepass/enable=false
 environment/default_environment="res://scenes/env.tres"

@@ -1,4 +1,4 @@
-import ../godotapi / [mesh, voxel_terrain, voxel_tool, voxel, voxel_library, spatial_material],
+import ../godotapi / [mesh, voxel_terrain, voxel_tool, voxel, voxel_library, shader_material],
        godot, sets, tables, hashes,
        globals, core
 
@@ -7,6 +7,9 @@ type
     GridMode, VoxelMode
   Buffers = Table[Vector3, VoxTable]
 const MAX_MATERIALS = 512
+let
+  highlight_energy = 5.0.to_variant()
+  default_energy = 0.1.to_variant()
 
 gdobj Terrain of VoxelTerrain:
   var
@@ -39,22 +42,17 @@ gdobj Terrain of VoxelTerrain:
     self.voxel_count = l.voxel_count.int
 
     for i in 0..<l.voxel_count:
-      var m = self.get_material(i).as(SpatialMaterial)
+      var m = self.get_material(i).as(ShaderMaterial)
       if not m.is_nil:
-        m.emission_enabled = true
-        m.emission_energy = 0.0
-        m.emission = m.albedo_color
+        m.set_shader_param("emission_energy", default_energy)
 
     l.voxel_count = MAX_MATERIALS
     for i in self.voxel_count..<MAX_MATERIALS:
       let idx = (i - 1) mod (self.voxel_count - 1)
-      var m = self.get_material(idx).as(SpatialMaterial)
+      var m = self.get_material(idx).as(ShaderMaterial)
       assert not m.is_nil
 
-      m = m.duplicate().as(SpatialMaterial)
-      m.emission_enabled = true
-      m.emission_energy = 0.0
-      m.emission = m.albedo_color
+      m = m.duplicate().as(ShaderMaterial)
       self.set_material(i - 1, m)
 
       let v = l.create_voxel(i, "voxel-" & $i)
@@ -210,15 +208,15 @@ gdobj Terrain of VoxelTerrain:
       min = offset * (self.voxel_count - 1)
       max = min + self.voxel_count - 2
     for i in min..max:
-      let m = self.get_material(i).as(SpatialMaterial)
+      let m = self.get_material(i).as(ShaderMaterial)
       if not m.is_nil:
-        m.emission_energy = 15.0
+        m.set_shader_param("emission_energy", highlight_energy)
 
   proc deselect() =
     for i in 0..<MAX_MATERIALS:
-      let m = self.get_material(i).as(SpatialMaterial)
+      let m = self.get_material(i).as(ShaderMaterial)
       if not m.is_nil:
-        m.emission_energy = 0.0
+        m.set_shader_param("emission_energy", default_energy)
 
   method on_block_loaded(location: Vector3, buffer: VoxelBuffer) =
     self.loading_buffers.add location

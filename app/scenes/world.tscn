@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=2]
+[gd_scene load_steps=19 format=2]
 
 [ext_resource path="res://scenes/default.tscn" type="PackedScene" id=1]
 [ext_resource path="res://scenes/env.tres" type="Environment" id=2]
@@ -11,6 +11,7 @@
 [ext_resource path="res://components/Terrain.gdns" type="Script" id=9]
 [ext_resource path="res://textures/green_block.png" type="Texture" id=10]
 [ext_resource path="res://meshlibs/voxellib.tres" type="VoxelLibrary" id=11]
+[ext_resource path="res://shaders/terrain_voxel.shader" type="Shader" id=12]
 
 [sub_resource type="PlaneMesh" id=1]
 material = ExtResource( 3 )
@@ -24,26 +25,62 @@ data = PoolVector3Array( 500, 0, 500, -500, 0, 500, 500, 0, -500, -500, 0, 500, 
 channel = 0
 voxel_type = 0
 
-[sub_resource type="SpatialMaterial" id=4]
-albedo_color = Color( 0, 0.403922, 1, 1 )
-albedo_texture = ExtResource( 7 )
-normal_enabled = true
-normal_scale = 2.0
-normal_texture = ExtResource( 8 )
-uv1_triplanar = true
+[sub_resource type="ShaderMaterial" id=4]
+shader = ExtResource( 12 )
+shader_param/albedo = Color( 0, 0.403922, 1, 1 )
+shader_param/specular = 0.5
+shader_param/metallic = 0.0
+shader_param/draw_distance = 230.0
+shader_param/roughness = 1.0
+shader_param/point_size = 1.0
+shader_param/emission = Color( 0, 0.403922, 1, 1 )
+shader_param/emission_energy = 0.0
+shader_param/normal_scale = 2.0
+shader_param/uv1_blend_sharpness = 1.0
+shader_param/uv1_scale = Vector3( 1, 1, 1 )
+shader_param/uv1_offset = Vector3( 0, 0, 0 )
+shader_param/uv2_scale = Vector3( 1, 1, 1 )
+shader_param/uv2_offset = Vector3( 0, 0, 0 )
+shader_param/texture_albedo = ExtResource( 7 )
+shader_param/texture_normal = ExtResource( 8 )
 
-[sub_resource type="SpatialMaterial" id=5]
-albedo_color = Color( 0.988235, 0.054902, 0.0431373, 1 )
-albedo_texture = ExtResource( 5 )
-normal_enabled = true
-normal_scale = 1.0
-normal_texture = ExtResource( 8 )
-uv1_triplanar = true
+[sub_resource type="ShaderMaterial" id=5]
+shader = ExtResource( 12 )
+shader_param/albedo = Color( 0.988235, 0.054902, 0.0431373, 1 )
+shader_param/specular = 0.5
+shader_param/metallic = 0.0
+shader_param/draw_distance = 230.0
+shader_param/roughness = 1.0
+shader_param/point_size = 1.0
+shader_param/emission = Color( 0.988235, 0.054902, 0.0431373, 1 )
+shader_param/emission_energy = 0.0
+shader_param/normal_scale = 2.0
+shader_param/uv1_blend_sharpness = 1.0
+shader_param/uv1_scale = Vector3( 1, 1, 1 )
+shader_param/uv1_offset = Vector3( 0, 0, 0 )
+shader_param/uv2_scale = Vector3( 1, 1, 1 )
+shader_param/uv2_offset = Vector3( 0, 0, 0 )
+shader_param/texture_albedo = ExtResource( 5 )
+shader_param/texture_normal = ExtResource( 8 )
 
-[sub_resource type="SpatialMaterial" id=6]
-albedo_color = Color( 0.0784314, 0.968627, 0.027451, 1 )
-albedo_texture = ExtResource( 10 )
-uv1_triplanar = true
+[sub_resource type="ShaderMaterial" id=6]
+shader = ExtResource( 12 )
+shader_param/albedo = Color( 0.0784314, 0.968627, 0.027451, 1 )
+shader_param/specular = 0.5
+shader_param/metallic = 0.0
+shader_param/draw_distance = 230.0
+shader_param/roughness = 1.0
+shader_param/point_size = 1.0
+shader_param/emission = Color( 0.0784314, 0.968627, 0.027451, 1 )
+shader_param/emission_energy = 0.0
+shader_param/normal_scale = 2.0
+shader_param/uv1_blend_sharpness = 1.0
+shader_param/uv1_scale = Vector3( 1, 1, 1 )
+shader_param/uv1_offset = Vector3( 0, 0, 0 )
+shader_param/uv2_scale = Vector3( 1, 1, 1 )
+shader_param/uv2_offset = Vector3( 0, 0, 0 )
+shader_param/texture_albedo = ExtResource( 10 )
+shader_param/texture_normal = ExtResource( 8 )
 
 [node name="Level" type="Spatial"]
 
@@ -52,7 +89,11 @@ environment = ExtResource( 2 )
 
 [node name="DirectionalLight" type="DirectionalLight" parent="WorldEnvironment"]
 transform = Transform( 0.703741, 0.70968, -0.0332158, -0.669706, 0.678255, 0.30243, 0.237158, -0.190588, 0.952593, 7.97419, 19.1694, 0.816371 )
+light_energy = 2.5
+light_specular = 0.8
 shadow_enabled = true
+shadow_color = Color( 0.658824, 0.658824, 0.658824, 1 )
+directional_shadow_mode = 0
 
 [node name="Ground" type="MeshInstance" parent="."]
 layers = 7
