@@ -23,6 +23,8 @@ const
   DOWN* = vec3(0, -1, 0)
   BACK* = vec3(0, 0, 1)
   FORWARD* = vec3(0, 0, -1)
+  LEFT* = vec3(1, 0, 0)
+  RIGHT* = vec3(-1, 0, 0)
 
 var
   editing*: proc:bool

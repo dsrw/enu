@@ -45,12 +45,12 @@ gdobj NimBot of KinematicBody:
   proc load_vars() =
     self.speed = self.engine.get_float("speed", "bot")
 
-  proc move(direction, steps: float): bool =
+  proc move(direction: Vector3, steps: float): bool =
     self.load_vars()
     var duration = 0.0
     let
-      facing = BACK.rotated(UP, self.rotation.y)
-      finish = self.translation - facing * steps
+      moving = direction.rotated(UP, self.rotation.y)
+      finish = self.translation + moving * steps
       finish_time = 1.0 / self.speed * steps
 
     self.callback = proc(delta: float): bool =
@@ -59,7 +59,7 @@ gdobj NimBot of KinematicBody:
         self.translation = finish
         return false
       else:
-        discard self.move_and_slide(facing * (self.speed * direction), UP)
+        discard self.move_and_slide(moving * self.speed, UP)
         return true
     true
 
@@ -79,10 +79,13 @@ gdobj NimBot of KinematicBody:
         false
     true
 
-  proc forward(steps: float): bool = self.move(-1.0, steps)
-  proc back(steps: float): bool = self.move(1.0, steps)
-  proc left(degrees: float): bool = self.turn(degrees)
-  proc right(degrees: float): bool = self.turn(-degrees)
+  proc forward(steps: float): bool = self.move(FORWARD, steps)
+  proc back(steps: float): bool = self.move(BACK, steps)
+  # yes, these are backwards. It works.
+  proc left(steps: float): bool = self.move(RIGHT, steps)
+  proc right(steps: float): bool = self.move(LEFT, steps)
+  proc turn_left(degrees: float): bool = self.turn(degrees)
+  proc turn_right(degrees: float): bool = self.turn(-degrees)
 
   proc error(e: ref VMQuit) =
     self.running = false
@@ -105,6 +108,8 @@ gdobj NimBot of KinematicBody:
           expose("bot", "back", a => self.back(get_float(a, 0)))
           expose("bot", "left", a => self.left(get_float(a, 0)))
           expose("bot", "right", a => self.right(get_float(a, 0)))
+          expose("bot", "turn_left", a => self.turn_left(get_float(a, 0)))
+          expose("bot", "turn_right", a => self.turn_right(get_float(a, 0)))
           expose("bot", "print", a => print(get_string(a, 0)))
           expose("bot", "echo", a => echo_console(get_string(a, 0)))
           expose("bot", "play", proc(a: VmArgs): bool =

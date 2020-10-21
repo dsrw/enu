@@ -17,10 +17,9 @@ gdobj Builder of Spatial:
     blocks_per_frame = 0.0
     blocks_remaining_this_frame = 0.0
     speed = 0.0
-    direction = FORWARD
-    position = vec3()
+    position = init_transform()
     drawing = true
-    save_points: Table[string, tuple[position: Vector3, direction: Vector3, index: int]]
+    save_points: Table[string, tuple[position: Transform, index: int]]
     grid: Grid
     terrain: Terrain
     holes, kept_holes: Table[Vector3, int]
@@ -78,11 +77,9 @@ gdobj Builder of Spatial:
     return false
 
   proc set_defaults() =
-    self.direction = FORWARD
-    self.position = if self.draw_mode == VoxelMode:
-      self.translation
-    else:
-      vec3()
+    self.position = init_transform()
+    if self.draw_mode == VoxelMode:
+      self.position.origin = self.translation
 
     self.speed = 30.0
     self.index = 1
@@ -96,7 +93,7 @@ gdobj Builder of Spatial:
       if self.draw_mode == VoxelMode:
         let data = self.terrain.export_data(offset, self.translation)
         self.terrain.clear(offset, all = true)
-        self.position -= self.translation
+        self.position.origin -= self.translation
         for loc, index in self.holes:
           holes[loc - self.translation] = index
         self.holes = holes
@@ -104,7 +101,7 @@ gdobj Builder of Spatial:
       else:
         let data = self.grid.export_data()
         self.grid.clear(all = true)
-        self.position += self.translation
+        self.position.origin += self.translation
         for loc, index in self.holes:
           holes[loc + self.translation] = index
         self.holes = holes
@@ -159,19 +156,20 @@ gdobj Builder of Spatial:
     var count = 0
     self.callback = proc(delta: float): bool =
       while count < steps and self.blocks_remaining_this_frame >= 1:
-        self.position += direction
+        self.position = self.position.translated(direction)
+        self.position.origin = self.position.origin.snapped(vec3(0.25, 0.25, 0.25))
         inc count
         self.blocks_remaining_this_frame -= 1
         self.drop_block()
       return count < steps
     true
 
-  proc turn(degrees: float): bool =
+  proc turn(degrees: float, axis = UP): bool =
     self.load_vars()
-    var direction = self.direction
-    direction = direction.rotated(UP, deg_to_rad(degrees))
-
-    self.direction = vec3(direction.x.round, direction.y.round, direction.z.round)
+    let origin = self.position.origin
+    self.position.origin = vec3()
+    self.position = self.position.rotated(axis, deg_to_rad(degrees))
+    self.position.origin = origin
     false
 
   proc sleep(seconds: float): bool =
@@ -187,22 +185,25 @@ gdobj Builder of Spatial:
     self.load_vars()
     self.save_points[name] = (
       position: self.position,
-      direction: self.direction,
       index: self.index
     )
     false
 
   proc restore(name: string): bool =
-    (self.position, self.direction, self.index) = self.save_points[name]
+    (self.position, self.index) = self.save_points[name]
     self.set_vars()
     false
 
-  proc forward(steps: BiggestInt): bool = self.move(self.direction, steps)
-  proc back(steps: BiggestInt): bool = self.move(-self.direction, steps)
+  proc forward(steps: BiggestInt): bool = self.move(FORWARD, steps)
+  proc back(steps: BiggestInt): bool = self.move(BACK, steps)
   proc up(steps: BiggestInt): bool = self.move(UP, steps)
   proc down(steps: BiggestInt): bool = self.move(DOWN, steps)
-  proc left(degrees: float): bool = self.turn(degrees)
-  proc right(degrees: float): bool = self.turn(-degrees)
+  proc left(steps: BiggestInt): bool = self.move(LEFT, steps)
+  proc right(steps: BiggestInt): bool = self.move(RIGHT, steps)
+  proc turn_left(degrees: float): bool = self.turn(degrees, UP)
+  proc turn_right(degrees: float): bool = self.turn(-degrees, UP)
+  proc turn_up(degrees: float): bool = self.turn(-degrees, RIGHT)
+  proc turn_down(degrees: float): bool = self.turn(degrees, RIGHT)
 
   proc error(e: ref VMQuit) =
     self.running = false
@@ -221,12 +222,12 @@ gdobj Builder of Spatial:
     if self.engine.initialized: self.set_vars()
     if clear:
       self.clear()
-      let p = self.position
+      let p = self.position.origin
       self.draw(p.x, p.y, p.z, self.initial_index)
 
   proc drop_block() =
     if self.drawing:
-      let p = self.position
+      var p = self.position.origin.snapped(vec3(1, 1, 1))
       self.draw(p.x, p.y, p.z, self.index)
 
   proc build() =
@@ -234,9 +235,9 @@ gdobj Builder of Spatial:
       os.copy_file "scripts/default_grid.nim", self.enu_script
 
     if self.draw_mode == VoxelMode:
-      self.position = self.translation
+      self.position.origin = self.translation
 
-    let p = self.position
+    let p = self.position.origin
     self.draw(p.x, p.y, p.z, action_index)
     self.load_script()
 
@@ -256,10 +257,14 @@ gdobj Builder of Spatial:
           load(self.enu_script)
           expose("grid", "up", a => self.up(get_int(a, 0)))
           expose("grid", "down", a => self.down(get_int(a, 0)))
+          expose("grid", "left", a => self.left(get_int(a, 0)))
+          expose("grid", "right", a => self.right(get_int(a, 0)))
           expose("grid", "forward", a => self.forward(get_int(a, 0)))
           expose("grid", "back", a => self.back(get_int(a, 0)))
-          expose("grid", "left", a => self.left(get_float(a, 0)))
-          expose("grid", "right", a => self.right(get_float(a, 0)))
+          expose("grid", "turn_left", a => self.turn_left(get_float(a, 0)))
+          expose("grid", "turn_right", a => self.turn_right(get_float(a, 0)))
+          expose("grid", "turn_up", a => self.turn_up(get_float(a, 0)))
+          expose("grid", "turn_down", a => self.turn_down(get_float(a, 0)))
           expose("grid", "print", a => print(get_string(a, 0)))
           expose("grid", "echo", a => echo_console(get_string(a, 0)))
           expose("grid", "sleep", a => self.sleep(get_float(a, 0)))
