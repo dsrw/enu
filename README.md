@@ -14,9 +14,8 @@ Or my somewhat outdated [talk from NimConf 2020](https://youtu.be/3l6tsKM1cY8).
 ```console
 $ nimble prereqs
 $ nimble build
-$ nimble edit
+$ nimble start
 ```
-Launch Enu with the play button in the upper right, or by pressing the F5 key.
 
 ### Notes
 

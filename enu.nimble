@@ -39,6 +39,7 @@ task prereqs, "Generate Godot API binding":
     exec &"{scons} -j{cores} platform={target}"
   exec &"{godot_bin} --gdnative-generate-json-api {join_path generated_dir, api_json}"
   exec &"{gen} generate_api -d={generated_dir} -j={api_json}"
+  exec godot_bin & " app/project.godot --editor --quit"
 
 task clean, "Remove files produced by build":
   rm_dir generated_dir
