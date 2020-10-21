@@ -10,7 +10,7 @@ export dump
 
 var
   durations*: Table[string, Duration]
-  log_trace* = true
+  log_trace* = false
 
 template trace*(body: untyped): untyped =
   # https://github.com/nim-lang/Nim/issues/8212#issuecomment-657202258

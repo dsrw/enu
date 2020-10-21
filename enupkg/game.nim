@@ -137,7 +137,6 @@ gdobj Game of Node:
       self.trigger("update_actionbar", index)
 
   method physics_process*(delta: int) =
-    log_trace = false
     trace:
       if self.ready and not self.triggered and self.frame_skip == 0:
         self.triggered = true
