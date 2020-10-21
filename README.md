@@ -124,4 +124,6 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
   https://www.reddit.com/r/blender/comments/3ebzwz/free_space_hdrs_1/
 - Added fog and a shader based distance fade
 - Added black and white blocks.
-- Added icon and splash screen
+- Turtle icon from
+  https://www.pexels.com/photo/close-up-photo-of-turtle-2613148/
+- Added `ē` icon and splash screen.
