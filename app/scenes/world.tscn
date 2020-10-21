@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=2]
+[gd_scene load_steps=19 format=2]
 
 [ext_resource path="res://scenes/default.tscn" type="PackedScene" id=1]
 [ext_resource path="res://scenes/env.tres" type="Environment" id=2]
@@ -6,10 +6,10 @@
 [ext_resource path="res://components/Ground.gdns" type="Script" id=4]
 [ext_resource path="res://textures/red_block.png" type="Texture" id=5]
 [ext_resource path="res://components/Player.tscn" type="PackedScene" id=6]
-[ext_resource path="res://textures/blue_block.png" type="Texture" id=7]
+[ext_resource path="res://materials/blue-block.tres" type="Material" id=7]
 [ext_resource path="res://textures/tile_nrm.png" type="Texture" id=8]
 [ext_resource path="res://components/Terrain.gdns" type="Script" id=9]
-[ext_resource path="res://textures/green_block.png" type="Texture" id=10]
+[ext_resource path="res://materials/green-block.tres" type="Material" id=10]
 [ext_resource path="res://meshlibs/voxellib.tres" type="VoxelLibrary" id=11]
 [ext_resource path="res://shaders/terrain_voxel.shader" type="Shader" id=12]
 [ext_resource path="res://materials/black-block.tres" type="Material" id=13]
@@ -29,25 +29,6 @@ voxel_type = 0
 
 [sub_resource type="ShaderMaterial" id=4]
 shader = ExtResource( 12 )
-shader_param/albedo = Color( 0, 0.403922, 1, 1 )
-shader_param/specular = 0.5
-shader_param/metallic = 0.0
-shader_param/draw_distance = 230.0
-shader_param/roughness = 1.0
-shader_param/point_size = 1.0
-shader_param/emission = Color( 0, 0.403922, 1, 1 )
-shader_param/emission_energy = 0.0
-shader_param/normal_scale = 2.0
-shader_param/uv1_blend_sharpness = 1.0
-shader_param/uv1_scale = Vector3( 1, 1, 1 )
-shader_param/uv1_offset = Vector3( 0, 0, 0 )
-shader_param/uv2_scale = Vector3( 1, 1, 1 )
-shader_param/uv2_offset = Vector3( 0, 0, 0 )
-shader_param/texture_albedo = ExtResource( 7 )
-shader_param/texture_normal = ExtResource( 8 )
-
-[sub_resource type="ShaderMaterial" id=5]
-shader = ExtResource( 12 )
 shader_param/albedo = Color( 0.988235, 0.054902, 0.0431373, 1 )
 shader_param/specular = 0.5
 shader_param/metallic = 0.0
@@ -63,25 +44,6 @@ shader_param/uv1_offset = Vector3( 0, 0, 0 )
 shader_param/uv2_scale = Vector3( 1, 1, 1 )
 shader_param/uv2_offset = Vector3( 0, 0, 0 )
 shader_param/texture_albedo = ExtResource( 5 )
-shader_param/texture_normal = ExtResource( 8 )
-
-[sub_resource type="ShaderMaterial" id=6]
-shader = ExtResource( 12 )
-shader_param/albedo = Color( 0.0784314, 0.968627, 0.027451, 1 )
-shader_param/specular = 0.5
-shader_param/metallic = 0.0
-shader_param/draw_distance = 230.0
-shader_param/roughness = 1.0
-shader_param/point_size = 1.0
-shader_param/emission = Color( 0.0784314, 0.968627, 0.027451, 1 )
-shader_param/emission_energy = 0.0
-shader_param/normal_scale = 2.0
-shader_param/uv1_blend_sharpness = 1.0
-shader_param/uv1_scale = Vector3( 1, 1, 1 )
-shader_param/uv1_offset = Vector3( 0, 0, 0 )
-shader_param/uv2_scale = Vector3( 1, 1, 1 )
-shader_param/uv2_offset = Vector3( 0, 0, 0 )
-shader_param/texture_albedo = ExtResource( 10 )
 shader_param/texture_normal = ExtResource( 8 )
 
 [node name="Level" type="Spatial"]
@@ -120,9 +82,9 @@ collision_mask = 7
 stream = SubResource( 3 )
 voxel_library = ExtResource( 11 )
 max_view_distance = 256
-material/0 = SubResource( 4 )
-material/1 = SubResource( 5 )
-material/2 = SubResource( 6 )
+material/0 = ExtResource( 7 )
+material/1 = SubResource( 4 )
+material/2 = ExtResource( 10 )
 material/3 = ExtResource( 13 )
 material/4 = ExtResource( 14 )
 script = ExtResource( 9 )

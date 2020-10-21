@@ -1,98 +1,89 @@
-[gd_scene load_steps=15 format=2]
+[gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://materials/green-block-grid.tres" type="Material" id=1]
 [ext_resource path="res://materials/red-block-grid.tres" type="Material" id=2]
 [ext_resource path="res://materials/white-block-grid.tres" type="Material" id=3]
-[ext_resource path="res://textures/tile_nrm.png" type="Texture" id=4]
-[ext_resource path="res://textures/blue_block.png" type="Texture" id=5]
+[ext_resource path="res://materials/blue-block-grid.tres" type="Material" id=4]
 [ext_resource path="res://materials/black-block-grid.tres" type="Material" id=6]
 
-[sub_resource type="SpatialMaterial" id=1]
-albedo_color = Color( 0, 0.403922, 1, 1 )
-albedo_texture = ExtResource( 5 )
-normal_enabled = true
-normal_scale = 2.0
-normal_texture = ExtResource( 4 )
-uv1_scale = Vector3( 3, 2, 1 )
-
-[sub_resource type="CubeMesh" id=2]
-material = SubResource( 1 )
+[sub_resource type="CubeMesh" id=36]
+material = ExtResource( 4 )
 size = Vector3( 1, 1, 1 )
 
-[sub_resource type="BoxShape" id=3]
+[sub_resource type="BoxShape" id=28]
 extents = Vector3( 0.5, 0.5, 0.5 )
 
-[sub_resource type="CubeMesh" id=4]
+[sub_resource type="CubeMesh" id=37]
 material = ExtResource( 2 )
 size = Vector3( 1, 1, 1 )
 
-[sub_resource type="CubeMesh" id=5]
+[sub_resource type="CubeMesh" id=38]
 material = ExtResource( 1 )
 size = Vector3( 1, 1, 1 )
 
-[sub_resource type="BoxShape" id=6]
+[sub_resource type="BoxShape" id=35]
 extents = Vector3( 0.5, 0.5, 0.5 )
 
-[sub_resource type="CubeMesh" id=7]
+[sub_resource type="CubeMesh" id=39]
 material = ExtResource( 6 )
 size = Vector3( 1, 1, 1 )
 
-[sub_resource type="CubeMesh" id=8]
+[sub_resource type="CubeMesh" id=40]
 material = ExtResource( 3 )
 size = Vector3( 1, 1, 1 )
 
 [node name="block" type="Spatial"]
 
-[node name="Cube" type="MeshInstance" parent="."]
-mesh = SubResource( 2 )
+[node name="blue-block" type="MeshInstance" parent="."]
+mesh = SubResource( 36 )
 material/0 = null
 
-[node name="StaticBody" type="StaticBody" parent="Cube"]
+[node name="StaticBody" type="StaticBody" parent="blue-block"]
 input_ray_pickable = false
 
-[node name="CollisionShape" type="CollisionShape" parent="Cube/StaticBody"]
-shape = SubResource( 3 )
+[node name="CollisionShape" type="CollisionShape" parent="blue-block/StaticBody"]
+shape = SubResource( 28 )
 
-[node name="Cube2" type="MeshInstance" parent="."]
+[node name="red-block" type="MeshInstance" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2 )
-mesh = SubResource( 4 )
+mesh = SubResource( 37 )
 material/0 = null
 
-[node name="StaticBody" type="StaticBody" parent="Cube2"]
+[node name="StaticBody" type="StaticBody" parent="red-block"]
 input_ray_pickable = false
 
-[node name="CollisionShape" type="CollisionShape" parent="Cube2/StaticBody"]
-shape = SubResource( 3 )
+[node name="CollisionShape" type="CollisionShape" parent="red-block/StaticBody"]
+shape = SubResource( 28 )
 
-[node name="Pipe" type="MeshInstance" parent="."]
+[node name="green-block" type="MeshInstance" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4 )
-mesh = SubResource( 5 )
+mesh = SubResource( 38 )
 material/0 = null
 
-[node name="StaticBody" type="StaticBody" parent="Pipe"]
+[node name="StaticBody" type="StaticBody" parent="green-block"]
 input_ray_pickable = false
 
-[node name="CollisionShape" type="CollisionShape" parent="Pipe/StaticBody"]
-shape = SubResource( 6 )
+[node name="CollisionShape" type="CollisionShape" parent="green-block/StaticBody"]
+shape = SubResource( 35 )
 
-[node name="Cube3" type="MeshInstance" parent="."]
+[node name="black-block" type="MeshInstance" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -6 )
-mesh = SubResource( 7 )
+mesh = SubResource( 39 )
 material/0 = null
 
-[node name="StaticBody" type="StaticBody" parent="Cube3"]
+[node name="StaticBody" type="StaticBody" parent="black-block"]
 input_ray_pickable = false
 
-[node name="CollisionShape" type="CollisionShape" parent="Cube3/StaticBody"]
-shape = SubResource( 3 )
+[node name="CollisionShape" type="CollisionShape" parent="black-block/StaticBody"]
+shape = SubResource( 28 )
 
-[node name="Cube4" type="MeshInstance" parent="."]
+[node name="white-block" type="MeshInstance" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -8 )
-mesh = SubResource( 8 )
+mesh = SubResource( 40 )
 material/0 = null
 
-[node name="StaticBody" type="StaticBody" parent="Cube4"]
+[node name="StaticBody" type="StaticBody" parent="white-block"]
 input_ray_pickable = false
 
-[node name="CollisionShape" type="CollisionShape" parent="Cube4/StaticBody"]
-shape = SubResource( 3 )
+[node name="CollisionShape" type="CollisionShape" parent="white-block/StaticBody"]
+shape = SubResource( 28 )
