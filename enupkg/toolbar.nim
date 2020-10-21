@@ -13,10 +13,11 @@ gdobj Toolbar of HBoxContainer:
     waiting = false
 
   method ready*() =
-    self.bind_signals self, "action_changed"
-    self.bind_signals "update_actionbar"
-    self.preview_maker = self.get_node("../PreviewMaker") as PreviewMaker
-    assert not self.preview_maker.is_nil
+    trace:
+      self.bind_signals self, "action_changed"
+      self.bind_signals "update_actionbar"
+      self.preview_maker = self.get_node("../PreviewMaker") as PreviewMaker
+      assert not self.preview_maker.is_nil
 
   method process*(delta: float) =
     trace:

@@ -1,6 +1,6 @@
 import ../godotapi / [text_edit, scene_tree, node, input_event, global_constants],
        godot,
-       core, globals, engine,
+       core, globals, engine, game,
        strutils, tables, compiler/lineinfos
 
 gdobj Editor of TextEdit:
@@ -10,6 +10,7 @@ gdobj Editor of TextEdit:
     ff = false
     comment_color* {.gdExport.} = init_color(0.5, 0.5, 0.5)
     command_mode_enabled = false
+    mouse_was_captured = false
 
   method unhandled_input*(event: InputEvent) =
     if self.visible:
@@ -44,8 +45,11 @@ gdobj Editor of TextEdit:
       self.file_name = file_name
       self.visible = true
       self.text = read_file(file_name)
+      self.mouse_was_captured = get_game().mouse_captured
+      if self.mouse_was_captured:
+        release_mouse()
+
       self.grab_focus()
-      release_mouse()
       open_file = file_name
       self.clear_errors()
       self.highlight_errors()
@@ -60,7 +64,8 @@ gdobj Editor of TextEdit:
     hide_editor = proc =
       trigger("retarget")
       self.release_focus()
-      capture_mouse()
+      if self.mouse_was_captured:
+        capture_mouse()
       self.visible = false
       self.engine.line_changed = nil
       self.engine = nil

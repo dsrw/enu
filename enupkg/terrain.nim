@@ -24,6 +24,7 @@ gdobj Terrain of VoxelTerrain:
     loading_buffers: seq[Vector3]
     highlighted_offset = -1
     voxel_count:int
+    painting, erasing = false
     # NOTE Voxels on the edges of buffers behave strangely. They often can't be drawn with
     # voxel_tool, even if their buffer is visible. I'm not sure if this is a bug.
     # To work around this, we add voxels that can't be displayed with their buffer
@@ -53,6 +54,7 @@ gdobj Terrain of VoxelTerrain:
       assert not m.is_nil
 
       m = m.duplicate().as(ShaderMaterial)
+      m.set_shader_param("emission_energy", default_energy)
       self.set_material(i - 1, m)
 
       let v = l.create_voxel(i, "voxel-" & $i)
@@ -62,11 +64,13 @@ gdobj Terrain of VoxelTerrain:
     l.bake()
 
   method ready*() =
-    self.bind_signals(self, w"""
-      target_in target_out target_move
-      target_fire target_remove block_loaded
-      block_unloaded""")
-    self.prep_voxels_and_materials()
+    trace:
+      self.bind_signals(self, w"""
+        target_in target_out target_move
+        target_fire target_remove block_loaded
+        block_unloaded""")
+      self.bind_signals("mouse_released")
+      self.prep_voxels_and_materials()
 
   proc in_view(loc: Vector3, log = false): bool =
     self.voxel_tool.is_area_editable(init_aabb(loc, vec3(1,1,1)))
@@ -245,16 +249,14 @@ gdobj Terrain of VoxelTerrain:
           self.deselect()
           self.highlight()
 
-    if fire_down and tool_mode == BlockMode:
+    if self.painting and tool_mode == BlockMode:
       let plane = point * normal
       if self.draw_plane == plane:
         self.on_target_fire()
-    elif remove_down and tool_mode == BlockMode:
+    elif self.erasing and tool_mode == BlockMode:
       let plane = point * normal
       if self.draw_plane == plane:
         self.on_target_remove()
-    elif not remove_down and not fire_down:
-      self.draw_plane = vec3()
 
   method on_target_out() =
     self.highlighted_offset = -1
@@ -266,10 +268,16 @@ gdobj Terrain of VoxelTerrain:
     if tool_mode == ObjectMode:
       game_node.trigger("hide_target")
 
+  method on_mouse_released() =
+    self.painting = false
+    self.erasing = false
+    self.draw_plane = vec3()
+
   method on_target_fire() =
     let vox = self.get_vox(self.targeted_voxel)
     if vox:
       if tool_mode == BlockMode:
+        self.painting = true
         let point = self.targeted_voxel + self.current_normal
         self.draw(point, action_index, vox.get.offset, true)
         self.draw_plane = self.current_point * self.current_normal
@@ -281,6 +289,7 @@ gdobj Terrain of VoxelTerrain:
   method on_target_remove() =
     let loc = self.targeted_voxel
     if tool_mode == BlockMode:
+      self.erasing = true
       let data = self.get_vox(loc)
       if data:
         let data = data.get

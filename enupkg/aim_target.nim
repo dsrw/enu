@@ -8,8 +8,9 @@ gdobj AimTarget of Sprite3D:
     last_collider: Object
 
   method ready*() =
-    self.set_as_top_level(true)
-    self.bind_signals(w"retarget hide_target show_target")
+    trace:
+      self.set_as_top_level(true)
+      self.bind_signals(w"retarget hide_target show_target")
 
   method on_retarget*() =
     if self.last_collider != nil:

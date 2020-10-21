@@ -8,6 +8,7 @@ gdobj Grid of GridMap:
     original_materials: seq[Material]
     kept_blocks: VoxTable
     point, normal, draw_plane: Vector3
+    painting, erasing = false
 
   proc build_unique_mesh_library() =
     self.mesh_library = self.mesh_library.duplicate().as(MeshLibrary)
@@ -17,9 +18,11 @@ gdobj Grid of GridMap:
       self.original_materials.add(mesh.surface_get_material(0))
 
   method ready*() =
-    let signals = w"target_in target_out target_move target_fire target_remove"
-    self.bind_signals(self, signals)
-    self.build_unique_mesh_library()
+    trace:
+      self.bind_signals(self,
+        w"target_in target_out target_move target_fire target_remove")
+      self.bind_signals("mouse_released")
+      self.build_unique_mesh_library()
 
   proc highlight() =
     let lib = self.mesh_library
@@ -75,23 +78,27 @@ gdobj Grid of GridMap:
   method on_target_out() =
     self.clear_highlight()
 
+  method on_mouse_released() =
+    self.painting = false
+    self.erasing = false
+    self.draw_plane = vec3()
+
   method on_target_move(point, normal: Vector3) =
     self.point = point - self.get_parent.as(Spatial).translation
     self.normal = normal
 
-    if fire_down and tool_mode == BlockMode:
+    if self.painting and tool_mode == BlockMode:
       let plane = self.point * self.normal
       if self.draw_plane == plane:
         self.on_target_fire()
-    elif remove_down and tool_mode == BlockMode:
+    elif self.erasing and tool_mode == BlockMode:
       let plane = self.point * self.normal
       if self.draw_plane == plane:
         self.on_target_remove()
-    elif not remove_down and not fire_down:
-      self.draw_plane = vec3()
 
   method on_target_fire() =
     if tool_mode == BlockMode:
+      self.painting = true
       let point = self.world_to_map(self.point + self.normal * 0.5)
       self.draw(point.x, point.y, point.z, action_index, true)
       self.draw_plane = self.point * self.normal
@@ -101,6 +108,7 @@ gdobj Grid of GridMap:
 
   method on_target_remove() =
     if tool_mode == BlockMode:
+      self.erasing = true
       let point = self.world_to_map(self.point - (self.normal * 0.5))
       let index = self.get_cell_item(int point.x, int point.y, int point.z).int
       self.draw(point.x, point.y, point.z, 0)

@@ -8,7 +8,9 @@ from sugar import dump
 import parseutils
 export dump
 
-var durations*: Table[string, Duration]
+var
+  durations*: Table[string, Duration]
+  log_trace* = true
 
 template trace*(body: untyped): untyped =
   # https://github.com/nim-lang/Nim/issues/8212#issuecomment-657202258
@@ -22,8 +24,12 @@ template trace*(body: untyped): untyped =
   let file = instantiation_info().filename
   let start_time = now()
   body
-  let name = file & "#" & proc_name
-  durations[name] = durations.get_or_default(name) + (now() - start_time)
+  let
+    name = file & "#" & proc_name
+    duration = now() - start_time
+  durations[name] = durations.get_or_default(name) + duration
+  if log_trace:
+    echo name, " took ", duration
 
 ### times ###
 import times

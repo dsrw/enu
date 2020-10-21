@@ -60,13 +60,14 @@ gdobj Player of KinematicBody:
       result.y = velocity_current.y + gravity * delta
 
   method ready*() =
-    state.player = self
-    self.camera_rig = self.get_node("CameraRig") as Spatial
-    self.camera = self.camera_rig.get_node("Camera") as Camera
-    self.aim_ray  = self.camera_rig.get_node("Camera/AimRay") as RayCast
-    self.world_ray = game_node.get_node("WorldRay") as RayCast
-    self.aim_target = self.camera_rig.get_node("AimTarget") as AimTarget
-    self.position_start = self.camera_rig.translation
+    trace:
+      state.player = self
+      self.camera_rig = self.get_node("CameraRig") as Spatial
+      self.camera = self.camera_rig.get_node("Camera") as Camera
+      self.aim_ray  = self.camera_rig.get_node("Camera/AimRay") as RayCast
+      self.world_ray = game_node.get_node("WorldRay") as RayCast
+      self.aim_target = self.camera_rig.get_node("AimTarget") as AimTarget
+      self.position_start = self.camera_rig.translation
 
   proc current_raycast*: RayCast =
     if get_game().mouse_captured:
@@ -140,7 +141,6 @@ gdobj Player of KinematicBody:
         let shrink = get_game().shrink.float
         self.input_relative += event.as(InputEventMouseMotion).relative() * shrink
       else:
-        echo "skipped mouse move"
         skip_next_mouse_move = false
     if event.is_action_pressed("jump"):
       let
@@ -159,9 +159,11 @@ gdobj Player of KinematicBody:
     if event of InputEventPanGesture and tool_mode == BlockMode:
       let pan = event as InputEventPanGesture
       self.pan_delta += pan.delta.y
-      if self.pan_delta > 1:
+      if self.pan_delta > 2:
+        self.pan_delta = 0
         get_game().next_action()
-      elif self.pan_delta < -1:
+      elif self.pan_delta < -2:
+        self.pan_delta = 0
         get_game().prev_action()
 
     if event.is_action_pressed("next"):
@@ -172,17 +174,15 @@ gdobj Player of KinematicBody:
 
     let ray = self.current_raycast
     if event.is_action_pressed("fire"):
-      fire_down = true
       if ray.is_colliding():
         trigger(ray.get_collider(), "target_fire")
-    elif fire_down and event.is_action_released("fire"):
-      fire_down = false
+    elif event.is_action_released("fire"):
+      get_game().trigger("mouse_released")
 
     if event.is_action_pressed("remove"):
-      remove_down = true
       if ray.is_colliding():
         trigger(ray.get_collider(), "target_remove")
-    elif remove_down and event.is_action_released("remove"):
-      remove_down = false
+    elif event.is_action_released("remove"):
+      get_game().trigger("mouse_released")
 
 proc get_player*(): Player = state.player as Player

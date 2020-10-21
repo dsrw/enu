@@ -11,14 +11,18 @@ gdobj Console of RichTextLabel:
 
   proc init*() =
     logger = proc(level, msg: string) =
+      if level == "err":
+        self.visible = true
       echo msg
       self.log_text &= &"[b]{level.to_upper}[/b] {msg}\n"
     echo_console = proc(msg: string) =
       self.log_text &= &"{msg}\n"
+      echo msg
     self.default_mouse_filter = self.mouse_filter
 
   method ready*() =
-    self.bind_signals w"mouse_captured mouse_released clear_console toggle_console"
+    trace:
+      self.bind_signals w"mouse_captured mouse_released clear_console toggle_console"
 
   method process*(delta: float) =
     trace:

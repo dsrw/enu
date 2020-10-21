@@ -45,10 +45,7 @@ var
   open_file* = ""
   action_index* = 1
   action_count* = 6
-  max_grid_index* = 0
   skip_next_mouse_move* = false
-  fire_down* = false
-  remove_down* = false
   command_mode* = false
 
 proc join_args[T](args: varargs[T]): string =

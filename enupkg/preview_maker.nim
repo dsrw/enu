@@ -12,12 +12,13 @@ gdobj PreviewMaker of Viewport:
     skip_next = false
 
   method ready*() =
-    self.camera = self.find_node("Camera") as Camera
-    self.cube = self.find_node("Cube") as MeshInstance
-    self.bot = self.find_node("bot") as Spatial
-    assert not self.camera.is_nil
-    assert not self.cube.is_nil
-    assert not self.bot.is_nil
+    trace:
+      self.camera = self.find_node("Camera") as Camera
+      self.cube = self.find_node("Cube") as MeshInstance
+      self.bot = self.find_node("bot") as Spatial
+      assert not self.camera.is_nil
+      assert not self.cube.is_nil
+      assert not self.bot.is_nil
 
   method process*(delta: float) =
     trace:

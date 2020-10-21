@@ -1,5 +1,5 @@
 import godot, ../godotapi / [area],
-       globals, bot, player
+       core, globals, bot, player
 
 const signals = ["target_in", "target_out", "target_fire"]
 
@@ -8,8 +8,9 @@ gdobj SelectionArea of Area:
     bot*: NimBot
 
   method ready*() =
-    self.bot = self.get_node("..") as NimBot
-    bind_signals(self, self, signals)
+    trace:
+      self.bot = self.get_node("..") as NimBot
+      bind_signals(self, self, signals)
 
   method on_target_in*() =
     if tool_mode == CodeMode:
@@ -25,5 +26,3 @@ gdobj SelectionArea of Area:
 
   method on_target_fire*() =
     self.bot.select()
-
-

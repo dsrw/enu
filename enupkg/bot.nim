@@ -3,13 +3,14 @@ import ../godotapi / [scene_tree, kinematic_body, material, mesh_instance, spati
        godot, math, tables, std/with, times, sugar, os,
        globals, core, engine
 
+var max_bot_index = 0
 gdobj NimBot of KinematicBody:
   var
     speed = 1.0
     enu_script* {.gdExport.} = "none"
     material* {.gdExport.}, highlight_material* {.gdExport.},
       selected_material* {.gdExport.}: Material
-
+    script_index* {.gdExport.} = 0
     callback: proc(delta: float): bool
     engine: Engine
     last_error: string
@@ -21,6 +22,7 @@ gdobj NimBot of KinematicBody:
     running = false
     animation_player: AnimationPlayer
     schedule_save* = false
+
 
   proc update_material*(value: Material) =
     self.mesh.set_surface_material(0, value)
@@ -94,6 +96,8 @@ gdobj NimBot of KinematicBody:
     trigger("script_error")
 
   proc load_script() =
+    if self.enu_script == "none":
+      return
     errors[self.enu_script] = @[]
     self.callback = nil
 
@@ -125,20 +129,27 @@ gdobj NimBot of KinematicBody:
     except VMQuit as e:
       self.error(e)
 
-  method ready*() =
-    if self.enu_script == "none":
-      self.enu_script = &"scripts/{self.name}.nim"
+  proc setup*() =
+    self.script_index = max_bot_index
+    inc max_bot_index
+    self.enu_script = &"scripts/bot_{self.script_index}.nim"
+    self.name = "Bot_" & $self.script_index
     if not file_exists(self.enu_script):
       copy_file "scripts/default_bot.nim", self.enu_script
-    with self:
-      bind_signals(w"reload pause reload_all")
-      skin = self.get_node("Mannequiny").as(Spatial)
-      mesh = self.skin.get_node("root/Skeleton/body001").as(MeshInstance)
-      animation_player = self.skin.get_node("AnimationPlayer").as(AnimationPlayer)
-      orig_rotation = self.rotation
-      orig_translation = self.translation
-      set_default_material()
-      load_script()
+
+  method ready*() =
+    trace:
+      if max_bot_index < self.script_index:
+        max_bot_index = self.script_index
+      with self:
+        bind_signals(w"reload pause reload_all")
+        skin = self.get_node("Mannequiny").as(Spatial)
+        mesh = self.skin.get_node("root/Skeleton/body001").as(MeshInstance)
+        animation_player = self.skin.get_node("AnimationPlayer").as(AnimationPlayer)
+        orig_rotation = self.rotation
+        orig_translation = self.translation
+        set_default_material()
+        load_script()
 
   method physics_process*(delta: float64) =
     trace:

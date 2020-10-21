@@ -70,34 +70,35 @@ gdobj Game of Node:
     self.viewport_container.stretch_shrink = val
 
   method ready*() {.gdExport.} =
-    state.game = self
-    self.mouse_captured = true
-    self.reticle = self.find_node("Reticle").as(Control)
-    self.viewport_container = self.get_node("ViewportContainer").as(ViewportContainer)
-    self.perf = self.find_node("perf").as(Label)
-    self.shrink = 2
-    globals.capture_mouse = proc() =
+    trace:
+      state.game = self
       self.mouse_captured = true
+      self.reticle = self.find_node("Reticle").as(Control)
+      self.viewport_container = self.get_node("ViewportContainer").as(ViewportContainer)
+      self.perf = self.find_node("perf").as(Label)
+      self.shrink = 2
+      globals.capture_mouse = proc() =
+        self.mouse_captured = true
 
-    globals.release_mouse = proc() =
-      self.mouse_captured = false
+      globals.release_mouse = proc() =
+        self.mouse_captured = false
 
-    globals.reload_scripts = proc() =
-      trigger("save")
-      trigger("reload")
+      globals.reload_scripts = proc() =
+        trigger("save")
+        trigger("reload")
 
-    globals.save_and_reload = proc() =
-      trigger("save")
-      trigger("reload_all")
-      globals.save_scene()
+      globals.save_and_reload = proc() =
+        trigger("save")
+        trigger("reload_all")
+        globals.save_scene()
 
-    globals.save_scene = proc(scene_name: string) =
-      self.save_requested = some(scene_name)
+      globals.save_scene = proc(scene_name: string) =
+        self.save_requested = some(scene_name)
 
-    globals.pause = proc() =
-      trigger("pause")
-    self.ready = true
-    #trigger "game_ready"
+      globals.pause = proc() =
+        trigger("pause")
+      self.ready = true
+      #trigger "game_ready"
 
   proc update_action_index*(change: int) =
     action_index += change
@@ -136,6 +137,7 @@ gdobj Game of Node:
       self.trigger("update_actionbar", index)
 
   method physics_process*(delta: int) =
+    log_trace = false
     trace:
       if self.ready and not self.triggered and self.frame_skip == 0:
         self.triggered = true

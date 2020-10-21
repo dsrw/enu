@@ -2,12 +2,16 @@ import ../godotapi / [spatial, grid_map],
        godot, tables, math, sets, sugar, sequtils, hashes, os,
        core, globals, engine, terrain, grid
 
+var max_grid_index = 0
+
 gdobj Builder of Spatial:
   var
     draw_mode* {.gdExport.}: DrawMode
     script_index* {.gdExport.} = 0
     enu_script* {.gdExport.} = "none"
     initial_index* {.gdExport} = 1
+    saved_blocks* {.gdExport}: Dictionary
+    saved_holes* {.gdExport}: Dictionary
     paused* = false
     schedule_save* = false
     engine: Engine
@@ -24,22 +28,33 @@ gdobj Builder of Spatial:
     terrain: Terrain
     holes, kept_holes: Table[Vector3, int]
     overwrite = false
+    built = false
 
   method ready() =
-    self.grid = self.get_node("Grid") as Grid
-    self.terrain = game_node.find_node("Terrain") as Terrain
-    assert self.grid != nil
-    assert self.terrain != nil
+    trace:
+      if max_grid_index < self.script_index:
+        max_grid_index = self.script_index
+      self.grid = self.get_node("Grid") as Grid
+      self.terrain = game_node.find_node("Terrain") as Terrain
+      assert self.grid != nil
+      assert self.terrain != nil
 
-    self.bind_signals self.terrain,
-      w"block_selected last_block_deleted terrain_block_added terrain_block_removed"
-    self.bind_signals self.grid, w"selected deleted grid_block_added grid_block_removed"
-    self.bind_signals w"reload pause reload_all"
+      self.bind_signals self.terrain,
+        w"block_selected last_block_deleted terrain_block_added terrain_block_removed"
+      self.bind_signals self.grid, w"selected deleted grid_block_added grid_block_removed"
+      self.bind_signals w"reload pause reload_all"
+
+  proc setup*() =
     self.script_index = max_grid_index
     inc max_grid_index
-
     self.enu_script = &"scripts/grid_{self.script_index}.nim"
-    self.build()
+    self.name = "Builder_" & $self.script_index
+    if not file_exists(self.enu_script):
+      copy_file "scripts/default_grid.nim", self.enu_script
+
+  proc save_blocks*() =
+    discard
+
 
   proc draw*(x, y, z: float, index: int, keep = false) =
     let loc = vec3(x, y, z)
@@ -126,12 +141,12 @@ gdobj Builder of Spatial:
 
   method physics_process(delta: float64) =
     trace:
+      if not self.built:
+        self.build()
+        self.built = true
       if not self.paused:
         self.blocks_remaining_this_frame += self.blocks_per_frame
         try:
-          if self.engine.is_nil:
-            # if we load paused we won't have a script engine yet
-            self.load_script()
           if self.blocks_per_frame > 0:
             while self.running and self.blocks_remaining_this_frame >= 1:
               if self.callback == nil or not self.callback(delta):
@@ -231,9 +246,6 @@ gdobj Builder of Spatial:
       self.draw(p.x, p.y, p.z, self.index)
 
   proc build() =
-    if not file_exists(self.enu_script):
-      os.copy_file "scripts/default_grid.nim", self.enu_script
-
     if self.draw_mode == VoxelMode:
       self.position.origin = self.translation
 
