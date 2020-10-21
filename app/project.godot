@@ -17,7 +17,10 @@ _global_script_class_icons={
 
 config/name="Enu"
 run/main_scene="res://scenes/game.tscn"
-config/icon="res://icon.png"
+boot_splash/image="res://media/boot_splash.png"
+boot_splash/fullsize=false
+boot_splash/bg_color=Color( 0, 0, 0, 1 )
+config/icon="res://media/enu_icon.png"
 
 [display]
 
@@ -212,4 +215,4 @@ mode_7={
 [rendering]
 
 quality/depth_prepass/enable=false
-environment/default_environment="res://scenes/env.tres"
+quality/filters/msaa=3
