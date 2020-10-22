@@ -35,8 +35,8 @@ gdobj Builder of Spatial:
 
   method ready() =
     trace:
-      if max_grid_index < self.script_index:
-        max_grid_index = self.script_index
+      if max_grid_index <= self.script_index:
+        max_grid_index = self.script_index + 1
       self.grid = self.get_node("Grid") as Grid
       self.terrain = game_node.find_node("Terrain") as Terrain
       assert self.grid != nil

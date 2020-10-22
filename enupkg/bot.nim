@@ -137,8 +137,8 @@ gdobj NimBot of KinematicBody:
 
   method ready*() =
     trace:
-      if max_bot_index < self.script_index:
-        max_bot_index = self.script_index
+      if max_bot_index <= self.script_index:
+        max_bot_index = self.script_index + 1
       with self:
         bind_signals(w"reload pause reload_all")
         skin = self.get_node("Mannequiny").as(Spatial)
