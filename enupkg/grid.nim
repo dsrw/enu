@@ -2,10 +2,12 @@ import ../godotapi/[grid_map, mesh_library, mesh, spatial, spatial_material],
        godot, sets,
        core, globals, builder
 
+let
+  highlight_energy = 5.0
+  default_energy = 0.1
+
 gdobj Grid of GridMap:
   var
-    highlight_material* {.gdExport}: Material
-    original_materials: seq[Material]
     kept_blocks: VoxTable
     point, normal, draw_plane: Vector3
     painting, erasing = false
@@ -14,8 +16,10 @@ gdobj Grid of GridMap:
     self.mesh_library = self.mesh_library.duplicate().as(MeshLibrary)
     for index in self.mesh_library.get_item_list():
       let mesh = self.mesh_library.get_item_mesh(index).duplicate().as(Mesh)
+      var material = mesh.surface_get_material(0).duplicate().as(SpatialMaterial)
+      material.emission_energy = default_energy
+      mesh.surface_set_material 0, material
       self.mesh_library.set_item_mesh(index, mesh)
-      self.original_materials.add(mesh.surface_get_material(0))
 
   method ready*() =
     trace:
@@ -24,23 +28,24 @@ gdobj Grid of GridMap:
       self.bind_signals("mouse_released")
       self.build_unique_mesh_library()
 
-  proc highlight() =
+  proc set_energy_for_all_materials(energy: float) =
     let lib = self.mesh_library
     for index in lib.get_item_list():
-      let mesh = lib.get_item_mesh(index)
-      mesh.surface_set_material(0, self.highlight_material)
+      let
+        mesh = lib.get_item_mesh(index)
+        material = mesh.surface_get_material(0).as(SpatialMaterial)
+      material.emission_energy = energy
+
+  proc highlight() =
+    self.set_energy_for_all_materials highlight_energy
 
   proc clear_highlight() =
-    let lib = self.mesh_library
-    for index in lib.get_item_list():
-      let mesh = lib.get_item_mesh(index)
-      mesh.surface_set_material(0, self.original_materials[index])
+    self.set_energy_for_all_materials default_energy
 
   proc set_energy*(color: int, energy: float) =
     let m = self.mesh_library.get_item_mesh(color)
                              .surface_get_material(0)
                              .as(SpatialMaterial)
-    #let m = self.original_materials[color].as(SpatialMaterial)
     if not m.is_nil:
       m.emission_energy = energy
 
@@ -92,8 +97,8 @@ gdobj Grid of GridMap:
     self.draw_plane = vec3()
 
   method on_target_move(point, normal: Vector3) =
-    self.point = point - self.get_parent.as(Spatial).translation
-    self.normal = normal
+    self.point = self.to_local(point - self.get_parent.as(Spatial).translation)
+    self.normal = self.to_local(normal)
 
     if self.painting and tool_mode == BlockMode:
       let plane = self.point * self.normal
