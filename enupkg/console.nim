@@ -17,6 +17,7 @@ gdobj Console of RichTextLabel:
       self.log_text &= &"[b]{level.to_upper}[/b] {msg}\n"
     echo_console = proc(msg: string) =
       self.log_text &= &"{msg}\n"
+      self.visible = true
       echo msg
     self.default_mouse_filter = self.mouse_filter
 

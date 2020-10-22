@@ -1,4 +1,4 @@
-import ../godotapi/[grid_map, mesh_library, mesh, spatial],
+import ../godotapi/[grid_map, mesh_library, mesh, spatial, spatial_material],
        godot, sets,
        core, globals, builder
 
@@ -35,6 +35,14 @@ gdobj Grid of GridMap:
     for index in lib.get_item_list():
       let mesh = lib.get_item_mesh(index)
       mesh.surface_set_material(0, self.original_materials[index])
+
+  proc set_energy*(color: int, energy: float) =
+    let m = self.mesh_library.get_item_mesh(color)
+                             .surface_get_material(0)
+                             .as(SpatialMaterial)
+    #let m = self.original_materials[color].as(SpatialMaterial)
+    if not m.is_nil:
+      m.emission_energy = energy
 
   proc draw*(x, y, z: float, index: int, keep = false) =
     let map_point = vec3(x, y, z)

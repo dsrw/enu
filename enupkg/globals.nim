@@ -48,22 +48,17 @@ var
   skip_next_mouse_move* = false
   command_mode* = false
 
-proc join_args[T](args: varargs[T]): string =
-  args.map_it(&"'{it}'").join " "
-
 proc roughly_zero[T](s: T): bool =
   abs(s) < CMP_EPSILON
 
-proc debug*[T](args: varargs[T]) =
-  let msg = join_args(args)
-  logger("debug", msg)
+proc debug*(args: varargs[string, `$`]) =
+  logger("debug", args.join)
 
-proc info*[T](args: varargs[T]) =
-  logger("info", join_args(args))
+proc info*(args: varargs[string, `$`]) =
+  logger("info", args.join)
 
-proc err*[T](args: varargs[T]) =
-  let joined = join_args(args)
-  logger "err", joined
+proc err*(args: varargs[string, `$`]) =
+  logger "err", args.join
 
 proc bind_signals*(receiver, sender: Node, signals: varargs[string]) =
   let send_node = if sender == nil:

@@ -23,7 +23,6 @@ gdobj NimBot of KinematicBody:
     animation_player: AnimationPlayer
     schedule_save* = false
 
-
   proc update_material*(value: Material) =
     self.mesh.set_surface_material(0, value)
 
@@ -114,7 +113,6 @@ gdobj NimBot of KinematicBody:
           expose("bot", "right", a => self.right(get_float(a, 0)))
           expose("bot", "turn_left", a => self.turn_left(get_float(a, 0)))
           expose("bot", "turn_right", a => self.turn_right(get_float(a, 0)))
-          expose("bot", "print", a => print(get_string(a, 0)))
           expose("bot", "echo", a => echo_console(get_string(a, 0)))
           expose("bot", "play", proc(a: VmArgs): bool =
             let animation_name = get_string(a, 0)

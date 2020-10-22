@@ -1,4 +1,8 @@
-import macros
+import macros, random
+export random
+
+converter int_to_float*(i: int): float =
+  result = i.float
 
 template times*(count: int, body: untyped): untyped =
   for x in 0..<count:

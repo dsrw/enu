@@ -29,6 +29,9 @@ gdobj Builder of Spatial:
     holes, kept_holes: Table[Vector3, int]
     overwrite = false
     built = false
+    move_mode = false
+    original_translation: Vector3
+    scale_factor = 1.0
 
   method ready() =
     trace:
@@ -43,7 +46,7 @@ gdobj Builder of Spatial:
         w"block_selected last_block_deleted terrain_block_added terrain_block_removed"
       self.bind_signals self.grid, w"selected deleted grid_block_added grid_block_removed"
       self.bind_signals w"reload pause reload_all"
-
+      self.original_translation = self.translation
   proc setup*() =
     self.script_index = max_grid_index
     inc max_grid_index
@@ -54,7 +57,6 @@ gdobj Builder of Spatial:
 
   proc save_blocks*() =
     discard
-
 
   proc draw*(x, y, z: float, index: int, keep = false) =
     let loc = vec3(x, y, z)
@@ -93,16 +95,25 @@ gdobj Builder of Spatial:
 
   proc set_defaults() =
     self.position = init_transform()
+    self.translation = self.original_translation
+    self.rotation = vec3()
     if self.draw_mode == VoxelMode:
       self.position.origin = self.translation
 
     self.speed = 30.0
+    self.scale_factor = 1.0
     self.index = 1
     self.drawing = true
     self.overwrite = false
+    self.move_mode = false
 
-  proc switch_mode(mode: DrawMode) =
+  proc switch_mode(mode: DrawMode, move_mode: bool) =
+    var mode = mode
+    if move_mode:
+      mode = GridMode
+    self.move_mode = move_mode
     if mode != self.draw_mode:
+      debug &"switching to {mode} mode"
       let offset = self.script_index
       var holes: Table[Vector3, int]
       if self.draw_mode == VoxelMode:
@@ -125,7 +136,10 @@ gdobj Builder of Spatial:
 
   proc load_vars() =
     var old_speed = self.speed
-    let mode = DrawMode self.engine.get_int("mode", "grid")
+    let
+      mode = DrawMode self.engine.get_int("mode", "grid")
+      move_mode = self.engine.get_bool("move_mode", "grid")
+      scale_factor = self.engine.get_float("scale", "grid")
     self.speed = self.engine.get_float("speed", "grid")
     self.index = self.engine.get_int("color", "grid")
     self.drawing = self.engine.get_bool("drawing", "grid")
@@ -136,8 +150,11 @@ gdobj Builder of Spatial:
       self.speed.float / 30.0
     if self.speed != old_speed:
       self.blocks_remaining_this_frame = 0
+    if scale_factor != self.scale_factor:
+      self.grid.scale = vec3(scale_factor, scale_factor, scale_factor)
+      self.scale_factor = scale_factor
 
-    self.switch_mode(mode)
+    self.switch_mode(mode, move_mode)
 
   method physics_process(delta: float64) =
     trace:
@@ -147,13 +164,17 @@ gdobj Builder of Spatial:
       if not self.paused:
         self.blocks_remaining_this_frame += self.blocks_per_frame
         try:
-          if self.blocks_per_frame > 0:
-            while self.running and self.blocks_remaining_this_frame >= 1:
-              if self.callback == nil or not self.callback(delta):
-                self.running = self.engine.resume()
-          else:
+          if self.move_mode:
             if self.running and (self.callback == nil or not self.callback(delta)):
-                self.running = self.engine.resume()
+              self.running = self.engine.resume()
+          else:
+            if self.blocks_per_frame > 0:
+              while self.running and self.blocks_remaining_this_frame >= 1:
+                if self.callback == nil or not self.callback(delta):
+                  self.running = self.engine.resume()
+            else:
+              if self.running and (self.callback == nil or not self.callback(delta)):
+                  self.running = self.engine.resume()
 
         except VMQuit as e:
           self.error(e)
@@ -164,28 +185,61 @@ gdobj Builder of Spatial:
 
   proc set_vars() =
     self.engine.call_proc("set_vars", module_name = "grid", self.index, self.drawing,
-                          self.speed, int self.draw_mode, self.overwrite)
+                          self.speed, self.scale_factor, int self.draw_mode,
+                          self.overwrite, self.move_mode)
 
-  proc move(direction: Vector3, steps: BiggestInt): bool =
+  proc move(direction: Vector3, steps: float): bool =
     self.load_vars()
-    var count = 0
-    self.callback = proc(delta: float): bool =
-      while count < steps and self.blocks_remaining_this_frame >= 1:
-        self.position = self.position.translated(direction)
-        self.position.origin = self.position.origin.snapped(vec3(0.25, 0.25, 0.25))
-        inc count
-        self.blocks_remaining_this_frame -= 1
-        self.drop_block()
-      return count < steps
-    true
+    if self.move_mode:
+      var duration = 0.0
+      let
+        moving = direction.rotated(UP, self.rotation.y)
+        finish = self.translation + moving * steps
+        finish_time = 1.0 / self.speed * steps
+
+      self.callback = proc(delta: float): bool =
+        duration += delta
+        if duration >= finish_time:
+          self.translation = finish
+          return false
+        else:
+          self.translation = self.translation + (moving * self.speed * delta)
+          return true
+      return true
+    else:
+      var count = 0
+      self.callback = proc(delta: float): bool =
+        while count.float < steps and self.blocks_remaining_this_frame >= 1:
+          self.position = self.position.translated(direction)
+          self.position.origin = self.position.origin.snapped(vec3(0.25, 0.25, 0.25))
+          inc count
+          self.blocks_remaining_this_frame -= 1
+          self.drop_block()
+        return count.float < steps
+      return true
 
   proc turn(degrees: float, axis = UP): bool =
     self.load_vars()
-    let origin = self.position.origin
-    self.position.origin = vec3()
-    self.position = self.position.rotated(axis, deg_to_rad(degrees))
-    self.position.origin = origin
-    false
+    if self.move_mode:
+      var duration = 0.0
+      # TODO: Why can't this be a one liner?
+      var final_transform = self.transform
+      final_transform.basis.rotate(axis, deg_to_rad(degrees))
+      self.callback = proc(delta: float): bool =
+        duration += delta
+        self.rotate(axis, deg_to_rad(degrees * delta * self.speed))
+        if duration <= 1.0 / self.speed:
+          true
+        else:
+          self.transform = final_transform
+          false
+      return true
+    else:
+      let origin = self.position.origin
+      self.position.origin = vec3()
+      self.position = self.position.rotated(axis, deg_to_rad(degrees))
+      self.position.origin = origin
+      return false
 
   proc sleep(seconds: float): bool =
     var duration = 0.0
@@ -209,12 +263,12 @@ gdobj Builder of Spatial:
     self.set_vars()
     false
 
-  proc forward(steps: BiggestInt): bool = self.move(FORWARD, steps)
-  proc back(steps: BiggestInt): bool = self.move(BACK, steps)
-  proc up(steps: BiggestInt): bool = self.move(UP, steps)
-  proc down(steps: BiggestInt): bool = self.move(DOWN, steps)
-  proc left(steps: BiggestInt): bool = self.move(LEFT, steps)
-  proc right(steps: BiggestInt): bool = self.move(RIGHT, steps)
+  proc forward(steps: float): bool = self.move(FORWARD, steps)
+  proc back(steps: float): bool = self.move(BACK, steps)
+  proc up(steps: float): bool = self.move(UP, steps)
+  proc down(steps: float): bool = self.move(DOWN, steps)
+  proc left(steps: float): bool = self.move(LEFT, steps)
+  proc right(steps: float): bool = self.move(RIGHT, steps)
   proc turn_left(degrees: float): bool = self.turn(degrees, UP)
   proc turn_right(degrees: float): bool = self.turn(-degrees, UP)
   proc turn_up(degrees: float): bool = self.turn(-degrees, RIGHT)
@@ -238,6 +292,7 @@ gdobj Builder of Spatial:
     if clear:
       self.clear()
       let p = self.position.origin
+      self.scale = vec3(1, 1, 1)
       self.draw(p.x, p.y, p.z, self.initial_index)
 
   proc drop_block() =
@@ -267,21 +322,29 @@ gdobj Builder of Spatial:
       if not (self.paused or self.engine.initialized):
         with self.engine:
           load(self.enu_script)
-          expose("grid", "up", a => self.up(get_int(a, 0)))
-          expose("grid", "down", a => self.down(get_int(a, 0)))
-          expose("grid", "left", a => self.left(get_int(a, 0)))
-          expose("grid", "right", a => self.right(get_int(a, 0)))
-          expose("grid", "forward", a => self.forward(get_int(a, 0)))
-          expose("grid", "back", a => self.back(get_int(a, 0)))
+          expose("grid", "up", a => self.up(get_float(a, 0)))
+          expose("grid", "down", a => self.down(get_float(a, 0)))
+          expose("grid", "left", a => self.left(get_float(a, 0)))
+          expose("grid", "right", a => self.right(get_float(a, 0)))
+          expose("grid", "forward", a => self.forward(get_float(a, 0)))
+          expose("grid", "back", a => self.back(get_float(a, 0)))
           expose("grid", "turn_left", a => self.turn_left(get_float(a, 0)))
           expose("grid", "turn_right", a => self.turn_right(get_float(a, 0)))
           expose("grid", "turn_up", a => self.turn_up(get_float(a, 0)))
           expose("grid", "turn_down", a => self.turn_down(get_float(a, 0)))
-          expose("grid", "print", a => print(get_string(a, 0)))
           expose("grid", "echo", a => echo_console(get_string(a, 0)))
           expose("grid", "sleep", a => self.sleep(get_float(a, 0)))
           expose("grid", "save", a => self.save(get_string(a, 0)))
           expose("grid", "restore", a => self.restore(get_string(a, 0)))
+          expose "grid", "set_energy", proc(a: VmArgs): bool =
+            let
+              color = get_int(a, 0).int
+              energy = get_float(a, 1)
+            if self.draw_mode == GridMode:
+              self.grid.set_energy(color, energy)
+            else:
+              self.terrain.set_energy(color, energy, self.script_index)
+            false
           expose "grid", "reset", proc(a: VmArgs): bool =
             self.reset(get_bool(a, 0))
             false
