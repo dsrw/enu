@@ -13,7 +13,7 @@ type
     GridMode, VoxelMode
 
 var
-  speed*: 0.0..250.0 = 30.0
+  speed* = 30.0
   move_speed = 1.0
   drawing* = true
   color*: ColorIndex
@@ -51,7 +51,6 @@ proc tr*(degrees = 90.0)            = turn_right(degrees)
 proc tu*(degrees = 90.0)            = turn_up(degrees)
 proc td*(degrees = 90.0)            = turn_down(degrees)
 proc echo*(msg: string)             = discard
-proc echo*(x: varargs[string, `$`]) = echo x.join()
 proc sleep*(seconds: float)         = discard
 proc reset*(clear = false)          = discard
 proc save*(name = "default")        = discard
@@ -67,6 +66,7 @@ proc set_energy(color: int, energy: float) =
 
 proc `energy=`*(color: ColorIndex, energy: float) =
   set_energy(color.int, energy)
+
 # Helpers
 proc load_defaults()             = discard
 
@@ -94,8 +94,10 @@ template move*(body: untyped): untyped =
   move_speed = speed
   speed = prev_speed
 
-proc build*() =
+template build*(body: untyped): untyped =
+  let prev_move_mode = move_mode
   move_mode = false
-  speed = 30.0
+  body
+  move_mode = prev_move_mode
 
 load_defaults()

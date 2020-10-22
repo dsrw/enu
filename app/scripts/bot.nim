@@ -18,7 +18,6 @@ proc rt*(steps = 1.0)               = right(steps)
 proc tl*(degrees = 90.0)            = turn_left(degrees)
 proc tr*(degrees = 90.0)            = turn_right(degrees)
 proc echo*(msg: string)             = discard
-proc echo*(x: varargs[string, `$`]) = echo x.join()
 proc play*(animation_name: string)  = discard
 proc set_speed*(spd: float)         = speed = spd
 
