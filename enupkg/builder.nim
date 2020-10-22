@@ -12,6 +12,7 @@ gdobj Builder of Spatial:
     initial_index* {.gdExport} = 1
     saved_blocks* {.gdExport}: Dictionary
     saved_holes* {.gdExport}: Dictionary
+    original_translation* {.gdExport.}: Vector3
     paused* = false
     schedule_save* = false
     engine: Engine
@@ -37,6 +38,7 @@ gdobj Builder of Spatial:
     trace:
       if max_grid_index <= self.script_index:
         max_grid_index = self.script_index + 1
+      self.translation = self.original_translation
       self.grid = self.get_node("Grid") as Grid
       self.terrain = game_node.find_node("Terrain") as Terrain
       assert self.grid != nil
@@ -47,7 +49,10 @@ gdobj Builder of Spatial:
       self.bind_signals self.grid, w"selected deleted grid_block_added grid_block_removed"
       self.bind_signals w"reload pause reload_all"
       self.original_translation = self.translation
-  proc setup*() =
+
+  proc setup*(translation: Vector3) =
+    self.translation = translation
+    self.original_translation = translation
     self.script_index = max_grid_index
     inc max_grid_index
     self.enu_script = &"scripts/grid_{self.script_index}.nim"

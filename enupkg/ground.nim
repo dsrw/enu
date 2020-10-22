@@ -26,10 +26,9 @@ gdobj Ground of MeshInstance:
       ps = load("res://components/Builder.tscn") as PackedScene
       b = ps.instance() as Builder
     assert not b.is_nil
-    b.translation = point
     b.schedule_save = true
     b.paused = true
-    b.setup()
+    b.setup(point)
     b.initial_index = action_index
     self.data.add_child(b)
     b.owner = self.data
