@@ -4,6 +4,9 @@ import ../godotapi / [spatial, grid_map],
 
 var max_grid_index = 0
 
+type
+  Timer = tuple[until: DateTime, callback: proc()]
+
 gdobj Builder of Spatial:
   var
     draw_mode* {.gdExport.}: DrawMode
@@ -31,8 +34,12 @@ gdobj Builder of Spatial:
     overwrite = false
     built = false
     move_mode = false
-    original_translation: Vector3
     scale_factor = 1.0
+
+    # If we delete a voxel while it's queued up to be drawn by godot voxel,
+    # the voxel gets drawn anyway, and the polys hang around until they
+    # move out of draw distance. Wait a bit before clearing. FIXME.
+    timer: Option[Timer]
 
   method ready() =
     trace:
@@ -118,26 +125,27 @@ gdobj Builder of Spatial:
       mode = GridMode
     self.move_mode = move_mode
     if mode != self.draw_mode:
-      debug &"switching to {mode} mode"
-      let offset = self.script_index
-      var holes: Table[Vector3, int]
-      if self.draw_mode == VoxelMode:
-        let data = self.terrain.export_data(offset, self.translation)
-        self.terrain.clear(offset, all = true)
-        self.position.origin -= self.translation
-        for loc, index in self.holes:
-          holes[loc - self.translation] = index
-        self.holes = holes
-        self.grid.import_data(data)
-      else:
-        let data = self.grid.export_data()
-        self.grid.clear(all = true)
-        self.position.origin += self.translation
-        for loc, index in self.holes:
-          holes[loc + self.translation] = index
-        self.holes = holes
-        self.terrain.import_data(data, offset, self.translation)
       self.draw_mode = mode
+      self.set_timer 1.seconds, proc() =
+        debug &"switching to {mode} mode"
+        let offset = self.script_index
+        var holes: Table[Vector3, int]
+        if mode == GridMode:
+          let data = self.terrain.export_data(offset, self.translation)
+          self.terrain.clear(offset, all = true)
+          self.position.origin -= self.translation
+          for loc, index in self.holes:
+            holes[loc - self.translation] = index
+          self.holes = holes
+          self.grid.import_data(data)
+        else:
+          let data = self.grid.export_data()
+          self.grid.clear(all = true)
+          self.position.origin += self.translation
+          for loc, index in self.holes:
+            holes[loc + self.translation] = index
+          self.holes = holes
+          self.terrain.import_data(data, offset, self.translation)
 
   proc load_vars() =
     var old_speed = self.speed
@@ -152,7 +160,7 @@ gdobj Builder of Spatial:
     self.blocks_per_frame = if self.speed == 0:
       float.high
     else:
-      self.speed.float / 30.0
+      self.speed / 30.0
     if self.speed != old_speed:
       self.blocks_remaining_this_frame = 0
     if scale_factor != self.scale_factor:
@@ -160,9 +168,16 @@ gdobj Builder of Spatial:
       self.scale_factor = scale_factor
 
     self.switch_mode(mode, move_mode)
+    self.set_vars()
 
   method physics_process(delta: float64) =
     trace:
+      if self.timer:
+        if self.timer.get.until < now():
+          self.timer.get.callback()
+          self.timer = none(Timer)
+        else:
+          return
       if not self.built:
         self.build()
         self.built = true
@@ -196,6 +211,7 @@ gdobj Builder of Spatial:
   proc move(direction: Vector3, steps: float): bool =
     self.load_vars()
     if self.move_mode:
+      let steps = steps.float
       var duration = 0.0
       let
         moving = direction.rotated(UP, self.rotation.y)
@@ -371,10 +387,15 @@ gdobj Builder of Spatial:
   method on_selected() =
     show_editor self.enu_script, self.engine
 
+  proc set_timer(duration: TimeInterval, callback: proc()) =
+    self.timer = some (now() + duration, callback)
+
   method reload() =
-    self.reset()
-    self.paused = false
-    self.load_script()
+    let duration = if self.running: 1.seconds else: 0.seconds
+    self.set_timer duration, proc() =
+      self.reset()
+      self.paused = false
+      self.load_script()
 
   method on_reload() =
     if not editing() or open_file == self.enu_script:
