@@ -4,11 +4,11 @@
 [ext_resource path="res://themes/SF-Mono-Powerline-Regular.otf" type="DynamicFontData" id=2]
 
 [sub_resource type="DynamicFont" id=1]
-size = 28
+size = 14
 font_data = ExtResource( 1 )
 
 [sub_resource type="DynamicFont" id=2]
-size = 28
+size = 14
 font_data = ExtResource( 2 )
 
 [resource]

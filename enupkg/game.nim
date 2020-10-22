@@ -1,6 +1,6 @@
 import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_container,
                       packed_scene, resource_saver, sprite, control, viewport,
-                      performance, label],
+                      performance, label, theme, dynamic_font, resource_loader],
        godot, threadpool, times,
        core, globals
 
@@ -71,12 +71,26 @@ gdobj Game of Node:
 
   method ready*() {.gdExport.} =
     trace:
+      self.viewport_container = self.get_node("ViewportContainer").as(ViewportContainer)
+      assert not self.viewport_container.is_nil
       state.game = self
+      if hostOS == "macosx":
+        let
+          theme = load("res://themes/AppleTheme.tres").as(Theme)
+          screen_scale = get_screen_scale()
+          theme_holder = self.find_node("ThemeHolder").as(Container)
+          font = theme.default_font.as(DynamicFont)
+          bold_font = theme.get_font("bold_font", "RichTextLabel")
+                                      .as(DynamicFont)
+        font.size = int(font.size.float * screen_scale)
+        bold_font.size = int(bold_font.size.float * screen_scale)
+        theme_holder.theme = theme
+        self.shrink = screen_scale.int
+
       self.mouse_captured = true
       self.reticle = self.find_node("Reticle").as(Control)
-      self.viewport_container = self.get_node("ViewportContainer").as(ViewportContainer)
       self.perf = self.find_node("perf").as(Label)
-      self.shrink = 2
+
       globals.capture_mouse = proc() =
         self.mouse_captured = true
 
