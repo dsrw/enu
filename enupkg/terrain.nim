@@ -78,7 +78,8 @@ gdobj Terrain of VoxelTerrain:
   proc set_voxel(loc: Vector3, index, offset: int) =
     let idx = if index == 0: 0 else:
       offset * (self.voxel_count - 1) + index
-    self.voxel_tool.set_voxel(loc, idx)
+    if loc.y >= 0:
+      self.voxel_tool.set_voxel(loc, idx)
 
   proc set_energy*(color: int, energy: float, offset: int) =
     let m = self.get_material(offset * self.voxel_count + color - 1).as(ShaderMaterial)
