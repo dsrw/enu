@@ -3,7 +3,7 @@
 3D live coding, implemented in Nim.
 
 Enu lets you build and explore worlds using a familiar block-building interface and a Logo inspired API.
-It aspires to make 3D development much accessible, and will one day be usable to create sandalone games.
+It aspires to make 3D development more accessible, and will one day be usable to create sandalone games.
 
 MacOS, PC and Linux version of Enu 0.1 should be ready by Friday, Nov. 6th 2020.
 
