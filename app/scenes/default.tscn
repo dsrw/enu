@@ -1,3 +1,44 @@
-[gd_scene format=2]
+[gd_scene load_steps=7 format=2]
+
+[ext_resource path="res://materials/black.tres" type="Material" id=1]
+[ext_resource path="res://materials/highlight.tres" type="Material" id=2]
+[ext_resource path="res://components/bot.tscn" type="PackedScene" id=3]
+[ext_resource path="res://components/Bot.gdns" type="Script" id=4]
+[ext_resource path="res://components/Builder.tscn" type="PackedScene" id=5]
+[ext_resource path="res://components/Builder.gdns" type="Script" id=6]
 
 [node name="data" type="Spatial"]
+
+[node name="Bot_1" type="KinematicBody" parent="." instance=ExtResource( 3 )]
+transform = Transform( -0.656059, 0, 0.75471, 0, 1, 0, -0.75471, 0, -0.656059, -238.244, 0.00150003, 30.4203 )
+collision_layer = 2
+script = ExtResource( 4 )
+enu_script = "scripts/bot_1.nim"
+material = ExtResource( 1 )
+highlight_material = ExtResource( 2 )
+script_index = 1
+
+[node name="Builder_0" type="Spatial" parent="." instance=ExtResource( 5 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 0, -12 )
+script = ExtResource( 6 )
+draw_mode = 1
+enu_script = "scripts/grid_0.nim"
+original_translation = Vector3( -17, 0, -12 )
+
+[node name="Builder_1" type="Spatial" parent="." instance=ExtResource( 5 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -45, 0, 75 )
+script = ExtResource( 6 )
+draw_mode = 1
+script_index = 1
+enu_script = "scripts/grid_1.nim"
+initial_index = 4
+original_translation = Vector3( -45, 0, 75 )
+
+[node name="Builder_2" type="Spatial" parent="." instance=ExtResource( 5 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -71, 0, 205 )
+script = ExtResource( 6 )
+draw_mode = 1
+script_index = 2
+enu_script = "scripts/grid_2.nim"
+initial_index = 5
+original_translation = Vector3( -71, 0, 205 )
