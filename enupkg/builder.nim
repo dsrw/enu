@@ -27,7 +27,7 @@ gdobj Builder of Spatial:
     speed = 0.0
     position = init_transform()
     drawing = true
-    save_points: Table[string, tuple[position: Transform, index: int]]
+    save_points: Table[string, tuple[position: Transform, index: int, drawing: bool]]
     grid: Grid
     terrain: Terrain
     holes, kept_holes: Table[Vector3, int]
@@ -39,7 +39,7 @@ gdobj Builder of Spatial:
     # If we delete a voxel while it's queued up to be drawn by godot voxel,
     # the voxel gets drawn anyway, and the polys hang around until they
     # move out of draw distance. Wait a bit before clearing. FIXME.
-    timer: Option[Timer]
+    timers: seq[Timer]
 
   method ready() =
     trace:
@@ -114,39 +114,42 @@ gdobj Builder of Spatial:
 
     self.speed = 30.0
     self.scale_factor = 1.0
+    self.grid.scale = vec3(1, 1, 1)
     self.index = 1
     self.drawing = true
     self.overwrite = false
     self.move_mode = false
 
-  proc switch_mode(mode: DrawMode, move_mode: bool) =
+  proc switch_mode(mode: DrawMode, move_mode: bool, scale_factor: float) =
     var mode = mode
     if move_mode:
       mode = GridMode
+    if scale_factor != 1.0:
+      mode = GridMode
     self.move_mode = move_mode
     if mode != self.draw_mode:
-      self.draw_mode = mode
-      self.set_timer 1.seconds, proc() =
-        debug &"switching to {mode} mode"
-        let offset = self.script_index
-        var holes: Table[Vector3, int]
-        if mode == GridMode:
-          let data = self.terrain.export_data(offset, self.translation)
+      debug &"switching to {mode} mode"
+      let offset = self.script_index
+      var holes: Table[Vector3, int]
+      if self.draw_mode == VoxelMode:
+        let data = self.terrain.export_data(offset, self.translation)
+        self.set_timer 0.5.seconds, proc() =
+          echo "clearing"
           self.terrain.clear(offset, all = true)
-          self.position.origin -= self.translation
-          for loc, index in self.holes:
-            holes[loc - self.translation] = index
-          self.holes = holes
-          self.grid.import_data(data)
-        else:
-          let data = self.grid.export_data()
-          self.grid.clear(all = true)
-          self.position.origin += self.translation
-          for loc, index in self.holes:
-            holes[loc + self.translation] = index
-          self.holes = holes
-          self.terrain.import_data(data, offset, self.translation)
-
+        self.position.origin -= self.translation
+        for loc, index in self.holes:
+          holes[loc - self.translation] = index
+        self.holes = holes
+        self.grid.import_data(data)
+      else:
+        let data = self.grid.export_data()
+        self.grid.clear(all = true)
+        self.position.origin += self.translation
+        for loc, index in self.holes:
+          holes[loc + self.translation] = index
+        self.holes = holes
+        self.terrain.import_data(data, offset, self.translation)
+      self.draw_mode = mode
   proc load_vars() =
     var old_speed = self.speed
     let
@@ -167,17 +170,22 @@ gdobj Builder of Spatial:
       self.grid.scale = vec3(scale_factor, scale_factor, scale_factor)
       self.scale_factor = scale_factor
 
-    self.switch_mode(mode, move_mode)
+    self.switch_mode(mode, move_mode, self.scale_factor)
     self.set_vars()
 
   method physics_process(delta: float64) =
     trace:
-      if self.timer:
-        if self.timer.get.until < now():
-          self.timer.get.callback()
-          self.timer = none(Timer)
-        else:
-          return
+      if self.timers.len > 0:
+        var timers = self.timers
+        self.timers = @[]
+        for timer in timers:
+          if timer.until < now():
+            echo "running timer"
+            timer.callback()
+          else:
+            self.timers.add timer
+        return
+
       if not self.built:
         self.build()
         self.built = true
@@ -214,7 +222,7 @@ gdobj Builder of Spatial:
       let steps = steps.float
       var duration = 0.0
       let
-        moving = direction.rotated(UP, self.rotation.y)
+        moving = self.transform.basis.xform(direction)
         finish = self.translation + moving * steps
         finish_time = 1.0 / self.speed * steps
 
@@ -232,7 +240,6 @@ gdobj Builder of Spatial:
       self.callback = proc(delta: float): bool =
         while count.float < steps and self.blocks_remaining_this_frame >= 1:
           self.position = self.position.translated(direction)
-          self.position.origin = self.position.origin.snapped(vec3(0.25, 0.25, 0.25))
           inc count
           self.blocks_remaining_this_frame -= 1
           self.drop_block()
@@ -243,9 +250,10 @@ gdobj Builder of Spatial:
     self.load_vars()
     if self.move_mode:
       var duration = 0.0
-      # TODO: Why can't this be a one liner?
+      let axis = self.transform.basis.xform(axis)
       var final_transform = self.transform
-      final_transform.basis.rotate(axis, deg_to_rad(degrees))
+      final_transform.basis = final_transform.basis.rotated(axis, deg_to_rad(degrees))
+                                                   .orthonormalized()
       self.callback = proc(delta: float): bool =
         duration += delta
         self.rotate(axis, deg_to_rad(degrees * delta * self.speed))
@@ -256,10 +264,9 @@ gdobj Builder of Spatial:
           false
       return true
     else:
-      let origin = self.position.origin
-      self.position.origin = vec3()
-      self.position = self.position.rotated(axis, deg_to_rad(degrees))
-      self.position.origin = origin
+      let axis = self.position.basis.xform(axis)
+      self.position.basis = self.position.basis.rotated(axis, deg_to_rad(degrees))
+      self.position = self.position.orthonormalized()
       return false
 
   proc sleep(seconds: float): bool =
@@ -273,14 +280,11 @@ gdobj Builder of Spatial:
 
   proc save(name: string): bool =
     self.load_vars()
-    self.save_points[name] = (
-      position: self.position,
-      index: self.index
-    )
+    self.save_points[name] = (self.position, self.index, self.drawing)
     false
 
   proc restore(name: string): bool =
-    (self.position, self.index) = self.save_points[name]
+    (self.position, self.index, self.drawing) = self.save_points[name]
     self.set_vars()
     false
 
@@ -291,9 +295,9 @@ gdobj Builder of Spatial:
   proc left(steps: float): bool = self.move(LEFT, steps)
   proc right(steps: float): bool = self.move(RIGHT, steps)
   proc turn_left(degrees: float): bool = self.turn(degrees, UP)
-  proc turn_right(degrees: float): bool = self.turn(-degrees, UP)
-  proc turn_up(degrees: float): bool = self.turn(-degrees, RIGHT)
-  proc turn_down(degrees: float): bool = self.turn(degrees, RIGHT)
+  proc turn_right(degrees: float): bool = self.turn(degrees, DOWN)
+  proc turn_up(degrees: float): bool = self.turn(degrees, RIGHT)
+  proc turn_down(degrees: float): bool = self.turn(degrees, LEFT)
 
   proc error(e: ref VMQuit) =
     self.running = false
@@ -343,17 +347,17 @@ gdobj Builder of Spatial:
       if not (self.paused or self.engine.initialized):
         with self.engine:
           load(self.enu_script)
-          expose("grid", "up", a => self.up(get_float(a, 0)))
-          expose("grid", "down", a => self.down(get_float(a, 0)))
-          expose("grid", "left", a => self.left(get_float(a, 0)))
-          expose("grid", "right", a => self.right(get_float(a, 0)))
-          expose("grid", "forward", a => self.forward(get_float(a, 0)))
-          expose("grid", "back", a => self.back(get_float(a, 0)))
-          expose("grid", "turn_left", a => self.turn_left(get_float(a, 0)))
-          expose("grid", "turn_right", a => self.turn_right(get_float(a, 0)))
-          expose("grid", "turn_up", a => self.turn_up(get_float(a, 0)))
-          expose("grid", "turn_down", a => self.turn_down(get_float(a, 0)))
-          expose("grid", "echo", a => echo_console(get_string(a, 0)))
+          expose("logo", "up", a => self.up(get_float(a, 0)))
+          expose("logo", "down", a => self.down(get_float(a, 0)))
+          expose("logo", "left", a => self.left(get_float(a, 0)))
+          expose("logo", "right", a => self.right(get_float(a, 0)))
+          expose("logo", "forward", a => self.forward(get_float(a, 0)))
+          expose("logo", "back", a => self.back(get_float(a, 0)))
+          expose("logo", "turn_left", a => self.turn_left(get_float(a, 0)))
+          expose("logo", "turn_right", a => self.turn_right(get_float(a, 0)))
+          expose("logo", "turn_up", a => self.turn_up(get_float(a, 0)))
+          expose("logo", "turn_down", a => self.turn_down(get_float(a, 0)))
+          expose("grid", "echo_console", a => echo_console(get_string(a, 0)))
           expose("grid", "sleep", a => self.sleep(get_float(a, 0)))
           expose("grid", "save", a => self.save(get_string(a, 0)))
           expose("grid", "restore", a => self.restore(get_string(a, 0)))
@@ -388,10 +392,10 @@ gdobj Builder of Spatial:
     show_editor self.enu_script, self.engine
 
   proc set_timer(duration: TimeInterval, callback: proc()) =
-    self.timer = some (now() + duration, callback)
+    self.timers.add (now() + duration, callback)
 
   method reload() =
-    let duration = if self.running: 1.seconds else: 0.seconds
+    let duration = if self.running: 0.5.seconds else: 0.seconds
     self.set_timer duration, proc() =
       self.reset()
       self.paused = false

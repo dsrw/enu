@@ -23,8 +23,8 @@ const
   DOWN* = vec3(0, -1, 0)
   BACK* = vec3(0, 0, 1)
   FORWARD* = vec3(0, 0, -1)
-  LEFT* = vec3(1, 0, 0)
-  RIGHT* = vec3(-1, 0, 0)
+  RIGHT* = vec3(1, 0, 0)
+  LEFT* = vec3(-1, 0, 0)
 
 var
   editing*: proc:bool
@@ -105,3 +105,6 @@ proc z*(b: Basis): Vector3 {.inline.} =
 
 proc round*(v: Vector3): Vector3 {.inline.} =
   vec3(v.x.round(), v.y.round(), v.z.round())
+
+proc is_axis_aligned*(v: Vector3): bool {.inline.} =
+  v in [UP, DOWN, LEFT, RIGHT, FORWARD, BACK]

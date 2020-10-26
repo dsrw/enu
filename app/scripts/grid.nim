@@ -1,8 +1,9 @@
-import strformat, strutils, helpers
-export helpers
+import strformat, strutils, helpers, logo
+export helpers, logo
 
 type
   ColorIndex* = enum
+    eraser = 0,
     blue = 1,
     red = 2,
     green = 3,
@@ -12,8 +13,10 @@ type
   DrawMode* = enum
     GridMode, VoxelMode
 
+  Energy = range[0.0..100.0]
+
 var
-  speed* = 30.0
+  speed*: range[0.0..250.0] = 30.0
   move_speed = 1.0
   drawing* = true
   color*: ColorIndex
@@ -21,6 +24,7 @@ var
   overwrite* = false
   move_mode* = false
   scale* = 1.0
+  energies: Table[ColorIndex, float]
 
 proc change_color(amount: int) =
   var color_index = int color
@@ -31,26 +35,7 @@ proc change_color(amount: int) =
     color_index = int ColorIndex.high
   color = ColorIndex color_index
 
-# API
-proc forward*(steps = 1.0)          = discard
-proc back*(steps = 1.0)             = discard
-proc left*(steps = 1.0)             = discard
-proc right*(steps = 1.0)            = discard
-proc turn_left*(degrees = 90.0)     = discard
-proc turn_right*(degrees = 90.0)    = discard
-proc turn_up*(degrees = 90.0)       = discard
-proc turn_down*(degrees = 90.0)     = discard
-proc up*(steps = 1.0)               = discard
-proc down*(steps = 1.0)             = discard
-proc fd*(steps = 1.0)               = forward(steps)
-proc bk*(steps = 1.0)               = back(steps)
-proc lt*(steps = 1.0)               = left(steps)
-proc rt*(steps = 1.0)               = right(steps)
-proc tl*(degrees = 90.0)            = turn_left(degrees)
-proc tr*(degrees = 90.0)            = turn_right(degrees)
-proc tu*(degrees = 90.0)            = turn_up(degrees)
-proc td*(degrees = 90.0)            = turn_down(degrees)
-proc echo*(msg: string)             = discard
+proc echo_console*(msg: string)     = discard
 proc sleep*(seconds: float)         = discard
 proc reset*(clear = false)          = discard
 proc save*(name = "default")        = discard
@@ -66,6 +51,12 @@ proc set_energy(color: int, energy: float) =
 
 proc `energy=`*(color: ColorIndex, energy: float) =
   set_energy(color.int, energy)
+  energies[color] = energy
+
+proc energy*(color: ColorIndex): var float =
+  if color notin energies:
+    energies[color] = 0.1
+  result = energies[color]
 
 # Helpers
 proc load_defaults()             = discard
@@ -99,5 +90,8 @@ template build*(body: untyped): untyped =
   move_mode = false
   body
   move_mode = prev_move_mode
+
+proc print*(args: varargs[string, `$`]) =
+  echo_console args.join
 
 load_defaults()

@@ -170,6 +170,10 @@ gdobj Terrain of VoxelTerrain:
 
   proc del_voxel(blk: Vector3, vox: Vox) =
     let (loc, data) = vox
+    if data.offset notin self.offset_buffers or
+       blk notin self.offset_buffers[data.offset]:
+      return
+
     self.offset_buffers[data.offset][blk].del loc
     self.buffers[blk].del loc
 
@@ -184,10 +188,12 @@ gdobj Terrain of VoxelTerrain:
     for blk, table in self.offset_buffers[offset]:
       for loc, data in table:
         result.add (loc - location, data)
+    echo &"exported {result.len} blocks"
 
   proc import_data*(bulk_data: seq[Vox], offset: int, location: Vector3) =
     for (loc, data) in bulk_data:
       self.draw(loc + location, data.index, offset, data.keep)
+    echo &"imported {bulk_data.len} blocks"
 
   proc clear*(offset: int, all = false) =
     for blk in self.visible_buffers:

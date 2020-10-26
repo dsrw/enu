@@ -97,8 +97,8 @@ gdobj Grid of GridMap:
     self.draw_plane = vec3()
 
   method on_target_move(point, normal: Vector3) =
-    self.point = self.to_local(point - self.get_parent.as(Spatial).translation)
-    self.normal = self.to_local(normal)
+    self.point = point
+    self.normal = normal
 
     if self.painting and tool_mode == BlockMode:
       let plane = self.point * self.normal

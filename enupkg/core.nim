@@ -1,6 +1,6 @@
 ### Sugar ###
 from sugar import dup
-import std/with, strformat, strutils, sequtils, sets, tables, times
+import std/with, strformat, strutils, sequtils, sets, tables, times, std/monotimes
 export dup, with, strformat, strutils, sequtils, sets, tables
 
 ### Debug
@@ -10,7 +10,9 @@ export dump
 
 var
   durations*: Table[string, Duration]
-  log_trace* = false
+  trace_start_time: MonoTime
+  section_start_time: MonoTime
+  current_proc: string
 
 template trace*(body: untyped): untyped =
   # https://github.com/nim-lang/Nim/issues/8212#issuecomment-657202258
@@ -21,15 +23,21 @@ template trace*(body: untyped): untyped =
     discard parseUntil($internalCProcName, realProcNameButShouldnotBeUsed, "__")
   #/
   var proc_name = realProcNameButShouldnotBeUsed
-  let file = instantiation_info().filename
-  let start_time = now()
+  let module = instantiation_info().filename[0..^3]
+  trace_start_time = get_mono_time()
+  section_start_time = trace_start_time
+
   body
   let
-    name = file & "#" & proc_name
-    duration = now() - start_time
-  durations[name] = durations.get_or_default(name) + duration
-  if log_trace:
-    echo name, " took ", duration
+    current_proc = module & "." & proc_name
+    duration = get_mono_time() - trace_start_time
+  durations[current_proc] = durations.get_or_default(current_proc) + duration
+
+proc log_trace*(name = "") =
+  let now = get_mono_time()
+  if name != "":
+    echo &"{current_proc}#{name} took {now - section_start_time}"
+  section_start_time = now
 
 ### times ###
 import times
@@ -62,6 +70,10 @@ proc vec3*(x, y, z: int): Vector3 {.inline.} =
 
 proc trunc*(self: Vector3): Vector3 {.inline.} =
   vec3(trunc(self.x), trunc(self.y), trunc(self.z))
+
+proc inverse_normalized*(self: Vector3): Vector3 {.inline.} =
+  (self - vec3(self.length, self.length, self.length)) * -1
+
 
 proc first*[T](arr: openArray[T], test: proc(x: T): bool): Option[T] =
   for item in arr:

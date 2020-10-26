@@ -1,5 +1,6 @@
 import compiler / [vm, vmdef, nimeval, options, lineinfos, ast]
 import os, strformat, std/with
+import core
 export Interpreter
 
 export VmArgs, get_float, get_int, get_string, get_bool
@@ -22,25 +23,29 @@ const
   STDLIB = find_nim_std_lib_compile_time()
 
 proc load*(e: Engine, script_file: string) =
-  let source_paths = [STDLIB, STDLIB & "/core", STDLIB & "/pure", parent_dir current_source_path]
-  e.i = create_interpreter(script_file, source_paths)
-  with e.i:
-    register_error_hook proc(config, info, msg, severity: auto) {.gcsafe.} =
-      if severity == Error and config.error_counter >= config.error_max:
-        raise (ref VMQuit)(info: info, msg: msg)
+  trace:
+    let source_paths = [STDLIB, STDLIB & "/core", STDLIB & "/pure",
+                        STDLIB & "/pure/collections", parent_dir current_source_path]
+    e.i = create_interpreter(script_file, source_paths)
+    log_trace("create_interpreter")
+    with e.i:
+      register_error_hook proc(config, info, msg, severity: auto) {.gcsafe.} =
+        if severity == Error and config.error_counter >= config.error_max:
+          raise (ref VMQuit)(info: info, msg: msg)
 
-    register_exit_hook proc(c, pc, tos: auto) =
-      e.ctx = c
-      e.pc = pc
-      e.tos = tos
+      register_exit_hook proc(c, pc, tos: auto) =
+        e.ctx = c
+        e.pc = pc
+        e.tos = tos
 
-    register_enter_hook proc(c, pc, tos, instr: auto) =
-      let info = c.debug[pc]
-      if info.file_index.int == 0 and e.previous_line != info:
-        if e.line_changed != nil:
-          e.line_changed(info, e.previous_line)
-        (e.previous_line, e.current_line) = (e.current_line, info)
-  e.initialized = true
+      register_enter_hook proc(c, pc, tos, instr: auto) =
+        let info = c.debug[pc]
+        if info.file_index.int == 0 and e.previous_line != info:
+          if e.line_changed != nil:
+            e.line_changed(info, e.previous_line)
+          (e.previous_line, e.current_line) = (e.current_line, info)
+    e.initialized = true
+    log_trace("hooks")
 proc run*(e: Engine): bool =
   try:
     e.i.eval_script()
