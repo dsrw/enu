@@ -43,7 +43,7 @@ gdobj Grid of GridMap:
     self.set_energy_for_all_materials default_energy
 
   proc set_energy*(color: int, energy: float) =
-    let m = self.mesh_library.get_item_mesh(color)
+    let m = self.mesh_library.get_item_mesh(color - 1)
                              .surface_get_material(0)
                              .as(SpatialMaterial)
     if not m.is_nil:

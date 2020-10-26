@@ -82,9 +82,12 @@ gdobj Terrain of VoxelTerrain:
       self.voxel_tool.set_voxel(loc, idx)
 
   proc set_energy*(color: int, energy: float, offset: int) =
-    let m = self.get_material(offset * self.voxel_count + color - 1).as(ShaderMaterial)
+    let index = offset * (self.voxel_count - 1) + color - 1
+    let m = self.get_material(index).as(ShaderMaterial)
     if not m.is_nil:
       m.set_shader_param("emission_energy", energy.to_variant)
+    else:
+      echo "can't find material"
 
   proc draw*(x, y, z: float, index, offset: int, keep = false) =
     if self.voxel_tool.is_nil:
