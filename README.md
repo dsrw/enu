@@ -1,13 +1,21 @@
 # Enu
 
 3D live coding, implemented in Nim.
-Very alpha. See my [intro video](https://youtu.be/QfAzuX7-y0Y):
 
-[![Enu Demo](https://img.youtube.com/vi/AW0PT9j976s/hqdefault.jpg)](https://youtu.be/AW0PT9j976s)
+Enu lets you build and explore worlds using a familiar block-building interface and a Logo inspired API.
+It aspires to make 3D development much accessible, and will one day be usable to create sandalone games.
 
-Or my somewhat outdated [talk from NimConf 2020](https://youtu.be/3l6tsKM1cY8).
+MacOS, PC and Linux version of Enu 0.1 should be ready by Friday, Nov. 6th 2020.
 
-[![NimConf 2020 Demo](https://img.youtube.com/vi/3l6tsKM1cY8/maxresdefault.jpg)](https://youtu.be/3l6tsKM1cY8)
+# Demo 
+See the [Enu 0.1 demo video](https://youtu.be/upg77dMBGDE):
+
+[![Enu 0.1 Demo](media/screenshot_1.png)](https://youtu.be/upg77dMBGDE)
+
+### Outdated Demos
+
+- [Enu 0.01 Intro and Demo](https://youtu.be/QfAzuX7-y0Y)
+- [Introducing Enu - NimConf 2020](https://youtu.be/3l6tsKM1cY8)
 
 # Install
 
@@ -34,11 +42,12 @@ fullscreen. ESC to grab/release mouse, and close editors.
 
 Ctrl/Cmd+Q to quit. Number keys to switch modes:
 
-1. Code Mode. Select objects to modify their code. Ctrl/Cmd+S to save.
-2. Edit Mode. Modify an object manually. Currently this means adding/removing LevelGrid blocks.
-   Left click to add blocks, right click to remove. Mousewheel up/down or +/- keys to cycle through
-   block types.
-3. Object Mode. Place and destroy objects, such as LevelGrids and blocks.
+- 1. Code Mode. Select objects to modify their code. Ctrl/Cmd+S to save.
+- 2-6. Build Mode. Shape the world with by painting voxels, or using the Minecraft inspired interface.
+- 7. Object Mode. Place and destroy pre-built objects.
+
+Enu 0.1 will only feature 5 block types/colors, and 1 object model (a robot). This will be greatly
+expanded in the future.
 
 # Tasks
 
@@ -132,3 +141,6 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
 - Allow tweaking color energy inside scripts.
 - Editor quality of life improvements. Better auto indent, and proper HOME/END support.
 - Fixed lots of 3d issues to properly support rotation and scaling.
+- Anything expecting a float or an int can be passed a slice (`1..100`) to use a random
+  value in the specified range.
+- Cycle through different options using the `cycle` template.
