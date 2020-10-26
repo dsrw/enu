@@ -8,7 +8,7 @@ type
   Buffers = Table[Vector3, VoxTable]
 const MAX_MATERIALS = 512
 let
-  highlight_energy = 5.0.to_variant()
+  highlight_energy = 1.0.to_variant()
   default_energy = 0.1.to_variant()
 
 gdobj Terrain of VoxelTerrain:

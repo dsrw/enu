@@ -3,7 +3,7 @@ import ../godotapi/[grid_map, mesh_library, mesh, spatial, spatial_material],
        core, globals, builder
 
 let
-  highlight_energy = 5.0
+  highlight_energy = 1.0
   default_energy = 0.1
 
 gdobj Grid of GridMap:
