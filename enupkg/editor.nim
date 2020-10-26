@@ -1,4 +1,5 @@
-import ../godotapi / [text_edit, scene_tree, node, input_event, global_constants],
+import ../godotapi / [text_edit, scene_tree, node, input_event, global_constants,
+                      input_event_key],
        godot,
        core, globals, engine, game,
        strutils, tables, compiler/lineinfos
@@ -11,6 +12,33 @@ gdobj Editor of TextEdit:
     comment_color* {.gdExport.} = init_color(0.5, 0.5, 0.5)
     command_mode_enabled = false
     mouse_was_captured = false
+
+  proc indent_new_line() =
+    let column = int self.cursor_get_column - 1
+    if column > 0:
+      let
+        line = self.get_line(self.cursor_get_line)[0..column]
+        stripped = line.strip()
+
+      if stripped.high > 0:
+        let last = $stripped[stripped.high]
+
+        if (stripped in w"var let const type") or last in w": =":
+          let spaces = " ".repeat(line.indentation + 2)
+          self.insert_text_at_cursor("\n" & spaces)
+          self.get_tree.set_input_as_handled()
+
+  method input*(event: InputEvent) =
+    var event = event.as(InputEventKey)
+    if not event.is_nil and event.pressed:
+      if event.scancode == KEY_ENTER:
+        self.indent_new_line()
+      elif event.scancode == KEY_HOME:
+        self.cursor_set_column(0)
+        self.get_tree.set_input_as_handled()
+      elif event.scancode == KEY_END:
+        self.cursor_set_column self.get_line(self.cursor_get_line).len
+        self.get_tree.set_input_as_handled()
 
   method unhandled_input*(event: InputEvent) =
     if self.visible:
