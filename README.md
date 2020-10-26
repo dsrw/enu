@@ -58,8 +58,8 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
 - [X] Better flying
 - [X] More block types
 - [ ] Validate build and keybindings for Mac/Linux/Windows
-- [ ] Support non-hidpi screens
-- [ ] Use Inconsolata on Windows/Linux
+- [X] Support non-hidpi screens
+- [X] Use Inconsolata on Windows/Linux
 
 ### v0.1
 
@@ -127,3 +127,8 @@ Ctrl/Cmd+Q to quit. Number keys to switch modes:
 - Turtle icon from
   https://www.pexels.com/photo/close-up-photo-of-turtle-2613148/
 - Added `ē` icon and splash screen.
+- Move support. Voxel objects can be moved rather than built from inside a
+  `move:` block.
+- Allow tweaking color energy inside scripts.
+- Editor quality of life improvements. Better auto indent, and proper HOME/END support.
+- Fixed lots of 3d issues to properly support rotation and scaling.
