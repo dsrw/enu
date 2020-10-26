@@ -82,11 +82,10 @@ gdobj Game of Node:
           font = theme.default_font.as(DynamicFont)
           bold_font = theme.get_font("bold_font", "RichTextLabel")
                                       .as(DynamicFont)
-        font.size = int(font.size.float * screen_scale)
-        bold_font.size = int(bold_font.size.float * screen_scale)
+        font.size = int(font.size.float * screen_scale * 2)
+        bold_font.size = int(bold_font.size.float * screen_scale * 2)
         theme_holder.theme = theme
         self.shrink = screen_scale.int
-
       self.mouse_captured = true
       self.reticle = self.find_node("Reticle").as(Control)
       self.perf = self.find_node("perf").as(Label)

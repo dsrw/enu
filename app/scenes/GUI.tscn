@@ -29,6 +29,7 @@ __meta__ = {
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
+margin_top = -106.0
 margin_bottom = -6.0
 grow_horizontal = 2
 grow_vertical = 0
@@ -39,44 +40,51 @@ __meta__ = {
 }
 
 [node name="Button-code" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 918.0
-margin_right = 1018.0
+margin_left = 568.0
+margin_right = 768.0
+margin_bottom = 200.0
 group = SubResource( 1 )
 
 [node name="Button-blue" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 1022.0
-margin_right = 1122.0
+margin_left = 772.0
+margin_right = 972.0
+margin_bottom = 200.0
 pressed = true
 group = SubResource( 1 )
 icon = null
 
 [node name="Button-red" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 1126.0
-margin_right = 1226.0
+margin_left = 976.0
+margin_right = 1176.0
+margin_bottom = 200.0
 group = SubResource( 1 )
 icon = null
 
 [node name="Button-green" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 1230.0
-margin_right = 1330.0
+margin_left = 1180.0
+margin_right = 1380.0
+margin_bottom = 200.0
 group = SubResource( 1 )
 icon = null
 
 [node name="Button-black" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 1334.0
-margin_right = 1434.0
+margin_left = 1384.0
+margin_right = 1584.0
+margin_bottom = 200.0
 group = SubResource( 1 )
 icon = null
 
 [node name="Button-white" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 1438.0
-margin_right = 1538.0
+margin_left = 1588.0
+margin_right = 1788.0
+margin_bottom = 200.0
 group = SubResource( 1 )
 icon = null
 
 [node name="Button-bot" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 1542.0
-margin_right = 1642.0
+margin_left = 1792.0
+margin_right = 1992.0
+margin_bottom = 200.0
 group = SubResource( 1 )
 icon = null
 
@@ -164,6 +172,7 @@ script = ExtResource( 10 )
 [node name="PreviewWorld" parent="PreviewMaker" instance=ExtResource( 9 )]
 
 [node name="perf" type="Label" parent="."]
+visible = false
 anchor_left = 1.0
 anchor_right = 1.0
 margin_left = -614.0

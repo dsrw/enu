@@ -10,10 +10,10 @@ border_width_top = 3
 border_width_right = 3
 border_width_bottom = 3
 border_color = Color( 0, 0, 0, 1 )
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
 
 [sub_resource type="StyleBoxFlat" id=2]
 bg_color = Color( 0, 0, 0, 0.576471 )
@@ -22,10 +22,10 @@ border_width_top = 3
 border_width_right = 3
 border_width_bottom = 3
 border_color = Color( 1, 1, 1, 1 )
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
 
 [sub_resource type="ButtonGroup" id=3]
 
@@ -33,7 +33,7 @@ corner_radius_bottom_left = 8
 margin_left = 590.0
 margin_right = 690.0
 margin_bottom = 100.0
-rect_min_size = Vector2( 100, 100 )
+rect_min_size = Vector2( 200, 200 )
 focus_mode = 0
 custom_styles/hover = SubResource( 1 )
 custom_styles/pressed = SubResource( 2 )
