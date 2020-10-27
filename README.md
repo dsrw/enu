@@ -88,7 +88,7 @@ or:
   color = cycle(red, black, blue)
   forward()
 ```
-![Color Cycle Example](media/example_4.png)
+![Color Cycle Example](media/cycle_example.png)
 
 # Install
 
