@@ -39,6 +39,8 @@ task prereqs, "Generate Godot API binding":
     exec &"{scons} -j{cores} platform={target}"
   exec &"{godot_bin} --gdnative-generate-json-api {join_path generated_dir, api_json}"
   exec &"{gen} generate_api -d={generated_dir} -j={api_json}"
+
+task import_assets, "Import Godot assets. Only required if you're not using the Godot editor":
   exec godot_bin & " app/project.godot --editor --quit"
 
 task clean, "Remove files produced by build":

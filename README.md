@@ -95,6 +95,7 @@ or:
 ```console
 $ nimble prereqs
 $ nimble build
+$ nimble import
 $ nimble start
 ```
 
