@@ -95,9 +95,10 @@ or:
 ```console
 $ nimble prereqs
 $ nimble build
-$ nimble import
-$ nimble start
+$ nimble edit
 ```
+When Godot has finished importing assets, you can launch Enu with the play button, F5,
+or with `nimble start`.
 
 ### Notes
 

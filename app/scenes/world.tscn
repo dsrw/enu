@@ -72,7 +72,7 @@ script = ExtResource( 4 )
 shape = SubResource( 2 )
 
 [node name="Player" parent="." instance=ExtResource( 6 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 6, -12 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0 )
 collision_layer = 1
 collision_mask = 7
 
