@@ -35,7 +35,7 @@ var
   release_mouse*: proc()
   reload_scripts*: proc()
   save_and_reload*: proc()
-  save_scene*: proc(file_name = "default")
+  save_scene*: proc(immediate = false)
   pause*: proc()
   logger*: proc(level, msg: string)
   echo_console*: proc(msg: string)

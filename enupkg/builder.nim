@@ -12,9 +12,13 @@ gdobj Builder of Spatial:
     draw_mode* {.gdExport.}: DrawMode
     script_index* {.gdExport.} = 0
     enu_script* {.gdExport.} = "none"
-    initial_index* {.gdExport} = 1
-    saved_blocks* {.gdExport}: Dictionary
-    saved_holes* {.gdExport}: Dictionary
+    initial_index* {.gdExport.} = 1
+    # FIXME `saved_blocks` and `saved_block_colors` should be
+    # a single `seq[(Vector, int)]`. Will need `to_variant`
+    # and `from_variant` procs.
+    saved_blocks* {.gdExport.}: seq[Vector3]
+    saved_block_colors {.gdExport.}: seq[int]
+    saved_holes* {.gdExport}: seq[Vector3]
     original_translation* {.gdExport.}: Vector3
     paused* = false
     schedule_save* = false
@@ -35,7 +39,6 @@ gdobj Builder of Spatial:
     built = false
     move_mode = false
     scale_factor = 1.0
-
     # If we delete a voxel while it's queued up to be drawn by godot voxel,
     # the voxel gets drawn anyway, and the polys hang around until they
     # move out of draw distance. Wait a bit before clearing. FIXME.
@@ -55,7 +58,9 @@ gdobj Builder of Spatial:
         w"block_selected last_block_deleted terrain_block_added terrain_block_removed"
       self.bind_signals self.grid, w"selected deleted grid_block_added grid_block_removed"
       self.bind_signals w"reload pause reload_all"
-      self.original_translation = self.translation
+
+      if self.saved_blocks.len > 0 or self.saved_holes.len > 0:
+        self.restore_blocks()
 
   proc setup*(translation: Vector3) =
     self.translation = translation
@@ -68,24 +73,44 @@ gdobj Builder of Spatial:
       copy_file "scripts/default_grid.nim", self.enu_script
 
   proc save_blocks*() =
-    discard
+    let data = if self.draw_mode == VoxelMode:
+      self.terrain.export_data(self.script_index, vec3())
+    else:
+      self.grid.export_data()
+    self.saved_blocks = @[]
+    self.saved_block_colors = @[]
+    for vox in data:
+      if vox.data.keep:
+        self.saved_blocks.add vox.location
+        self.saved_block_colors.add vox.data.index
 
-  proc draw*(x, y, z: float, index: int, keep = false) =
+    self.saved_holes = @[]
+    for loc in self.holes.keys:
+      self.saved_holes.add loc
+
+  proc restore_blocks*() =
+    for loc in self.saved_holes:
+      self.holes[loc] = 0
+    for (loc, index) in zip(self.saved_blocks, self.saved_block_colors):
+      self.draw(loc.x, loc.y, loc.z, index, true, false)
+
+  proc draw*(x, y, z: float, index: int, keep = false, trigger = true) =
     let loc = vec3(x, y, z)
     if not keep and loc in self.holes and
        not self.overwrite and index != self.holes[loc]:
       self.kept_holes[loc] = self.holes[loc]
     else:
       if self.draw_mode == VoxelMode:
-        self.terrain.draw(x, y, z, index, self.script_index, keep)
+        self.terrain.draw(x, y, z, index, self.script_index, keep, trigger)
       else:
-        self.grid.draw(x, y, z, index, keep)
+        self.grid.draw(x, y, z, index, keep, trigger)
 
   proc `running=`*(val: bool) =
     self.is_running = val
     if not val:
       self.holes = self.kept_holes
       self.kept_holes.clear()
+      self.save_blocks()
       self.load_vars()
       debug(self.enu_script & " done.")
 
@@ -134,7 +159,6 @@ gdobj Builder of Spatial:
       if self.draw_mode == VoxelMode:
         let data = self.terrain.export_data(offset, self.translation)
         self.set_timer 0.5.seconds, proc() =
-          echo "clearing"
           self.terrain.clear(offset, all = true)
         self.position.origin -= self.translation
         for loc, index in self.holes:
@@ -150,6 +174,8 @@ gdobj Builder of Spatial:
         self.holes = holes
         self.terrain.import_data(data, offset, self.translation)
       self.draw_mode = mode
+      self.save_blocks()
+
   proc load_vars() =
     var old_speed = self.speed
     let
@@ -420,12 +446,12 @@ gdobj Builder of Spatial:
       self.on_deleted()
 
   method on_grid_block_added(loc: Vector3, index: int) =
-    if loc in self.holes:
-      self.holes[loc] = index
+    self.save_blocks()
+    save_scene()
 
   method on_grid_block_removed(loc: Vector3, index: int, keep: bool) =
-    if not keep:
-      self.holes[loc] = -1
+    self.save_blocks()
+    save_scene()
 
   method on_terrain_block_added(offset: int, loc: Vector3, index: int) =
     if offset == self.script_index:

@@ -1,9 +1,10 @@
 import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_container,
                       packed_scene, resource_saver, sprite, control, viewport,
-                      performance, label, theme, dynamic_font, resource_loader],
+                      performance, label, theme, dynamic_font, resource_loader, main_loop],
        godot, threadpool, times,
        core, globals
 
+const scene_name = "default"
 var
   timer = 0.0
 gdobj Game of Node:
@@ -13,14 +14,17 @@ gdobj Game of Node:
     triggered = false
     ready = false
     frame_skip = 90
-    pack: FlowVar[PackedScene]
-    save_requested: Option[string]
+    scene_packer: PackedScene
+    data_node: Node
+    save_requested: Option[DateTime]
     saved_mouse_captured_state = false
     perf: Label
+    saving = false
+    quitting = false
+    save_thread: system.Thread[Game]
 
-  proc pack_scene(scene: Node): PackedScene =
-    result = gdnew[PackedScene]()
-    debug $result.pack(scene)
+  proc pack_scene() {.thread.} =
+    echo $self.scene_packer.pack(self.data_node)
 
   method process*(delta: float) =
     timer += delta
@@ -38,15 +42,16 @@ gdobj Game of Node:
       durations.clear()
 
     trace:
-      if not self.pack.is_nil and self.pack.is_ready:
-        let
-          scene_name = self.save_requested.get
-          full_path = &"res://scenes/{scene_name}.tscn"
-        self.save_requested = none(string)
-        debug $save(full_path, ^self.pack)
-        self.pack = nil
-      elif self.pack.is_nil and self.save_requested.is_some:
-        self.pack = spawn self.pack_scene(self.find_node("data"))
+      if self.saving and not self.save_thread.running:
+        let full_path = &"res://scenes/{scene_name}.tscn"
+        debug $save(full_path, self.scene_packer)
+        self.saving = false
+      elif not self.saving and self.save_requested and now() > self.save_requested.get:
+        self.save_requested = none(DateTime)
+        self.saving = true
+        create_thread[Game](self.save_thread, pack_scene, self)
+      elif self.quitting and not self.saving:
+        self.get_tree().quit()
 
   proc `mouse_captured=`*(captured: bool) =
     if captured:
@@ -69,9 +74,17 @@ gdobj Game of Node:
   proc `shrink=`*(val: int) =
     self.viewport_container.stretch_shrink = val
 
+  method notification*(what: int) =
+    if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
+      self.quitting = true
+      save_scene(true)
+
   method ready*() {.gdExport.} =
     trace:
       self.viewport_container = self.get_node("ViewportContainer").as(ViewportContainer)
+      self.scene_packer = gdnew[PackedScene]()
+      self.data_node = self.find_node("data")
+      self.get_tree().set_auto_accept_quit(false)
       assert not self.viewport_container.is_nil
       state.game = self
       if hostOS == "macosx":
@@ -82,10 +95,10 @@ gdobj Game of Node:
           font = theme.default_font.as(DynamicFont)
           bold_font = theme.get_font("bold_font", "RichTextLabel")
                                       .as(DynamicFont)
-        font.size = int(font.size.float * screen_scale * 2)
-        bold_font.size = int(bold_font.size.float * screen_scale * 2)
+        font.size = int(font.size.float * screen_scale)
+        bold_font.size = int(bold_font.size.float * screen_scale)
         theme_holder.theme = theme
-        self.shrink = screen_scale.int
+        self.shrink = 2
       self.mouse_captured = true
       self.reticle = self.find_node("Reticle").as(Control)
       self.perf = self.find_node("perf").as(Label)
@@ -105,13 +118,15 @@ gdobj Game of Node:
         trigger("reload_all")
         globals.save_scene()
 
-      globals.save_scene = proc(scene_name: string) =
-        self.save_requested = some(scene_name)
+      globals.save_scene = proc(immediate: bool) =
+        if immediate:
+          self.save_requested = some(now())
+        elif not self.save_requested:
+          self.save_requested = some(now() + 5.seconds)
 
       globals.pause = proc() =
         trigger("pause")
       self.ready = true
-      #trigger "game_ready"
 
   proc update_action_index*(change: int) =
     action_index += change

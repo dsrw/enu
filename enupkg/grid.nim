@@ -49,10 +49,8 @@ gdobj Grid of GridMap:
     if not m.is_nil:
       m.emission_energy = energy
 
-  proc draw*(x, y, z: float, index: int, keep = false) =
+  proc draw*(x, y, z: float, index: int, keep = false, trigger = true) =
     let map_point = vec3(x, y, z)
-    if keep:
-      self.trigger("grid_block_added", map_point, index)
     var index = index - 1
     self.set_cell_item(int(map_point.x), int(map_point.y), int(map_point.z), index)
     let data = (index, 0, keep)
@@ -60,6 +58,9 @@ gdobj Grid of GridMap:
       self.kept_blocks[map_point] = data
     else:
       self.kept_blocks.del map_point
+
+    if keep and trigger:
+      self.trigger("grid_block_added", map_point, index)
 
   proc clear*(all = false) =
     self.as(GridMap).clear()
@@ -82,7 +83,7 @@ gdobj Grid of GridMap:
 
   proc import_data*(data: seq[Vox]) =
     for (loc, data) in data:
-      self.draw(loc.x, loc.y, loc.z, data.index, data.keep)
+      self.draw(loc.x, loc.y, loc.z, data.index, data.keep, trigger = false)
 
   method on_target_in() =
     if tool_mode == CodeMode:

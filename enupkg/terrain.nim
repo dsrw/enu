@@ -89,7 +89,7 @@ gdobj Terrain of VoxelTerrain:
     else:
       echo "can't find material"
 
-  proc draw*(x, y, z: float, index, offset: int, keep = false) =
+  proc draw*(x, y, z: float, index, offset: int, keep = false, trigger = true) =
     if self.voxel_tool.is_nil:
       self.voxel_tool = self.get_voxel_tool()
 
@@ -97,9 +97,6 @@ gdobj Terrain of VoxelTerrain:
       loc = vec3(x, y, z)
       blk = self.voxel_to_block(loc)
       vox: Vox = (loc, (index, offset, keep))
-
-    if keep:
-      self.trigger("terrain_block_added", offset, loc, index)
 
     if self.in_view(loc):
       self.set_voxel(loc, index, offset)
@@ -111,8 +108,11 @@ gdobj Terrain of VoxelTerrain:
     else:
       self.add_voxel(blk, vox)
 
-  proc draw*(loc: Vector3, index, offset: int, keep = false) =
-    self.draw(loc.x, loc.y, loc.z, index, offset, keep)
+    if keep and trigger:
+      self.trigger("terrain_block_added", offset, loc, index)
+
+  proc draw*(loc: Vector3, index, offset: int, keep = false, trigger = true) =
+    self.draw(loc.x, loc.y, loc.z, index, offset, keep, trigger)
 
   proc find_targeted_voxel(point, normal: Vector3): Vector3 =
     let diffed = (vec3(1, 1, 1) + normal) * 0.5
@@ -188,14 +188,15 @@ gdobj Terrain of VoxelTerrain:
       self.buffers.del(blk)
 
   proc export_data*(offset: int, location: Vector3): seq[Vox] =
-    for blk, table in self.offset_buffers[offset]:
-      for loc, data in table:
-        result.add (loc - location, data)
+    if offset in self.offset_buffers:
+      for blk, table in self.offset_buffers[offset]:
+        for loc, data in table:
+          result.add (loc - location, data)
     echo &"exported {result.len} blocks"
 
   proc import_data*(bulk_data: seq[Vox], offset: int, location: Vector3) =
     for (loc, data) in bulk_data:
-      self.draw(loc + location, data.index, offset, data.keep)
+      self.draw(loc + location, data.index, offset, data.keep, trigger = false)
     echo &"imported {bulk_data.len} blocks"
 
   proc clear*(offset: int, all = false) =
