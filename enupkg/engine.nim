@@ -18,6 +18,7 @@ type
     current_line*: TLineInfo
     previous_line: TLineInfo
     initialized*: bool
+    pause_requested: bool
 
 const
   STDLIB = find_nim_std_lib_compile_time()
@@ -33,17 +34,19 @@ proc load*(e: Engine, script_file: string) =
         if severity == Error and config.error_counter >= config.error_max:
           raise (ref VMQuit)(info: info, msg: msg)
 
-      register_exit_hook proc(c, pc, tos: auto) =
-        e.ctx = c
-        e.pc = pc
-        e.tos = tos
-
       register_enter_hook proc(c, pc, tos, instr: auto) =
         let info = c.debug[pc]
         if info.file_index.int == 0 and e.previous_line != info:
           if e.line_changed != nil:
             e.line_changed(info, e.previous_line)
           (e.previous_line, e.current_line) = (e.current_line, info)
+        if e.pause_requested:
+          e.pause_requested = false
+          e.ctx = c
+          e.pc = pc
+          e.tos = tos
+          raise new_exception(VMPause, "vm paused")
+
     e.initialized = true
     log_trace("hooks")
 proc run*(e: Engine): bool =
@@ -80,7 +83,7 @@ proc call*(e: Engine, proc_name: string): bool =
     true
 
 proc pause*(e: Engine) =
-  raise new_exception(VMPause, "vm paused")
+  e.pause_requested = true
 
 proc expose*(e: Engine, script_name, proc_name: string,
              routine: proc(a: VmArgs): bool) {.gcsafe.} =
@@ -110,7 +113,7 @@ proc call_int*(e: Engine, proc_name: string): int =
 
 proc resume*(e: Engine): bool =
   try:
-    discard execFromCtx(e.ctx, e.pc + 1, e.tos)
+    discard execFromCtx(e.ctx, e.pc, e.tos)
     false
   except VMPause:
     true
