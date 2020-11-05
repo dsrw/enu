@@ -84,13 +84,15 @@ gdobj Builder of Spatial:
         self.saved_blocks.add vox.location
         self.saved_block_colors.add vox.data.index
 
+    echo "holes ", repr(self.holes)
     self.saved_holes = @[]
     for loc in self.holes.keys:
       self.saved_holes.add loc
+    echo "saved holes ", repr(self.saved_holes)
 
   proc restore_blocks*() =
     for loc in self.saved_holes:
-      self.holes[loc] = 0
+      self.holes[loc] = -1
     for (loc, index) in zip(self.saved_blocks, self.saved_block_colors):
       self.draw(loc.x, loc.y, loc.z, index, true, false)
 
@@ -206,7 +208,6 @@ gdobj Builder of Spatial:
         self.timers = @[]
         for timer in timers:
           if timer.until < now():
-            echo "running timer"
             timer.callback()
           else:
             self.timers.add timer
@@ -446,10 +447,14 @@ gdobj Builder of Spatial:
       self.on_deleted()
 
   method on_grid_block_added(loc: Vector3, index: int) =
+    if loc in self.holes:
+      self.holes[loc] = index
     self.save_blocks()
     save_scene()
 
   method on_grid_block_removed(loc: Vector3, index: int, keep: bool) =
+    if not keep:
+      self.holes[loc] = -1
     self.save_blocks()
     save_scene()
 
