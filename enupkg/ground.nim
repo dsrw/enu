@@ -5,19 +5,14 @@ import ../godotapi / [mesh_instance, node, spatial, resource_loader, packed_scen
 gdobj Ground of MeshInstance:
   var
     point, normal: Vector3
-    data: Node
     terrain: Terrain
-    bot_proto: PackedScene
     painting = false
 
   method ready*() =
     trace:
       let level = self.get_parent.get_parent
-      self.data = level.get_node("data")
       self.terrain = level.get_node("Terrain") as Terrain
-      assert not self.data.is_nil
       assert not self.terrain.is_nil
-      self.bot_proto = load("res://components/bot.tscn") as PackedScene
       self.bind_signals(self, w"target_move target_fire")
       self.bind_signals("mouse_released")
 
@@ -26,12 +21,12 @@ gdobj Ground of MeshInstance:
       ps = load("res://components/Builder.tscn") as PackedScene
       b = ps.instance() as Builder
     assert not b.is_nil
-    b.schedule_save = true
     b.paused = true
     b.setup(point)
     b.initial_index = action_index
-    self.data.add_child(b)
-    b.owner = self.data
+    data_node.add_child(b)
+    b.owner = data_node
+    save_scene()
 
   method on_mouse_released() =
     self.painting = false
@@ -52,7 +47,7 @@ gdobj Ground of MeshInstance:
         if vox:
           self.terrain.draw(p.x, p.y, p.z, action_index, vox.get.offset, true)
           return
-      for c in self.data.get_children():
+      for c in data_node.get_children():
         let b = c.as_object(Node)
         if b of Builder:
           let b = b.as(Builder)
@@ -67,14 +62,16 @@ gdobj Ground of MeshInstance:
       self.create_builder(p)
 
     elif tool_mode == ObjectMode:
-      let bot = self.bot_proto.instance() as NimBot
+      let
+        proto = load("res://components/bot.tscn") as PackedScene
+        bot = proto.instance() as NimBot
       assert not bot.is_nil
       bot.translation = p + vec3(0.5, 0, 0.5)
       bot.paused = true
       bot.setup()
-      bot.schedule_save = true
-      self.data.add_child(bot)
-      bot.owner = self.data
+      data_node.add_child(bot)
+      bot.owner = data_node
+      save_scene()
 
   method on_target_move(point, normal: Vector3) =
     let previous_point = self.point

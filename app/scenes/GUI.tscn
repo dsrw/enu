@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=2]
+[gd_scene load_steps=15 format=2]
 
 [ext_resource path="res://components/Console.gdns" type="Script" id=1]
 [ext_resource path="res://components/TextEdit.gdns" type="Script" id=2]
@@ -13,7 +13,17 @@
 
 [sub_resource type="ButtonGroup" id=1]
 
-[sub_resource type="DynamicFont" id=2]
+[sub_resource type="StyleBoxFlat" id=2]
+bg_color = Color( 0, 0, 0, 0 )
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+
+[sub_resource type="StyleBoxFlat" id=3]
+bg_color = Color( 0, 0, 0, 0.839216 )
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+
+[sub_resource type="DynamicFont" id=4]
 size = 20
 font_data = ExtResource( 8 )
 
@@ -29,7 +39,7 @@ __meta__ = {
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_top = -106.0
+margin_top = -206.0
 margin_bottom = -6.0
 grow_horizontal = 2
 grow_vertical = 0
@@ -118,6 +128,8 @@ visible = false
 margin_right = 1024.0
 margin_bottom = 1440.0
 size_flags_vertical = 3
+custom_styles/read_only = SubResource( 2 )
+custom_styles/normal = SubResource( 3 )
 custom_colors/selection_color = Color( 0.184314, 0.0117647, 0.686275, 1 )
 custom_colors/executing_line_color = Color( 0.0392157, 0, 0.168627, 1 )
 indent_using_spaces = true
@@ -179,7 +191,7 @@ margin_left = -614.0
 margin_top = 5.0
 margin_right = -5.0
 margin_bottom = 628.0
-custom_fonts/font = SubResource( 2 )
+custom_fonts/font = SubResource( 4 )
 text = "0"
 autowrap = true
 __meta__ = {

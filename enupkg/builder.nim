@@ -11,7 +11,7 @@ gdobj Builder of Spatial:
   var
     draw_mode* {.gdExport.}: DrawMode
     script_index* {.gdExport.} = 0
-    enu_script* {.gdExport.} = "none"
+    enu_script*: string
     initial_index* {.gdExport.} = 1
     # FIXME `saved_blocks` and `saved_block_colors` should be
     # a single `seq[(Vector, int)]`. Will need `to_variant`
@@ -21,7 +21,6 @@ gdobj Builder of Spatial:
     saved_holes* {.gdExport}: seq[Vector3]
     original_translation* {.gdExport.}: Vector3
     paused* = false
-    schedule_save* = false
     engine: Engine
     callback: proc(delta: float): bool
     is_running = false
@@ -48,6 +47,7 @@ gdobj Builder of Spatial:
     trace:
       if max_grid_index <= self.script_index:
         max_grid_index = self.script_index + 1
+      self.set_script()
       self.translation = self.original_translation
       self.grid = self.get_node("Grid") as Grid
       self.terrain = game_node.find_node("Terrain") as Terrain
@@ -62,15 +62,17 @@ gdobj Builder of Spatial:
       if self.saved_blocks.len > 0 or self.saved_holes.len > 0:
         self.restore_blocks()
 
+  proc set_script() =
+    self.enu_script = join_path(config.script_dir, &"grid_{self.script_index}.nim")
+
   proc setup*(translation: Vector3) =
     self.translation = translation
     self.original_translation = translation
     self.script_index = max_grid_index
     inc max_grid_index
-    self.enu_script = &"scripts/grid_{self.script_index}.nim"
     self.name = "Builder_" & $self.script_index
-    if not file_exists(self.enu_script):
-      copy_file "scripts/default_grid.nim", self.enu_script
+    self.set_script()
+    copy_file "scripts/default_grid.nim", self.enu_script
 
   proc save_blocks*() =
     let data = if self.draw_mode == VoxelMode:
@@ -84,11 +86,9 @@ gdobj Builder of Spatial:
         self.saved_blocks.add vox.location
         self.saved_block_colors.add vox.data.index
 
-    echo "holes ", repr(self.holes)
     self.saved_holes = @[]
     for loc in self.holes.keys:
       self.saved_holes.add loc
-    echo "saved holes ", repr(self.saved_holes)
 
   proc restore_blocks*() =
     for loc in self.saved_holes:
@@ -233,10 +233,6 @@ gdobj Builder of Spatial:
 
         except VMQuit as e:
           self.error(e)
-
-      if self.schedule_save:
-        self.schedule_save = false
-        save_scene()
 
   proc set_vars() =
     self.engine.call_proc("set_vars", module_name = "grid", self.index, self.drawing,

@@ -1,7 +1,7 @@
 import ../godotapi / [node, scene_tree, voxel_buffer],
        godot, hashes,
        engine, core,
-       strformat, math, strutils, sequtils, compiler/lineinfos, tables, sets
+       strformat, math, strutils, sequtils, compiler/lineinfos, tables, sets, json_serialization
 
 export strformat.`&`
 
@@ -16,6 +16,16 @@ type
   VoxData* = tuple[index, offset: int, keep: bool]
   Vox* = tuple[location: Vector3, data: VoxData]
   VoxTable* = Table[Vector3, VoxData]
+
+  Config* = object of RootObj
+    downscale*: int
+    font_size*: int
+    dock_icon_size*: float
+    world*: string
+    world_dir* {.dont_serialize.}: string
+    script_dir* {.dont_serialize.}: string
+    screen_scale* {.dont_serialize.}: float
+    scene* {.dont_serialize.}: string
 
 const
   CMP_EPSILON = 0.00001
@@ -40,6 +50,7 @@ var
   logger*: proc(level, msg: string)
   echo_console*: proc(msg: string)
   game_node*: Node
+  data_node*: Node
   tool_mode* = BlockMode
   state* = new StateRefs
   open_file* = ""
@@ -47,6 +58,7 @@ var
   action_count* = 6
   skip_next_mouse_move* = false
   command_mode* = false
+  config*: Config
 
 proc roughly_zero[T](s: T): bool =
   abs(s) < CMP_EPSILON

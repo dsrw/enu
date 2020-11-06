@@ -7,7 +7,7 @@ var max_bot_index = 0
 gdobj NimBot of KinematicBody:
   var
     speed = 1.0
-    enu_script* {.gdExport.} = "none"
+    enu_script*: string
     material* {.gdExport.}, highlight_material* {.gdExport.},
       selected_material* {.gdExport.}: Material
     script_index* {.gdExport.} = 0
@@ -21,7 +21,6 @@ gdobj NimBot of KinematicBody:
     paused* = true
     running = false
     animation_player: AnimationPlayer
-    schedule_save* = false
 
   proc update_material*(value: Material) =
     self.mesh.set_surface_material(0, value)
@@ -131,19 +130,22 @@ gdobj NimBot of KinematicBody:
       except VMQuit as e:
         self.error(e)
 
+  proc set_script() =
+    self.enu_script = join_path(config.script_dir, &"bot_{self.script_index}.nim")
+
   proc setup*() =
     trace:
       self.script_index = max_bot_index
       inc max_bot_index
-      self.enu_script = &"scripts/bot_{self.script_index}.nim"
       self.name = "Bot_" & $self.script_index
-      if not file_exists(self.enu_script):
-        copy_file "scripts/default_bot.nim", self.enu_script
+      self.set_script()
+      copy_file "scripts/default_bot.nim", self.enu_script
 
   method ready*() =
     trace:
       if max_bot_index <= self.script_index:
         max_bot_index = self.script_index + 1
+      self.set_script()
       with self:
         bind_signals(w"reload pause reload_all")
         skin = self.get_node("Mannequiny").as(Spatial)
@@ -164,9 +166,6 @@ gdobj NimBot of KinematicBody:
             self.running = self.engine.resume()
         except VMQuit as e:
           self.error(e)
-      if self.schedule_save:
-        self.schedule_save = false
-        save_scene()
 
   method reload() =
     self.animation_player.stop(true)

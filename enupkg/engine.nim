@@ -26,12 +26,16 @@ const
 proc load*(e: Engine, script_file: string) =
   trace:
     let source_paths = [STDLIB, STDLIB & "/core", STDLIB & "/pure",
-                        STDLIB & "/pure/collections", parent_dir current_source_path]
+                        STDLIB & "/pure/collections",
+                        join_path(parent_dir(current_source_path), "..", "app", "scripts"),
+                        parent_dir script_file]
+
     e.i = create_interpreter(script_file, source_paths)
     log_trace("create_interpreter")
     with e.i:
       register_error_hook proc(config, info, msg, severity: auto) {.gcsafe.} =
         if severity == Error and config.error_counter >= config.error_max:
+          echo "error: ", msg
           raise (ref VMQuit)(info: info, msg: msg)
 
       register_enter_hook proc(c, pc, tos, instr: auto) =

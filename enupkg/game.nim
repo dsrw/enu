@@ -1,10 +1,9 @@
 import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_container,
                       packed_scene, resource_saver, sprite, control, viewport,
-                      performance, label, theme, dynamic_font, resource_loader, main_loop],
-       godot, threadpool, times,
-       core, globals
+                      performance, label, theme, dynamic_font, resource_loader, main_loop, gd_os]
+import godot, threadpool, times, os, json_serialization
+import core, globals
 
-const scene_name = "default"
 var
   timer = 0.0
 gdobj Game of Node:
@@ -13,9 +12,7 @@ gdobj Game of Node:
     viewport_container: ViewportContainer
     triggered = false
     ready = false
-    frame_skip = 90
     scene_packer: PackedScene
-    data_node: Node
     save_requested: Option[DateTime]
     saved_mouse_captured_state = false
     perf: Label
@@ -24,15 +21,15 @@ gdobj Game of Node:
     save_thread: system.Thread[Game]
 
   proc pack_scene() {.thread.} =
-    echo $self.scene_packer.pack(self.data_node)
+    echo $self.scene_packer.pack(data_node)
 
   method process*(delta: float) =
     timer += delta
     if timer >= 1:
       timer = 0
       var
-        total: Duration
-        highest: tuple[name: string, duration: Duration]
+        total: times.Duration
+        highest: tuple[name: string, duration: times.Duration]
       for name, dur in durations:
         if dur > highest.duration:
           highest = (name, dur)
@@ -43,8 +40,7 @@ gdobj Game of Node:
 
     trace:
       if self.saving and not self.save_thread.running:
-        let full_path = &"res://scenes/{scene_name}.tscn"
-        debug $save(full_path, self.scene_packer)
+        debug $save(config.scene, self.scene_packer)
         self.saving = false
       elif not self.saving and self.save_requested and now() > self.save_requested.get:
         self.save_requested = none(DateTime)
@@ -79,11 +75,52 @@ gdobj Game of Node:
       self.quitting = true
       save_scene(true)
 
-  method ready*() {.gdExport.} =
+  proc init* =
+    let
+      screen_scale = get_screen_scale()
+      work_dir = get_user_data_dir()
+      config_file = join_path(work_dir, "config.json")
+
+    if not file_exists(config_file):
+      let default_config = Config(
+        downscale: int screen_scale,
+        font_size: (14 * screen_scale).int,
+        dock_icon_size: 50 * screen_scale,
+        world: "default"
+      )
+      JSON.save_file(config_file, default_config, pretty = true)
+    config = JSON.load_file(config_file, Config)
+    echo repr(config)
+    config.world_dir = join_path(work_dir, config.world)
+    config.script_dir = join_path(config.world_dir, "scripts")
+    config.scene = join_path(config.world_dir, "data.tscn")
+    config.screen_scale = screen_scale
+    create_dir(config.script_dir)
+
+    echo &"Using world dir {config.world_dir}"
+
+  proc load_world() =
+    data_node = self.find_node("data")
+    assert not data_node.is_nil
+
+    if file_exists(config.scene):
+      let
+        pos = data_node.get_position_in_parent()
+        parent = data_node.getParent()
+        packed_scene = load(config.scene) as PackedScene
+
+      parent.remove_child(data_node)
+      data_node = packed_scene.instance()
+      parent.add_child(data_node)
+      parent.move_child(data_node, pos)
+      data_node.owner = parent
+      echo &"loaded {config.scene}"
+
+  method ready* =
     trace:
       self.viewport_container = self.get_node("ViewportContainer").as(ViewportContainer)
       self.scene_packer = gdnew[PackedScene]()
-      self.data_node = self.find_node("data")
+      self.load_world()
       self.get_tree().set_auto_accept_quit(false)
       assert not self.viewport_container.is_nil
       state.game = self
@@ -94,11 +131,12 @@ gdobj Game of Node:
           theme_holder = self.find_node("ThemeHolder").as(Container)
           font = theme.default_font.as(DynamicFont)
           bold_font = theme.get_font("bold_font", "RichTextLabel")
-                                      .as(DynamicFont)
-        font.size = int(font.size.float * screen_scale)
-        bold_font.size = int(bold_font.size.float * screen_scale)
+                           .as(DynamicFont)
+        font.size = config.font_size
+        bold_font.size = config.font_size
         theme_holder.theme = theme
-        self.shrink = 2
+        self.shrink = config.downscale
+
       self.mouse_captured = true
       self.reticle = self.find_node("Reticle").as(Control)
       self.perf = self.find_node("perf").as(Label)
@@ -164,14 +202,6 @@ gdobj Game of Node:
     if update_actionbar:
       self.trigger("update_actionbar", index)
 
-  method physics_process*(delta: int) =
-    trace:
-      if self.ready and not self.triggered and self.frame_skip == 0:
-        self.triggered = true
-        trigger "game_ready"
-      elif self.ready and self.frame_skip > 0:
-        self.frame_skip -= 1
-
   method unhandled_input*(event: InputEvent) =
     if event.is_action_pressed("command_mode"):
       self.saved_mouse_captured_state = self.mouse_captured
@@ -184,9 +214,6 @@ gdobj Game of Node:
       self.trigger("command_mode_disabled")
     elif event.is_action_pressed("save_and_reload"):
       globals.save_and_reload()
-      self.get_tree().set_input_as_handled()
-    elif event.is_action_pressed("save"):
-      globals.reload_scripts()
       self.get_tree().set_input_as_handled()
     elif event.is_action_pressed("pause"):
       globals.pause()

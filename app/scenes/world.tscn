@@ -1,6 +1,6 @@
 [gd_scene load_steps=19 format=2]
 
-[ext_resource path="res://scenes/default.tscn" type="PackedScene" id=1]
+[ext_resource path="res://scenes/default_level.tscn" type="PackedScene" id=1]
 [ext_resource path="res://scenes/env.tres" type="Environment" id=2]
 [ext_resource path="res://materials/default_ground.tres" type="Material" id=3]
 [ext_resource path="res://components/Ground.gdns" type="Script" id=4]
