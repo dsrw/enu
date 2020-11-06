@@ -8,7 +8,7 @@ let
   generated_dir   = "godotapi"
   api_json        = "api.json"
   generator       = "tools/build_helpers"
-  godot_bin       = this_dir() & &"/vendor/godot/bin/godot.{target}.tools.64{exe_ext}"
+  godot_bin       = this_dir() & &"/vendor/godot/bin/godot.{target}.opt.tools.64{exe_ext}"
   godot_build_url = "https://docs.godotengine.org/en/stable/development/compiling/index.html"
 
 version       = "0.0.1"
@@ -36,7 +36,7 @@ task prereqs, "Generate Godot API binding":
   if scons == "":
     quit &"*** scons not found on path, and is required to build Godot. See {godot_build_url} ***"
   with_dir "vendor/godot":
-    exec &"{scons} -j{cores} platform={target}"
+    exec &"{scons} -j{cores} platform={target} target=release_debug"
   exec &"{godot_bin} --gdnative-generate-json-api {join_path generated_dir, api_json}"
   exec &"{gen} generate_api -d={generated_dir} -j={api_json}"
 
