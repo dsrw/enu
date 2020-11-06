@@ -22,7 +22,8 @@ bin           = @["enu" & lib_ext]
 requires "nim >= 1.4.0",
          "https://github.com/dsrw/godot-nim#7c2f345",
          "https://github.com/dsrw/Nim#7633a23",
-         "cligen 1.2.2"
+         "cligen 1.2.2",
+         "json_serialization"
 
 task prereqs, "Generate Godot API binding":
   mk_dir generated_dir
