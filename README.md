@@ -130,8 +130,15 @@ expanded in the future.
 
 ### v0.1
 
-- [ ] Project support.
-- [ ] Save the world when it changes.
-- [ ] Basic documentation
-- [ ] Validate build and keybindings for Mac/Linux/Windows
-- [ ] Mac/Windows/Linux binaries
+- [X] Project support.
+- [X] Save the world when it changes.
+- [X] Basic documentation
+- [ ] Mac binary
+
+### v0.1.1
+- [ ] Validate under Windows
+- [ ] Windows binary
+
+### v0.1.2
+- [ ] Validate under Linux
+- [ ] Linux install task
