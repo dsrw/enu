@@ -1,17 +1,20 @@
 import godot, ../godotapi / [kinematic_body, spatial, input, input_event,
                              input_event_mouse_motion, ray_cast, scene_tree,
-                             input_event_pan_gesture, viewport, camera],
-       math,
-       core, globals, game, aim_target
+                             input_event_pan_gesture, viewport, camera, global_constants,
+                             collision_shape]
+import math
+import core, globals, game, aim_target
 
 let
   angle_x_min = -PI / 2.25
   angle_x_max = PI / 2.25
   max_speed = 50.0
   move_speed = 500.0
+  run_speed = 1000.0
   gravity = -80.0
   jump_impulse = 25.0
   fly_toggle = 0.3.seconds
+  run_toggle = 0.3.seconds
   sensitivity_gamepad = vec2(2.5, 2.5)
   sensitivity_mouse = vec2(0.005, -0.005)
   nil_time = none(DateTime)
@@ -26,10 +29,14 @@ gdobj Player of KinematicBody:
     world_ray: RayCast
     aim_target*: AimTarget
     flying = false
+    running = false
+    always_run = false
     velocity = vec3()
     jump_time: Option[DateTime]
+    run_time: Option[DateTime]
     pan_delta = 0.0
     index = 0
+    collision_shape: CollisionShape
 
   proc get_look_direction(): Vector2 =
     vec2(get_action_strength("look_right") - get_action_strength("look_left"),
@@ -52,22 +59,25 @@ gdobj Player of KinematicBody:
   proc calculate_velocity(velocity_current: Vector3,
                           move_direction: Vector3,
                           delta: float,
-                          flying: bool): Vector3 =
-    result = move_direction * delta * move_speed
+                          flying, running: bool): Vector3 =
+    let speed = if running: run_speed else: move_speed
+    result = move_direction * delta * speed
     if result.length() > max_speed:
       result = result.normalized() * max_speed
-    if not self.flying:
+    if not flying:
       result.y = velocity_current.y + gravity * delta
 
   method ready*() =
     trace:
       state.player = self
       self.camera_rig = self.get_node("CameraRig") as Spatial
+      self.collision_shape = self.get_node("CollisionShape") as CollisionShape
       self.camera = self.camera_rig.get_node("Camera") as Camera
       self.aim_ray  = self.camera_rig.get_node("Camera/AimRay") as RayCast
       self.world_ray = game_node.get_node("WorldRay") as RayCast
       self.aim_target = self.camera_rig.get_node("AimTarget") as AimTarget
       self.position_start = self.camera_rig.translation
+      self.bind_signals w"command_mode_enabled command_mode_disabled"
 
   proc current_raycast*: RayCast =
     if get_game().mouse_captured:
@@ -111,10 +121,11 @@ gdobj Player of KinematicBody:
       if not editing():
         let
           input_direction = self.get_input_direction()
-          b = self.camera_rig.global_transform.basis
-          right = b.x * input_direction.x
-          up = UP * input_direction.y
-          forward = (b.z * input_direction.z * vec3(1, 0, 1)).normalized()
+          basis   = self.camera_rig.global_transform.basis
+          right   = basis.x * input_direction.x
+          up      = UP * input_direction.y
+          forward = (basis.z * input_direction.z * vec3(1, 0, 1)).normalized()
+          flying  = self.flying or command_mode
 
         var
           move_direction = forward + right + up
@@ -122,12 +133,13 @@ gdobj Player of KinematicBody:
         if move_direction.length() > 1.0:
           move_direction = move_direction.normalized()
 
-        if not self.flying:
+        if not flying:
           move_direction.y = 0
 
-        self.velocity = self.calculate_velocity(self.velocity, move_direction, delta, self.flying)
+        self.velocity = self.calculate_velocity(self.velocity, move_direction,
+                                                delta, flying, self.running)
 
-        if self.flying:
+        if flying:
           discard self.move_and_collide(self.velocity * delta)
         else:
           self.velocity = self.move_and_slide(self.velocity, UP)
@@ -156,6 +168,20 @@ gdobj Player of KinematicBody:
       else:
         self.jump_time = time
 
+    if event.is_action_pressed("run"):
+      let
+        time = now()
+        toggle = self.run_time and time < self.run_time.get + run_toggle
+
+      if toggle:
+        self.run_time = nil_time
+        self.always_run = not self.always_run
+      else:
+        self.run_time = time
+      self.running = not self.always_run
+    elif event.is_action_released("run"):
+      self.running = self.always_run
+
     if event of InputEventPanGesture and tool_mode == BlockMode:
       let pan = event as InputEventPanGesture
       self.pan_delta += pan.delta.y
@@ -175,14 +201,24 @@ gdobj Player of KinematicBody:
     let ray = self.current_raycast
     if event.is_action_pressed("fire"):
       if ray.is_colliding():
-        trigger(ray.get_collider(), "target_fire")
+        var trigger_event = "target_fire"
+        trigger(ray.get_collider(), trigger_event)
     elif event.is_action_released("fire"):
       get_game().trigger("mouse_released")
 
     if event.is_action_pressed("remove"):
       if ray.is_colliding():
-        trigger(ray.get_collider(), "target_remove")
+        var trigger_event = "target_remove"
+        trigger(ray.get_collider(), trigger_event)
     elif event.is_action_released("remove"):
       get_game().trigger("mouse_released")
+
+  method on_command_mode_enabled() =
+    self.collision_shape.disabled = true
+
+  method on_command_mode_disabled() =
+    if editing() and not self.is_on_floor:
+      self.flying = true
+    self.collision_shape.disabled = false
 
 proc get_player*(): Player = state.player as Player
