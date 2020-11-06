@@ -1,5 +1,5 @@
 import ../godotapi / [text_edit, scene_tree, node, input_event, global_constants,
-                      input_event_key],
+                      input_event_key, style_box_flat],
        godot,
        core, globals, engine, game,
        strutils, tables, compiler/lineinfos
@@ -12,6 +12,8 @@ gdobj Editor of TextEdit:
     comment_color* {.gdExport.} = init_color(0.5, 0.5, 0.5)
     command_mode_enabled = false
     mouse_was_captured = false
+    og_bg_color: Color
+    dirty = false
 
   proc indent_new_line() =
     let column = int self.cursor_get_column - 1
@@ -66,8 +68,12 @@ gdobj Editor of TextEdit:
     if self.get_line_count >= line:
       self.set_executing_line(line)
 
+  method on_text_changed() =
+    self.dirty = true
+
   method ready* =
     self.bind_signals w"save script_error command_mode_enabled command_mode_disabled"
+    self.bind_signals(self, w"text_changed")
     show_editor = proc(file_name: string, engine: Engine) =
       self.engine = engine
       self.file_name = file_name
@@ -90,6 +96,8 @@ gdobj Editor of TextEdit:
       not self.command_mode_enabled and self.visible
 
     hide_editor = proc =
+      if self.dirty:
+        reload_scripts()
       trigger("retarget")
       self.release_focus()
       if self.mouse_was_captured:
@@ -102,6 +110,7 @@ gdobj Editor of TextEdit:
 
   method on_save* =
     if self.file_name != "":
+      self.dirty = false
       self.clear_errors()
       write_file(self.file_name, self.text)
 
@@ -109,11 +118,20 @@ gdobj Editor of TextEdit:
     self.highlight_errors()
 
   method on_command_mode_enabled =
+    if self.dirty:
+      reload_scripts()
     self.mouse_filter = MOUSE_FILTER_IGNORE
     self.command_mode_enabled = true
     self.shortcut_keys_enabled = false
+    self.readonly = true
+    var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
+    self.og_bg_color = stylebox.bg_color
+    stylebox.bg_color = Color(r: 0, g: 0, b: 0, a: 0.4)
 
   method on_command_mode_disabled =
     self.mouse_filter = MOUSE_FILTER_STOP
     self.command_mode_enabled = false
     self.shortcut_keys_enabled = true
+    self.readonly = false
+    var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
+    stylebox.bg_color = self.og_bg_color
