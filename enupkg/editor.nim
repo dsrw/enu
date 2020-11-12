@@ -10,7 +10,6 @@ gdobj Editor of TextEdit:
     file_name = ""
     ff = false
     comment_color* {.gdExport.} = init_color(0.5, 0.5, 0.5)
-    command_mode_enabled = false
     mouse_was_captured = false
     og_bg_color: Color
     dirty = false
@@ -93,7 +92,7 @@ gdobj Editor of TextEdit:
         self.executing_line = int current.line - 1
 
     editing = proc: bool =
-      not self.command_mode_enabled and self.visible
+      not command_mode and self.visible
 
     hide_editor = proc =
       if self.dirty:
@@ -121,7 +120,6 @@ gdobj Editor of TextEdit:
     if self.dirty:
       reload_scripts()
     self.mouse_filter = MOUSE_FILTER_IGNORE
-    self.command_mode_enabled = true
     self.shortcut_keys_enabled = false
     self.readonly = true
     var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
@@ -130,7 +128,6 @@ gdobj Editor of TextEdit:
 
   method on_command_mode_disabled =
     self.mouse_filter = MOUSE_FILTER_STOP
-    self.command_mode_enabled = false
     self.shortcut_keys_enabled = true
     self.readonly = false
     var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)

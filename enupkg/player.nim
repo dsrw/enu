@@ -71,7 +71,9 @@ gdobj Player of KinematicBody:
       else:
         float_time
       let floating = self.jump_down and self.jump_time and self.jump_time.get + float_time > now()
-      var gravity = if floating:
+      var gravity = if flying:
+        0.0
+      elif floating:
         gravity / 4
       else:
         gravity
@@ -97,34 +99,33 @@ gdobj Player of KinematicBody:
 
   method process*(delta: float) {.gdExport.} =
     trace:
-      if not editing():
-        var transform = self.camera_rig.global_transform
-        transform.origin = self.global_transform.origin + self.position_start
+      var transform = self.camera_rig.global_transform
+      transform.origin = self.global_transform.origin + self.position_start
 
-        var look_direction = self.get_look_direction()
+      var look_direction = self.get_look_direction()
 
-        if self.input_relative.length() > 0:
-          self.update_rotation(self.input_relative * sensitivity_mouse)
-          self.input_relative = vec2()
-        elif look_direction.length() > 0:
-          self.update_rotation(look_direction * sensitivity_gamepad * delta)
+      if self.input_relative.length() > 0:
+        self.update_rotation(self.input_relative * sensitivity_mouse)
+        self.input_relative = vec2()
+      elif look_direction.length() > 0:
+        self.update_rotation(look_direction * sensitivity_gamepad * delta)
 
-        var r = self.camera_rig.rotation
-        r.y = wrap(r.y, -PI, PI)
-        self.camera_rig.rotation = r
-        if not get_game().mouse_captured:
-          let
-            mouse_pos = self.get_viewport()
-                            .get_mouse_position() / float get_game()
-                            .shrink
-            cast_from = self.camera.project_ray_origin(mouse_pos)
-            cast_to = self.aim_ray.translation + self.camera.project_ray_normal(mouse_pos) * 100
-          self.world_ray.cast_to = cast_to
-          self.world_ray.translation = cast_from
-          self.aim_target.update(self.world_ray)
-        else:
-          self.aim_ray.cast_to = vec3(0, 0, -100)
-          self.aim_target.update(self.aim_ray)
+      var r = self.camera_rig.rotation
+      r.y = wrap(r.y, -PI, PI)
+      self.camera_rig.rotation = r
+      if not get_game().mouse_captured:
+        let
+          mouse_pos = self.get_viewport()
+                          .get_mouse_position() / float get_game()
+                          .shrink
+          cast_from = self.camera.project_ray_origin(mouse_pos)
+          cast_to = self.aim_ray.translation + self.camera.project_ray_normal(mouse_pos) * 100
+        self.world_ray.cast_to = cast_to
+        self.world_ray.translation = cast_from
+        self.aim_target.update(self.world_ray)
+      else:
+        self.aim_ray.cast_to = vec3(0, 0, -100)
+        self.aim_target.update(self.aim_ray)
 
   method physics_process*(delta: float) =
     trace:
@@ -146,13 +147,9 @@ gdobj Player of KinematicBody:
         if not flying:
           move_direction.y = 0
 
-        self.velocity = self.calculate_velocity(self.velocity, move_direction,
-                                                delta, flying, self.running)
-
-        if flying:
-          discard self.move_and_collide(self.velocity * delta)
-        else:
-          self.velocity = self.move_and_slide(self.velocity, UP)
+        let velocity = self.calculate_velocity(self.velocity, move_direction,
+                                               delta, flying, self.running)
+        self.velocity = self.move_and_slide(velocity, UP)
 
   method unhandled_input*(event: InputEvent) =
     if event of InputEventMouseMotion and get_game().mouse_captured:
