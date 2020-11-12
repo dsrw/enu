@@ -72,7 +72,7 @@ gdobj Builder of Spatial:
     inc max_grid_index
     self.name = "Builder_" & $self.script_index
     self.set_script()
-    copy_file "scripts/default_grid.nim", self.enu_script
+    copy_file join_path(config.lib_dir, "enu", "default_grid.nim"), self.enu_script
 
   proc save_blocks*() =
     let data = if self.draw_mode == VoxelMode:

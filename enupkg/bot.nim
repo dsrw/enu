@@ -139,7 +139,7 @@ gdobj NimBot of KinematicBody:
       inc max_bot_index
       self.name = "Bot_" & $self.script_index
       self.set_script()
-      copy_file "scripts/default_bot.nim", self.enu_script
+      copy_file join_path(config.lib_dir, "enu", "default_bot.nim"), self.enu_script
 
   method ready*() =
     trace:
