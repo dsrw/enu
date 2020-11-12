@@ -1,7 +1,7 @@
 import strformat, strutils, os
 
 let
-  (target, lib_ext, exe_ext) = case hostOS
+  (target, lib_ext, exe_ext) = case host_os
     of "windows": ("windows", ".dll", ".exe")
     of "macosx" : ("osx", ".dylib", "")
     else        : ("x11", ".so", "")
@@ -25,7 +25,10 @@ requires "nim >= 1.4.0",
          "cligen 1.2.2",
          "json_serialization"
 
-task prereqs, "Generate Godot API binding":
+var
+  godot_opts = "target=release_debug"
+
+task build_godot, "Build godot":
   mk_dir generated_dir
   exec "git submodule update --init"
   exec "ln -sfh ../../godot_voxel vendor/godot/modules/voxel"
@@ -59,3 +62,20 @@ task edit, "Edit project in Godot":
 task start, "Run Enu":
   cd "app"
   exec godot_bin & " scenes/game.tscn"
+
+task dist, "Build distribution":
+  prereqs_task()
+  when host_os == "macosx":
+    godot_opts = "target=release tools=no"
+    build_godot_task()
+    rm_dir "dist"
+    mkdir "dist"
+    exec "cp -r templates/Enu.app dist/Enu.app"
+    exec "mkdir -p dist/Enu.app/Contents/MacOS"
+    exec "mkdir -p dist/Enu.app/Contents/Frameworks"
+    exec "cp vendor/godot/bin/godot.osx.opt.64 dist/Enu.app/Contents/MacOS/Enu"
+    let pck_path = this_dir() & "/dist/Enu.app/Contents/Resources/Enu.pck"
+    exec &"{godot_bin} --path app --export-pack \"mac\" " & pck_path
+    exec "nimble build -d:release"
+    exec "cp app/_dlls/enu.dylib dist/Enu.app/Contents/Frameworks"
+    exec "cp -r vmlib dist/Enu.app/Contents/Resources/vmlib"

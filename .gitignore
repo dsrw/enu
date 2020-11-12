@@ -15,4 +15,5 @@ app/scripts/.backups
 app/scenes/default.tscn
 godotapi
 app/state
+dist/
 vmlib/stdlib

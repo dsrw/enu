@@ -1,8 +1,11 @@
 import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_container,
                       packed_scene, resource_saver, sprite, control, viewport,
-                      performance, label, theme, dynamic_font, resource_loader, main_loop, gd_os]
+                      performance, label, theme, dynamic_font, resource_loader, main_loop,
+                      gd_os, project_settings]
 import godot, threadpool, times, os, json_serialization
 import core, globals
+
+const version = static_exec("git describe --tags HEAD")
 
 var
   timer = 0.0
@@ -15,7 +18,7 @@ gdobj Game of Node:
     scene_packer: PackedScene
     save_requested: Option[DateTime]
     saved_mouse_captured_state = false
-    perf: Label
+    stats: Label
     saving = false
     quitting = false
     save_thread: system.Thread[Game]
@@ -35,7 +38,7 @@ gdobj Game of Node:
           highest = (name, dur)
         total += dur
       let fps = get_monitor(TIME_FPS)
-      self.perf.text = &"FPS: {fps}\nUser: {total}\n{highest.name}: {highest.duration}"
+      self.stats.text = &"FPS: {fps}\nUser: {total}\n{highest.name}: {highest.duration}"
       durations.clear()
 
     trace:
@@ -74,6 +77,8 @@ gdobj Game of Node:
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
       self.quitting = true
       save_scene(true)
+    if what == main_loop.NOTIFICATION_WM_ABOUT:
+      alert(&"Enu {version}\n\n© 2020 Scott Wadden", "Enu")
 
   proc init* =
     let
@@ -86,7 +91,8 @@ gdobj Game of Node:
         downscale: int screen_scale,
         font_size: (14 * screen_scale).int,
         dock_icon_size: 50 * screen_scale,
-        world: "default"
+        world: "default",
+        show_stats: false
       )
       JSON.save_file(config_file, default_config, pretty = true)
     config = JSON.load_file(config_file, Config)
@@ -145,7 +151,8 @@ gdobj Game of Node:
 
       self.mouse_captured = true
       self.reticle = self.find_node("Reticle").as(Control)
-      self.perf = self.find_node("perf").as(Label)
+      self.stats = self.find_node("stats").as(Label)
+      self.stats.visible = config.show_stats
 
       globals.capture_mouse = proc() =
         self.mouse_captured = true

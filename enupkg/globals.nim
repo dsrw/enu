@@ -22,6 +22,7 @@ type
     font_size*: int
     dock_icon_size*: float
     world*: string
+    show_stats*: bool
     world_dir* {.dont_serialize.}: string
     script_dir* {.dont_serialize.}: string
     screen_scale* {.dont_serialize.}: float
