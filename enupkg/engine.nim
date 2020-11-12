@@ -21,21 +21,20 @@ type
     pause_requested: bool
 
 const
-  STDLIB = find_nim_std_lib_compile_time()
+  STDLIB = find_nim_stdlib_compile_time()
+  STDLIB_PATHS = (w". core pure pure/collections pure/concurrency" &
+                  w"std fusion")
 
-proc load*(e: Engine, script_file: string) =
+proc load*(e: Engine, script_file, vmlib: string) =
   trace:
-    let source_paths = [STDLIB, STDLIB & "/core", STDLIB & "/pure",
-                        STDLIB & "/pure/collections",
-                        join_path(parent_dir(current_source_path), "..", "app", "scripts"),
-                        parent_dir script_file]
-
+    let std_paths = STDLIB_PATHS.map_it join_path(vmlib, "stdlib", it)
+    let source_paths = std_paths & join_path(vmlib, "enu") & @[parent_dir script_file]
     e.i = create_interpreter(script_file, source_paths)
     log_trace("create_interpreter")
     with e.i:
       register_error_hook proc(config, info, msg, severity: auto) {.gcsafe.} =
         if severity == Error and config.error_counter >= config.error_max:
-          echo "error: ", msg
+          echo &"error: {msg}"
           raise (ref VMQuit)(info: info, msg: msg)
 
       register_enter_hook proc(c, pc, tos, instr: auto) =
@@ -53,6 +52,7 @@ proc load*(e: Engine, script_file: string) =
 
     e.initialized = true
     log_trace("hooks")
+
 proc run*(e: Engine): bool =
   try:
     e.i.eval_script()

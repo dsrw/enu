@@ -6,7 +6,6 @@ logs/
 *.dll
 *.so
 *.import
-enu
 enupkg/editor
 enupkg/utils
 .DS_Store
@@ -16,3 +15,4 @@ app/scripts/.backups
 app/scenes/default.tscn
 godotapi
 app/state
+vmlib/stdlib

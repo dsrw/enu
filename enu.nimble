@@ -37,9 +37,14 @@ task prereqs, "Generate Godot API binding":
   if scons == "":
     quit &"*** scons not found on path, and is required to build Godot. See {godot_build_url} ***"
   with_dir "vendor/godot":
-    exec &"{scons} -j{cores} platform={target} target=release_debug"
+    exec &"{scons} -j{cores} platform={target} {godot_opts}"
+
+task prereqs, "Generate Godot API binding":
+  build_godot_task()
+  let gen = find_exe generator
   exec &"{godot_bin} --gdnative-generate-json-api {join_path generated_dir, api_json}"
   exec &"{gen} generate_api -d={generated_dir} -j={api_json}"
+  exec &"{gen} copy_stdlib -d=vmlib/stdlib"
 
 task import_assets, "Import Godot assets. Only required if you're not using the Godot editor":
   exec godot_bin & " app/project.godot --editor --quit"

@@ -96,6 +96,12 @@ gdobj Game of Node:
     config.scene = join_path(config.world_dir, "data.tscn")
     config.screen_scale = screen_scale
     create_dir(config.script_dir)
+    echo get_executable_path()
+    let exe_dir = parent_dir get_executable_path()
+    config.lib_dir = join_path(exe_dir, "..", "..", "..", "vmlib")
+    if host_os == "macosx":
+      if "/Enu.app/" in exe_dir:
+        config.lib_dir = join_path(exe_dir.parent_dir, "Resources", "vmlib")
 
     echo &"Using world dir {config.world_dir}"
 

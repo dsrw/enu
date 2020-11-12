@@ -369,7 +369,7 @@ gdobj Builder of Spatial:
       if self.engine.is_nil: self.engine = Engine()
       if not (self.paused or self.engine.initialized):
         with self.engine:
-          load(self.enu_script)
+          load(self.enu_script, config.lib_dir)
           expose("logo", "up", a => self.up(get_float(a, 0)))
           expose("logo", "down", a => self.down(get_float(a, 0)))
           expose("logo", "left", a => self.left(get_float(a, 0)))

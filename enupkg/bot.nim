@@ -105,7 +105,7 @@ gdobj NimBot of KinematicBody:
         if not self.paused and not self.engine.initialized:
           debug &"Loading {self.enu_script}"
 
-          self.engine.load(self.enu_script)
+          self.engine.load(self.enu_script, config.lib_dir)
           log_trace("loaded")
           with self.engine:
             expose("logo", "forward", a => self.forward(get_float(a, 0)))

@@ -26,6 +26,7 @@ type
     script_dir* {.dont_serialize.}: string
     screen_scale* {.dont_serialize.}: float
     scene* {.dont_serialize.}: string
+    lib_dir* {.dont_serialize.}: string
 
 const
   CMP_EPSILON = 0.00001
