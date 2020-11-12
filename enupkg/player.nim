@@ -10,10 +10,10 @@ let
   angle_x_max = PI / 2.25
   max_speed = 50.0
   move_speed = 500.0
-  run_speed = 1000.0
-  gravity = -80.0
-  jump_impulse = 25.0
+  gravity = -240.0
+  jump_impulse = 50.0
   fly_toggle = 0.3.seconds
+  float_time = 0.3.seconds
   run_toggle = 0.3.seconds
   sensitivity_gamepad = vec2(2.5, 2.5)
   sensitivity_mouse = vec2(0.005, -0.005)
@@ -37,6 +37,7 @@ gdobj Player of KinematicBody:
     pan_delta = 0.0
     index = 0
     collision_shape: CollisionShape
+    jump_down = false
 
   proc get_look_direction(): Vector2 =
     vec2(get_action_strength("look_right") - get_action_strength("look_left"),
@@ -60,11 +61,20 @@ gdobj Player of KinematicBody:
                           move_direction: Vector3,
                           delta: float,
                           flying, running: bool): Vector3 =
-    let speed = if running: run_speed else: move_speed
+    let speed = if running: move_speed * 2 else: move_speed
     result = move_direction * delta * speed
     if result.length() > max_speed:
       result = result.normalized() * max_speed
     if not flying:
+      let float_time = if running:
+        float_time + float_time
+      else:
+        float_time
+      let floating = self.jump_down and self.jump_time and self.jump_time.get + float_time > now()
+      var gravity = if floating:
+        gravity / 4
+      else:
+        gravity
       result.y = velocity_current.y + gravity * delta
 
   method ready*() =
@@ -144,9 +154,6 @@ gdobj Player of KinematicBody:
         else:
           self.velocity = self.move_and_slide(self.velocity, UP)
 
-  proc next_block() = discard
-  proc prev_block() = discard
-
   method unhandled_input*(event: InputEvent) =
     if event of InputEventMouseMotion and get_game().mouse_captured:
       if not skip_next_mouse_move:
@@ -155,6 +162,7 @@ gdobj Player of KinematicBody:
       else:
         skip_next_mouse_move = false
     if event.is_action_pressed("jump"):
+      self.jump_down = true
       let
         time = now()
         toggle = self.jump_time and time < self.jump_time.get + fly_toggle
@@ -167,6 +175,8 @@ gdobj Player of KinematicBody:
         self.jump_time = time
       else:
         self.jump_time = time
+    elif event.is_action_released("jump"):
+      self.jump_down = false
 
     if event.is_action_pressed("run"):
       let
