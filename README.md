@@ -133,12 +133,10 @@ expanded in the future.
 - [X] Project support.
 - [X] Save the world when it changes.
 - [X] Basic documentation
-- [ ] Mac binary
-
-### v0.1.1
+- [X] Mac binary
 - [ ] Validate under Windows
 - [ ] Windows binary
 
-### v0.1.2
+### v0.1.1
 - [ ] Validate under Linux
 - [ ] Linux install task
