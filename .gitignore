@@ -17,3 +17,4 @@ godotapi
 app/state
 dist/
 vmlib/stdlib
+dist_config.json

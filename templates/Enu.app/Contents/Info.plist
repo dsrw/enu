@@ -13,7 +13,7 @@
 	<key>CFBundleIconFile</key>
 	<string>Enu.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>ca.dsrw.godot</string>
+	<string>ca.dsrw.enu</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>

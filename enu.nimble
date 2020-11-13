@@ -1,4 +1,4 @@
-import strformat, strutils, os
+import strformat, strutils, os, json
 
 let
   (target, lib_ext, exe_ext) = case host_os
@@ -63,7 +63,11 @@ task start, "Run Enu":
   cd "app"
   exec godot_bin & " scenes/game.tscn"
 
+proc code_sign(id, path: string) =
+  exec &"codesign -s '{id}' -v --timestamp --options runtime {path}"
+
 task dist, "Build distribution":
+  let config = read_file("dist_config.json").parse_json
   prereqs_task()
   when host_os == "macosx":
     godot_opts = "target=release tools=no"
@@ -79,3 +83,19 @@ task dist, "Build distribution":
     exec "nimble build -d:release"
     exec "cp app/_dlls/enu.dylib dist/Enu.app/Contents/Frameworks"
     exec "cp -r vmlib dist/Enu.app/Contents/Resources/vmlib"
+
+    if config["sign"].get_bool:
+      let id = config["id"].get_str
+      code_sign(id, "dist/Enu.app/Contents/Frameworks/enu.dylib")
+      code_sign(id, "dist/Enu.app")
+
+    if config["package"].get_bool:
+      exec "hdiutil create Enu.dmg -ov -volname Enu -fs HFS+ -srcfolder dist"
+      exec "mv Enu.dmg dist"
+
+    if config["notarize"].get_bool:
+      let
+        username = config["notarize-username"].get_str
+        password = config["notarize-password"].get_str
+
+      exec &"xcrun altool --notarize-app --primary-bundle-id 'ca.dsrw.enu'  --username '{username}' --password '{password}' --file dist/Enu.dmg"
