@@ -1,5 +1,5 @@
 [submodule "vendor/godot_voxel"]
-	path = vendor/godot_voxel
+	path = vendor/modules/voxel
 	url = https://github.com/dsrw/godot_voxel.git
 	branch = enu-changes
 [submodule "vendor/godot"]
