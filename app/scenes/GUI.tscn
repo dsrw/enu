@@ -1,9 +1,8 @@
-[gd_scene load_steps=15 format=2]
+[gd_scene load_steps=14 format=2]
 
 [ext_resource path="res://components/Console.gdns" type="Script" id=1]
 [ext_resource path="res://components/TextEdit.gdns" type="Script" id=2]
 [ext_resource path="res://components/ActionButton.tscn" type="PackedScene" id=3]
-[ext_resource path="res://themes/AppleTheme.tres" type="Theme" id=4]
 [ext_resource path="res://textures/reticle.png" type="Texture" id=5]
 [ext_resource path="res://themes/DarkTheme.tres" type="Theme" id=6]
 [ext_resource path="res://themes/SF-Mono-Powerline-Bold.otf" type="DynamicFontData" id=8]
@@ -113,7 +112,6 @@ margin_bottom = 1080.0
 mouse_filter = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme = ExtResource( 4 )
 
 [node name="MarginContainer" type="MarginContainer" parent="Panels/ThemeHolder"]
 margin_right = 768.0
