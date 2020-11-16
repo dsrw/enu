@@ -50,50 +50,50 @@ __meta__ = {
 }
 
 [node name="Button-code" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 568.0
-margin_right = 768.0
+margin_left = 248.0
+margin_right = 448.0
 margin_bottom = 200.0
 group = SubResource( 1 )
 
 [node name="Button-blue" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 772.0
-margin_right = 972.0
+margin_left = 452.0
+margin_right = 652.0
 margin_bottom = 200.0
 pressed = true
 group = SubResource( 1 )
 icon = null
 
 [node name="Button-red" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 976.0
-margin_right = 1176.0
+margin_left = 656.0
+margin_right = 856.0
 margin_bottom = 200.0
 group = SubResource( 1 )
 icon = null
 
 [node name="Button-green" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 1180.0
-margin_right = 1380.0
+margin_left = 860.0
+margin_right = 1060.0
 margin_bottom = 200.0
 group = SubResource( 1 )
 icon = null
 
 [node name="Button-black" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 1384.0
-margin_right = 1584.0
+margin_left = 1064.0
+margin_right = 1264.0
 margin_bottom = 200.0
 group = SubResource( 1 )
 icon = null
 
 [node name="Button-white" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 1588.0
-margin_right = 1788.0
+margin_left = 1268.0
+margin_right = 1468.0
 margin_bottom = 200.0
 group = SubResource( 1 )
 icon = null
 
 [node name="Button-bot" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 1792.0
-margin_right = 1992.0
+margin_left = 1472.0
+margin_right = 1672.0
 margin_bottom = 200.0
 group = SubResource( 1 )
 icon = null
@@ -108,25 +108,24 @@ __meta__ = {
 }
 
 [node name="ThemeHolder" type="VBoxContainer" parent="Panels"]
-margin_right = 1024.0
-margin_bottom = 1440.0
+margin_right = 768.0
+margin_bottom = 1080.0
 mouse_filter = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme = ExtResource( 4 )
 
 [node name="MarginContainer" type="MarginContainer" parent="Panels/ThemeHolder"]
-margin_right = 1024.0
-margin_bottom = 1440.0
+margin_right = 768.0
+margin_bottom = 1080.0
 mouse_filter = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 size_flags_stretch_ratio = 2.0
 
 [node name="Editor" type="TextEdit" parent="Panels/ThemeHolder/MarginContainer"]
-visible = false
-margin_right = 1024.0
-margin_bottom = 1440.0
+margin_right = 768.0
+margin_bottom = 1080.0
 size_flags_vertical = 3
 custom_styles/read_only = SubResource( 2 )
 custom_styles/normal = SubResource( 3 )
@@ -134,6 +133,7 @@ custom_colors/selection_color = Color( 0.184314, 0.0117647, 0.686275, 1 )
 custom_colors/executing_line_color = Color( 0.0392157, 0, 0.168627, 1 )
 indent_using_spaces = true
 indent_size = 2
+text = "test test"
 syntax_highlighting = true
 show_line_numbers = true
 script = ExtResource( 2 )

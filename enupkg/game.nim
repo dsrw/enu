@@ -82,7 +82,7 @@ gdobj Game of Node:
 
   proc init* =
     let
-      screen_scale = get_screen_scale()
+      screen_scale = get_screen_dpi().int / 96
       work_dir = get_user_data_dir()
       config_file = join_path(work_dir, "config.json")
 
@@ -136,18 +136,21 @@ gdobj Game of Node:
       self.get_tree().set_auto_accept_quit(false)
       assert not self.viewport_container.is_nil
       state.game = self
-      if hostOS == "macosx":
-        let
-          theme = load("res://themes/AppleTheme.tres").as(Theme)
-          screen_scale = get_screen_scale()
-          theme_holder = self.find_node("ThemeHolder").as(Container)
-          font = theme.default_font.as(DynamicFont)
-          bold_font = theme.get_font("bold_font", "RichTextLabel")
-                           .as(DynamicFont)
-        font.size = config.font_size
-        bold_font.size = config.font_size
-        theme_holder.theme = theme
-        self.shrink = config.downscale
+      let (theme_holder, theme) = if hostOS == "macosx":
+        ( self.find_node("ThemeHolder").as(Container),
+          load("res://themes/AppleTheme.tres").as(Theme))
+      else:
+        let node = self.find_node("Panels").as(Container)
+        (node, node.theme)
+      let
+        font = theme.default_font.as(DynamicFont)
+        bold_font = theme.get_font("bold_font", "RichTextLabel")
+                          .as(DynamicFont)
+ 
+      font.size = config.font_size
+      bold_font.size = config.font_size
+      theme_holder.theme = theme
+      self.shrink = config.downscale
 
       self.mouse_captured = true
       self.reticle = self.find_node("Reticle").as(Control)
@@ -234,6 +237,10 @@ gdobj Game of Node:
       trigger("clear_console")
     elif event.is_action_pressed("toggle_console"):
       trigger("toggle_console")
+    elif event.is_action_pressed("quit"):
+      if host_os != "macosx":
+        self.quitting = true
+        save_scene(true)
     elif not globals.editing():
       if event.is_action_pressed("toggle_mouse_captured"):
         self.mouse_captured = not self.mouse_captured

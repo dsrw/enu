@@ -31,7 +31,6 @@ var
 task build_godot, "Build godot":
   mk_dir generated_dir
   exec "git submodule update --init"
-  exec "ln -sfh ../../godot_voxel vendor/godot/modules/voxel"
   exec &"nimble c --skipParentCfg {generator}"
   let
     gen = find_exe generator
@@ -40,7 +39,7 @@ task build_godot, "Build godot":
   if scons == "":
     quit &"*** scons not found on path, and is required to build Godot. See {godot_build_url} ***"
   with_dir "vendor/godot":
-    exec &"{scons} -j{cores} platform={target} {godot_opts}"
+    exec &"{scons} custom_modules=../modules platform={target} {godot_opts} -j{cores}"
 
 task prereqs, "Generate Godot API binding":
   build_godot_task()
@@ -48,6 +47,12 @@ task prereqs, "Generate Godot API binding":
   exec &"{godot_bin} --gdnative-generate-json-api {join_path generated_dir, api_json}"
   exec &"{gen} generate_api -d={generated_dir} -j={api_json}"
   exec &"{gen} copy_stdlib -d=vmlib/stdlib"
+  if host_os == "windows":
+    # Assumes mingw
+    let dep_path = parent_dir find_exe("gcc")
+    for dep in ["libgcc_s_seh-1.dll", "libwinpthread-1.dll"]:
+      cp_file dep_path.join_path(dep), join_path("app", "_dlls", dep)
+    
 
 task import_assets, "Import Godot assets. Only required if you're not using the Godot editor":
   exec godot_bin & " app/project.godot --editor --quit"
@@ -61,7 +66,7 @@ task edit, "Edit project in Godot":
 
 task start, "Run Enu":
   cd "app"
-  exec godot_bin & " scenes/game.tscn"
+  exec godot_bin & " --verbose scenes/game.tscn"
 
 proc code_sign(id, path: string) =
   exec &"codesign -s '{id}' -v --timestamp --options runtime {path}"
