@@ -122,6 +122,7 @@ size_flags_vertical = 3
 size_flags_stretch_ratio = 2.0
 
 [node name="Editor" type="TextEdit" parent="Panels/ThemeHolder/MarginContainer"]
+visible = false
 margin_right = 768.0
 margin_bottom = 1080.0
 size_flags_vertical = 3
@@ -131,7 +132,6 @@ custom_colors/selection_color = Color( 0.184314, 0.0117647, 0.686275, 1 )
 custom_colors/executing_line_color = Color( 0.0392157, 0, 0.168627, 1 )
 indent_using_spaces = true
 indent_size = 2
-text = "test test"
 syntax_highlighting = true
 show_line_numbers = true
 script = ExtResource( 2 )
