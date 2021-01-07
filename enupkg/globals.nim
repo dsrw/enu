@@ -40,7 +40,6 @@ const
 
 var
   editing*: proc:bool
-  errors*: Table[string, seq[tuple[msg: string, info: TLineInfo]]]
   show_editor*: proc(file: string, engine: Engine)
   hide_editor*: proc()
   capture_mouse*: proc()

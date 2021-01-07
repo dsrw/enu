@@ -324,7 +324,6 @@ gdobj Builder of Spatial:
 
   proc error(e: ref VMQuit) =
     self.running = false
-    errors[self.enu_script] = @[(e.msg, e.info)]
     err e.msg
     trigger("script_error")
 
@@ -362,7 +361,6 @@ gdobj Builder of Spatial:
       # can probably be fixed in godot-nim
       return
     debug &"Loading {self.enu_script}. Paused {self.paused}"
-    errors[self.enu_script] = @[]
     self.callback = nil
     self.blocks_remaining_this_frame = 0
     try:

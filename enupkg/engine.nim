@@ -19,6 +19,7 @@ type
     previous_line: TLineInfo
     initialized*: bool
     pause_requested: bool
+    errors*: seq[tuple[msg: string, info: TLineInfo]]
 
 const
   STDLIB = find_nim_stdlib_compile_time()
@@ -35,6 +36,8 @@ proc load*(e: Engine, script_file, vmlib: string) =
       register_error_hook proc(config, info, msg, severity: auto) {.gcsafe.} =
         if severity == Error and config.error_counter >= config.error_max:
           echo &"error: {msg}"
+          e.errors.add (msg, info)
+
           raise (ref VMQuit)(info: info, msg: msg)
 
       register_enter_hook proc(c, pc, tos, instr: auto) =

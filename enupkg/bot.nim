@@ -88,7 +88,6 @@ gdobj NimBot of KinematicBody:
 
   proc error(e: ref VMQuit) =
     self.running = false
-    errors[self.enu_script] = @[(e.msg, e.info)]
     err e.msg
     trigger("script_error")
 
@@ -96,7 +95,6 @@ gdobj NimBot of KinematicBody:
     trace:
       if self.enu_script == "none":
         return
-      errors[self.enu_script] = @[]
       self.callback = nil
 
       try:
