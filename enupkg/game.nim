@@ -1,7 +1,7 @@
 import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_container,
                       packed_scene, resource_saver, sprite, control, viewport,
                       performance, label, theme, dynamic_font, resource_loader, main_loop,
-                      gd_os, project_settings]
+                      gd_os, project_settings, input_map, input_event, input_event_action]
 import godot, threadpool, times, os, json_serialization
 import core, globals
 
@@ -80,6 +80,20 @@ gdobj Game of Node:
     if what == main_loop.NOTIFICATION_WM_ABOUT:
       alert(&"Enu {version}\n\n© 2020 Scott Wadden", "Enu")
 
+  proc add_platform_input_actions =
+    let suffix = "." & gd_os.get_name()
+    for action in get_actions():
+      let action = action.as_string()
+      if suffix in action:
+        let name = action.replace(suffix, "")
+        if has_action(name):
+          erase_action(name)
+        add_action(name)
+        for event in get_action_list(action):
+          let event = event.as_object(InputEvent)
+          action_add_event(name, event)
+        erase_action(action)
+
   proc init* =
     let
       screen_scale = get_screen_dpi().int / 96
@@ -105,6 +119,8 @@ gdobj Game of Node:
     echo get_executable_path()
     let exe_dir = parent_dir get_executable_path()
     config.lib_dir = join_path(exe_dir, "..", "..", "..", "vmlib")
+    self.add_platform_input_actions()
+
     if host_os == "macosx":
       if "/Enu.app/" in exe_dir:
         config.lib_dir = join_path(exe_dir.parent_dir, "Resources", "vmlib")
