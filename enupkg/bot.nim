@@ -11,6 +11,7 @@ gdobj NimBot of KinematicBody:
     material* {.gdExport.}, highlight_material* {.gdExport.},
       selected_material* {.gdExport.}: Material
     script_index* {.gdExport.} = 0
+    disabled* {.gdExport.} = false
     callback: proc(delta: float): bool
     engine: Engine
     last_error: string
@@ -145,16 +146,18 @@ gdobj NimBot of KinematicBody:
         max_bot_index = self.script_index + 1
       self.set_script()
       with self:
-        bind_signals(w"reload pause reload_all")
         skin = self.get_node("Mannequiny").as(Spatial)
         mesh = self.skin.get_node("root/Skeleton/body001").as(MeshInstance)
         animation_player = self.skin.get_node("AnimationPlayer").as(AnimationPlayer)
         orig_rotation = self.rotation
         orig_translation = self.translation
         set_default_material()
-      log_trace()
-      self.load_script()
-      log_trace("load_script")
+
+      if not self.disabled:
+        self.bind_signals(w"reload pause reload_all")
+        log_trace()
+        self.load_script()
+        log_trace("load_script")
 
   method physics_process*(delta: float64) =
     trace:
