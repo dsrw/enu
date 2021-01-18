@@ -41,8 +41,7 @@ gdobj Player of KinematicBody:
 
   proc get_look_direction(): Vector2 =
     vec2(get_action_strength("look_right") - get_action_strength("look_left"),
-         get_action_strength("look_up") - get_action_strength("look_down")
-        ).normalized()
+         get_action_strength("look_up") - get_action_strength("look_down"))
 
   proc update_rotation(offset: Vector2) =
     var r = self.camera_rig.rotation
@@ -117,8 +116,8 @@ gdobj Player of KinematicBody:
         if not get_game().mouse_captured:
           let
             mouse_pos = self.get_viewport()
-                            .get_mouse_position() / float get_game()
-                            .shrink
+                            .get_mouse_position() / float get_game().shrink
+
             cast_from = self.camera.project_ray_origin(mouse_pos)
             cast_to = self.aim_ray.translation + self.camera.project_ray_normal(mouse_pos) * 100
           self.world_ray.cast_to = cast_to
@@ -130,23 +129,24 @@ gdobj Player of KinematicBody:
 
   method physics_process*(delta: float) =
     trace:
+      const forward_rotation = deg_to_rad(-90.0)
       if not editing():
         let
           input_direction = self.get_input_direction()
           basis   = self.camera_rig.global_transform.basis
           right   = basis.x * input_direction.x
           up      = UP * input_direction.y
-          forward = (basis.z * input_direction.z * vec3(1, 0, 1)).normalized()
+          forward = (basis.x * input_direction.z).rotated(UP, forward_rotation)
           flying  = self.flying or command_mode
 
         var
-          move_direction = forward + right + up
+          move_direction = forward + right
 
         if move_direction.length() > 1.0:
           move_direction = move_direction.normalized()
 
-        if not flying:
-          move_direction.y = 0
+        move_direction.y = 0
+        move_direction += up
 
         let velocity = self.calculate_velocity(self.velocity, move_direction,
                                                delta, flying, self.running)
