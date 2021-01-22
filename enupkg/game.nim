@@ -22,6 +22,7 @@ gdobj Game of Node:
     saving = false
     quitting = false
     save_thread: system.Thread[Game]
+    last_index = 1
 
   proc pack_scene() {.thread.} =
     echo $self.scene_packer.pack(data_node)
@@ -210,15 +211,19 @@ gdobj Game of Node:
   proc prev_action*() =
     self.update_action_index(-1)
 
-  proc code_mode*(update_actionbar = true) =
-    tool_mode = CodeMode
-    self.trigger("retarget")
-    self.reticle.visible = self.mouse_captured
-    action_index = 0
-    if update_actionbar:
-      self.trigger("update_actionbar", 0)
+  proc code_mode*(update_actionbar = true, restore = false) =
+    if restore and action_index == 0:
+      self.block_mode(self.last_index)
+    else:
+      tool_mode = CodeMode
+      self.trigger("retarget")
+      self.reticle.visible = self.mouse_captured
+      action_index = 0
+      if update_actionbar:
+        self.trigger("update_actionbar", 0)
 
   proc block_mode*(index: int, update_actionbar = true) =
+    self.last_index = index
     tool_mode = BlockMode
     self.trigger("retarget")
     self.reticle.visible = false
@@ -269,6 +274,8 @@ gdobj Game of Node:
 
       if event.is_action_pressed("toggle_fullscreen"):
         set_window_fullscreen not is_window_fullscreen()
+      elif event.is_action_pressed("toggle_code_mode"):
+        self.code_mode(restore = true)
       elif event.is_action_pressed("mode_1"):
         self.code_mode()
       elif event.is_action_pressed("mode_2"):

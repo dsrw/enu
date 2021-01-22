@@ -48,10 +48,10 @@ gdobj Toolbar of HBoxContainer:
 
   method on_action_changed*(button_name: string) =
     case button_name[7..^1]:
-    of "code": get_game().code_mode(false)
-    of "blue": get_game().block_mode(1, false)
-    of "red": get_game().block_mode(2, false)
-    of "green": get_game().block_mode(3, false)
-    of "black": get_game().block_mode(4, false)
-    of "white": get_game().block_mode(5, false)
-    of "bot": get_game().obj_mode(6, false)
+    of "code": get_game().code_mode(update_actionbar = false)
+    of "blue": get_game().block_mode(1, update_actionbar = false)
+    of "red": get_game().block_mode(2, update_actionbar = false)
+    of "green": get_game().block_mode(3, update_actionbar = false)
+    of "black": get_game().block_mode(4, update_actionbar = false)
+    of "white": get_game().block_mode(5, update_actionbar = false)
+    of "bot": get_game().obj_mode(6, update_actionbar = false)

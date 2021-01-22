@@ -1,8 +1,9 @@
-import godot, ../godotapi / [kinematic_body, spatial, input, input_event,
-                             input_event_mouse_motion, ray_cast, scene_tree,
-                             input_event_pan_gesture, viewport, camera, global_constants,
-                             collision_shape]
-import math
+import godot except print
+import ../godotapi / [kinematic_body, spatial, input, input_event,
+                      input_event_mouse_motion,
+                      ray_cast, scene_tree, input_event_pan_gesture, viewport, camera, global_constants,
+                      collision_shape]
+import math, print
 import core, globals, game, aim_target
 
 let
@@ -18,6 +19,7 @@ let
   sensitivity_gamepad = vec2(2.5, 2.5)
   sensitivity_mouse = vec2(0.005, -0.005)
   nil_time = none(DateTime)
+  input_command_timeout = 0.5
 
 gdobj Player of KinematicBody:
   var
@@ -38,6 +40,7 @@ gdobj Player of KinematicBody:
     index = 0
     collision_shape: CollisionShape
     jump_down = false
+    command_timer = 0.0
 
   proc get_look_direction(): Vector2 =
     vec2(get_action_strength("look_right") - get_action_strength("look_left"),
@@ -129,6 +132,13 @@ gdobj Player of KinematicBody:
 
   method physics_process*(delta: float) =
     trace:
+      if command_mode and self.command_timer > 0:
+        self.command_timer -= delta
+        if self.command_timer <= 0:
+          print "DONE"
+          command_mode = false
+          get_game().trigger("command_mode_disabled")
+
       const forward_rotation = deg_to_rad(-90.0)
       if not editing():
         let
@@ -152,6 +162,14 @@ gdobj Player of KinematicBody:
                                                delta, flying, self.running)
         self.velocity = self.move_and_slide(velocity, UP)
 
+  proc has_active_input(device: int): bool =
+    for axis in 0..JOY_AXIS_MAX:
+      if get_joy_axis(device, axis).abs >= 0.2:
+        return true
+    for button in 0..JOY_BUTTON_MAX:
+      if is_joy_button_pressed(device, button):
+        return true
+
   method unhandled_input*(event: InputEvent) =
     if event of InputEventMouseMotion and get_game().mouse_captured:
       if not skip_next_mouse_move:
@@ -159,6 +177,17 @@ gdobj Player of KinematicBody:
         self.input_relative += event.as(InputEventMouseMotion).relative() * shrink
       else:
         skip_next_mouse_move = false
+    if event of InputEventJoypadButton or event of InputEventJoypadMotion:
+      let active_input = self.has_active_input(event.device.int)
+      if command_mode and not active_input:
+        self.command_timer = input_command_timeout
+      elif command_mode and active_input:
+        self.command_timer = 0.0
+      elif active_input:
+        command_mode = true
+        self.command_timer = 0.0
+        get_game().trigger("command_mode_enabled")
+
     if event.is_action_pressed("jump"):
       self.jump_down = true
       let

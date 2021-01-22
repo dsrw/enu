@@ -43,7 +43,7 @@ gdobj Editor of TextEdit:
 
   method unhandled_input*(event: InputEvent) =
     if self.visible:
-      if event.is_action_pressed("toggle_mouse_captured"):
+      if event.is_action_pressed("ui_cancel"):
         hide_editor()
         self.get_tree().set_input_as_handled()
 
