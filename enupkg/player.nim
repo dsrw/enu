@@ -98,7 +98,7 @@ gdobj Player of KinematicBody:
  
   method process*(delta: float) {.gdExport.} =
     trace:
-      if not editing():
+      if not editing() or command_mode:
         var transform = self.camera_rig.global_transform
         transform.origin = self.global_transform.origin + self.position_start
 
@@ -136,7 +136,7 @@ gdobj Player of KinematicBody:
           get_game().disable_command_mode()
 
       const forward_rotation = deg_to_rad(-90.0)
-      if not editing():
+      if not editing() or command_mode:
         let
           input_direction = self.get_input_direction()
           basis   = self.camera_rig.global_transform.basis
@@ -172,7 +172,7 @@ gdobj Player of KinematicBody:
         self.input_relative += event.as(InputEventMouseMotion).relative() * shrink
       else:
         skip_next_mouse_move = false
-    if event of InputEventJoypadButton or event of InputEventJoypadMotion:
+    if editing() and (event of InputEventJoypadButton or event of InputEventJoypadMotion):
       let active_input = self.has_active_input(event.device.int)
       if command_mode and not active_input:
         self.command_timer = input_command_timeout

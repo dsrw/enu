@@ -90,8 +90,7 @@ gdobj Editor of TextEdit:
       self.engine.line_changed = proc(current: TLineInfo, previous: TLineInfo) =
         self.executing_line = int current.line - 1
 
-    editing = proc: bool =
-      not command_mode and self.visible
+    editing = proc: bool = self.visible
 
     hide_editor = proc =
       if self.dirty:
