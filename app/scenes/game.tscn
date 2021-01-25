@@ -25,6 +25,7 @@ render_target_update_mode = 3
 shadow_atlas_size = 100
 
 [node name="Level" parent="ViewportContainer/Viewport" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015144, 0.0254424, -0.00756478 )
 
 [node name="GUI" parent="." instance=ExtResource( 3 )]
 

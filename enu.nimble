@@ -77,9 +77,9 @@ proc code_sign(id, path: string) =
   exec &"codesign -s '{id}' -v --timestamp --options runtime {path}"
 
 task dist, "Build distribution":
-  let config = read_file("dist_config.json").parse_json
-  prereqs_task()
   when host_os == "macosx":
+    let config = read_file("dist_config.json").parse_json
+    prereqs_task()
     godot_opts = "target=release tools=no"
     build_godot_task()
     rm_dir "dist"
@@ -109,3 +109,18 @@ task dist, "Build distribution":
         password = config["notarize-password"].get_str
 
       exec &"xcrun altool --notarize-app --primary-bundle-id 'ca.dsrw.enu'  --username '{username}' --password '{password}' --file dist/Enu.dmg"
+  elif host_os == "windows":
+    prereqs_task()
+    godot_opts = "target=release tools=no"
+    build_godot_task()
+    rm_dir "dist"
+    mkdir "dist"
+    exec "cp vendor/godot/bin/godot.windows.opt.tools.64.exe dist/Enu.exe"
+    exec "rcedit dist/Enu.exe --set-icon media/enu_icon.ico"
+    let pck_path = this_dir() & "/dist/Enu.pck"
+    exec &"{godot_bin} --path app --export-pack \"win\" " & pck_path
+    find_and_copy_dlls(parent_dir find_exe("gcc"), "dist", gcc_dlls)
+    find_and_copy_dlls(parent_dir get_current_compiler_exe(), "dist", nim_dlls)    
+    exec "cp vmlib dist"
+  else:
+    quit &"dist is currently unsupported on {host_os}"
