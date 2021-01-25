@@ -44,8 +44,9 @@ gdobj Editor of TextEdit:
   method unhandled_input*(event: InputEvent) =
     if self.visible:
       if event.is_action_pressed("ui_cancel"):
-        hide_editor()
-        self.get_tree().set_input_as_handled()
+        if not (event of InputEventJoypadButton) or not command_mode:
+          hide_editor()
+          self.get_tree().set_input_as_handled()
 
   proc configure_highlighting =
     # block comments

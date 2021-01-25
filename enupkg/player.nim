@@ -41,6 +41,7 @@ gdobj Player of KinematicBody:
     collision_shape: CollisionShape
     jump_down = false
     command_timer = 0.0
+    skip_release = false
 
   proc get_look_direction(): Vector2 =
     vec2(get_action_strength("look_right") - get_action_strength("look_left"),
@@ -172,7 +173,7 @@ gdobj Player of KinematicBody:
         self.input_relative += event.as(InputEventMouseMotion).relative() * shrink
       else:
         skip_next_mouse_move = false
-    if editing() and (event of InputEventJoypadButton or event of InputEventJoypadMotion):
+    if editing() and not self.skip_release and (event of InputEventJoypadButton or event of InputEventJoypadMotion):
       let active_input = self.has_active_input(event.device.int)
       if command_mode and not active_input:
         self.command_timer = input_command_timeout
@@ -232,10 +233,13 @@ gdobj Player of KinematicBody:
 
     let ray = self.current_raycast
     if event.is_action_pressed("fire"):
+      if not editing():
+        self.skip_release = true
       if ray.is_colliding():
         var trigger_event = "target_fire"
         trigger(ray.get_collider(), trigger_event)
     elif event.is_action_released("fire"):
+      self.skip_release = false
       get_game().trigger("mouse_released")
 
     if event.is_action_pressed("remove"):
