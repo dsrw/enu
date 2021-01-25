@@ -73,9 +73,7 @@ gdobj Player of KinematicBody:
       else:
         float_time
       let floating = self.jump_down and self.jump_time and self.jump_time.get + float_time > now()
-      var gravity = if flying:
-        0.0
-      elif floating:
+      var gravity = if floating:
         gravity / 4
       else:
         gravity
@@ -91,7 +89,6 @@ gdobj Player of KinematicBody:
       self.world_ray = game_node.get_node("WorldRay") as RayCast
       self.aim_target = self.camera_rig.get_node("AimTarget") as AimTarget
       self.position_start = self.camera_rig.translation
-      self.bind_signals w"command_mode_enabled command_mode_disabled"
 
   proc current_raycast*: RayCast =
     if get_game().mouse_captured:
@@ -136,8 +133,7 @@ gdobj Player of KinematicBody:
         self.command_timer -= delta
         if self.command_timer <= 0:
           print "DONE"
-          command_mode = false
-          get_game().trigger("command_mode_disabled")
+          get_game().disable_command_mode()
 
       const forward_rotation = deg_to_rad(-90.0)
       if not editing():
@@ -147,7 +143,6 @@ gdobj Player of KinematicBody:
           right   = basis.x * input_direction.x
           up      = UP * input_direction.y
           forward = (basis.x * input_direction.z).rotated(UP, forward_rotation)
-          flying  = self.flying or command_mode
 
         var
           move_direction = forward + right
@@ -159,7 +154,7 @@ gdobj Player of KinematicBody:
         move_direction += up
 
         let velocity = self.calculate_velocity(self.velocity, move_direction,
-                                               delta, flying, self.running)
+                                               delta, self.flying, self.running)
         self.velocity = self.move_and_slide(velocity, UP)
 
   proc has_active_input(device: int): bool =
@@ -184,9 +179,8 @@ gdobj Player of KinematicBody:
       elif command_mode and active_input:
         self.command_timer = 0.0
       elif active_input:
-        command_mode = true
         self.command_timer = 0.0
-        get_game().trigger("command_mode_enabled")
+        get_game().enable_command_mode()
 
     if event.is_action_pressed("jump"):
       self.jump_down = true
@@ -197,6 +191,7 @@ gdobj Player of KinematicBody:
       if toggle:
         self.jump_time = nil_time
         self.flying = not self.flying
+        self.collision_shape.disabled = self.flying
       elif self.is_on_floor():
         self.velocity += vec3(0, jump_impulse, 0)
         self.jump_time = time
@@ -249,13 +244,5 @@ gdobj Player of KinematicBody:
         trigger(ray.get_collider(), trigger_event)
     elif event.is_action_released("remove"):
       get_game().trigger("mouse_released")
-
-  method on_command_mode_enabled() =
-    self.collision_shape.disabled = true
-
-  method on_command_mode_disabled() =
-    if editing() and not self.is_on_floor:
-      self.flying = true
-    self.collision_shape.disabled = false
 
 proc get_player*(): Player = state.player as Player

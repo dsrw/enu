@@ -23,6 +23,7 @@ gdobj Game of Node:
     quitting = false
     save_thread: system.Thread[Game]
     last_index = 1
+    saved_mouse_position: Vector2
 
   proc pack_scene() {.thread.} =
     echo $self.scene_packer.pack(data_node)
@@ -57,6 +58,7 @@ gdobj Game of Node:
     if captured:
       # center mouse before capturing to ensure clicks are handled on macos
       let center = self.get_viewport().get_visible_rect().size * 0.5
+      self.saved_mouse_position = self.get_viewport().get_mouse_position()
       trigger("mouse_captured")
       warp_mouse_position(center)
       set_mouse_mode MOUSE_MODE_CAPTURED
@@ -64,6 +66,7 @@ gdobj Game of Node:
     else:
       trigger("mouse_released")
       set_mouse_mode MOUSE_MODE_VISIBLE
+      warp_mouse_position(self.saved_mouse_position)
 
   proc mouse_captured*(): bool =
     get_mouse_mode() == MOUSE_MODE_CAPTURED
@@ -239,16 +242,22 @@ gdobj Game of Node:
     if update_actionbar:
       self.trigger("update_actionbar", index)
 
+  proc enable_command_mode*() =
+    self.saved_mouse_captured_state = self.mouse_captured
+    self.mouse_captured = true
+    command_mode = true
+    self.trigger("command_mode_enabled")
+
+  proc disable_command_mode*() =
+    self.mouse_captured = false#self.saved_mouse_captured_state
+    command_mode = false
+    self.trigger("command_mode_disabled")
+
   method unhandled_input*(event: InputEvent) =
     if event.is_action_pressed("command_mode"):
-      self.saved_mouse_captured_state = self.mouse_captured
-      self.mouse_captured = true
-      command_mode = true
-      self.trigger("command_mode_enabled")
+      self.enable_command_mode()
     elif event.is_action_released("command_mode"):
-      self.mouse_captured = self.saved_mouse_captured_state
-      command_mode = false
-      self.trigger("command_mode_disabled")
+      self.disable_command_mode()
     elif event.is_action_pressed("save_and_reload"):
       globals.save_and_reload()
       self.get_tree().set_input_as_handled()
