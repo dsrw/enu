@@ -10,8 +10,10 @@ let
   generator       = "tools/build_helpers"
   godot_bin       = this_dir() & &"/vendor/godot/bin/godot.{target}.opt.tools.64{exe_ext}"
   godot_build_url = "https://docs.godotengine.org/en/stable/development/compiling/index.html"
+  gcc_dlls        = ["libgcc_s_seh-1.dll", "libwinpthread-1.dll"]
+  nim_dlls        = ["pcre64.dll"]
 
-version       = "0.0.1"
+version       = "0.1.0"
 author        = "Scott Wadden"
 description   = "Logo-like DSL for Godot"
 license       = "MIT"
@@ -42,6 +44,10 @@ task build_godot, "Build godot":
   with_dir "vendor/godot":
     exec &"{scons} custom_modules=../modules platform={target} {godot_opts} -j{cores}"
 
+proc find_and_copy_dlls(dep_path, dest: string, dlls: varargs[string]) =
+  for dep in dlls:
+    cp_file dep_path.join_path(dep), join_path(dest, dep)
+
 task prereqs, "Generate Godot API binding":
   build_godot_task()
   let gen = find_exe generator
@@ -50,10 +56,8 @@ task prereqs, "Generate Godot API binding":
   exec &"{gen} copy_stdlib -d=vmlib/stdlib"
   if host_os == "windows":
     # Assumes mingw
-    let dep_path = parent_dir find_exe("gcc")
-    for dep in ["libgcc_s_seh-1.dll", "libwinpthread-1.dll"]:
-      cp_file dep_path.join_path(dep), join_path("app", "_dlls", dep)
-    
+    find_and_copy_dlls(parent_dir find_exe("gcc"), join_path("app", "_dlls"), gcc_dlls)
+    find_and_copy_dlls(parent_dir get_current_compiler_exe(), join_path("vendor", "godot", "bin"), nim_dlls)    
 
 task import_assets, "Import Godot assets. Only required if you're not using the Godot editor":
   exec godot_bin & " app/project.godot --editor --quit"
