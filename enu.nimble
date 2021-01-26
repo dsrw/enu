@@ -56,8 +56,8 @@ task prereqs, "Generate Godot API binding":
   exec &"{gen} copy_stdlib -d=vmlib/stdlib"
   if host_os == "windows":
     # Assumes mingw
-    find_and_copy_dlls(parent_dir find_exe("gcc"), join_path("app", "_dlls"), gcc_dlls)
-    find_and_copy_dlls(parent_dir get_current_compiler_exe(), join_path("vendor", "godot", "bin"), nim_dlls)    
+    find_and_copy_dlls find_exe("gcc").parent_dir, join_path("app", "_dlls"), gcc_dlls
+    find_and_copy_dlls get_current_compiler_exe().parent_dir, join_path("vendor", "godot", "bin"), nim_dlls  
 
 task import_assets, "Import Godot assets. Only required if you're not using the Godot editor":
   exec godot_bin & " app/project.godot --editor --quit"
@@ -84,13 +84,13 @@ task dist, "Build distribution":
     build_godot_task()
     rm_dir "dist"
     mkdir "dist"
-    exec "cp -r templates/Enu.app dist/Enu.app"
+    exec "cp -r installer/Enu.app dist/Enu.app"
     exec "mkdir -p dist/Enu.app/Contents/MacOS"
     exec "mkdir -p dist/Enu.app/Contents/Frameworks"
     exec "cp vendor/godot/bin/godot.osx.opt.64 dist/Enu.app/Contents/MacOS/Enu"
     let pck_path = this_dir() & "/dist/Enu.app/Contents/Resources/Enu.pck"
     exec &"{godot_bin} --path app --export-pack \"mac\" " & pck_path
-    exec "nimble build -d:release"
+    exec "nimble build -d:release -d:dist"
     exec "cp app/_dlls/enu.dylib dist/Enu.app/Contents/Frameworks"
     exec "cp -r vmlib dist/Enu.app/Contents/Resources/vmlib"
 
@@ -114,13 +114,18 @@ task dist, "Build distribution":
     godot_opts = "target=release tools=no"
     build_godot_task()
     rm_dir "dist"
-    mkdir "dist"
-    exec "cp vendor/godot/bin/godot.windows.opt.tools.64.exe dist/Enu.exe"
-    exec "rcedit dist/Enu.exe --set-icon media/enu_icon.ico"
-    let pck_path = this_dir() & "/dist/Enu.pck"
+    mkdir "dist/build"
+    let exe = "vendor/godot/bin/godot.windows.opt.64.exe"
+    exec "strip " & exe
+    cp_file exe, "dist/build/Enu.exe"
+    exec "rcedit dist/build/Enu.exe --set-icon media/enu_icon.ico"
+    let pck_path = this_dir() & "/dist/build/Enu.pck"
     exec &"{godot_bin} --path app --export-pack \"win\" " & pck_path
-    find_and_copy_dlls(parent_dir find_exe("gcc"), "dist", gcc_dlls)
-    find_and_copy_dlls(parent_dir get_current_compiler_exe(), "dist", nim_dlls)    
-    exec "cp vmlib dist"
+    exec "nimble build -d:release -d:dist"
+    cp_file "app/_dlls/enu.dll", "dist/build/enu.dll"
+    find_and_copy_dlls find_exe("gcc").parent_dir, "dist/build", gcc_dlls
+    find_and_copy_dlls get_current_compiler_exe().parent_dir, "dist/build", nim_dlls
+    cp_dir "vmlib", "dist/build/vmlib"
+    exec &"iscc /DVersion={version} installer/enu.iss"
   else:
     quit &"dist is currently unsupported on {host_os}"

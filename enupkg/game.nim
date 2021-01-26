@@ -125,9 +125,11 @@ gdobj Game of Node:
     config.lib_dir = join_path(exe_dir, "..", "..", "..", "vmlib")
     self.add_platform_input_actions()
 
-    if host_os == "macosx":
-      if "/Enu.app/" in exe_dir:
+    when defined(dist):
+      if host_os == "macosx":
         config.lib_dir = join_path(exe_dir.parent_dir, "Resources", "vmlib")
+      elif host_os == "windows":
+        config.lib_dir = join_path(exe_dir, "vmlib")
 
     echo &"Using world dir {config.world_dir}"
 
