@@ -57,7 +57,7 @@ task prereqs, "Generate Godot API binding":
   if host_os == "windows":
     # Assumes mingw
     find_and_copy_dlls find_exe("gcc").parent_dir, join_path("app", "_dlls"), gcc_dlls
-    find_and_copy_dlls get_current_compiler_exe().parent_dir, join_path("vendor", "godot", "bin"), nim_dlls  
+    find_and_copy_dlls get_current_compiler_exe().parent_dir, join_path("vendor", "godot", "bin"), nim_dlls
 
 task import_assets, "Import Godot assets. Only required if you're not using the Godot editor":
   exec godot_bin & " app/project.godot --editor --quit"
@@ -99,16 +99,18 @@ task dist, "Build distribution":
       code_sign(id, "dist/Enu.app/Contents/Frameworks/enu.dylib")
       code_sign(id, "dist/Enu.app")
 
+    let package_name = &"Enu-{version}.dmg"
     if config["package"].get_bool:
-      exec "hdiutil create Enu.dmg -ov -volname Enu -fs HFS+ -srcfolder dist"
-      exec "mv Enu.dmg dist"
+
+      exec &"hdiutil create {package_name} -ov -volname Enu -fs HFS+ -srcfolder dist"
+      exec &"mv {package_name} dist"
 
     if config["notarize"].get_bool:
       let
         username = config["notarize-username"].get_str
         password = config["notarize-password"].get_str
 
-      exec &"xcrun altool --notarize-app --primary-bundle-id 'ca.dsrw.enu'  --username '{username}' --password '{password}' --file dist/Enu.dmg"
+      exec &"xcrun altool --notarize-app --primary-bundle-id 'ca.dsrw.enu'  --username '{username}' --password '{password}' --file dist/{package_name}"
   elif host_os == "windows":
     prereqs_task()
     godot_opts = "target=release tools=no"
