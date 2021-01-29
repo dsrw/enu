@@ -92,50 +92,81 @@ or:
 
 # Install
 
+Download from https://github.com/dsrw/enu/releases. The Windows version isn't signed, and
+UAC will warn that it's untrusted. This will be fixed in a future release.
+
+Linux isn't currently supported. It should be possible to build and run, but there will
+be breaking bugs and missing features. This will be addressed soon.
+
+The world format will change in a future release. Worlds created in 0.1 won't be supported in future versions.
+# Build
+
 ```console
 $ nimble prereqs
 $ nimble build
 $ nimble edit
 ```
+
 When Godot has finished importing assets, you can launch Enu with the play button, F5,
 or with `nimble start`.
 
 ### Notes
 
-Enu temporarily requires a custom Godot version, which lives in `vendor/godot`. This is
-built as part of `nimble prereqs`.
+Enu requires a custom Godot version, which lives in `vendor/godot`. This will be fetched
+and built as part of `nimble prereqs`.
 
 See https://docs.godotengine.org/en/3.2/development/compiling/index.html
 
-Windows and Linux targets aren't well tested currently, and may not work.
+
 
 # Usage
 
-- `ESC` - toggle mouse capture and to dismiss editor windows
-- `W, A, S, D` - move around when mouse is captured
-- `Space` - jump. Double jump to toggle flying. Hold to go up while flying
-- `Shift` - go down while flying
-- `~` - toggle the console
-- `Cmd+S` - save and reload the current script
-- `F` - toggle fullscreen
-- `1 - 7` keys - Change action. 1 to code, 2 - 6 for blocks and 7 for objects
-- `Mouse Wheel Up/Down` - switch between blocks
-- `CTRL` - hold to temporarily capture the mouse and fly. Mainly so you can
+## Keyboard/Mouse
+- `ESC` - toggle mouse capture and to dismiss editor windows. Reloads script changes.
+- `W, A, S, D` - move around when mouse is captured.
+- `Space` - jump. Double jump to toggle flying. Hold to go up while flying.
+- `Shift` - run.
+- `C` - go down while flying.
+- `~` - toggle the console.
+- `F` - toggle fullscreen.
+- `1` - enter edit mode.
+- `2 - 9` - change active action.
+- `Mouse Wheel Up/Down` - change active action.
+- `Ctrl` - reload script changes. Hold to temporarily capture the mouse and move, so you can
   change your view without having to switch away from what you're doing.
+- `Cmd+P / Ctrl+P` - Pause the current script.
+- `Left Click` - Place a block/object or open the code for the currently selected object.
+- `Right Click` - Remove a block/object.
 
-Enu 0.1 will only feature 5 block types/colors, and 1 object model (a robot). This will be greatly
+## XBox / Playstation Controller
+- `Left Stick` - move.
+- `Right Stick` - change view.
+- `A / X` - jump. Double jump to toggle flying. Hold to go up while flying.
+- `B / ◯` - go down while flying. Dismiss code editor.
+- `Y / △` - toggle edit mode.
+- `L1 / R1` - change active action.
+- `L2` - place a block/object or open the code for the currently selected object.
+- `R2` - remove a block/object.
+- `L3` - run.
+
+Enu currently includes 5 block types/colors, and 1 object model (a robot). This will be greatly
 expanded in the future.
 
+# Config
+
+The Enu data directory lives in `~/Library/Application Support/Enu` on Mac, and `%AppData%\Enu` on Windows. `config.json` has a few configurable options:
+
+`downscale`: Increase to render at a lower resolution to improve performance. Should be an integer.
+
+`font_size`: The font size. DPI is currently ignored, so hidpi screens will require a higher number.
+
+`dock_icon_size`: Size of the icons in the dock. DPI is currently ignored, so hidpi screens will require a higher number.
+
+`world`: The world/project to load. Change this to create a new world.
+
+`show_stats`: Show FPS and other stats.
+
 # Tasks
-
-### v0.1
-
-- [X] Project support.
-- [X] Save the world when it changes.
-- [X] Basic documentation
-- [X] Mac binary
-- [ ] Validate under Windows
-- [ ] Windows binary
 
 ### v0.1.1
 - [ ] Validate under Linux
