@@ -73,6 +73,8 @@ gdobj Editor of TextEdit:
   method ready* =
     self.bind_signals w"save script_error command_mode_enabled command_mode_disabled"
     self.bind_signals(self, w"text_changed")
+    var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
+    self.og_bg_color = stylebox.bg_color
     show_editor = proc(file_name: string, engine: Engine) =
       self.engine = engine
       self.file_name = file_name
@@ -122,7 +124,6 @@ gdobj Editor of TextEdit:
     self.shortcut_keys_enabled = false
     self.readonly = true
     var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
-    self.og_bg_color = stylebox.bg_color
     stylebox.bg_color = Color(r: 0, g: 0, b: 0, a: 0.4)
 
   method on_command_mode_disabled =

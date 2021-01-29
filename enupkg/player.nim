@@ -96,7 +96,7 @@ gdobj Player of KinematicBody:
       self.aim_ray
     else:
       self.world_ray
- 
+
   method process*(delta: float) {.gdExport.} =
     trace:
       if not editing() or command_mode:
@@ -133,7 +133,6 @@ gdobj Player of KinematicBody:
       if command_mode and self.command_timer > 0:
         self.command_timer -= delta
         if self.command_timer <= 0:
-          print "DONE"
           get_game().disable_command_mode()
 
       const forward_rotation = deg_to_rad(-90.0)
