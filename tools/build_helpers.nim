@@ -3,7 +3,7 @@
 import godotapigen, os, cpuinfo, cligen, strformat,
        compiler/nimeval
 
-include "../app/export_presets.cfg.nimf"
+include "../installer/export_presets.cfg.nimf"
 
 const STDLIB = find_nim_std_lib_compile_time()
 

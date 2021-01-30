@@ -1,4 +1,4 @@
-#? stdtmpl(subsChar = '$', metaChar = '#')
+#? stdtmpl
 #proc generate_export_presets(version: string): string =
 #  result = ""
 [preset.0]
