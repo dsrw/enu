@@ -77,9 +77,11 @@ proc code_sign(id, path: string) =
   exec &"codesign -s '{id}' -v --timestamp --options runtime {path}"
 
 task dist, "Build distribution":
+  prereqs_task()
+  let gen = find_exe generator
+  exec &"{gen} write_export_presets --enu_version {version}"
   when host_os == "macosx":
     let config = read_file("dist_config.json").parse_json
-    prereqs_task()
     godot_opts = "target=release tools=no"
     build_godot_task()
     rm_dir "dist"

@@ -1,3 +1,6 @@
+#? stdtmpl(subsChar = '$', metaChar = '#')
+#proc generate_export_presets(version: string): string =
+#  result = ""
 [preset.0]
 
 name="mac"
@@ -21,8 +24,8 @@ application/info=""
 application/icon="res://media/enu_icon.png"
 application/identifier="ca.dsrw.enu"
 application/signature=""
-application/short_version="0.1"
-application/version="0.1"
+application/short_version="$version"
+application/version="$version"
 application/copyright="2021 Scott Wadden"
 display/high_res=true
 privacy/camera_usage_description=""
@@ -66,8 +69,8 @@ codesign/digest_algorithm=1
 codesign/description=""
 codesign/custom_options=PoolStringArray(  )
 application/icon="res://media/enu_icon.png"
-application/file_version="0.1.0"
-application/product_version="0.1.0"
+application/file_version="$version"
+application/product_version="$version"
 application/company_name="dsrw"
 application/product_name="Enu"
 application/file_description=""

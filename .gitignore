@@ -14,7 +14,7 @@ app/_dlls/enu.lib
 app/scripts/.backups
 app/scenes/default.tscn
 godotapi
-app/state
+app/export_presets.cfg
 dist/
 vmlib/stdlib
 dist_config.json
