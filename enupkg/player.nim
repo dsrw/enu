@@ -1,6 +1,6 @@
 import godot except print
 import ../godotapi / [kinematic_body, spatial, input, input_event,
-                      input_event_mouse_motion,
+                      input_event_mouse_motion, input_event_joypad_motion,
                       ray_cast, scene_tree, input_event_pan_gesture, viewport, camera, global_constants,
                       collision_shape]
 import math, print
@@ -19,7 +19,7 @@ let
   sensitivity_gamepad = vec2(2.5, 2.5)
   sensitivity_mouse = vec2(0.005, -0.005)
   nil_time = none(DateTime)
-  input_command_timeout = 0.5
+  input_command_timeout = 0.25
 
 gdobj Player of KinematicBody:
   var
@@ -159,13 +159,17 @@ gdobj Player of KinematicBody:
 
   proc has_active_input(device: int): bool =
     for axis in 0..JOY_AXIS_MAX:
-      if get_joy_axis(device, axis).abs >= 0.2:
+      if axis != JOY_ANALOG_L2 and axis != JOY_ANALOG_R2 and get_joy_axis(device, axis).abs >= 0.2:
         return true
     for button in 0..JOY_BUTTON_MAX:
       if is_joy_button_pressed(device, button):
         return true
 
   method unhandled_input*(event: InputEvent) =
+    if event of InputEventJoypadMotion:
+      let event = event as InputEventJoypadMotion
+      if event.axis == JOY_ANALOG_L2 or event.axis == JOY_ANALOG_R2:
+        return
     if event of InputEventMouseMotion and get_game().mouse_captured:
       if not skip_next_mouse_move:
         let shrink = get_game().shrink.float
