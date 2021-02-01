@@ -5,7 +5,7 @@ logs/
 *.dylib
 *.dll
 *.so
-*.import
+app/.import
 enupkg/editor
 enupkg/utils
 .DS_Store
