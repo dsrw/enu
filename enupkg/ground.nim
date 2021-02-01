@@ -63,7 +63,7 @@ gdobj Ground of MeshInstance:
 
     elif tool_mode == ObjectMode:
       let
-        proto = load("res://components/bot.tscn") as PackedScene
+        proto = load("res://components/Bot.tscn") as PackedScene
         bot = proto.instance() as NimBot
       assert not bot.is_nil
       bot.translation = p + vec3(0.5, 0, 0.5)
