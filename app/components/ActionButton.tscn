@@ -31,9 +31,9 @@ corner_radius_bottom_left = 16
 
 [node name="ActionButton" type="Button"]
 margin_left = 590.0
-margin_right = 690.0
-margin_bottom = 100.0
-rect_min_size = Vector2( 200, 200 )
+margin_right = 596.0
+margin_bottom = 20.0
+rect_min_size = Vector2( 50, 50 )
 focus_mode = 0
 custom_styles/hover = SubResource( 1 )
 custom_styles/pressed = SubResource( 2 )

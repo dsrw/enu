@@ -38,8 +38,8 @@ __meta__ = {
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_top = -206.0
-margin_bottom = -6.0
+margin_right = 0.0
+margin_bottom = -5.0
 grow_horizontal = 2
 grow_vertical = 0
 alignment = 1
@@ -49,51 +49,51 @@ __meta__ = {
 }
 
 [node name="Button-code" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 248.0
-margin_right = 448.0
-margin_bottom = 200.0
+margin_left = 773.0
+margin_right = 823.0
+margin_bottom = 50.0
 group = SubResource( 1 )
 
 [node name="Button-blue" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 452.0
-margin_right = 652.0
-margin_bottom = 200.0
+margin_left = 827.0
+margin_right = 877.0
+margin_bottom = 50.0
 pressed = true
 group = SubResource( 1 )
 icon = null
 
 [node name="Button-red" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 656.0
-margin_right = 856.0
-margin_bottom = 200.0
+margin_left = 881.0
+margin_right = 931.0
+margin_bottom = 50.0
 group = SubResource( 1 )
 icon = null
 
 [node name="Button-green" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 860.0
-margin_right = 1060.0
-margin_bottom = 200.0
+margin_left = 935.0
+margin_right = 985.0
+margin_bottom = 50.0
 group = SubResource( 1 )
 icon = null
 
 [node name="Button-black" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 1064.0
-margin_right = 1264.0
-margin_bottom = 200.0
+margin_left = 989.0
+margin_right = 1039.0
+margin_bottom = 50.0
 group = SubResource( 1 )
 icon = null
 
 [node name="Button-white" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 1268.0
-margin_right = 1468.0
-margin_bottom = 200.0
+margin_left = 1043.0
+margin_right = 1093.0
+margin_bottom = 50.0
 group = SubResource( 1 )
 icon = null
 
 [node name="Button-bot" parent="Toolbar" instance=ExtResource( 3 )]
-margin_left = 1472.0
-margin_right = 1672.0
-margin_bottom = 200.0
+margin_left = 1097.0
+margin_right = 1147.0
+margin_bottom = 50.0
 group = SubResource( 1 )
 icon = null
 
