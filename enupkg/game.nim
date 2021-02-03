@@ -114,7 +114,6 @@ gdobj Game of Node:
       )
       JSON.save_file(config_file, default_config, pretty = true)
     config = JSON.load_file(config_file, Config)
-    echo repr(config)
     config.world_dir = join_path(work_dir, config.world)
     config.script_dir = join_path(config.world_dir, "scripts")
     config.scene = join_path(config.world_dir, "data.tscn")
@@ -130,8 +129,10 @@ gdobj Game of Node:
         config.lib_dir = join_path(exe_dir.parent_dir, "Resources", "vmlib")
       elif host_os == "windows":
         config.lib_dir = join_path(exe_dir, "vmlib")
+      elif host_os == "linux":
+        config.lib_dir = join_path(exe_dir.parent_dir, "lib", "vmlib")
 
-    echo &"Using world dir {config.world_dir}"
+    print config
 
   proc load_world() =
     data_node = self.find_node("data")

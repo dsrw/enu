@@ -1,4 +1,5 @@
 # Enu
+
 3D live coding, implemented in Nim.
 
 ![Enu Screenshot](media/screenshot_2.png)
@@ -9,6 +10,7 @@ It aspires to make 3D development more accessible, and will eventually be usable
 Enu isn't ready for public testing, but it's getting close. MacOS, PC and Linux version of Enu 0.1 should be ready on Friday, Nov. 6th 2020.
 
 # Demo
+
 See the [Enu 0.1 demo video](https://youtu.be/upg77dMBGDE):
 
 [![Enu 0.1 Demo](media/screenshot_1.png)](https://youtu.be/upg77dMBGDE)
@@ -17,6 +19,7 @@ See the [Enu 0.1 demo video](https://youtu.be/upg77dMBGDE):
 
 - [Enu 0.01 Intro and Demo](https://youtu.be/QfAzuX7-y0Y)
 - [Introducing Enu - NimConf 2020](https://youtu.be/3l6tsKM1cY8)
+
 # Examples
 
 Draw a square:
@@ -99,29 +102,27 @@ Linux isn't currently supported. It should be possible to build and run, but the
 be breaking bugs and missing features. This will be addressed soon.
 
 The world format will change in a future release. Worlds created in 0.1 won't be supported in future versions.
-# Build
+
+# Build and Run
 
 ```console
 $ nimble prereqs
 $ nimble build
-$ nimble edit
+$ nimble import_assets
+$ nimble start
 ```
 
-When Godot has finished importing assets, you can launch Enu with the play button, F5,
-or with `nimble start`.
-
-### Notes
+## Notes
 
 Enu requires a custom Godot version, which lives in `vendor/godot`. This will be fetched
 and built as part of `nimble prereqs`.
 
 See https://docs.godotengine.org/en/3.2/development/compiling/index.html
 
-
-
 # Usage
 
 ## Keyboard/Mouse
+
 - `ESC` - toggle mouse capture and to dismiss editor windows. Reloads script changes.
 - `W, A, S, D` - move around when mouse is captured.
 - `Space` - jump. Double jump to toggle flying. Hold to go up while flying.
@@ -139,6 +140,7 @@ See https://docs.godotengine.org/en/3.2/development/compiling/index.html
 - `Right Click` - Remove a block/object.
 
 ## XBox / Playstation Controller
+
 - `Left Stick` - move.
 - `Right Stick` - change view.
 - `A / X` - jump. Double jump to toggle flying. Hold to go up while flying.
@@ -154,7 +156,7 @@ expanded in the future.
 
 # Config
 
-The Enu data directory lives in `~/Library/Application Support/Enu` on Mac, and `%AppData%\Enu` on Windows. `config.json` has a few configurable options:
+The Enu data directory lives in `~/Library/Application Support/enu` on Mac, `%AppData%\enu` on Windows, and `~/.local/share/enu` on Linux. `config.json` has a few configurable options:
 
 `downscale`: Increase to render at a lower resolution to improve performance. Should be an integer.
 
@@ -168,6 +170,13 @@ The Enu data directory lives in `~/Library/Application Support/Enu` on Mac, and 
 
 # Tasks
 
-### v0.1.1
-- [ ] Validate under Linux
-- [ ] Linux install task
+### v0.2
+
+- [ ] Slim down Godot classes. Move out most of the state.
+- [ ] General refactoring and cleanups.
+- [ ] Rethink Nim VM usage. Ideally, everything will run in a single VM.
+- [ ] State machines to manage UI and player behavior.
+
+### v0.2.1
+
+- [ ] iOS support.

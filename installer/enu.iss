@@ -17,7 +17,7 @@ DisableProgramGroupPage=yes
 LicenseFile=..\LICENSE
 PrivilegesRequiredOverridesAllowed=dialog
 OutputDir=..\dist
-OutputBaseFilename=enu-{#Version}
+OutputBaseFilename=enu-{#Version}-installer
 SetupIconFile=..\media\enu_icon.ico
 UninstallDisplayIcon={app}\{#ExeName}
 Compression=lzma
@@ -40,4 +40,3 @@ Name: "{autodesktop}\{#Name}"; Filename: "{app}\{#ExeName}"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\{#ExeName}"; Description: "{cm:LaunchProgram,{#StringChange(Name, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
-

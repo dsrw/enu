@@ -4,6 +4,7 @@ import godotapigen, os, cpuinfo, cligen, strformat,
        compiler/nimeval
 
 include "../installer/export_presets.cfg.nimf"
+include "../installer/Info.plist.nimf"
 
 const STDLIB = find_nim_std_lib_compile_time()
 
@@ -25,4 +26,7 @@ proc generate_api(directory = "godotapi", json = "api.json") =
 proc write_export_presets(enu_version: string) =
   write_file("app/export_presets.cfg", generate_export_presets(enu_version))
 
-dispatch_multi [generate_api], [core_count], [copy_stdlib], [write_export_presets]
+proc write_info_plist(enu_version: string) =
+  write_file("dist/Enu.app/Contents/Info.plist", generate_export_presets(enu_version))
+
+dispatch_multi [generate_api], [core_count], [copy_stdlib], [write_export_presets], [write_info_plist]

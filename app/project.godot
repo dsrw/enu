@@ -26,7 +26,6 @@ config/icon="res://media/enu_icon.png"
 
 [display]
 
-window/size/fullscreen=true
 window/dpi/allow_hidpi=true
 window/stretch/aspect="expand"
 
