@@ -7,7 +7,7 @@
 Enu lets you build and explore worlds using a familiar block-building interface and a Logo inspired API.
 It aspires to make 3D development more accessible, and will eventually be usable to create sandalone games.
 
-Enu isn't ready for public testing, but it's getting close. MacOS, PC and Linux version of Enu 0.1 should be ready on Friday, Nov. 6th 2020.
+Download version 0.1 from https://github.com/dsrw/enu/releases/tag/v0.1.0.
 
 # Demo
 
