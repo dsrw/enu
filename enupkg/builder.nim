@@ -65,6 +65,9 @@ gdobj Builder of Spatial:
   proc set_script() =
     self.enu_script = join_path(config.script_dir, &"grid_{self.script_index}.nim")
 
+  proc default_script: string = 
+    join_path(config.lib_dir, "enu", "default_grid.nim")
+
   proc setup*(translation: Vector3) =
     self.translation = translation
     self.original_translation = translation
@@ -72,7 +75,15 @@ gdobj Builder of Spatial:
     inc max_grid_index
     self.name = "Builder_" & $self.script_index
     self.set_script()
-    copy_file join_path(config.lib_dir, "enu", "default_grid.nim"), self.enu_script
+    copy_file self.default_script, self.enu_script
+
+  proc is_script_loadable(): bool =
+    if self.enu_script != "none" and file_exists(self.enu_script):
+      let
+        default_code = read_file(self.default_script).strip
+        current_code = read_file(self.enu_script).strip
+
+      result = current_code != "" and current_code != default_code
 
   proc save_blocks*() =
     let data = if self.draw_mode == VoxelMode:
@@ -356,15 +367,12 @@ gdobj Builder of Spatial:
     self.load_script()
 
   proc load_script() =
-    if self.enu_script == "none":
-      # can't use empty string because it gets set as nil, which is no longer valid nim.
-      # can probably be fixed in godot-nim
-      return
-    debug &"Loading {self.enu_script}. Paused {self.paused}"
     self.callback = nil
     self.blocks_remaining_this_frame = 0
     try:
       if self.engine.is_nil: self.engine = Engine()
+      if not self.is_script_loadable:
+        return
       if not (self.paused or self.engine.initialized):
         with self.engine:
           load(self.enu_script, config.lib_dir)

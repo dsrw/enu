@@ -92,15 +92,26 @@ gdobj NimBot of KinematicBody:
     err e.msg
     trigger("script_error")
 
+  proc default_script: string = 
+    join_path(config.lib_dir, "enu", "default_bot.nim")
+
+  proc is_script_loadable(): bool =
+    if self.enu_script != "none" and file_exists(self.enu_script):
+      let
+        default_code = read_file(self.default_script).strip
+        current_code = read_file(self.enu_script).strip
+
+      result = current_code != "" and current_code != default_code
+
   proc load_script() =
     trace:
-      if self.enu_script == "none":
-        return
       self.callback = nil
 
       try:
         if self.engine.is_nil:
           self.engine = Engine()
+        if not self.is_script_loadable:
+          return
         if not self.paused and not self.engine.initialized:
           debug &"Loading {self.enu_script}"
 
@@ -138,7 +149,7 @@ gdobj NimBot of KinematicBody:
       inc max_bot_index
       self.name = "Bot_" & $self.script_index
       self.set_script()
-      copy_file join_path(config.lib_dir, "enu", "default_bot.nim"), self.enu_script
+      copy_file self.default_script, self.enu_script
 
   method ready*() =
     trace:
