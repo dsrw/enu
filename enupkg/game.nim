@@ -85,7 +85,7 @@ gdobj Game of Node:
       alert(&"Enu {version}\n\n© 2020 Scott Wadden", "Enu")
 
   proc add_platform_input_actions =
-    let suffix = "." & gd_os.get_name()
+    let suffix = "." & host_os
     for action in get_actions():
       let action = action.as_string()
       if suffix in action:
