@@ -38,6 +38,9 @@ gdobj NimBot of KinematicBody:
   proc select*() =
     show_editor self.enu_script, self.engine
 
+  proc destroy*() =
+    self.get_parent.remove_child(self)
+
   proc print_error(msg: string) =
     if msg != self.last_error:
       self.last_error = msg
@@ -92,7 +95,7 @@ gdobj NimBot of KinematicBody:
     err e.msg
     trigger("script_error")
 
-  proc default_script: string = 
+  proc default_script: string =
     join_path(config.lib_dir, "enu", "default_bot.nim")
 
   proc is_script_loadable(): bool =

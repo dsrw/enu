@@ -121,7 +121,7 @@ gdobj Grid of GridMap:
       self.trigger("selected")
 
   method on_target_remove() =
-    if tool_mode == BlockMode:
+    if tool_mode != CodeMode:
       self.erasing = true
       let point = self.world_to_map(self.point - (self.normal * 0.5))
       let index = self.get_cell_item(int point.x, int point.y, int point.z).int

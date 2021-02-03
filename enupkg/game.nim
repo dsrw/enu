@@ -168,7 +168,7 @@ gdobj Game of Node:
         font = theme.default_font.as(DynamicFont)
         bold_font = theme.get_font("bold_font", "RichTextLabel")
                           .as(DynamicFont)
- 
+
       font.size = config.font_size
       bold_font.size = config.font_size
       theme_holder.theme = theme
@@ -206,9 +206,17 @@ gdobj Game of Node:
 
   proc update_action_index*(change: int) =
     action_index += change
-    if action_index < 1: action_index = action_count - 1
-    if action_index >= action_count: action_index = 1
-    self.block_mode(action_index)
+    if action_index < 0:
+      action_index = action_count
+      self.obj_mode(action_index)
+    if action_index == 0:
+      self.code_mode()
+    elif action_index == action_count:
+      self.obj_mode(action_index)
+    elif action_index > action_count:
+      self.code_mode()
+    else:
+      self.block_mode(action_index)
 
   proc next_action*() =
     self.update_action_index(1)
