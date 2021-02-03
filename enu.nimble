@@ -77,11 +77,11 @@ proc code_sign(id, path: string) =
   exec &"codesign -s '{id}' -v --timestamp --options runtime {path}"
 
 task dist, "Build distribution":
-  let release_bin = &"vendor/godot/bin/godot.{target}.opt.debug.64{exe_ext}"
+  let release_bin = &"vendor/godot/bin/godot.{target}.opt.64{exe_ext}"
   prereqs_task()
   let gen = find_exe generator
   exec &"{gen} write_export_presets --enu_version {version}"
-  godot_opts = "target=release_debug tools=no"
+  godot_opts = "target=release tools=no"
   build_godot_task()
   rm_dir "dist"
 
@@ -118,18 +118,21 @@ task dist, "Build distribution":
       exec &"xcrun altool --notarize-app --primary-bundle-id 'ca.dsrw.enu'  --username '{username}' --password '{password}' --file dist/{package_name}"
   
   elif host_os == "windows":
-    mkdir "dist/build"
-    exec "strip " & exe
-    cp_file release_bin, "dist/build/enu.exe"
-    exec "rcedit dist/build/enu.exe --set-icon media/enu_icon.ico"
-    let pck_path = this_dir() & "/dist/build/enu.pck"
+    let root = &"dist/enu-{version}"
+    mkdir root
+    exec "strip " & release_bin
+    cp_file release_bin, root & "/enu.exe"
+    exec &"rcedit {root}/enu.exe --set-icon media/enu_icon.ico"
+    let pck_path = &"{this_dir()}/{root}/enu.pck"
     exec &"{godot_bin} --path app --export-pack \"win\" " & pck_path
     exec "nimble build -d:release -d:dist"
-    cp_file "app/_dlls/enu.dll", "dist/build/enu.dll"
-    find_and_copy_dlls find_exe("gcc").parent_dir, "dist/build", gcc_dlls
-    find_and_copy_dlls get_current_compiler_exe().parent_dir, "dist/build", nim_dlls
-    cp_dir "vmlib", "dist/build/vmlib"
+    cp_file "app/_dlls/enu.dll", root & "/enu.dll"
+    find_and_copy_dlls find_exe("gcc").parent_dir, root, gcc_dlls
+    find_and_copy_dlls get_current_compiler_exe().parent_dir, root, nim_dlls
+    cp_dir "vmlib", root & "/vmlib"
     exec &"iscc /DVersion={version} installer/enu.iss"
+    with_dir "dist":
+      exec &"zip -r enu-{version}.zip enu-{version}"
   
   elif host_os == "linux":
     let root = &"dist/enu-{version}"

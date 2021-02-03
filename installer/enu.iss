@@ -31,8 +31,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "..\dist\build\{#ExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\dist\build\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\dist\enu-{#Version}\{#ExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\dist\enu-{#Version}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{autoprograms}\{#Name}"; Filename: "{app}\{#ExeName}"
