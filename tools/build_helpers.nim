@@ -27,6 +27,6 @@ proc write_export_presets(enu_version: string) =
   write_file("app/export_presets.cfg", generate_export_presets(enu_version))
 
 proc write_info_plist(enu_version: string) =
-  write_file("dist/Enu.app/Contents/Info.plist", generate_export_presets(enu_version))
+  write_file("dist/Enu.app/Contents/Info.plist", generate_info_plist(enu_version))
 
 dispatch_multi [generate_api], [core_count], [copy_stdlib], [write_export_presets], [write_info_plist]
