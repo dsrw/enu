@@ -155,7 +155,7 @@ expanded in the future.
 
 Drop a block or robot with the left mouse button/controller trigger, remove it with the right. Adjoining blocks will be combined into a single structure. With the mouse captured, building works more or less like MineCraft. Release the mouse by pressing ESC to draw blocks using the mouse cursor.
 
-Code by switching to the code tool left clicking/triggering on an object or structure. Changes are applied when the code window is closed (ESC key) or CTRL is pressed. Holding CTRL will also temprarly grab the mouse and allow you to change your position.
+Code by switching to the code tool by left clicking/triggering on an object or structure. Changes are applied when the code window is closed (ESC key) or CTRL is pressed. Holding CTRL will also temprarly grab the mouse and allow you to change your position.
 
 # Config
 
