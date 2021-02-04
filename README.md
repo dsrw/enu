@@ -7,7 +7,14 @@
 Enu lets you build and explore worlds using a familiar block-building interface and a Logo inspired API.
 It aspires to make 3D development more accessible, and will eventually be usable to create sandalone games.
 
-Download version 0.1 from https://github.com/dsrw/enu/releases/tag/v0.1.0.
+# Install
+
+Download from https://github.com/dsrw/enu/releases. The Windows version isn't signed, and
+UAC will warn that it's untrusted. This will be fixed in a future release.
+
+The Linux version hasn't been tested particularly well, but it works for me under Ubuntu 20.04. Please report any issues.
+
+The world format will change in a future release. Worlds created in 0.1 won't be supported in future versions.
 
 # Demo
 
@@ -93,16 +100,6 @@ or:
 ```
 ![Color Cycle Example](media/cycle_example.png)
 
-# Install
-
-Download from https://github.com/dsrw/enu/releases. The Windows version isn't signed, and
-UAC will warn that it's untrusted. This will be fixed in a future release.
-
-Linux isn't currently supported. It should be possible to build and run, but there will
-be breaking bugs and missing features. This will be addressed soon.
-
-The world format will change in a future release. Worlds created in 0.1 won't be supported in future versions.
-
 # Build and Run
 
 ```console
@@ -153,6 +150,12 @@ See https://docs.godotengine.org/en/3.2/development/compiling/index.html
 
 Enu currently includes 5 block types/colors, and 1 object model (a robot). This will be greatly
 expanded in the future.
+
+## Building
+
+Drop a block or robot with the left mouse button/controller trigger, remove it with the right. Adjoining blocks will be combined into a single structure. With the mouse captured, building works more or less like MineCraft. Release the mouse by pressing ESC to draw blocks using the mouse cursor.
+
+Code by switching to the code tool left clicking/triggering on an object or structure. Changes are applied when the code window is closed (ESC key) or CTRL is pressed. Holding CTRL will also temprarly grab the mouse and allow you to change your position.
 
 # Config
 
