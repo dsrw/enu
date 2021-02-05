@@ -1,6 +1,6 @@
 import compiler / [vm, vmdef, nimeval, options, lineinfos, ast]
 import os, strformat, std/with
-import core
+import core, fibers
 export Interpreter
 
 export VmArgs, get_float, get_int, get_string, get_bool
@@ -11,15 +11,12 @@ type
   VMPause* = object of CatchableError
   Engine* = ref object
     i: Interpreter
-    ctx: PCtx
-    pc: int
-    tos: PStackFrame
     line_changed*: proc(current, previous: TLineInfo)
     current_line*: TLineInfo
     previous_line: TLineInfo
     initialized*: bool
-    pause_requested: bool
     errors*: seq[tuple[msg: string, info: TLineInfo]]
+    coro: CoroutineRef
 
 const
   STDLIB = find_nim_stdlib_compile_time()
@@ -46,22 +43,15 @@ proc load*(e: Engine, script_file, vmlib: string) =
           if e.line_changed != nil:
             e.line_changed(info, e.previous_line)
           (e.previous_line, e.current_line) = (e.current_line, info)
-        if e.pause_requested:
-          e.pause_requested = false
-          e.ctx = c
-          e.pc = pc
-          e.tos = tos
-          raise new_exception(VMPause, "vm paused")
 
     e.initialized = true
     log_trace("hooks")
 
 proc run*(e: Engine): bool =
-  try:
-    e.i.eval_script()
-    false
-  except VMPause:
-    true
+  proc go() = e.i.eval_script()
+  e.coro = start(go)
+  #e.coro.resume()
+  e.coro.alive
 
 proc to_node*(val: int): PNode =
   new_int_node(nk_int_lit, val)
@@ -83,14 +73,13 @@ proc call_proc*(e: Engine, proc_name: string, module_name = "", args: varargs[PN
   return e.i.call_routine(foreign_proc, args)
 
 proc call*(e: Engine, proc_name: string): bool =
-  try:
-    discard e.call_proc(proc_name)
-    false
-  except VMPause:
-    true
+  proc go() = e.call_proc(proc_name)
+  e.coro = start(go)
+  #e.coro.resume()
+  e.coro.alive
 
 proc pause*(e: Engine) =
-  e.pause_requested = true
+  suspend()
 
 proc expose*(e: Engine, script_name, proc_name: string,
              routine: proc(a: VmArgs): bool) {.gcsafe.} =
@@ -119,8 +108,5 @@ proc call_int*(e: Engine, proc_name: string): int =
   e.call_proc(proc_name).get_int.to_int
 
 proc resume*(e: Engine): bool =
-  try:
-    discard execFromCtx(e.ctx, e.pc, e.tos)
-    false
-  except VMPause:
-    true
+  e.coro.resume()
+  e.coro.alive

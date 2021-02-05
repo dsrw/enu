@@ -1,9 +1,8 @@
 --define:useRealtimeGC
 --define:vmExecHooks
+--define:nimCoroutines
 --noMain
 --app:lib
 --threads:on
 --tlsEmulation:off
 --threadAnalysis:off
-#--define:gcDestructors
-#--gc:orc
