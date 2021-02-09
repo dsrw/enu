@@ -60,8 +60,9 @@ gdobj Editor of TextEdit:
 
   proc highlight_errors =
     self.clear_executing_line()
-    for err in self.engine.errors:
-      self.set_line_as_marked(int64(err.info.line - 1), true)
+    if not self.engine.is_nil:
+      for err in self.engine.errors:
+        self.set_line_as_marked(int64(err.info.line - 1), true)
 
   proc `executing_line=`*(line: int) =
     if self.get_line_count >= line:

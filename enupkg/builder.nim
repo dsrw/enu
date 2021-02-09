@@ -23,7 +23,6 @@ gdobj Builder of Spatial:
     paused* = false
     engine: Engine
     callback: proc(delta: float): bool
-    is_running = false
     index: int = 1
     blocks_per_frame = 0.0
     blocks_remaining_this_frame = 0.0
@@ -38,6 +37,7 @@ gdobj Builder of Spatial:
     built = false
     move_mode = false
     scale_factor = 1.0
+    running = false
     # If we delete a voxel while it's queued up to be drawn by godot voxel,
     # the voxel gets drawn anyway, and the polys hang around until they
     # move out of draw distance. Wait a bit before clearing. FIXME.
@@ -118,17 +118,15 @@ gdobj Builder of Spatial:
       else:
         self.grid.draw(x, y, z, index, keep, trigger)
 
-  proc `running=`*(val: bool) =
-    self.is_running = val
-    if not val:
+  proc update_running_state(running: bool) =
+    self.running = running
+    if not self.running:
       self.holes = self.kept_holes
       self.kept_holes.clear()
       self.save_blocks()
       self.load_vars()
       debug(self.enu_script & " done.")
-
-  proc running*: bool = self.is_running
-
+    
   proc includes_any_location*(locations: seq[Vector3]): bool =
     if self.draw_mode == GridMode:
       for l in self.grid.get_used_cells():
@@ -232,15 +230,15 @@ gdobj Builder of Spatial:
         try:
           if self.move_mode:
             if self.running and (self.callback == nil or not self.callback(delta)):
-              self.running = self.engine.resume()
+              self.update_running_state self.engine.resume()
           else:
             if self.blocks_per_frame > 0:
               while self.running and self.blocks_remaining_this_frame >= 1:
                 if self.callback == nil or not self.callback(delta):
-                  self.running = self.engine.resume()
+                  self.update_running_state self.engine.resume()
             else:
               if self.running and (self.callback == nil or not self.callback(delta)):
-                  self.running = self.engine.resume()
+                  self.update_running_state self.engine.resume()
 
         except VMQuit as e:
           self.error(e)
@@ -249,7 +247,7 @@ gdobj Builder of Spatial:
     self.engine.call_proc("set_vars", module_name = "grid", self.index, self.drawing,
                           self.speed, self.scale_factor, int self.draw_mode,
                           self.overwrite, self.move_mode)
-
+    
   proc move(direction: Vector3, steps: float): bool =
     self.load_vars()
     if self.move_mode:
@@ -319,7 +317,7 @@ gdobj Builder of Spatial:
 
   proc restore(name: string): bool =
     (self.position, self.index, self.drawing) = self.save_points[name]
-    self.set_vars()
+    if self.engine.initialized: self.set_vars()
     false
 
   proc forward(steps: float): bool = self.move(FORWARD, steps)
@@ -346,7 +344,11 @@ gdobj Builder of Spatial:
 
   proc reset(clear = true) =
     self.set_defaults()
-    if self.engine.initialized: self.set_vars()
+    if self.engine.initialized:
+      try:
+        self.set_vars()
+      except VMError:
+        discard
     if clear:
       self.clear()
       let p = self.position.origin
@@ -409,7 +411,7 @@ gdobj Builder of Spatial:
             self.set_vars()
             false
       if not self.paused:
-        self.running = self.engine.run()
+        self.update_running_state self.engine.run()
     except VMQuit as e:
       self.error(e)
 

@@ -6,7 +6,8 @@ export Interpreter
 export VmArgs, get_float, get_int, get_string, get_bool
 
 type
-  VMQuit* = object of CatchableError
+  VMError* = object of CatchableError
+  VMQuit* = object of VMError
     info*: TLineInfo
   VMPause* = object of CatchableError
   Engine* = ref object
@@ -79,7 +80,7 @@ proc to_node*(val: bool): PNode =
 proc call_proc*(e: Engine, proc_name: string, module_name = "", args: varargs[PNode, to_node]): PNode {.discardable.}=
   let foreign_proc = e.i.select_routine(proc_name, module_name = module_name)
   if foreign_proc == nil:
-    quit &"script does not export a proc of the name: '{proc_name}'"
+    raise new_exception(VMError, &"script does not export a proc of the name: '{proc_name}'")
   return e.i.call_routine(foreign_proc, args)
 
 proc call*(e: Engine, proc_name: string): bool =
