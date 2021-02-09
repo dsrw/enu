@@ -65,7 +65,7 @@ gdobj Builder of Spatial:
   proc set_script() =
     self.enu_script = join_path(config.script_dir, &"grid_{self.script_index}.nim")
 
-  proc default_script: string = 
+  proc default_script: string =
     join_path(config.lib_dir, "enu", "default_grid.nim")
 
   proc setup*(translation: Vector3) =
@@ -126,7 +126,7 @@ gdobj Builder of Spatial:
       self.save_blocks()
       self.load_vars()
       debug(self.enu_script & " done.")
-    
+
   proc includes_any_location*(locations: seq[Vector3]): bool =
     if self.draw_mode == GridMode:
       for l in self.grid.get_used_cells():
@@ -247,7 +247,7 @@ gdobj Builder of Spatial:
     self.engine.call_proc("set_vars", module_name = "grid", self.index, self.drawing,
                           self.speed, self.scale_factor, int self.draw_mode,
                           self.overwrite, self.move_mode)
-    
+
   proc move(direction: Vector3, steps: float): bool =
     self.load_vars()
     if self.move_mode:
