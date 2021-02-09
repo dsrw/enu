@@ -132,7 +132,7 @@ task dist, "Build distribution":
     cp_dir "vmlib", root & "/vmlib"
     exec &"iscc /DVersion={version} installer/enu.iss"
     with_dir "dist":
-      exec &"zip -r enu-{version}.zip enu-{version}"
+      exec &"zip -r enu-{version}-x64.zip enu-{version}"
 
   elif host_os == "linux":
     let root = &"dist/enu-{version}"
@@ -147,7 +147,7 @@ task dist, "Build distribution":
     let pck_path = this_dir() & "/" & root & "/enu.pck"
     exec &"{godot_bin} --path app --export-pack \"x11\" " & pck_path
     with_dir "dist":
-      exec &"tar -czvf enu-{version}.tar.gz enu-{version}"
+      exec &"tar -czvf enu-{version}-x64.tar.gz enu-{version}"
 
   else:
     quit &"dist is currently unsupported on {host_os}"
