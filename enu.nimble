@@ -13,7 +13,7 @@ let
   gcc_dlls        = ["libgcc_s_seh-1.dll", "libwinpthread-1.dll"]
   nim_dlls        = ["pcre64.dll"]
 
-version       = "0.1.0"
+version       = "0.1.1"
 author        = "Scott Wadden"
 description   = "Logo-like DSL for Godot"
 license       = "MIT"
@@ -86,7 +86,7 @@ task dist, "Build distribution":
   rm_dir "dist"
 
   when host_os == "macosx":
-    let config = read_file("dist_config.json").parse_json  
+    let config = read_file("dist_config.json").parse_json
     mkdir "dist"
     exec "cp -r installer/Enu.app dist/Enu.app"
     exec &"{gen} write_info_plist --enu_version {version}"
@@ -116,7 +116,7 @@ task dist, "Build distribution":
         password = config["notarize-password"].get_str
 
       exec &"xcrun altool --notarize-app --primary-bundle-id 'ca.dsrw.enu'  --username '{username}' --password '{password}' --file dist/{package_name}"
-  
+
   elif host_os == "windows":
     let root = &"dist/enu-{version}"
     mkdir root
@@ -133,7 +133,7 @@ task dist, "Build distribution":
     exec &"iscc /DVersion={version} installer/enu.iss"
     with_dir "dist":
       exec &"zip -r enu-{version}.zip enu-{version}"
-  
+
   elif host_os == "linux":
     let root = &"dist/enu-{version}"
     mkdir root & "/bin"
@@ -148,7 +148,6 @@ task dist, "Build distribution":
     exec &"{godot_bin} --path app --export-pack \"x11\" " & pck_path
     with_dir "dist":
       exec &"tar -czvf enu-{version}.tar.gz enu-{version}"
-  
+
   else:
     quit &"dist is currently unsupported on {host_os}"
-    
