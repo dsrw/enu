@@ -1,9 +1,8 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://components/Builder.gdns" type="Script" id=1]
 [ext_resource path="res://meshlibs/block.meshlib" type="MeshLibrary" id=2]
 [ext_resource path="res://components/Grid.gdns" type="Script" id=3]
-[ext_resource path="res://materials/highlight.tres" type="Material" id=4]
 
 [node name="Builder" type="Spatial"]
 script = ExtResource( 1 )
@@ -12,6 +11,7 @@ draw_mode = 1
 [node name="Grid" type="GridMap" parent="."]
 mesh_library = ExtResource( 2 )
 cell_size = Vector3( 1, 1, 1 )
+collision_mask = 0
 data = {
 "cells": PoolIntArray(  )
 }
@@ -19,4 +19,3 @@ script = ExtResource( 3 )
 __meta__ = {
 "_editor_clip_": 0
 }
-highlight_material = ExtResource( 4 )

@@ -60,11 +60,11 @@ shadow_color = Color( 0.658824, 0.658824, 0.658824, 1 )
 directional_shadow_mode = 0
 
 [node name="Ground" type="MeshInstance" parent="."]
-layers = 7
 mesh = SubResource( 1 )
 material/0 = null
 
 [node name="StaticBody" type="StaticBody" parent="Ground"]
+collision_layer = 524288
 collision_mask = 0
 script = ExtResource( 4 )
 
@@ -73,8 +73,8 @@ shape = SubResource( 2 )
 
 [node name="Player" parent="." instance=ExtResource( 6 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0 )
-collision_layer = 1
-collision_mask = 7
+collision_layer = 2147483648
+collision_mask = 524291
 
 [node name="data" parent="." instance=ExtResource( 1 )]
 

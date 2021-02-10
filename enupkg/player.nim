@@ -156,6 +156,9 @@ gdobj Player of KinematicBody:
         let velocity = self.calculate_velocity(self.velocity, move_direction,
                                                delta, self.flying, self.running)
         self.velocity = self.move_and_slide(velocity, UP)
+        # drop us back in the middle of the world if we fall through
+        if self.translation.y < -10:
+          self.translation = vec3(0, 100, 0)
 
   proc has_active_input(device: int): bool =
     for axis in 0..JOY_AXIS_MAX:
@@ -195,7 +198,8 @@ gdobj Player of KinematicBody:
       if toggle:
         self.jump_time = nil_time
         self.flying = not self.flying
-        self.collision_shape.disabled = self.flying
+        for i in [0, 1]:
+          self.set_collision_mask_bit(i, not self.flying)
       elif self.is_on_floor():
         self.velocity += vec3(0, jump_impulse, 0)
         self.jump_time = time

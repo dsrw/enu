@@ -6,36 +6,37 @@
 [ext_resource path="res://materials/blue-block-grid.tres" type="Material" id=4]
 [ext_resource path="res://materials/black-block-grid.tres" type="Material" id=6]
 
-[sub_resource type="CubeMesh" id=10]
+[sub_resource type="CubeMesh" id=1]
 material = ExtResource( 4 )
 size = Vector3( 1, 1, 1 )
 
 [sub_resource type="BoxShape" id=2]
 extents = Vector3( 0.5, 0.5, 0.5 )
 
-[sub_resource type="CubeMesh" id=11]
+[sub_resource type="CubeMesh" id=3]
 material = ExtResource( 2 )
 size = Vector3( 1, 1, 1 )
 
-[sub_resource type="CubeMesh" id=12]
+[sub_resource type="CubeMesh" id=4]
 material = ExtResource( 1 )
 size = Vector3( 1, 1, 1 )
 
-[sub_resource type="BoxShape" id=9]
+[sub_resource type="BoxShape" id=5]
 extents = Vector3( 0.5, 0.5, 0.5 )
 
-[sub_resource type="CubeMesh" id=13]
+[sub_resource type="CubeMesh" id=6]
 material = ExtResource( 6 )
 size = Vector3( 1, 1, 1 )
 
-[sub_resource type="CubeMesh" id=14]
+[sub_resource type="CubeMesh" id=7]
 material = ExtResource( 3 )
 size = Vector3( 1, 1, 1 )
 
 [node name="block" type="Spatial"]
 
 [node name="blue-block" type="MeshInstance" parent="."]
-mesh = SubResource( 10 )
+layers = 2
+mesh = SubResource( 1 )
 material/0 = null
 
 [node name="StaticBody" type="StaticBody" parent="blue-block"]
@@ -46,7 +47,8 @@ shape = SubResource( 2 )
 
 [node name="red-block" type="MeshInstance" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2 )
-mesh = SubResource( 11 )
+layers = 2
+mesh = SubResource( 3 )
 material/0 = null
 
 [node name="StaticBody" type="StaticBody" parent="red-block"]
@@ -57,18 +59,20 @@ shape = SubResource( 2 )
 
 [node name="green-block" type="MeshInstance" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4 )
-mesh = SubResource( 12 )
+layers = 2
+mesh = SubResource( 4 )
 material/0 = null
 
 [node name="StaticBody" type="StaticBody" parent="green-block"]
 input_ray_pickable = false
 
 [node name="CollisionShape" type="CollisionShape" parent="green-block/StaticBody"]
-shape = SubResource( 9 )
+shape = SubResource( 5 )
 
 [node name="black-block" type="MeshInstance" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -6 )
-mesh = SubResource( 13 )
+layers = 2
+mesh = SubResource( 6 )
 material/0 = null
 
 [node name="StaticBody" type="StaticBody" parent="black-block"]
@@ -79,7 +83,8 @@ shape = SubResource( 2 )
 
 [node name="white-block" type="MeshInstance" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -8 )
-mesh = SubResource( 14 )
+layers = 2147483650
+mesh = SubResource( 7 )
 material/0 = null
 
 [node name="StaticBody" type="StaticBody" parent="white-block"]
