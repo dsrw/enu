@@ -24,7 +24,7 @@ See the [Enu 0.1 demo video](https://youtu.be/upg77dMBGDE):
 
 ### Outdated Demos
 
-- [Enu 0.01 Intro and Demo](https://youtu.be/QfAzuX7-y0Y)
+- [Enu 0.01 Intro and Demo](https://youtu.be/AW0PT9j976s)
 - [Introducing Enu - NimConf 2020](https://youtu.be/3l6tsKM1cY8)
 
 # Examples
