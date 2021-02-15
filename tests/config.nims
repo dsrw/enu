@@ -1,1 +1,1 @@
-switch("path", "$projectDir/../enupkg")
+switch("path", "$projectDir/../src")

@@ -19,6 +19,7 @@ description   = "Logo-like DSL for Godot"
 license       = "MIT"
 install_files = @["enu.nim"]
 bin_dir       = "app/_dlls"
+src_dir       = "src"
 bin           = @["enu" & lib_ext]
 
 requires "nim >= 1.4.0",
