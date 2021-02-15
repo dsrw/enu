@@ -71,10 +71,6 @@ proc init_interpreter(script_dir, vmlib: string) =
 
     log_trace("hooks")
 
-proc new*(typ: typedesc[Engine], module_name, vmlib: string): Engine =
-  result = Engine()
-  result.load(module_name, vmlib)
-
 proc pause*(e: Engine) =
   set_current e
   e.pause_requested = true
@@ -162,39 +158,3 @@ proc resume*(e: Engine): bool =
     false
   except VMPause:
     e.exit_code.is_none
-
-when is_main_module:
-  let
-    vmlib = "vmlib"
-    e1 = Engine.new("scripts/test1.nim", vmlib)
-    e2 = Engine.new("scripts/test2.nim", vmlib)
-
-  e1.expose "test1", "callback", proc(a: VmArgs): bool =
-    assert a.get_string(0) == "test1"
-    result = true
-
-  e2.expose "test2", "callback", proc(a: VmArgs): bool =
-    assert a.get_string(0) == "test2"
-    result = true
-
-  assert e1.run()
-  assert e2.run()
-
-  for i in 0..9:
-    assert e1.resume()
-    assert e2.resume()
-
-  assert not e1.resume()
-  assert not e2.resume()
-
-  echo "!!!!!!! RESTART !!!!!!!!!!"
-
-  assert e1.run()
-  assert e2.run()
-
-  for i in 0..9:
-    assert e1.resume()
-    assert e2.resume()
-
-  assert not e1.resume()
-  assert not e2.resume()
