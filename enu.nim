@@ -1,4 +1,5 @@
 import segfaults
-import enupkg / [bot, editor, game, console, player, aim_target,
-                 selection_area, ground, builder, terrain, preview_maker,
-                 toolbar, action_button]
+import enupkg/game
+import enupkg/ui / [editor, console, toolbar, action_button, preview_maker]
+import enupkg/player / [player, aim_target, selection_area]
+import enupkg/world / [bot, ground, builder, terrain]

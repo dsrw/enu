@@ -1,7 +1,6 @@
-import ../godotapi / [sprite_3d, ray_cast, spatial],
-       godot,
-       strutils, math,
-       globals, core
+import ../../godotapi / [sprite_3d, ray_cast, spatial]
+import godot, strutils, math
+import ".." / [globals, core]
 
 gdobj AimTarget of Sprite3D:
   var

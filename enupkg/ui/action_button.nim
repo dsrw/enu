@@ -1,6 +1,6 @@
-import ../godotapi / [button, style_box_flat],
-       godot,
-       core, globals
+import ../../godotapi / [button, style_box_flat]
+import godot
+import ".." / [core, globals]
 
 gdobj ActionButton of Button:
   method ready*() =

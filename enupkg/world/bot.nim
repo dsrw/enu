@@ -1,7 +1,7 @@
-import ../godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
-                      input_event, animation_player, resource_loader, packed_scene],
-       godot, math, tables, std/with, times, sugar, os,
-       globals, core, engine
+import ../../godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
+                         input_event, animation_player, resource_loader, packed_scene]
+import godot, math, tables, std/with, times, sugar, os
+import ".." / [globals, core, engine/engine]
 
 include "default_robot.nim.nimf"
 

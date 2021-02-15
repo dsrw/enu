@@ -1,6 +1,6 @@
-import ../godotapi/[grid_map, mesh_library, mesh, spatial, spatial_material],
-       godot, sets,
-       core, globals, builder
+import ../../godotapi/[grid_map, mesh_library, mesh, spatial, spatial_material]
+import godot, sets
+import ".." / [core, globals, world/builder]
 
 let
   highlight_energy = 1.0

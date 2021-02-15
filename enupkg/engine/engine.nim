@@ -1,7 +1,7 @@
 import compiler / [vm, vmdef, options, lineinfos, ast]
-import ../experiments/eval
+import eval
 import os, strformat, std/with, parseutils
-import core
+import ../core
 export Interpreter
 
 export VmArgs, get_float, get_int, get_string, get_bool

@@ -1,10 +1,11 @@
+import ../../godotapi / [kinematic_body, spatial, input, input_event,
+                         input_event_mouse_motion, input_event_joypad_motion,
+                         ray_cast, scene_tree, input_event_pan_gesture, viewport, camera, global_constants,
+                         collision_shape]
 import godot except print
-import ../godotapi / [kinematic_body, spatial, input, input_event,
-                      input_event_mouse_motion, input_event_joypad_motion,
-                      ray_cast, scene_tree, input_event_pan_gesture, viewport, camera, global_constants,
-                      collision_shape]
 import math, print
-import core, globals, game, aim_target
+import ".." / [core, globals, game]
+import aim_target
 
 let
   angle_x_min = -PI / 2.25

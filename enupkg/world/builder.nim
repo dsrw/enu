@@ -1,6 +1,6 @@
-import ../godotapi / [spatial, grid_map],
-       godot, tables, math, sets, sugar, sequtils, hashes, os,
-       core, globals, engine, terrain, grid
+import ../../godotapi / [spatial, grid_map]
+import godot, tables, math, sets, sugar, sequtils, hashes, os
+import ".." / [core, globals, engine/engine, world/terrain, world/grid]
 
 include "default_builder.nim.nimf"
 

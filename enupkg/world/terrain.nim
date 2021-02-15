@@ -1,6 +1,6 @@
-import ../godotapi / [mesh, voxel_terrain, voxel_tool, voxel, voxel_library, shader_material],
-       godot, sets, tables, hashes,
-       globals, core
+import ../../godotapi / [mesh, voxel_terrain, voxel_tool, voxel, voxel_library, shader_material]
+import godot, sets, tables, hashes
+import ".." / [globals, core]
 
 type
   DrawMode* = enum

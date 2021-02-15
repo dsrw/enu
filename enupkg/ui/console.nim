@@ -1,8 +1,7 @@
-import ../godotapi / [text_edit, scene_tree, node, input_event, input_event_key,
-                      rich_text_label, global_constants],
-       godot,
-       strutils,
-       globals, core
+import ../../godotapi / [text_edit, scene_tree, node, input_event, input_event_key,
+                         rich_text_label, global_constants]
+import godot, strutils
+import ".." / [globals, core]
 
 gdobj Console of RichTextLabel:
   var

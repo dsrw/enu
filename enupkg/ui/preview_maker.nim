@@ -1,7 +1,7 @@
-import ../godotapi / [viewport, camera, mesh_instance, material, camera,
-                      viewport_texture, image, resource_loader],
-       godot,
-       core, globals
+import ../../godotapi / [viewport, camera, mesh_instance, material, camera,
+                         viewport_texture, image, resource_loader]
+import godot
+import ".." / [core, globals]
 
 gdobj PreviewMaker of Viewport:
   var

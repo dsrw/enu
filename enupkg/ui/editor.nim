@@ -1,8 +1,7 @@
-import ../godotapi / [text_edit, scene_tree, node, input_event, global_constants,
-                      input_event_key, style_box_flat],
-       godot,
-       core, globals, engine, game,
-       strutils, tables, compiler/lineinfos
+import ../../godotapi / [text_edit, scene_tree, node, input_event, global_constants,
+                         input_event_key, style_box_flat]
+import godot, strutils, tables, compiler/lineinfos
+import ".." / [core, globals, game, engine/engine]
 
 gdobj Editor of TextEdit:
   var
