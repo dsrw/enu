@@ -3,6 +3,8 @@ import ../godotapi / [scene_tree, kinematic_body, material, mesh_instance, spati
        godot, math, tables, std/with, times, sugar, os,
        globals, core, engine
 
+include "default_robot.nim.nimf"
+
 var max_bot_index = 0
 gdobj NimBot of KinematicBody:
   var
@@ -47,7 +49,7 @@ gdobj NimBot of KinematicBody:
       print(msg)
 
   proc load_vars() =
-    self.speed = self.engine.get_float("speed", "bot")
+    self.speed = self.engine.get_float("speed", self.engine.module_name)
 
   proc move(direction: Vector3, steps: float): bool =
     self.load_vars()
@@ -95,16 +97,10 @@ gdobj NimBot of KinematicBody:
     err e.msg
     trigger("script_error")
 
-  proc default_script: string =
-    join_path(config.lib_dir, "enu", "default_bot.nim")
-
   proc is_script_loadable(): bool =
     if self.enu_script != "none" and file_exists(self.enu_script):
-      let
-        default_code = read_file(self.default_script).strip
-        current_code = read_file(self.enu_script).strip
-
-      result = current_code != "" and current_code != default_code
+      let current_code = read_file(self.enu_script).strip
+      result = current_code != ""
 
   proc load_script() =
     trace:
@@ -117,18 +113,18 @@ gdobj NimBot of KinematicBody:
           return
         if not self.paused and not self.engine.initialized:
           debug &"Loading {self.enu_script}"
-
-          self.engine.load(self.enu_script, config.lib_dir)
+          let code = default_robot(self.enu_script.extract_filename)
+          self.engine.load(config.script_dir, self.enu_script.split_file.name, code, config.lib_dir)
           log_trace("loaded")
           with self.engine:
-            expose("logo", "forward", a => self.forward(get_float(a, 0)))
-            expose("logo", "back", a => self.back(get_float(a, 0)))
-            expose("logo", "left", a => self.left(get_float(a, 0)))
-            expose("logo", "right", a => self.right(get_float(a, 0)))
-            expose("logo", "turn_left", a => self.turn_left(get_float(a, 0)))
-            expose("logo", "turn_right", a => self.turn_right(get_float(a, 0)))
-            expose("bot", "echo", a => echo_console(get_string(a, 0)))
-            expose("bot", "play", proc(a: VmArgs): bool =
+            expose("forward", a => self.forward(get_float(a, 0)))
+            expose("back", a => self.back(get_float(a, 0)))
+            expose("left", a => self.left(get_float(a, 0)))
+            expose("right", a => self.right(get_float(a, 0)))
+            expose("turn_left", a => self.turn_left(get_float(a, 0)))
+            expose("turn_right", a => self.turn_right(get_float(a, 0)))
+            expose("echo", a => echo_console(get_string(a, 0)))
+            expose("play", proc(a: VmArgs): bool =
               let animation_name = get_string(a, 0)
               if animation_name == "":
                 self.animation_player.stop(true)
@@ -152,7 +148,7 @@ gdobj NimBot of KinematicBody:
       inc max_bot_index
       self.name = "Bot_" & $self.script_index
       self.set_script()
-      copy_file self.default_script, self.enu_script
+      write_file self.enu_script, ""
 
   method ready*() =
     trace:

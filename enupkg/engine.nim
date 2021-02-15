@@ -1,5 +1,6 @@
-import compiler / [vm, vmdef, nimeval, options, lineinfos, ast]
-import os, strformat, std/with
+import compiler / [vm, vmdef, options, lineinfos, ast]
+import ../experiments/eval
+import os, strformat, std/with, parseutils
 import core
 export Interpreter
 
@@ -11,42 +12,56 @@ type
     info*: TLineInfo
   VMPause* = object of CatchableError
   Engine* = ref object
-    i: Interpreter
     ctx: PCtx
     pc: int
     tos: PStackFrame
     line_changed*: proc(current, previous: TLineInfo)
     current_line*: TLineInfo
     previous_line: TLineInfo
-    initialized*: bool
     pause_requested: bool
+    is_main_module: bool
+    initialized*: bool
+    code: string
+    module_name*: string
+    exit_code*: Option[int]
     errors*: seq[tuple[msg: string, info: TLineInfo]]
 
 const
-  STDLIB = find_nim_stdlib_compile_time()
   STDLIB_PATHS = (w". core pure pure/collections pure/concurrency" &
                   w"std fusion")
+  MAIN_SCRIPT = "scripts/main.nim"
 
-proc load*(e: Engine, script_file, vmlib: string) =
+var
+  interpreter: Interpreter
+  current_engine: Engine
+
+proc current(): Engine = current_engine
+proc set_current(e: Engine) =
+  current_engine = e
+
+proc init_interpreter(script_dir, vmlib: string) =
   trace:
     let std_paths = STDLIB_PATHS.map_it join_path(vmlib, "stdlib", it)
-    let source_paths = std_paths & join_path(vmlib, "enu") & @[parent_dir script_file]
-    e.i = create_interpreter(script_file, source_paths)
+    let source_paths = std_paths & join_path(vmlib, "enu") & @[parent_dir MAIN_SCRIPT] & @[script_dir]
+    interpreter = create_interpreter(MAIN_SCRIPT, source_paths)
     log_trace("create_interpreter")
-    with e.i:
+    with interpreter:
       register_error_hook proc(config, info, msg, severity: auto) {.gcsafe.} =
+        let e = current_engine
         if severity == Error and config.error_counter >= config.error_max:
           echo &"error: {msg}"
           e.errors.add (msg, info)
-
+          e.exit_code = some(99)
           raise (ref VMQuit)(info: info, msg: msg)
 
       register_enter_hook proc(c, pc, tos, instr: auto) =
+        let e = current()
         let info = c.debug[pc]
         if info.file_index.int == 0 and e.previous_line != info:
           if e.line_changed != nil:
             e.line_changed(info, e.previous_line)
           (e.previous_line, e.current_line) = (e.current_line, info)
+
         if e.pause_requested:
           e.pause_requested = false
           e.ctx = c
@@ -54,15 +69,37 @@ proc load*(e: Engine, script_file, vmlib: string) =
           e.tos = tos
           raise new_exception(VMPause, "vm paused")
 
-    e.initialized = true
     log_trace("hooks")
 
+proc new*(typ: typedesc[Engine], module_name, vmlib: string): Engine =
+  result = Engine()
+  result.load(module_name, vmlib)
+
+proc pause*(e: Engine) =
+  set_current e
+  e.pause_requested = true
+
+proc load*(e: Engine, script_dir, module_name, code, vmlib: string) =
+  e.code = code
+  e.module_name = module_name
+  set_current e
+  if interpreter.is_nil:
+    init_interpreter(script_dir, vmlib)
+    e.is_main_module = true
+  interpreter.implement_routine "*", e.module_name, "quit", proc(a: VmArgs) {.gcsafe.} =
+    e.exit_code = some(a.get_int(0).int)
+    e.pause()
+  e.initialized = true
+
 proc run*(e: Engine): bool =
+  set_current e
+  e.exit_code = none(int)
+  e.errors = @[]
   try:
-    e.i.eval_script()
+    interpreter.load_module(e.module_name, e.code)
     false
   except VMPause:
-    true
+    e.exit_code.is_none
 
 proc to_node*(val: int): PNode =
   new_int_node(nk_int_lit, val)
@@ -78,24 +115,23 @@ proc to_node*(val: bool): PNode =
   new_int_node(nk_int_lit, v)
 
 proc call_proc*(e: Engine, proc_name: string, module_name = "", args: varargs[PNode, to_node]): PNode {.discardable.}=
-  let foreign_proc = e.i.select_routine(proc_name, module_name = module_name)
+  set_current e
+  let foreign_proc = interpreter.select_routine(proc_name, module_name = module_name)
   if foreign_proc == nil:
     raise new_exception(VMError, &"script does not export a proc of the name: '{proc_name}'")
-  return e.i.call_routine(foreign_proc, args)
+  return interpreter.call_routine(foreign_proc, args)
 
 proc call*(e: Engine, proc_name: string): bool =
+  set_current e
   try:
     discard e.call_proc(proc_name)
     false
   except VMPause:
-    true
+    e.exit_code.is_none
 
-proc pause*(e: Engine) =
-  e.pause_requested = true
-
-proc expose*(e: Engine, script_name, proc_name: string,
+proc expose*(e: Engine, proc_name: string,
              routine: proc(a: VmArgs): bool) {.gcsafe.} =
-  e.i.implement_routine "*", script_name, proc_name, proc(a: VmArgs) {.gcsafe.} =
+  interpreter.implement_routine "*", e.module_name, proc_name, proc(a: VmArgs) {.gcsafe.} =
     if routine(a):
       e.pause()
 
@@ -103,8 +139,8 @@ proc call_float*(e: Engine, proc_name: string): float =
   e.call_proc(proc_name).get_float()
 
 proc get_var*(e: Engine, var_name: string, module_name: string): PNode =
-  let sym = e.i.select_unique_symbol(var_name, module_name = module_name)
-  e.i.get_global_value(sym)
+  let sym = interpreter.select_unique_symbol(var_name, module_name = module_name)
+  interpreter.get_global_value(sym)
 
 proc get_float*(e: Engine, var_name: string, module_name = ""): float =
   e.get_var(var_name, module_name).get_float
@@ -120,8 +156,45 @@ proc call_int*(e: Engine, proc_name: string): int =
   e.call_proc(proc_name).get_int.to_int
 
 proc resume*(e: Engine): bool =
+  set_current e
   try:
-    discard execFromCtx(e.ctx, e.pc, e.tos)
+    discard exec_from_ctx(e.ctx, e.pc, e.tos)
     false
   except VMPause:
-    true
+    e.exit_code.is_none
+
+when is_main_module:
+  let
+    vmlib = "vmlib"
+    e1 = Engine.new("scripts/test1.nim", vmlib)
+    e2 = Engine.new("scripts/test2.nim", vmlib)
+
+  e1.expose "test1", "callback", proc(a: VmArgs): bool =
+    assert a.get_string(0) == "test1"
+    result = true
+
+  e2.expose "test2", "callback", proc(a: VmArgs): bool =
+    assert a.get_string(0) == "test2"
+    result = true
+
+  assert e1.run()
+  assert e2.run()
+
+  for i in 0..9:
+    assert e1.resume()
+    assert e2.resume()
+
+  assert not e1.resume()
+  assert not e2.resume()
+
+  echo "!!!!!!! RESTART !!!!!!!!!!"
+
+  assert e1.run()
+  assert e2.run()
+
+  for i in 0..9:
+    assert e1.resume()
+    assert e2.resume()
+
+  assert not e1.resume()
+  assert not e2.resume()

@@ -1,0 +1,7 @@
+#? stdtmpl
+#proc default_robot(file_name: string): string =
+proc quit*(exit_code = 0) = discard
+include robot
+include "${file_name}"
+
+quit()

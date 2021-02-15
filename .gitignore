@@ -1,3 +1,8 @@
+# ignore all files with no extension (unix binaries)
+*
+!/**/
+!*.*
+
 bin/
 tools/build_helpers
 tools/build_helpers.exe
@@ -5,16 +10,18 @@ logs/
 *.dylib
 *.dll
 *.so
+*.exe
+
+
 app/.import
-enupkg/editor
-enupkg/utils
 .DS_Store
 app/_dlls/enu.exp
 app/_dlls/enu.lib
-app/scripts/.backups
-app/scenes/default.tscn
+
 godotapi
 app/export_presets.cfg
 dist/
 vmlib/stdlib
 dist_config.json
+.idea
+.vscode

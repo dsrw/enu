@@ -2,6 +2,8 @@ import ../godotapi / [spatial, grid_map],
        godot, tables, math, sets, sugar, sequtils, hashes, os,
        core, globals, engine, terrain, grid
 
+include "default_builder.nim.nimf"
+
 var max_grid_index = 0
 
 type
@@ -65,9 +67,6 @@ gdobj Builder of Spatial:
   proc set_script() =
     self.enu_script = join_path(config.script_dir, &"grid_{self.script_index}.nim")
 
-  proc default_script: string =
-    join_path(config.lib_dir, "enu", "default_grid.nim")
-
   proc setup*(translation: Vector3) =
     self.translation = translation
     self.original_translation = translation
@@ -75,15 +74,11 @@ gdobj Builder of Spatial:
     inc max_grid_index
     self.name = "Builder_" & $self.script_index
     self.set_script()
-    copy_file self.default_script, self.enu_script
+    write_file self.enu_script, ""
 
   proc is_script_loadable(): bool =
     if self.enu_script != "none" and file_exists(self.enu_script):
-      let
-        default_code = read_file(self.default_script).strip
-        current_code = read_file(self.enu_script).strip
-
-      result = current_code != "" and current_code != default_code
+      result = read_file(self.enu_script).strip != ""
 
   proc save_blocks*() =
     let data = if self.draw_mode == VoxelMode:
@@ -190,13 +185,14 @@ gdobj Builder of Spatial:
   proc load_vars() =
     var old_speed = self.speed
     let
-      mode = DrawMode self.engine.get_int("mode", "grid")
-      move_mode = self.engine.get_bool("move_mode", "grid")
-      scale_factor = self.engine.get_float("scale", "grid")
-    self.speed = self.engine.get_float("speed", "grid")
-    self.index = self.engine.get_int("color", "grid")
-    self.drawing = self.engine.get_bool("drawing", "grid")
-    self.overwrite = self.engine.get_bool("overwrite", "grid")
+      e = self.engine
+      mode = DrawMode self.engine.get_int("mode", e.module_name)
+      move_mode = self.engine.get_bool("move_mode", e.module_name)
+      scale_factor = self.engine.get_float("scale", e.module_name)
+    self.speed = self.engine.get_float("speed", e.module_name)
+    self.index = self.engine.get_int("color", e.module_name)
+    self.drawing = self.engine.get_bool("drawing", e.module_name)
+    self.overwrite = self.engine.get_bool("overwrite", e.module_name)
     self.blocks_per_frame = if self.speed == 0:
       float.high
     else:
@@ -244,7 +240,8 @@ gdobj Builder of Spatial:
           self.error(e)
 
   proc set_vars() =
-    self.engine.call_proc("set_vars", module_name = "grid", self.index, self.drawing,
+    let module_name = self.engine.module_name
+    self.engine.call_proc("set_vars", module_name = module_name, self.index, self.drawing,
                           self.speed, self.scale_factor, int self.draw_mode,
                           self.overwrite, self.move_mode)
 
@@ -342,9 +339,9 @@ gdobj Builder of Spatial:
     else:
       self.grid.clear()
 
-  proc reset(clear = true) =
+  proc reset(clear = true, set_vars = true) =
     self.set_defaults()
-    if self.engine.initialized:
+    if set_vars and self.engine.initialized:
       try:
         self.set_vars()
       except VMError:
@@ -376,23 +373,24 @@ gdobj Builder of Spatial:
       if not self.is_script_loadable:
         return
       if not (self.paused or self.engine.initialized):
+        let code = default_builder(self.enu_script.extract_filename)
         with self.engine:
-          load(self.enu_script, config.lib_dir)
-          expose("logo", "up", a => self.up(get_float(a, 0)))
-          expose("logo", "down", a => self.down(get_float(a, 0)))
-          expose("logo", "left", a => self.left(get_float(a, 0)))
-          expose("logo", "right", a => self.right(get_float(a, 0)))
-          expose("logo", "forward", a => self.forward(get_float(a, 0)))
-          expose("logo", "back", a => self.back(get_float(a, 0)))
-          expose("logo", "turn_left", a => self.turn_left(get_float(a, 0)))
-          expose("logo", "turn_right", a => self.turn_right(get_float(a, 0)))
-          expose("logo", "turn_up", a => self.turn_up(get_float(a, 0)))
-          expose("logo", "turn_down", a => self.turn_down(get_float(a, 0)))
-          expose("grid", "echo_console", a => echo_console(get_string(a, 0)))
-          expose("grid", "sleep", a => self.sleep(get_float(a, 0)))
-          expose("grid", "save", a => self.save(get_string(a, 0)))
-          expose("grid", "restore", a => self.restore(get_string(a, 0)))
-          expose "grid", "set_energy", proc(a: VmArgs): bool =
+          load(config.script_dir, self.enu_script.split_file.name, code, config.lib_dir)
+          expose("up", a => self.up(get_float(a, 0)))
+          expose("down", a => self.down(get_float(a, 0)))
+          expose("left", a => self.left(get_float(a, 0)))
+          expose("right", a => self.right(get_float(a, 0)))
+          expose("forward", a => self.forward(get_float(a, 0)))
+          expose("back", a => self.back(get_float(a, 0)))
+          expose("turn_left", a => self.turn_left(get_float(a, 0)))
+          expose("turn_right", a => self.turn_right(get_float(a, 0)))
+          expose("turn_up", a => self.turn_up(get_float(a, 0)))
+          expose("turn_down", a => self.turn_down(get_float(a, 0)))
+          expose("echo_console", a => echo_console(get_string(a, 0)))
+          expose("sleep", a => self.sleep(get_float(a, 0)))
+          expose("save", a => self.save(get_string(a, 0)))
+          expose("restore", a => self.restore(get_string(a, 0)))
+          expose "set_energy", proc(a: VmArgs): bool =
             let
               color = get_int(a, 0).int
               energy = get_float(a, 1)
@@ -401,13 +399,13 @@ gdobj Builder of Spatial:
             else:
               self.terrain.set_energy(color, energy, self.script_index)
             false
-          expose "grid", "reset", proc(a: VmArgs): bool =
+          expose "reset", proc(a: VmArgs): bool =
             self.reset(get_bool(a, 0))
             false
-          expose "grid", "pause", proc(a: VmArgs): bool =
+          expose "pause", proc(a: VmArgs): bool =
             self.paused = true
             true
-          expose "grid", "load_defaults", proc(a: VmArgs): bool =
+          expose "load_defaults", proc(a: VmArgs): bool =
             self.set_vars()
             false
       if not self.paused:
@@ -428,7 +426,7 @@ gdobj Builder of Spatial:
   method reload() =
     let duration = if self.running: 0.5.seconds else: 0.seconds
     self.set_timer duration, proc() =
-      self.reset()
+      self.reset(clear = true, set_vars = false)
       self.paused = false
       self.load_script()
 

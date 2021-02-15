@@ -1,0 +1,7 @@
+#? stdtmpl
+#proc default_builder(file_name: string): string =
+proc quit*(exit_code = 0) = discard
+include builder
+include "${file_name}"
+
+quit()

@@ -63,7 +63,7 @@ proc optional_get*[T](self: var HashSet[T], key: T): Option[T] =
     result = none(T)
 
 ### Vector3 ###
-import godot, math
+import core/godotcoretypes, core/vector3, math
 
 proc vec3*(x, y, z: int): Vector3 {.inline.} =
   vec3(x.float, y.float, z.float)
