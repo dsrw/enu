@@ -177,7 +177,7 @@ The Enu data directory lives in `~/Library/Application Support/enu` on Mac, `%Ap
 
 - [ ] Slim down Godot classes. Move out most of the state.
 - [ ] General refactoring and cleanups.
-- [ ] Rethink Nim VM usage. Ideally, everything will run in a single VM.
+- [X] Rethink Nim VM usage. Ideally, everything will run in a single VM.
 - [ ] State machines to manage UI and player behavior.
 
 ### v0.2.1
