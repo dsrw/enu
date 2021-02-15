@@ -13,7 +13,7 @@ let
   gcc_dlls        = ["libgcc_s_seh-1.dll", "libwinpthread-1.dll"]
   nim_dlls        = ["pcre64.dll"]
 
-version       = "0.1.1"
+version       = "0.1.99"
 author        = "Scott Wadden"
 description   = "Logo-like DSL for Godot"
 license       = "MIT"
