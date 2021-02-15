@@ -35,7 +35,7 @@ var
 task build_godot, "Build godot":
   mk_dir generated_dir
   exec "git submodule update --init"
-  exec &"nimble c --skipParentCfg {generator}"
+  exec &"nimble c {generator}"
   let
     gen = find_exe generator
     scons = find_exe "scons"
