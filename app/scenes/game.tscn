@@ -30,5 +30,5 @@ shadow_atlas_size = 100
 
 [node name="WorldRay" type="RayCast" parent="."]
 visible = false
-collision_mask = 17
+collision_mask = 524305
 collide_with_areas = true
