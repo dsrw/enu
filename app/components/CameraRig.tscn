@@ -14,7 +14,7 @@ far = 512.0
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 0.999999, 0, 0, 0 )
 visible = false
 cast_to = Vector3( 0, 0, -50 )
-collision_mask = 17
+collision_mask = 524305
 collide_with_areas = true
 
 [node name="AimTarget" type="Sprite3D" parent="."]
