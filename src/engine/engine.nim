@@ -49,7 +49,12 @@ proc init_interpreter(script_dir, vmlib: string) =
       register_error_hook proc(config, info, msg, severity: auto) {.gcsafe.} =
         let e = current_engine
         if severity == Error and config.error_counter >= config.error_max:
-          echo &"error: {msg}"
+          let file_name = if info.file_index.int >= 0:
+            config.m.file_infos[info.file_index.int].full_path.string
+          else:
+            "???"
+          let msg = &"{file_name}({int info.line},{int info.col}): {msg}"
+          echo "error: ", msg
           e.errors.add (msg, info)
           e.exit_code = some(99)
           raise (ref VMQuit)(info: info, msg: msg)
@@ -153,7 +158,7 @@ proc call_int*(e: Engine, proc_name: string): int =
 
 proc resume*(e: Engine): bool =
   set_current e
-  try:
+  result = try:
     discard exec_from_ctx(e.ctx, e.pc, e.tos)
     false
   except VMPause:

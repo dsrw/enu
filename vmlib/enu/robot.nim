@@ -1,12 +1,14 @@
-import helpers, strutils, logo
+import helpers, strutils
 export helpers
-{.push define: skip_3d.}
-include logo #except turn_up, turn_down, tu, td
-{.pop.}
-var
-  speed* = 1.0
 
-proc echo*(msg: string)             = discard
+include loops
+
+let skip_3d = true
+include logo
+
+var speed* = 1.0
+
+#proc echo*(msg: string)             = discard
 proc play*(animation_name: string)  = discard
 proc set_speed*(spd: float)         = speed = spd
 

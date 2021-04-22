@@ -7,9 +7,8 @@ bin/
 tools/build_helpers
 tools/build_helpers.exe
 logs/
-*.dylib
-*.dll
-*.so
+app/_dlls
+!app/_dlls/nimlib.gdnlib
 *.exe
 
 

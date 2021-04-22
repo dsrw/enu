@@ -1,7 +1,8 @@
 import ../../godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
                          input_event, animation_player, resource_loader, packed_scene]
-import godot, math, tables, std/with, times, sugar, os
-import ".." / [globals, core, engine/engine]
+import godot, std / [math, tables, with, times, sugar, os, monotimes]
+import ".." / [globals, core]
+import ../engine / [engine, script_helpers]
 
 include "default_robot.nim.nimf"
 
@@ -15,6 +16,7 @@ gdobj NimBot of KinematicBody:
     script_index* {.gdExport.} = 0
     disabled* {.gdExport.} = false
     callback: proc(delta: float): bool
+    saved_callback: proc(delta: float): bool
     engine: Engine
     last_error: string
     orig_rotation: Vector3
@@ -24,6 +26,7 @@ gdobj NimBot of KinematicBody:
     paused* = true
     running = false
     animation_player: AnimationPlayer
+    advance_timer = MonoTime.high
 
   proc update_material*(value: Material) =
     self.mesh.set_surface_material(0, value)
@@ -67,6 +70,7 @@ gdobj NimBot of KinematicBody:
       else:
         discard self.move_and_slide(moving * self.speed, UP)
         return true
+    self.start_advance_timer()
     true
 
   proc turn(degrees: float): bool =
@@ -83,6 +87,7 @@ gdobj NimBot of KinematicBody:
       else:
         self.transform = final_transform
         false
+    self.start_advance_timer()
     true
 
   proc forward(steps: float): bool = self.move(FORWARD, steps)
@@ -117,12 +122,16 @@ gdobj NimBot of KinematicBody:
           self.engine.load(config.script_dir, self.enu_script.split_file.name, code, config.lib_dir)
           log_trace("loaded")
           with self.engine:
-            expose("forward", a => self.forward(get_float(a, 0)))
-            expose("back", a => self.back(get_float(a, 0)))
-            expose("left", a => self.left(get_float(a, 0)))
-            expose("right", a => self.right(get_float(a, 0)))
-            expose("turn_left", a => self.turn_left(get_float(a, 0)))
-            expose("turn_right", a => self.turn_right(get_float(a, 0)))
+            expose "yield_script", proc(a: VmArgs): bool =
+              self.callback = self.saved_callback
+              self.saved_callback = nil
+              true
+            expose("forward_impl", a => self.forward(get_float(a, 0)))
+            expose("back_impl", a => self.back(get_float(a, 0)))
+            expose("left_impl", a => self.left(get_float(a, 0)))
+            expose("right_impl", a => self.right(get_float(a, 0)))
+            expose("turn_left_impl", a => self.turn_left(get_float(a, 0)))
+            expose("turn_right_impl", a => self.turn_right(get_float(a, 0)))
             expose("echo", a => echo_console(get_string(a, 0)))
             expose("play", proc(a: VmArgs): bool =
               let animation_name = get_string(a, 0)
@@ -169,12 +178,15 @@ gdobj NimBot of KinematicBody:
         self.load_script()
         log_trace("load_script")
 
+  proc update_running_state(running: bool) =
+    self.running = running
+
   method physics_process*(delta: float64) =
     trace:
       if not self.paused:
         try:
-          if self.running and (self.callback == nil or not self.callback(delta)):
-            self.running = self.engine.resume()
+          if self.running:
+            self.advance(delta)
         except VMQuit as e:
           self.error(e)
 

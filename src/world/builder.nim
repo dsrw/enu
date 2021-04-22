@@ -1,6 +1,8 @@
 import ../../godotapi / [spatial, grid_map]
-import godot, tables, math, sets, sugar, sequtils, hashes, os
-import ".." / [core, globals, engine/engine, world/terrain, world/grid]
+import godot
+import std / [tables, math, sets, sugar, sequtils, hashes, os, monotimes]
+import ".." / [core, globals, world/terrain, world/grid]
+import ../engine / [engine, script_helpers]
 
 include "default_builder.nim.nimf"
 
@@ -25,6 +27,7 @@ gdobj Builder of Spatial:
     paused* = false
     engine: Engine
     callback: proc(delta: float): bool
+    saved_callback: proc(delta: float): bool
     index: int = 1
     blocks_per_frame = 0.0
     blocks_remaining_this_frame = 0.0
@@ -44,6 +47,7 @@ gdobj Builder of Spatial:
     # the voxel gets drawn anyway, and the polys hang around until they
     # move out of draw distance. Wait a bit before clearing. FIXME.
     timers: seq[Timer]
+    advance_timer = MonoTime.high
 
   method ready() =
     trace:
@@ -225,16 +229,15 @@ gdobj Builder of Spatial:
         self.blocks_remaining_this_frame += self.blocks_per_frame
         try:
           if self.move_mode:
-            if self.running and (self.callback == nil or not self.callback(delta)):
-              self.update_running_state self.engine.resume()
+            if self.running:
+              self.advance(delta)
           else:
             if self.blocks_per_frame > 0:
               while self.running and self.blocks_remaining_this_frame >= 1:
-                if self.callback == nil or not self.callback(delta):
-                  self.update_running_state self.engine.resume()
+                self.advance(delta)
             else:
-              if self.running and (self.callback == nil or not self.callback(delta)):
-                  self.update_running_state self.engine.resume()
+              if self.running:
+                self.advance(delta)
 
         except VMQuit as e:
           self.error(e)
@@ -263,6 +266,7 @@ gdobj Builder of Spatial:
         else:
           self.translation = self.translation + (moving * self.speed * delta)
           return true
+      self.start_advance_timer()
       return true
     else:
       var count = 0
@@ -273,6 +277,7 @@ gdobj Builder of Spatial:
           self.blocks_remaining_this_frame -= 1
           self.drop_block()
         return count.float < steps
+      self.start_advance_timer()
       return true
 
   proc turn(degrees: float, axis = UP): bool =
@@ -291,6 +296,7 @@ gdobj Builder of Spatial:
         else:
           self.transform = final_transform
           false
+      self.start_advance_timer()
       return true
     else:
       let axis = self.position.basis.xform(axis)
@@ -305,6 +311,7 @@ gdobj Builder of Spatial:
     self.callback = proc(delta: float): bool =
       duration += delta
       return duration < seconds
+    self.start_advance_timer()
     true
 
   proc save(name: string): bool =
@@ -376,18 +383,22 @@ gdobj Builder of Spatial:
         let code = default_builder(self.enu_script.extract_filename)
         with self.engine:
           load(config.script_dir, self.enu_script.split_file.name, code, config.lib_dir)
-          expose("up", a => self.up(get_float(a, 0)))
-          expose("down", a => self.down(get_float(a, 0)))
-          expose("left", a => self.left(get_float(a, 0)))
-          expose("right", a => self.right(get_float(a, 0)))
-          expose("forward", a => self.forward(get_float(a, 0)))
-          expose("back", a => self.back(get_float(a, 0)))
-          expose("turn_left", a => self.turn_left(get_float(a, 0)))
-          expose("turn_right", a => self.turn_right(get_float(a, 0)))
-          expose("turn_up", a => self.turn_up(get_float(a, 0)))
-          expose("turn_down", a => self.turn_down(get_float(a, 0)))
+          expose "yield_script", proc(a: VmArgs):bool =
+            self.callback = self.saved_callback
+            self.saved_callback = nil
+            true
+          expose("up_impl", a => self.up(get_float(a, 0)))
+          expose("down_impl", a => self.down(get_float(a, 0)))
+          expose("left_impl", a => self.left(get_float(a, 0)))
+          expose("right_impl", a => self.right(get_float(a, 0)))
+          expose("forward_impl", a => self.forward(get_float(a, 0)))
+          expose("back_impl", a => self.back(get_float(a, 0)))
+          expose("turn_left_impl", a => self.turn_left(get_float(a, 0)))
+          expose("turn_right_impl", a => self.turn_right(get_float(a, 0)))
+          expose("turn_up_impl", a => self.turn_up(get_float(a, 0)))
+          expose("turn_down_impl", a => self.turn_down(get_float(a, 0)))
           expose("echo_console", a => echo_console(get_string(a, 0)))
-          expose("sleep", a => self.sleep(get_float(a, 0)))
+          expose("sleep_impl", a => self.sleep(get_float(a, 0)))
           expose("save", a => self.save(get_string(a, 0)))
           expose("restore", a => self.restore(get_string(a, 0)))
           expose "set_energy", proc(a: VmArgs): bool =

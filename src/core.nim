@@ -46,6 +46,20 @@ export times
 proc seconds*(s: float): TimeInterval {.inline.} =
   init_time_interval(milliseconds = int(s * 1000))
 
+proc to_duration(interval: TimeInterval): Duration =
+  init_duration(nanoseconds = interval.nanoseconds,
+                microseconds = interval.microseconds,
+                milliseconds = interval.milliseconds,
+                seconds = interval.seconds,
+                minutes = interval.minutes,
+                hours = interval.hours)
+
+proc `+`*(time: MonoTime, interval: TimeInterval): MonoTime =
+  time + interval.to_duration
+
+proc `-`*(time: MonoTime, interval: TimeInterval): MonoTime =
+  time - interval.to_duration
+
 ### options ###
 import options
 export options
@@ -73,7 +87,6 @@ proc trunc*(self: Vector3): Vector3 {.inline.} =
 
 proc inverse_normalized*(self: Vector3): Vector3 {.inline.} =
   (self - vec3(self.length, self.length, self.length)) * -1
-
 
 proc first*[T](arr: openArray[T], test: proc(x: T): bool): Option[T] =
   for item in arr:

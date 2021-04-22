@@ -1,6 +1,7 @@
 import strformat, strutils, helpers
 export helpers
-include logo
+
+include loops
 
 type
   ColorIndex* = enum
@@ -35,6 +36,8 @@ proc change_color(amount: int) =
   elif color_index < ColorIndex.low.int:
     color_index = int ColorIndex.high
   color = ColorIndex color_index
+
+include logo
 
 proc echo_console*(msg: string)     = discard
 proc sleep*(seconds: float)         = discard
