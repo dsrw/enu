@@ -1,9 +1,10 @@
-[gd_scene load_steps=13 format=2]
+[gd_scene load_steps=15 format=2]
 
 [ext_resource path="res://materials/green-block-grid.tres" type="Material" id=1]
 [ext_resource path="res://materials/red-block-grid.tres" type="Material" id=2]
 [ext_resource path="res://materials/white-block-grid.tres" type="Material" id=3]
 [ext_resource path="res://materials/blue-block-grid.tres" type="Material" id=4]
+[ext_resource path="res://materials/brown-block-grid.tres" type="Material" id=5]
 [ext_resource path="res://materials/black-block-grid.tres" type="Material" id=6]
 
 [sub_resource type="CubeMesh" id=1]
@@ -28,8 +29,12 @@ extents = Vector3( 0.5, 0.5, 0.5 )
 material = ExtResource( 6 )
 size = Vector3( 1, 1, 1 )
 
-[sub_resource type="CubeMesh" id=7]
+[sub_resource type="CubeMesh" id=8]
 material = ExtResource( 3 )
+size = Vector3( 1, 1, 1 )
+
+[sub_resource type="CubeMesh" id=7]
+material = ExtResource( 5 )
 size = Vector3( 1, 1, 1 )
 
 [node name="block" type="Spatial"]
@@ -84,11 +89,23 @@ shape = SubResource( 2 )
 [node name="white-block" type="MeshInstance" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -8 )
 layers = 2147483650
-mesh = SubResource( 7 )
+mesh = SubResource( 8 )
 material/0 = null
 
 [node name="StaticBody" type="StaticBody" parent="white-block"]
 input_ray_pickable = false
 
 [node name="CollisionShape" type="CollisionShape" parent="white-block/StaticBody"]
+shape = SubResource( 2 )
+
+[node name="brown-block" type="MeshInstance" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -10.0097 )
+layers = 2147483650
+mesh = SubResource( 7 )
+material/0 = null
+
+[node name="StaticBody" type="StaticBody" parent="brown-block"]
+input_ray_pickable = false
+
+[node name="CollisionShape" type="CollisionShape" parent="brown-block/StaticBody"]
 shape = SubResource( 2 )
