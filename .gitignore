@@ -3,12 +3,14 @@
 !/**/
 !*.*
 
+*.dSYM
+*.so
+*.dylib
+*.dll
 bin/
 tools/build_helpers
 tools/build_helpers.exe
 logs/
-app/_dlls
-!app/_dlls/nimlib.gdnlib
 *.exe
 
 
@@ -22,5 +24,4 @@ app/export_presets.cfg
 dist/
 vmlib/stdlib
 dist_config.json
-.idea
 .vscode
