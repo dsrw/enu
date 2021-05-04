@@ -1,4 +1,4 @@
-import random
+import random, types
 
 # API
 proc forward_impl*(steps: float) = discard
@@ -7,6 +7,8 @@ proc left_impl(steps: float) = discard
 proc right_impl(steps: float) = discard
 proc turn_left_impl(degrees: float) = discard
 proc turn_right_impl(degrees: float) = discard
+proc look_at_impl(node: Node) = discard
+proc near*(node: Node, distance = 5):bool = discard
 
 proc forward*(steps = 1.0) = wait forward_impl(steps)
 proc back*(steps = 1.0) = wait back_impl(steps)
@@ -14,6 +16,8 @@ proc left*(steps = 1.0) = wait left_impl(steps)
 proc right*(steps = 1.0) = wait right_impl(steps)
 proc turn_left*(degrees = 90.0) = wait turn_left_impl(degrees)
 proc turn_right*(degrees = 90.0) = wait turn_right_impl(degrees)
+proc look_at*(node: Node) = wait look_at_impl(node)
+
 
 proc fd*(steps = 1.0) = forward(steps)
 proc bk*(steps = 1.0) = back(steps)

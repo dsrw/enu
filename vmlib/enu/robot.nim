@@ -6,7 +6,9 @@ include loops
 let skip_3d = true
 include logo
 
-var speed* = 1.0
+var
+  speed* = 1.0
+  player* = Node()
 
 #proc echo*(msg: string)             = discard
 proc play*(animation_name: string)  = discard
