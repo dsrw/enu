@@ -1,59 +1,60 @@
 import ../../godotapi / [h_box_container, scene_tree, button, image_texture]
 import godot
-import ".." / [core, globals, game, ui/preview_maker]
+import std / [strscans]
+import ".." / [core, globals, game, ui/preview_makers, api/block_colors]
 
-type
-  PreviewResult = tuple[color: string, preview: Image]
+var
+  color_index = 0
+  preview: tuple[image: Option[Image],
+                 button_name: string]
+  preview_maker: PreviewMaker
+  waiting = false
+  bot_generated = false
+
+proc len[T: tuple | object](t: T): int =
+  for _ in t.fields:
+    inc result
 
 gdobj Toolbar of HBoxContainer:
-  var
-    preview_maker: PreviewMaker
-    blocks = w"green red blue black white brown"
-    objects = w"bot"
-    preview_result: Option[PreviewResult]
-    waiting = false
-
   method ready*() =
     trace:
       self.bind_signals self, "action_changed"
       self.bind_signals "update_actionbar"
-      self.preview_maker = self.get_node("../PreviewMaker") as PreviewMaker
-      assert not self.preview_maker.is_nil
+      preview_maker = self.get_node("../PreviewMaker") as PreviewMaker
+      assert not preview_maker.is_nil
 
   method process*(delta: float) =
     trace:
-      if self.preview_result.is_some:
-        let
-          p = self.preview_result.get
-          b = self.get_node("Button-" & p.color) as Button
-        self.preview_result = none(PreviewResult)
+      if preview.image.is_some:
+        let image = preview.image.get
+        let button = self.get_node(preview.button_name) as Button
         var tex = gdnew[ImageTexture]()
-        tex.create_from_image(p.preview)
-        b.icon = tex
+        preview.image = none(Image)
+        tex.create_from_image(image)
+        button.icon = tex
 
-      if not self.waiting and self.blocks.len > 0:
-        var color = self.blocks.pop()
-        self.waiting = true
-        self.preview_maker.generate_block_preview &"{color}-block-grid", proc(preview: Image) =
-          self.preview_result = some (color: color, preview: preview)
-          self.waiting = false
-      if not self.waiting and self.blocks.len == 0 and self.objects.len > 0:
-        let obj = self.objects.pop()
-        self.waiting = true
-        self.preview_maker.generate_object_preview obj, proc(preview: Image) =
-          self.preview_result = some (color: obj, preview: preview)
+      if not waiting and color_index < BlockColors.len:
+        waiting = true
+        preview_maker.generate_block_preview BlockColors[Colors(color_index)], proc(p: Image) =
+          preview.image = some p
+          waiting = false
+        inc color_index
+      if not waiting and color_index == BlockColors.len and not bot_generated:
+        bot_generated = true
+        waiting = true
+        preview_maker.generate_object_preview "bot", proc(p: Image) =
+          preview.image = some p
 
   method on_update_actionbar(index: int) =
     let b = self.get_child(index) as Button
     b.set_pressed true
 
   method on_action_changed*(button_name: string) =
-    case button_name[7..^1]:
-    of "code": get_game().code_mode(update_actionbar = false)
-    of "blue": get_game().block_mode(1, update_actionbar = false)
-    of "red": get_game().block_mode(2, update_actionbar = false)
-    of "green": get_game().block_mode(3, update_actionbar = false)
-    of "black": get_game().block_mode(4, update_actionbar = false)
-    of "white": get_game().block_mode(5, update_actionbar = false)
-    of "brown": get_game().block_mode(6, update_actionbar = false)
-    of "bot": get_game().obj_mode(7, update_actionbar = false)
+    var index = 0
+
+    if button_name == "code":
+      get_game().code_mode(update_actionbar = false)
+    elif button_name.scanf("block_$i", index):
+      get_game().block_mode(index, update_actionbar = false)
+    elif button_name == "bot":
+      get_game().obj_mode(BlockColors.len, update_actionbar = false)

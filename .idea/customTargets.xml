@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CLionExternalBuildManager">
+    <target id="25ab8651-65d5-48cd-bc3e-43140641d3c5" name="nimble build" defaultType="TOOL">
+      <configuration id="61c30287-245f-4ee7-ada1-9d05b2db662c" name="nimble build" toolchainName="Default">
+        <build type="TOOL">
+          <tool actionId="Tool_External Tools_Nimble build" />
+        </build>
+      </configuration>
+    </target>
+  </component>
+</project>

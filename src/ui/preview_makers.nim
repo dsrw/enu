@@ -1,7 +1,8 @@
-import ../../godotapi / [viewport, camera, mesh_instance, material, camera,
-                         viewport_texture, image, resource_loader]
+import ../../godotapi / [viewport, camera, mesh_instance, spatial_material, camera,
+                         viewport_texture, image_texture, image, resource_loader]
 import godot
-import ".." / [core, globals]
+from std/colors import extract_rgb
+import ".." / [core, globals, api/block_colors, api/directions]
 
 gdobj PreviewMaker of Viewport:
   var
@@ -28,14 +29,28 @@ gdobj PreviewMaker of Viewport:
         self.callback = nil
       self.skip_next = false
 
-  proc generate_block_preview*(material_name: string, callback: proc(preview: Image)) =
-    let material = load(&"res://materials/{material_name}.tres") as Material
+  proc generate_block_preview*(block_color: BlockColor, callback: proc(preview: Image)) =
+    let material = load(&"res://materials/default-block-grid.tres") as SpatialMaterial
     self.cube.visible = true
     self.bot.visible = false
+    let
+      texture = gdnew[ImageTexture]()
+      image = gdnew[Image]()
+      color = init_color block_color.main
+
+    image.create(256, 256, true, FORMAT_RGB8)
+    image.fill(color)
+
+    #image.lock() # To enable drawing with setpixel later
+    texture.createfrom_image(image)
+    material.albedo_texture = texture
+    material.albedo_color = color
+    material.emission = color
     self.cube.set_surface_material(0, material)
     self.render_target_update_mode = UPDATE_ONCE
     self.camera.fov = 1
-    self.camera.look_at vec3(), UP
+    self.camera.look_at vec3(), Up
+    #callback(image)
     self.callback = callback
     self.skip_next = true
 
@@ -44,6 +59,6 @@ gdobj PreviewMaker of Viewport:
     self.bot.visible = true
     self.render_target_update_mode = UPDATE_ONCE
     self.camera.fov = 1.2
-    self.camera.look_at vec3(), UP
+    self.camera.look_at vec3(), Up
     self.callback = callback
     self.skip_next = true

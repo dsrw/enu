@@ -3,6 +3,7 @@ import ../../godotapi / [scene_tree, kinematic_body, material, mesh_instance, sp
 import godot, std / [math, tables, with, times, sugar, os, monotimes]
 import ".." / [globals, core]
 import ../engine / [engine, script_helpers]
+import ../api/directions
 
 include "default_robot.nim.nimf"
 
@@ -58,7 +59,7 @@ gdobj NimBot of KinematicBody:
     self.load_vars()
     var duration = 0.0
     let
-      moving = direction.rotated(UP, self.rotation.y)
+      moving = direction.rotated(Up, self.rotation.y)
       finish = self.translation + moving * steps
       finish_time = 1.0 / self.speed * steps
 
@@ -68,7 +69,7 @@ gdobj NimBot of KinematicBody:
         self.translation = finish
         return false
       else:
-        discard self.move_and_slide(moving * self.speed, UP)
+        discard self.move_and_slide(moving * self.speed, Up)
         return true
     self.start_advance_timer()
     true
@@ -78,10 +79,10 @@ gdobj NimBot of KinematicBody:
     var duration = 0.0
     # TODO: Why can't this be a one liner?
     var final_transform = self.transform
-    final_transform.basis.rotate(UP, deg_to_rad(degrees))
+    final_transform.basis.rotate(Up, deg_to_rad(degrees))
     self.callback = proc(delta: float): bool =
       duration += delta
-      self.rotate(UP, deg_to_rad(degrees * delta * self.speed))
+      self.rotate(Up, deg_to_rad(degrees * delta * self.speed))
       if duration <= 1.0 / self.speed:
         true
       else:
@@ -90,10 +91,10 @@ gdobj NimBot of KinematicBody:
     self.start_advance_timer()
     true
 
-  proc forward(steps: float): bool = self.move(FORWARD, steps)
-  proc back(steps: float): bool = self.move(BACK, steps)
-  proc left(steps: float): bool = self.move(LEFT, steps)
-  proc right(steps: float): bool = self.move(RIGHT, steps)
+  proc forward(steps: float): bool = self.move(Forward, steps)
+  proc back(steps: float): bool = self.move(Back, steps)
+  proc left(steps: float): bool = self.move(Left, steps)
+  proc right(steps: float): bool = self.move(Right, steps)
   proc turn_left(degrees: float): bool = self.turn(degrees)
   proc turn_right(degrees: float): bool = self.turn(-degrees)
 

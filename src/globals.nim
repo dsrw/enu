@@ -1,7 +1,7 @@
-import ../godotapi / [node, scene_tree, voxel_buffer],
-       godot, hashes,
-       engine/engine, core,
-       strformat, math, strutils, sequtils, compiler/lineinfos, tables, sets, json_serialization
+import ../godotapi / [node, scene_tree, voxel_buffer]
+import godot, json_serialization, compiler/lineinfos
+import engine/engine, core, api/directions
+import std / [strformat, math, strutils, sequtils, tables, sets, colors]
 
 export strformat.`&`
 
@@ -12,6 +12,12 @@ type
   StateRefs = ref object
     player*: Node
     game*: Node
+
+
+
+
+  #BlockColors* = enum
+
 
   VoxData* = tuple[index, offset: int, keep: bool]
   Vox* = tuple[location: Vector3, data: VoxData]
@@ -31,12 +37,6 @@ type
 
 const
   CMP_EPSILON = 0.00001
-  UP* = vec3(0, 1, 0)
-  DOWN* = vec3(0, -1, 0)
-  BACK* = vec3(0, 0, 1)
-  FORWARD* = vec3(0, 0, -1)
-  RIGHT* = vec3(1, 0, 0)
-  LEFT* = vec3(-1, 0, 0)
 
 var
   editing*: proc:bool
@@ -120,4 +120,11 @@ proc round*(v: Vector3): Vector3 {.inline.} =
   vec3(v.x.round(), v.y.round(), v.z.round())
 
 proc is_axis_aligned*(v: Vector3): bool {.inline.} =
-  v in [UP, DOWN, LEFT, RIGHT, FORWARD, BACK]
+  v in [Up, Down, Left, Right, Forward, Back]
+
+proc init_color*(color: colors.Color): godot.Color =
+  let rgb = extract_rgb color
+  result = init_color(rgb.r.float / 256, rgb.g.float / 256, rgb.b.float / 256)
+
+proc init_color*(hex: 0..0xffffff): godot.Color =
+  result = init_color colors.Color(hex)

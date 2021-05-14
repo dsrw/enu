@@ -3,6 +3,7 @@ import godot
 import std / [tables, math, sets, sugar, sequtils, hashes, os, monotimes]
 import ".." / [core, globals, world/terrain, world/grid]
 import ../engine / [engine, script_helpers]
+import ../api / [directions]
 
 include "default_builder.nim.nimf"
 
@@ -280,7 +281,7 @@ gdobj Builder of Spatial:
       self.start_advance_timer()
       return true
 
-  proc turn(degrees: float, axis = UP): bool =
+  proc turn(degrees: float, axis = Up): bool =
     self.load_vars()
     if self.move_mode:
       var duration = 0.0
@@ -324,16 +325,16 @@ gdobj Builder of Spatial:
     if self.engine.initialized: self.set_vars()
     false
 
-  proc forward(steps: float): bool = self.move(FORWARD, steps)
-  proc back(steps: float): bool = self.move(BACK, steps)
-  proc up(steps: float): bool = self.move(UP, steps)
-  proc down(steps: float): bool = self.move(DOWN, steps)
-  proc left(steps: float): bool = self.move(LEFT, steps)
-  proc right(steps: float): bool = self.move(RIGHT, steps)
-  proc turn_left(degrees: float): bool = self.turn(degrees, UP)
-  proc turn_right(degrees: float): bool = self.turn(degrees, DOWN)
-  proc turn_up(degrees: float): bool = self.turn(degrees, RIGHT)
-  proc turn_down(degrees: float): bool = self.turn(degrees, LEFT)
+  proc forward(steps: float): bool = self.move(Forward, steps)
+  proc back(steps: float): bool = self.move(Back, steps)
+  proc up(steps: float): bool = self.move(Up, steps)
+  proc down(steps: float): bool = self.move(Down, steps)
+  proc left(steps: float): bool = self.move(Left, steps)
+  proc right(steps: float): bool = self.move(Right, steps)
+  proc turn_left(degrees: float): bool = self.turn(degrees, Up)
+  proc turn_right(degrees: float): bool = self.turn(degrees, Down)
+  proc turn_up(degrees: float): bool = self.turn(degrees, Right)
+  proc turn_down(degrees: float): bool = self.turn(degrees, Left)
 
   proc error(e: ref VMQuit) =
     self.running = false

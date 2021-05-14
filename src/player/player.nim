@@ -4,7 +4,8 @@ import ../../godotapi / [kinematic_body, spatial, input, input_event,
                          collision_shape]
 import godot except print
 import math, print
-import ".." / [core, globals, game]
+import ".." / [core, globals, game, api/directions]
+
 import aim_target
 
 let
@@ -142,8 +143,8 @@ gdobj Player of KinematicBody:
           input_direction = self.get_input_direction()
           basis   = self.camera_rig.global_transform.basis
           right   = basis.x * input_direction.x
-          up      = UP * input_direction.y
-          forward = (basis.x * input_direction.z).rotated(UP, forward_rotation)
+          up      = Up * input_direction.y
+          forward = (basis.x * input_direction.z).rotated(Up, forward_rotation)
 
         var
           move_direction = forward + right
@@ -152,11 +153,11 @@ gdobj Player of KinematicBody:
           move_direction = move_direction.normalized()
 
         move_direction.y = 0
-        move_direction += up
+        move_direction += Up
 
         let velocity = self.calculate_velocity(self.velocity, move_direction,
                                                delta, self.flying, self.running)
-        self.velocity = self.move_and_slide(velocity, UP)
+        self.velocity = self.move_and_slide(velocity, up)
         # drop us back in the middle of the world if we fall through
         if self.translation.y < -10:
           self.translation = vec3(0, 100, 0)

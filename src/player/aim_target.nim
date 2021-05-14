@@ -1,5 +1,6 @@
 import ../../godotapi / [sprite_3d, ray_cast, spatial]
 import godot, strutils, math
+import ../api/directions
 import ".." / [globals, core]
 
 gdobj AimTarget of Sprite3D:
@@ -71,7 +72,7 @@ gdobj AimTarget of Sprite3D:
 
       let
         align_normal = self.transform.origin + global_normal
-        axis = if local_normal.abs.snapped(fuzzy) != UP: UP else: FORWARD
+        axis = if local_normal.abs.snapped(fuzzy) != Up: Up else: Forward
       self.look_at(align_normal, axis)
 
       if (self.last_point, self.last_normal) != (local_point, local_normal):
