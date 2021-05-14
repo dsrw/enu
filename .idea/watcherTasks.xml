@@ -5,13 +5,29 @@
       <option name="arguments" value="c -r $FilePath$ --verbose" />
       <option name="checkSyntaxErrors" value="true" />
       <option name="description" />
-      <option name="exitCodeBehavior" value="ERROR" />
+      <option name="exitCodeBehavior" value="ALWAYS" />
       <option name="fileExtension" value="nim" />
       <option name="immediateSync" value="false" />
-      <option name="name" value="tbridge" />
+      <option name="name" value="nim test" />
       <option name="output" value="" />
       <option name="outputFilters">
-        <array />
+        <array>
+          <FilterInfo>
+            <option name="description" value="" />
+            <option name="name" value="" />
+            <option name="regExp" value="$FILE_PATH$\($LINE$, $COLUMN$\) $MESSAGE$" />
+          </FilterInfo>
+          <FilterInfo>
+            <option name="description" value="" />
+            <option name="name" value="" />
+            <option name="regExp" value=".*?$FILE_PATH$" />
+          </FilterInfo>
+          <FilterInfo>
+            <option name="description" value="" />
+            <option name="name" value="" />
+            <option name="regExp" value="'$FILE_PATH$'" />
+          </FilterInfo>
+        </array>
       </option>
       <option name="outputFromStdout" value="false" />
       <option name="program" value="nimble" />
@@ -31,7 +47,28 @@
       <option name="name" value="build" />
       <option name="output" value="" />
       <option name="outputFilters">
-        <array />
+        <array>
+          <FilterInfo>
+            <option name="description" value="" />
+            <option name="name" value="" />
+            <option name="regExp" value="$FILE_PATH$\($LINE$, $COLUMN$\) $MESSAGE$" />
+          </FilterInfo>
+          <FilterInfo>
+            <option name="description" value="" />
+            <option name="name" value="" />
+            <option name="regExp" value="previous declaration here: $FILE_PATH$\($LINE$, $COLUMN$\)" />
+          </FilterInfo>
+          <FilterInfo>
+            <option name="description" value="" />
+            <option name="name" value="" />
+            <option name="regExp" value=".*?$FILE_PATH$" />
+          </FilterInfo>
+          <FilterInfo>
+            <option name="description" value="" />
+            <option name="name" value="" />
+            <option name="regExp" value="'$FILE_PATH$'" />
+          </FilterInfo>
+        </array>
       </option>
       <option name="outputFromStdout" value="false" />
       <option name="program" value="nimble" />
