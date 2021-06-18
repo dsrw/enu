@@ -1,0 +1,8 @@
+[gd_resource type="NativeScript" load_steps=2 format=2]
+
+[ext_resource path="res://_dlls/enutest.gdnlib" type="GDNativeLibrary" id=1]
+
+[resource]
+resource_name = "EnuTest"
+class_name = "EnuTest"
+library = ExtResource( 1 )

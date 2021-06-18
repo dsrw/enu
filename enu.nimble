@@ -48,6 +48,10 @@ task build_godot, "Build godot":
   with_dir "vendor/godot":
     exec &"{scons} custom_modules=../modules platform={target} {godot_opts} -j{cores}"
 
+task build_headless, "build headless godot":
+  target = "server"
+  build_godot_task()
+
 proc find_and_copy_dlls(dep_path, dest: string, dlls: varargs[string]) =
   for dep in dlls:
     cp_file dep_path.join_path(dep), join_path(dest, dep)

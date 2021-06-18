@@ -1,0 +1,12 @@
+--define:useRealtimeGC
+--define:vmExecHooks
+--define:enu_simulate
+--noMain
+--app:lib
+--threads:on
+--tlsEmulation:off
+--threadAnalysis:off
+--define:vmExecHooks
+--path:"$projectDir/../../src"
+--path:"$projectDir/../../generated"
+switch("out", "app/_dlls/enu-test.dylib")

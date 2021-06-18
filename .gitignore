@@ -19,9 +19,10 @@ app/.import
 app/_dlls/enu.exp
 app/_dlls/enu.lib
 
-godotapi
+generated/
 app/export_presets.cfg
 dist/
 vmlib/stdlib
 dist_config.json
 .vscode
+/.last_test
