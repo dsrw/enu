@@ -1,4 +1,4 @@
-import ../../godotapi / [mesh, voxel_terrain, voxel_tool, voxel, voxel_library, shader_material]
+import godotapi / [mesh, voxel_terrain, voxel_tool, voxel, voxel_library, shader_material]
 import godot, sets, tables, hashes
 import ".." / [globals, core]
 

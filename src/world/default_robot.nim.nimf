@@ -1,6 +1,10 @@
 #? stdtmpl
-#proc default_robot(file_name: string): string =
-proc quit*(exit_code = 0) = discard
+#proc default_robot(file_name, imports: string): string =
+import types
+${imports}
+template name(n: untyped) = class_name(n, ScriptNode)
+preprocess "name", "${file_name}", "ScriptNode"
+
 include robot
 include "${file_name}"
 

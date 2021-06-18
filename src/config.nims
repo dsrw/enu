@@ -5,5 +5,6 @@
 --threads:on
 --tlsEmulation:off
 --threadAnalysis:off
-#--define:gcDestructors
-#--gc:orc
+
+switch("path", this_dir())
+switch("path", this_dir() & "/../generated")

@@ -14,6 +14,8 @@ var
   section_start_time: MonoTime
   current_proc: string
 
+template nim_filename*: string = instantiation_info(full_paths = true).filename
+
 template trace*(body: untyped): untyped =
   # https://github.com/nim-lang/Nim/issues/8212#issuecomment-657202258
   when not declaredInScope(internalCProcName):

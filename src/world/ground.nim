@@ -1,7 +1,6 @@
-import ../../godotapi / [mesh_instance, node, spatial, resource_loader, packed_scene]
+import godotapi / [mesh_instance, node, spatial, resource_loader, packed_scene]
 import godot, sugar
-import ".." / [core, globals]
-import ../world / [builder, bot, terrain]
+import core, globals, world / [builder, bot, terrain]
 
 gdobj Ground of MeshInstance:
   var

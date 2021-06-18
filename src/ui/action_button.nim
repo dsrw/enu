@@ -1,4 +1,4 @@
-import ../../godotapi / [button, style_box_flat]
+import godotapi / [button, style_box_flat]
 import godot
 import ".." / [core, globals]
 

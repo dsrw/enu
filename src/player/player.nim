@@ -1,4 +1,4 @@
-import ../../godotapi / [kinematic_body, spatial, input, input_event,
+import godotapi / [kinematic_body, spatial, input, input_event,
                          input_event_mouse_motion, input_event_joypad_motion,
                          ray_cast, scene_tree, input_event_pan_gesture, viewport, camera, global_constants,
                          collision_shape]

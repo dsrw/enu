@@ -1,4 +1,4 @@
-import ../../godotapi / [text_edit, scene_tree, node, input_event, input_event_key,
+import godotapi / [text_edit, scene_tree, node, input_event, input_event_key,
                          rich_text_label, global_constants]
 import godot, strutils
 import ".." / [globals, core]

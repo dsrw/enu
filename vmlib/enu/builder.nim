@@ -1,24 +1,10 @@
-import strformat, strutils, helpers
+import strformat, strutils, helpers, types
 export helpers
 
-include loops
-
-type
-  ColorIndex* = enum
-    eraser = 0,
-    blue = 1,
-    red = 2,
-    green = 3,
-    black = 4,
-    white = 5
-
-  DrawMode* = enum
-    GridMode, VoxelMode
-
-  Energy = range[0.0..100.0]
+include loops, core
 
 var
-  speed*: range[0.0..250.0] = 30.0
+  speed*: range[0.0..250.0] = 1.0
   move_speed = 1.0
   drawing* = true
   color*: ColorIndex
@@ -27,6 +13,21 @@ var
   move_mode* = false
   scale* = 1.0
   energies: Table[ColorIndex, float]
+
+include base_api
+
+self.ctrl.begin_move = proc(direction: Vector3, steps: float, self: ScriptNode) =
+  self.wait begin_move(direction, steps)
+
+self.ctrl.begin_turn = proc(axis: Vector3, degrees: float, self: ScriptNode) =
+  self.wait begin_turn(axis, degrees)
+
+self.ctrl.advance_state_machine = proc(): bool = advance_state_machine()
+self.ctrl.yield_script = proc() = yield_script()
+
+self.ctrl.set = proc(name: string, new_speed:float) =
+  speed = new_speed
+self.ctrl.get = proc(name: string): float = speed
 
 proc change_color(amount: int) =
   var color_index = int color
@@ -37,9 +38,6 @@ proc change_color(amount: int) =
     color_index = int ColorIndex.high
   color = ColorIndex color_index
 
-include logo
-
-proc echo_console*(msg: string)     = discard
 proc sleep*(seconds: float)         = discard
 proc reset*(clear = false)          = discard
 proc save*(name = "default")        = discard

@@ -1,7 +1,7 @@
-import ../godotapi / [input, input_event, gd_os, node, scene_tree, viewport_container,
-                      packed_scene, resource_saver, sprite, control, viewport,
-                      performance, label, theme, dynamic_font, resource_loader, main_loop,
-                      gd_os, project_settings, input_map, input_event, input_event_action]
+import godotapi / [input, input_event, gd_os, node, scene_tree, viewport_container,
+                   packed_scene, resource_saver, sprite, control, viewport,
+                   performance, label, theme, dynamic_font, resource_loader, main_loop,
+                   gd_os, project_settings, input_map, input_event, input_event_action]
 import godot, threadpool, times, os, json_serialization
 import core, globals
 
@@ -152,58 +152,58 @@ gdobj Game of Node:
       echo &"loaded {config.scene}"
 
   method ready* =
-    trace:
-      self.viewport_container = self.get_node("ViewportContainer").as(ViewportContainer)
-      self.scene_packer = gdnew[PackedScene]()
-      self.load_world()
-      self.get_tree().set_auto_accept_quit(false)
-      assert not self.viewport_container.is_nil
-      state.game = self
-      let (theme_holder, theme) = if hostOS == "macosx":
-        ( self.find_node("ThemeHolder").as(Container),
-          load("res://themes/AppleTheme.tres").as(Theme))
-      else:
-        let node = self.find_node("Panels").as(Container)
-        (node, node.theme)
-      let
-        font = theme.default_font.as(DynamicFont)
-        bold_font = theme.get_font("bold_font", "RichTextLabel")
-                          .as(DynamicFont)
+    self.viewport_container = self.get_node("ViewportContainer").as(ViewportContainer)
+    self.scene_packer = gdnew[PackedScene]()
+    self.load_world()
+    self.get_tree().set_auto_accept_quit(false)
+    assert not self.viewport_container.is_nil
+    state.game = self
+    let (theme_holder, theme) = if hostOS == "macosx":
+      ( self.find_node("ThemeHolder").as(Container),
+        load("res://themes/AppleTheme.tres").as(Theme))
+    else:
+      let node = self.find_node("Panels").as(Container)
+      (node, node.theme)
+    let
+      font = theme.default_font.as(DynamicFont)
+      bold_font = theme.get_font("bold_font", "RichTextLabel")
+                        .as(DynamicFont)
 
-      font.size = config.font_size
-      bold_font.size = config.font_size
-      theme_holder.theme = theme
-      self.shrink = config.downscale
+    font.size = config.font_size
+    bold_font.size = config.font_size
+    theme_holder.theme = theme
+    self.shrink = config.downscale
 
+    self.mouse_captured = true
+    self.reticle = self.find_node("Reticle").as(Control)
+    self.stats = self.find_node("stats").as(Label)
+    self.stats.visible = config.show_stats
+
+    globals.capture_mouse = proc() =
       self.mouse_captured = true
-      self.reticle = self.find_node("Reticle").as(Control)
-      self.stats = self.find_node("stats").as(Label)
-      self.stats.visible = config.show_stats
 
-      globals.capture_mouse = proc() =
-        self.mouse_captured = true
+    globals.release_mouse = proc() =
+      self.mouse_captured = false
 
-      globals.release_mouse = proc() =
-        self.mouse_captured = false
+    globals.reload_scripts = proc() =
+      trigger("save")
+      trigger("reload")
 
-      globals.reload_scripts = proc() =
-        trigger("save")
-        trigger("reload")
+    globals.save_and_reload = proc() =
+      trigger("save")
+      trigger("reload_all")
+      globals.save_scene()
 
-      globals.save_and_reload = proc() =
-        trigger("save")
-        trigger("reload_all")
-        globals.save_scene()
+    globals.save_scene = proc(immediate: bool) =
+      if immediate:
+        self.save_requested = some(now())
+      elif not self.save_requested:
+        self.save_requested = some(now() + 5.seconds)
 
-      globals.save_scene = proc(immediate: bool) =
-        if immediate:
-          self.save_requested = some(now())
-        elif not self.save_requested:
-          self.save_requested = some(now() + 5.seconds)
-
-      globals.pause = proc() =
-        trigger("pause")
-      self.ready = true
+    globals.pause = proc() =
+      trigger("pause")
+    self.ready = true
+    trigger("game_ready")
 
   proc update_action_index*(change: int) =
     action_index += change

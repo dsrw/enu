@@ -1,4 +1,4 @@
-import ../godotapi / [node, scene_tree, voxel_buffer],
+import godotapi / [node, scene_tree, voxel_buffer],
        godot, hashes,
        engine/engine, core,
        strformat, math, strutils, sequtils, compiler/lineinfos, tables, sets, json_serialization

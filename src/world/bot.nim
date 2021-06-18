@@ -1,32 +1,32 @@
-import ../../godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
-                         input_event, animation_player, resource_loader, packed_scene]
+import godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
+                   input_event, animation_player, resource_loader, packed_scene]
 import godot, std / [math, tables, with, times, sugar, os, monotimes]
-import ".." / [globals, core]
-import ../engine / [engine, script_helpers]
+import globals, core
+import engine/contexts
+export contexts
 
 include "default_robot.nim.nimf"
 
 var max_bot_index = 0
 gdobj NimBot of KinematicBody:
   var
-    speed = 1.0
-    enu_script*: string
+    script_ctx*: ScriptCtx
     material* {.gdExport.}, highlight_material* {.gdExport.},
       selected_material* {.gdExport.}: Material
     script_index* {.gdExport.} = 0
     disabled* {.gdExport.} = false
-    callback: proc(delta: float): bool
-    saved_callback: proc(delta: float): bool
-    engine: Engine
-    last_error: string
     orig_rotation: Vector3
     orig_translation: Vector3
     skin: Spatial
     mesh: MeshInstance
-    paused* = true
-    running = false
     animation_player: AnimationPlayer
-    advance_timer = MonoTime.high
+
+  proc init*() =
+    self.script_ctx = ScriptCtx.init("bot")
+    self.speed = 1.0
+
+  proc code_template(file: string, imports: string): string =
+    result = default_robot(config.script_dir & "/" & file, imports)
 
   proc update_material*(value: Material) =
     self.mesh.set_surface_material(0, value)
@@ -41,154 +41,90 @@ gdobj NimBot of KinematicBody:
     self.set_default_material()
 
   proc select*() =
-    show_editor self.enu_script, self.engine
+    show_editor self.script_ctx.script, self.script_ctx.engine
 
   proc destroy*() =
     self.get_parent.remove_child(self)
 
-  proc print_error(msg: string) =
-    if msg != self.last_error:
-      self.last_error = msg
-      print(msg)
+  proc on_load_vars() =
+    let e = self.script_ctx.engine
+    self.speed = e.get_float("speed", e.module_name)
 
-  proc load_vars() =
-    self.speed = self.engine.get_float("speed", self.engine.module_name)
-
-  proc move(direction: Vector3, steps: float): bool =
-    self.load_vars()
+  proc on_begin_move(direction: Vector3, steps: float): Callback =
     var duration = 0.0
     let
       moving = direction.rotated(UP, self.rotation.y)
       finish = self.translation + moving * steps
       finish_time = 1.0 / self.speed * steps
 
-    self.callback = proc(delta: float): bool =
-      duration += delta
-      if duration >= finish_time:
-        self.translation = finish
-        return false
-      else:
-        discard self.move_and_slide(moving * self.speed, UP)
-        return true
-    self.start_advance_timer()
-    true
+    when not defined(enu_simulate):
+      result = proc(delta: float): bool =
+        duration += delta
+        if duration >= finish_time:
+          self.translation = finish
+          return false
+        else:
+          discard self.move_and_slide(moving * self.speed, UP)
+          return true
+      current_ctx().start_advance_timer()
+    else:
+      self.translation = finish
 
-  proc turn(degrees: float): bool =
-    self.load_vars()
+  proc on_begin_turn(axis: Vector3, degrees: float): Callback =
+    assert axis in [LEFT, RIGHT]
+    let degrees = degrees * -axis.x
     var duration = 0.0
     # TODO: Why can't this be a one liner?
     var final_transform = self.transform
     final_transform.basis.rotate(UP, deg_to_rad(degrees))
-    self.callback = proc(delta: float): bool =
-      duration += delta
-      self.rotate(UP, deg_to_rad(degrees * delta * self.speed))
-      if duration <= 1.0 / self.speed:
-        true
-      else:
-        self.transform = final_transform
-        false
-    self.start_advance_timer()
-    true
-
-  proc forward(steps: float): bool = self.move(FORWARD, steps)
-  proc back(steps: float): bool = self.move(BACK, steps)
-  proc left(steps: float): bool = self.move(LEFT, steps)
-  proc right(steps: float): bool = self.move(RIGHT, steps)
-  proc turn_left(degrees: float): bool = self.turn(degrees)
-  proc turn_right(degrees: float): bool = self.turn(-degrees)
-
-  proc error(e: ref VMQuit) =
-    self.running = false
-    err e.msg
-    trigger("script_error")
-
-  proc is_script_loadable(): bool =
-    if self.enu_script != "none" and file_exists(self.enu_script):
-      let current_code = read_file(self.enu_script).strip
-      result = current_code != ""
-
-  proc load_script() =
-    trace:
-      self.callback = nil
-
-      try:
-        if self.engine.is_nil:
-          self.engine = Engine()
-        if not self.is_script_loadable:
-          return
-        if not self.paused and not self.engine.initialized:
-          debug &"Loading {self.enu_script}"
-          let code = default_robot(self.enu_script.extract_filename)
-          self.engine.load(config.script_dir, self.enu_script.split_file.name, code, config.lib_dir)
-          log_trace("loaded")
-          with self.engine:
-            expose "yield_script", proc(a: VmArgs): bool =
-              self.callback = self.saved_callback
-              self.saved_callback = nil
-              true
-            expose("forward_impl", a => self.forward(get_float(a, 0)))
-            expose("back_impl", a => self.back(get_float(a, 0)))
-            expose("left_impl", a => self.left(get_float(a, 0)))
-            expose("right_impl", a => self.right(get_float(a, 0)))
-            expose("turn_left_impl", a => self.turn_left(get_float(a, 0)))
-            expose("turn_right_impl", a => self.turn_right(get_float(a, 0)))
-            expose("echo", a => echo_console(get_string(a, 0)))
-            expose("play", proc(a: VmArgs): bool =
-              let animation_name = get_string(a, 0)
-              if animation_name == "":
-                self.animation_player.stop(true)
-              else:
-                self.animation_player.play(animation_name)
-              return false
-            )
-        log_trace("exposed")
-        if not self.paused:
-          self.running = self.engine.run()
-          log_trace("running")
-      except VMQuit as e:
-        self.error(e)
-
-  proc set_script() =
-    self.enu_script = join_path(config.script_dir, &"bot_{self.script_index}.nim")
+    when not defined(enu_simulate):
+      result = proc(delta: float): bool =
+        duration += delta
+        self.rotate(UP, deg_to_rad(degrees * delta * self.speed))
+        if duration <= 1.0 / self.speed:
+          true
+        else:
+          self.transform = final_transform
+          false
+      current_ctx().start_advance_timer()
+    else:
+      self.transform = final_transform
 
   proc setup*() =
-    trace:
-      self.script_index = max_bot_index
-      inc max_bot_index
-      self.name = "Bot_" & $self.script_index
-      self.set_script()
-      write_file self.enu_script, ""
+    self.script_index = max_bot_index
+    inc max_bot_index
+    self.name = "Bot_" & $self.script_index
+    self.set_script()
+    write_file self.script_ctx.script, ""
 
   method ready*() =
-    trace:
-      if max_bot_index <= self.script_index:
-        max_bot_index = self.script_index + 1
-      self.set_script()
-      with self:
-        skin = self.get_node("Mannequiny").as(Spatial)
-        mesh = self.skin.get_node("root/Skeleton/body001").as(MeshInstance)
-        animation_player = self.skin.get_node("AnimationPlayer").as(AnimationPlayer)
-        orig_rotation = self.rotation
-        orig_translation = self.translation
-        set_default_material()
+    self.bind_signals("game_ready")
+    if max_bot_index <= self.script_index:
+      max_bot_index = self.script_index + 1
+    self.set_script()
+    with self:
+      skin = self.get_node("Mannequiny").as(Spatial)
+      mesh = self.skin.get_node("root/Skeleton/body001").as(MeshInstance)
+      animation_player = self.skin.get_node("AnimationPlayer").as(AnimationPlayer)
+      orig_rotation = self.rotation
+      orig_translation = self.translation
+      set_default_material()
 
-      if not self.disabled:
-        self.bind_signals(w"reload pause reload_all")
-        log_trace()
-        self.load_script()
-        log_trace("load_script")
+  method on_game_ready() =
+    if not self.disabled:
+      self.bind_signals(w"reload pause reload_all")
+      self.load_script()
 
   proc update_running_state(running: bool) =
-    self.running = running
+    self.engine.running = running
 
   method physics_process*(delta: float64) =
-    trace:
-      if not self.paused:
-        try:
-          if self.running:
-            self.advance(delta)
-        except VMQuit as e:
-          self.error(e)
+    if not self.paused:
+      try:
+        if self.engine.running:
+          self.advance(delta)
+      except VMQuit as e:
+        self.engine.error(e)
 
   method reload() =
     self.animation_player.stop(true)
@@ -197,8 +133,17 @@ gdobj NimBot of KinematicBody:
       rotation = self.orig_rotation
     self.load_script()
 
+  proc on_script_loaded*(e: Engine) =
+    e.expose "play", proc(a: VmArgs): bool =
+      let animation_name = get_string(a, 0)
+      if animation_name == "":
+        self.animation_player.stop(true)
+      else:
+        self.animation_player.play(animation_name)
+      return false
+
   method on_reload*() =
-    if not editing() or open_file == self.enu_script:
+    if not editing() or open_file == self.script:
       self.paused = false
       self.reload()
 

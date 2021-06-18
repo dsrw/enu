@@ -1,4 +1,4 @@
-import ../../godotapi / [h_box_container, scene_tree, button, image_texture]
+import godotapi / [h_box_container, scene_tree, button, image_texture]
 import godot
 import ".." / [core, globals, game, ui/preview_maker]
 

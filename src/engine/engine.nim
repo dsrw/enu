@@ -1,7 +1,8 @@
-import compiler / [vm, vmdef, options, lineinfos, ast]
-import eval
-import os, strformat, std/with, parseutils
-import ../core
+import compiler / [vm, vmdef, options, lineinfos, ast, idgen]
+import types, eval
+import std / [os, strformat, with, parseutils, hashes]
+import core
+import godot
 export Interpreter
 
 export VmArgs, get_float, get_int, get_string, get_bool
@@ -23,8 +24,13 @@ type
     initialized*: bool
     code: string
     module_name*: string
+    file_name: string
     exit_code*: Option[int]
     errors*: seq[tuple[msg: string, info: TLineInfo]]
+    callback*: Callback
+    saved_callback*: Callback
+    id: int
+    running*: bool
 
 const
   STDLIB_PATHS = (w". core pure pure/collections pure/concurrency" &
@@ -33,11 +39,16 @@ const
 
 var
   interpreter: Interpreter
-  current_engine: Engine
+  current: Engine
 
-proc current(): Engine = current_engine
+proc hash*(e: Engine): Hash = e.id.hash
+proc current_engine*(): Engine = current
 proc set_current(e: Engine) =
-  current_engine = e
+  current = e
+
+proc init*(t: typedesc[Engine]): Engine =
+  result = Engine()
+  result.id = get_id()
 
 proc init_interpreter(script_dir, vmlib: string) =
   trace:
@@ -47,8 +58,8 @@ proc init_interpreter(script_dir, vmlib: string) =
     log_trace("create_interpreter")
     with interpreter:
       register_error_hook proc(config, info, msg, severity: auto) {.gcsafe.} =
-        let e = current_engine
-        if severity == Error and config.error_counter >= config.error_max:
+        let e = current_engine()
+        if severity == Severity.Error and config.error_counter >= config.error_max:
           let file_name = if info.file_index.int >= 0:
             config.m.file_infos[info.file_index.int].full_path.string
           else:
@@ -60,7 +71,7 @@ proc init_interpreter(script_dir, vmlib: string) =
           raise (ref VMQuit)(info: info, msg: msg)
 
       register_enter_hook proc(c, pc, tos, instr: auto) =
-        let e = current()
+        let e = current_engine()
         let info = c.debug[pc]
         if info.file_index.int == 0 and e.previous_line != info:
           if e.line_changed != nil:
@@ -77,19 +88,16 @@ proc init_interpreter(script_dir, vmlib: string) =
     log_trace("hooks")
 
 proc pause*(e: Engine) =
-  set_current e
   e.pause_requested = true
 
-proc load*(e: Engine, script_dir, module_name, code, vmlib: string) =
+proc load*(e: Engine, script_dir, file_name, code, vmlib: string) =
   e.code = code
-  e.module_name = module_name
+  e.file_name = file_name
+  e.module_name = file_name.split_file.name
   set_current e
   if interpreter.is_nil:
     init_interpreter(script_dir, vmlib)
     e.is_main_module = true
-  interpreter.implement_routine "*", e.module_name, "quit", proc(a: VmArgs) {.gcsafe.} =
-    e.exit_code = some(a.get_int(0).int)
-    e.pause()
   e.initialized = true
 
 proc run*(e: Engine): bool =
@@ -97,26 +105,48 @@ proc run*(e: Engine): bool =
   e.exit_code = none(int)
   e.errors = @[]
   try:
-    interpreter.load_module(e.module_name, e.code)
+    interpreter.load_module(e.file_name, e.code)
     false
   except VMPause:
     e.exit_code.is_none
 
-proc to_node*(val: int): PNode =
-  new_int_node(nk_int_lit, val)
+proc get_vec3*(a: VmArgs, pos: int): Vector3 =
+  proc float_val(node: PNode, name: string): float =
+    assert node.kind == nkExprColonExpr
+    assert node.sons[0].sym.kind == skField
+    assert node.sons[0].sym.name.s == name
+    result = node.sons[1].float_val
+  let
+    fields = a.get_node(0).sons
+    x = float_val(fields[1], "x")
+    y = float_val(fields[2], "y")
+    z = float_val(fields[3], "z")
+  result = vec3(x, y, z)
 
-proc to_node*(val: float): PNode =
-  new_float_node(nk_float_lit, val)
+# adapted from https://github.com/h0lley/embeddedNimScript/blob/6101fb37d4bd3f947db86bac96f53b35d507736a/embeddedNims/enims.nim#L31
+proc to_node*(val: int): PNode = new_int_node(nkIntLit, val)
+proc to_node*(val: float): PNode = new_float_node(nkFloatLit, val)
+proc to_node*(val: string): PNode = new_str_node(nkStrLit, val)
+proc to_node*(val: bool): PNode = val.ord.to_node
+proc to_node*(val: enum): PNode = val.ord.to_node
 
-proc to_node*(val: string): PNode =
-  new_str_node(nk_str_lit, val)
+proc to_node*(list: open_array[int|float|string|bool|enum]): PNode =
+  result = nkBracket.new_node
+  result.sons.initialize(list.len)
+  for i in 0..list.high: result.sons[i] = list[i].to_node()
 
-proc to_node*(val: bool): PNode =
-  let v = if val: 1 else: 0
-  new_int_node(nk_int_lit, v)
+proc to_node*(tree: tuple|object): PNode =
+  result = nkPar.new_tree
+  for field in tree.fields:
+    result.sons.add(field.to_node)
+
+proc to_node*(tree: ref tuple|ref object): PNode =
+  result = nkPar.new_tree
+  if tree.is_nil: return result
+  for field in tree.fields:
+    result.sons.add(field.to_node)
 
 proc call_proc*(e: Engine, proc_name: string, module_name = "", args: varargs[PNode, to_node]): PNode {.discardable.}=
-  set_current e
   let foreign_proc = interpreter.select_routine(proc_name, module_name = module_name)
   if foreign_proc == nil:
     raise new_exception(VMError, &"script does not export a proc of the name: '{proc_name}'")
@@ -134,7 +164,7 @@ proc expose*(e: Engine, proc_name: string,
              routine: proc(a: VmArgs): bool) {.gcsafe.} =
   interpreter.implement_routine "*", e.module_name, proc_name, proc(a: VmArgs) {.gcsafe.} =
     if routine(a):
-      e.pause()
+      current_engine().pause()
 
 proc call_float*(e: Engine, proc_name: string): float =
   e.call_proc(proc_name).get_float()
@@ -152,6 +182,9 @@ proc get_int*(e: Engine, var_name: string, module_name = ""): int =
 proc get_bool*(e: Engine, var_name: string, module_name = ""): bool =
   let b = e.get_var(var_name, module_name).get_int
   return b == 1
+
+proc get_string*(e: Engine, var_name: string, module_name = ""): string =
+  result = e.get_var(var_name, module_name).get_str
 
 proc call_int*(e: Engine, proc_name: string): int =
   e.call_proc(proc_name).get_int.to_int

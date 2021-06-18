@@ -1,17 +1,19 @@
 import strformat, strutils, os, json
 
-let
+var
   (target, lib_ext, exe_ext) = case host_os
     of "windows": ("windows", ".dll", ".exe")
     of "macosx" : ("osx", ".dylib", "")
     else        : ("x11", ".so", "")
-  generated_dir   = "godotapi"
+  generated_dir   = "generated/godotapi"
   api_json        = "api.json"
   generator       = "tools/build_helpers"
   godot_bin       = this_dir() & &"/vendor/godot/bin/godot.{target}.opt.tools.64{exe_ext}"
   godot_build_url = "https://docs.godotengine.org/en/stable/development/compiling/index.html"
   gcc_dlls        = ["libgcc_s_seh-1.dll", "libwinpthread-1.dll"]
   nim_dlls        = ["pcre64.dll"]
+  godot_opts      = "target=release_debug"
+  generator_path  = ""
 
 version       = "0.1.99"
 author        = "Scott Wadden"
@@ -27,19 +29,20 @@ requires "nim >= 1.4.0",
          "https://github.com/dsrw/Nim#1d5093d",
          "cligen 1.2.2",
          "json_serialization",
-         "print"
+         "print >= 1.0"
 
-var
-  godot_opts = "target=release_debug"
+proc gen: string =
+  if generator_path == "":
+    exec &"nimble c {generator}"
+    generator_path = find_exe generator
+  generator_path
 
 task build_godot, "Build godot":
   mk_dir generated_dir
   exec "git submodule update --init"
-  exec &"nimble c {generator}"
   let
-    gen = find_exe generator
     scons = find_exe "scons"
-    cores = gorge gen & " core_count"
+    cores = gorge(gen() & " core_count")
   if scons == "":
     quit &"*** scons not found on path, and is required to build Godot. See {godot_build_url} ***"
   with_dir "vendor/godot":
@@ -51,10 +54,9 @@ proc find_and_copy_dlls(dep_path, dest: string, dlls: varargs[string]) =
 
 task prereqs, "Generate Godot API binding":
   build_godot_task()
-  let gen = find_exe generator
   exec &"{godot_bin} --gdnative-generate-json-api {join_path generated_dir, api_json}"
-  exec &"{gen} generate_api -d={generated_dir} -j={api_json}"
-  exec &"{gen} copy_stdlib -d=vmlib/stdlib"
+  exec &"{gen()} generate_api -d={generated_dir} -j={api_json}"
+  exec &"{gen()} copy_stdlib -d=vmlib/stdlib"
   if host_os == "windows":
     # Assumes mingw
     find_and_copy_dlls find_exe("gcc").parent_dir, join_path("app", "_dlls"), gcc_dlls
@@ -74,14 +76,16 @@ task start, "Run Enu":
   cd "app"
   exec godot_bin & " --verbose scenes/game.tscn"
 
+task gen, "Generate build_helpers":
+  discard gen()
+
 proc code_sign(id, path: string) =
   exec &"codesign -s '{id}' -v --timestamp --options runtime {path}"
 
 task dist, "Build distribution":
   let release_bin = &"vendor/godot/bin/godot.{target}.opt.64{exe_ext}"
   prereqs_task()
-  let gen = find_exe generator
-  exec &"{gen} write_export_presets --enu_version {version}"
+  exec &"{gen()} write_export_presets --enu_version {version}"
   godot_opts = "target=release tools=no"
   build_godot_task()
   rm_dir "dist"
@@ -90,7 +94,7 @@ task dist, "Build distribution":
     let config = read_file("dist_config.json").parse_json
     mkdir "dist"
     exec "cp -r installer/Enu.app dist/Enu.app"
-    exec &"{gen} write_info_plist --enu_version {version}"
+    exec &"{gen()} write_info_plist --enu_version {version}"
     exec "mkdir -p dist/Enu.app/Contents/MacOS"
     exec "mkdir -p dist/Enu.app/Contents/Frameworks"
     exec &"cp {release_bin} dist/Enu.app/Contents/MacOS/Enu"

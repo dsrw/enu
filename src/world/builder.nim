@@ -1,8 +1,9 @@
-import ../../godotapi / [spatial, grid_map]
+import godotapi / [spatial, grid_map]
 import godot
 import std / [tables, math, sets, sugar, sequtils, hashes, os, monotimes]
-import ".." / [core, globals, world/terrain, world/grid]
-import ../engine / [engine, script_helpers]
+import core, globals, world / [terrain, grid]
+import engine/contexts
+export contexts
 
 include "default_builder.nim.nimf"
 
@@ -13,9 +14,9 @@ type
 
 gdobj Builder of Spatial:
   var
+    script_ctx: ScriptCtx
     draw_mode* {.gdExport.}: DrawMode
     script_index* {.gdExport.} = 0
-    enu_script*: string
     initial_index* {.gdExport.} = 1
     # FIXME `saved_blocks` and `saved_block_colors` should be
     # a single `seq[(Vector, int)]`. Will need `to_variant`
@@ -24,10 +25,6 @@ gdobj Builder of Spatial:
     saved_block_colors {.gdExport.}: seq[int]
     saved_holes* {.gdExport}: seq[Vector3]
     original_translation* {.gdExport.}: Vector3
-    paused* = false
-    engine: Engine
-    callback: proc(delta: float): bool
-    saved_callback: proc(delta: float): bool
     index: int = 1
     blocks_per_frame = 0.0
     blocks_remaining_this_frame = 0.0
@@ -42,34 +39,35 @@ gdobj Builder of Spatial:
     built = false
     move_mode = false
     scale_factor = 1.0
-    running = false
     # If we delete a voxel while it's queued up to be drawn by godot voxel,
     # the voxel gets drawn anyway, and the polys hang around until they
     # move out of draw distance. Wait a bit before clearing. FIXME.
     timers: seq[Timer]
-    advance_timer = MonoTime.high
+
+  proc init*() =
+    self.script_ctx = ScriptCtx.init("grid")
+
+  proc code_template(file: string, imports: string): string =
+    result = default_builder(file, imports)
+    echo "template: ", result
 
   method ready() =
-    trace:
-      if max_grid_index <= self.script_index:
-        max_grid_index = self.script_index + 1
-      self.set_script()
-      self.translation = self.original_translation
-      self.grid = self.get_node("Grid") as Grid
-      self.terrain = game_node.find_node("Terrain") as Terrain
-      assert self.grid != nil
-      assert self.terrain != nil
+    if max_grid_index <= self.script_index:
+      max_grid_index = self.script_index + 1
+    self.set_script()
+    self.translation = self.original_translation
+    self.grid = self.get_node("Grid") as Grid
+    self.terrain = game_node.find_node("Terrain") as Terrain
+    assert self.grid != nil
+    assert self.terrain != nil
 
-      self.bind_signals self.terrain,
-        w"block_selected last_block_deleted terrain_block_added terrain_block_removed"
-      self.bind_signals self.grid, w"selected deleted grid_block_added grid_block_removed"
-      self.bind_signals w"reload pause reload_all"
+    self.bind_signals self.terrain,
+      w"block_selected last_block_deleted terrain_block_added terrain_block_removed"
+    self.bind_signals self.grid, w"selected deleted grid_block_added grid_block_removed"
+    self.bind_signals w"reload pause reload_all"
 
-      if self.saved_blocks.len > 0 or self.saved_holes.len > 0:
-        self.restore_blocks()
-
-  proc set_script() =
-    self.enu_script = join_path(config.script_dir, &"grid_{self.script_index}.nim")
+    if self.saved_blocks.len > 0 or self.saved_holes.len > 0:
+      self.restore_blocks()
 
   proc setup*(translation: Vector3) =
     self.translation = translation
@@ -78,11 +76,7 @@ gdobj Builder of Spatial:
     inc max_grid_index
     self.name = "Builder_" & $self.script_index
     self.set_script()
-    write_file self.enu_script, ""
-
-  proc is_script_loadable(): bool =
-    if self.enu_script != "none" and file_exists(self.enu_script):
-      result = read_file(self.enu_script).strip != ""
+    write_file self.script, ""
 
   proc save_blocks*() =
     let data = if self.draw_mode == VoxelMode:
@@ -118,13 +112,13 @@ gdobj Builder of Spatial:
         self.grid.draw(x, y, z, index, keep, trigger)
 
   proc update_running_state(running: bool) =
-    self.running = running
-    if not self.running:
+    self.engine.running = running
+    if not running:
       self.holes = self.kept_holes
       self.kept_holes.clear()
       self.save_blocks()
       self.load_vars()
-      debug(self.enu_script & " done.")
+      debug(self.script & " done.")
 
   proc includes_any_location*(locations: seq[Vector3]): bool =
     if self.draw_mode == GridMode:
@@ -147,7 +141,7 @@ gdobj Builder of Spatial:
     if self.draw_mode == VoxelMode:
       self.position.origin = self.translation
 
-    self.speed = 30.0
+    self.speed = 1.0
     self.scale_factor = 1.0
     self.grid.scale = vec3(1, 1, 1)
     self.index = 1
@@ -186,7 +180,7 @@ gdobj Builder of Spatial:
       self.draw_mode = mode
       self.save_blocks()
 
-  proc load_vars() =
+  proc on_load_vars() =
     var old_speed = self.speed
     let
       e = self.engine
@@ -200,7 +194,7 @@ gdobj Builder of Spatial:
     self.blocks_per_frame = if self.speed == 0:
       float.high
     else:
-      self.speed / 30.0
+      self.speed
     if self.speed != old_speed:
       self.blocks_remaining_this_frame = 0
     if scale_factor != self.scale_factor:
@@ -211,36 +205,25 @@ gdobj Builder of Spatial:
     self.set_vars()
 
   method physics_process(delta: float64) =
-    trace:
-      if self.timers.len > 0:
-        var timers = self.timers
-        self.timers = @[]
-        for timer in timers:
-          if timer.until < now():
-            timer.callback()
-          else:
-            self.timers.add timer
-        return
+    if self.timers.len > 0:
+      var timers = self.timers
+      self.timers = @[]
+      for timer in timers:
+        if timer.until < now():
+          timer.callback()
+        else:
+          self.timers.add timer
+      return
 
-      if not self.built:
-        self.build()
-        self.built = true
-      if not self.paused:
-        self.blocks_remaining_this_frame += self.blocks_per_frame
-        try:
-          if self.move_mode:
-            if self.running:
-              self.advance(delta)
-          else:
-            if self.blocks_per_frame > 0:
-              while self.running and self.blocks_remaining_this_frame >= 1:
-                self.advance(delta)
-            else:
-              if self.running:
-                self.advance(delta)
-
-        except VMQuit as e:
-          self.error(e)
+    if not self.built:
+      self.build()
+      self.built = true
+    if not self.paused:
+      try:
+        if self.engine.running:
+          self.advance(delta)
+      except VMQuit as e:
+        self.engine.error(e)
 
   proc set_vars() =
     let module_name = self.engine.module_name
@@ -248,8 +231,7 @@ gdobj Builder of Spatial:
                           self.speed, self.scale_factor, int self.draw_mode,
                           self.overwrite, self.move_mode)
 
-  proc move(direction: Vector3, steps: float): bool =
-    self.load_vars()
+  proc on_begin_move(direction: Vector3, steps: float): Callback =
     if self.move_mode:
       let steps = steps.float
       var duration = 0.0
@@ -258,7 +240,7 @@ gdobj Builder of Spatial:
         finish = self.translation + moving * steps
         finish_time = 1.0 / self.speed * steps
 
-      self.callback = proc(delta: float): bool =
+      result = proc(delta: float): bool =
         duration += delta
         if duration >= finish_time:
           self.translation = finish
@@ -266,29 +248,32 @@ gdobj Builder of Spatial:
         else:
           self.translation = self.translation + (moving * self.speed * delta)
           return true
-      self.start_advance_timer()
-      return true
     else:
       var count = 0
-      self.callback = proc(delta: float): bool =
+      result = proc(delta: float): bool =
+        self.blocks_remaining_this_frame += self.blocks_per_frame
+        var remaining = self.blocks_remaining_this_frame
+        var per_frame = self.blocks_per_frame
         while count.float < steps and self.blocks_remaining_this_frame >= 1:
+          remaining = self.blocks_remaining_this_frame
+          per_frame = self.blocks_per_frame
           self.position = self.position.translated(direction)
           inc count
           self.blocks_remaining_this_frame -= 1
           self.drop_block()
         return count.float < steps
-      self.start_advance_timer()
-      return true
+    current_ctx().start_advance_timer()
 
-  proc turn(degrees: float, axis = UP): bool =
-    self.load_vars()
+  proc on_begin_turn(axis = UP, degrees: float): Callback =
+    let map = {LEFT: UP, RIGHT: DOWN, UP: RIGHT, DOWN: LEFT}.to_table
+    let axis = map[axis]
     if self.move_mode:
       var duration = 0.0
       let axis = self.transform.basis.xform(axis)
       var final_transform = self.transform
       final_transform.basis = final_transform.basis.rotated(axis, deg_to_rad(degrees))
                                                    .orthonormalized()
-      self.callback = proc(delta: float): bool =
+      result = proc(delta: float): bool =
         duration += delta
         self.rotate(axis, deg_to_rad(degrees * delta * self.speed))
         if duration <= 1.0 / self.speed:
@@ -296,23 +281,15 @@ gdobj Builder of Spatial:
         else:
           self.transform = final_transform
           false
-      self.start_advance_timer()
-      return true
+      current_ctx().start_advance_timer()
     else:
       let axis = self.position.basis.xform(axis)
       self.position.basis = self.position.basis.rotated(axis, deg_to_rad(degrees))
       self.position = self.position.orthonormalized()
-      return false
 
-  proc sleep(seconds: float): bool =
-    var duration = 0.0
+  proc on_sleep(seconds: float) =
     self.blocks_per_frame = 0.0
     self.blocks_remaining_this_frame = 0.0
-    self.callback = proc(delta: float): bool =
-      duration += delta
-      return duration < seconds
-    self.start_advance_timer()
-    true
 
   proc save(name: string): bool =
     self.load_vars()
@@ -324,21 +301,28 @@ gdobj Builder of Spatial:
     if self.engine.initialized: self.set_vars()
     false
 
-  proc forward(steps: float): bool = self.move(FORWARD, steps)
-  proc back(steps: float): bool = self.move(BACK, steps)
-  proc up(steps: float): bool = self.move(UP, steps)
-  proc down(steps: float): bool = self.move(DOWN, steps)
-  proc left(steps: float): bool = self.move(LEFT, steps)
-  proc right(steps: float): bool = self.move(RIGHT, steps)
-  proc turn_left(degrees: float): bool = self.turn(degrees, UP)
-  proc turn_right(degrees: float): bool = self.turn(degrees, DOWN)
-  proc turn_up(degrees: float): bool = self.turn(degrees, RIGHT)
-  proc turn_down(degrees: float): bool = self.turn(degrees, LEFT)
-
-  proc error(e: ref VMQuit) =
-    self.running = false
-    err e.msg
-    trigger("script_error")
+  proc on_script_loaded(e: Engine) =
+    self.blocks_remaining_this_frame = 0
+    e.expose "set_energy", proc(a: VmArgs): bool =
+      let
+        color = get_int(a, 0).int
+        energy = get_float(a, 1)
+      if self.draw_mode == GridMode:
+        self.grid.set_energy(color, energy)
+      else:
+        self.terrain.set_energy(color, energy, self.script_index)
+      false
+    e.expose("save", a => self.save(get_string(a, 0)))
+    e.expose("restore", a => self.restore(get_string(a, 0)))
+    e.expose "reset", proc(a: VmArgs): bool =
+      self.reset(get_bool(a, 0))
+      false
+    e.expose "pause", proc(a: VmArgs): bool =
+      self.paused = true
+      true
+    e.expose "load_defaults", proc(a: VmArgs): bool =
+      self.set_vars()
+      false
 
   proc clear() =
     if self.draw_mode == VoxelMode:
@@ -372,77 +356,25 @@ gdobj Builder of Spatial:
     self.draw(p.x, p.y, p.z, action_index)
     self.load_script()
 
-  proc load_script() =
-    self.callback = nil
-    self.blocks_remaining_this_frame = 0
-    try:
-      if self.engine.is_nil: self.engine = Engine()
-      if not self.is_script_loadable:
-        return
-      if not (self.paused or self.engine.initialized):
-        let code = default_builder(self.enu_script.extract_filename)
-        with self.engine:
-          load(config.script_dir, self.enu_script.split_file.name, code, config.lib_dir)
-          expose "yield_script", proc(a: VmArgs):bool =
-            self.callback = self.saved_callback
-            self.saved_callback = nil
-            true
-          expose("up_impl", a => self.up(get_float(a, 0)))
-          expose("down_impl", a => self.down(get_float(a, 0)))
-          expose("left_impl", a => self.left(get_float(a, 0)))
-          expose("right_impl", a => self.right(get_float(a, 0)))
-          expose("forward_impl", a => self.forward(get_float(a, 0)))
-          expose("back_impl", a => self.back(get_float(a, 0)))
-          expose("turn_left_impl", a => self.turn_left(get_float(a, 0)))
-          expose("turn_right_impl", a => self.turn_right(get_float(a, 0)))
-          expose("turn_up_impl", a => self.turn_up(get_float(a, 0)))
-          expose("turn_down_impl", a => self.turn_down(get_float(a, 0)))
-          expose("echo_console", a => echo_console(get_string(a, 0)))
-          expose("sleep_impl", a => self.sleep(get_float(a, 0)))
-          expose("save", a => self.save(get_string(a, 0)))
-          expose("restore", a => self.restore(get_string(a, 0)))
-          expose "set_energy", proc(a: VmArgs): bool =
-            let
-              color = get_int(a, 0).int
-              energy = get_float(a, 1)
-            if self.draw_mode == GridMode:
-              self.grid.set_energy(color, energy)
-            else:
-              self.terrain.set_energy(color, energy, self.script_index)
-            false
-          expose "reset", proc(a: VmArgs): bool =
-            self.reset(get_bool(a, 0))
-            false
-          expose "pause", proc(a: VmArgs): bool =
-            self.paused = true
-            true
-          expose "load_defaults", proc(a: VmArgs): bool =
-            self.set_vars()
-            false
-      if not self.paused:
-        self.update_running_state self.engine.run()
-    except VMQuit as e:
-      self.error(e)
-
   method on_block_selected(offset: int) =
     if offset == self.script_index:
-      show_editor self.enu_script, self.engine
+      show_editor self.script, self.engine
 
   method on_selected() =
-    show_editor self.enu_script, self.engine
+    show_editor self.script, self.engine
 
   proc set_timer(duration: TimeInterval, callback: proc()) =
     self.timers.add (now() + duration, callback)
 
   method reload() =
-    let duration = if self.running: 0.5.seconds else: 0.seconds
+    let duration = if self.engine.running: 0.5.seconds else: 0.seconds
     self.set_timer duration, proc() =
       self.reset(clear = true, set_vars = false)
       self.paused = false
       self.load_script()
 
   method on_reload() =
-    if not editing() or open_file == self.enu_script:
+    if not editing() or open_file == self.script:
       self.reload()
 
   method on_reload_all() =

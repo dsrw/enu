@@ -1,4 +1,4 @@
-import ../../godotapi / [area, control]
+import godotapi / [area, control]
 import godot
 import ".." / [core, globals, game, world/bot]
 import player

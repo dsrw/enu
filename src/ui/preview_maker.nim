@@ -1,4 +1,4 @@
-import ../../godotapi / [viewport, camera, mesh_instance, material, camera,
+import godotapi / [viewport, camera, mesh_instance, material, camera,
                          viewport_texture, image, resource_loader]
 import godot
 import ".." / [core, globals]

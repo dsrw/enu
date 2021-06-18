@@ -1,4 +1,4 @@
-import ../../godotapi/[grid_map, mesh_library, mesh, spatial, spatial_material]
+import godotapi/[grid_map, mesh_library, mesh, spatial, spatial_material]
 import godot, sets
 import ".." / [core, globals, world/builder]
 

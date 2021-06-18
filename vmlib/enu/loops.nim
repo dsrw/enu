@@ -1,24 +1,25 @@
-import state_machine
+import state_machine, types
 
 var
   context: Context
-  action_running = true
 
 proc yield_script = discard
 
 proc advance_state_machine(): bool =
-  if not context.is_nil:
-    result = context.advance()
+  result = if not context.is_nil:
+    context.advance()
+  else:
+    true
 
 proc set_action_running*(running: bool) =
-  action_running = running
+  self.ctrl.action_running = running
 
-template wait(body: untyped) =
-  action_running = true
+template wait(node: ScriptNode, body: untyped) =
+  node.ctrl.action_running = true
   when defined(nimscript):
     body
-    while action_running and advance_state_machine():
-      yield_script()
+    while node.ctrl.action_running and node.ctrl.advance_state_machine():
+      node.ctrl.yield_script()
   else:
     # only for tests
     var counter = 0

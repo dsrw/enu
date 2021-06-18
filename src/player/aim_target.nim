@@ -1,4 +1,4 @@
-import ../../godotapi / [sprite_3d, ray_cast, spatial]
+import godotapi / [sprite_3d, ray_cast, spatial]
 import godot, strutils, math
 import ".." / [globals, core]
 
