@@ -14,7 +14,6 @@ gdobj Game of Node:
     reticle*: Control
     viewport_container: ViewportContainer
     triggered = false
-    ready = false
     scene_packer: PackedScene
     save_requested: Option[DateTime]
     saved_mouse_captured_state = false
@@ -202,7 +201,7 @@ gdobj Game of Node:
 
     globals.pause = proc() =
       trigger("pause")
-    self.ready = true
+    game_ready = true
     trigger("game_ready")
 
   proc update_action_index*(change: int) =

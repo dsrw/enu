@@ -168,8 +168,7 @@ proc load_script*(self; script = "", retry_failed = true) =
             e.pause()
             e.running = false
             result = false
-
-    self.on_script_loaded(ctx.engine)
+        self.on_script_loaded(ctx.engine)
     if not ctx.paused:
       self.update_running_state ctx.engine.run()
   except VMQuit as e:

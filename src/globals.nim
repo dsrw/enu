@@ -60,7 +60,7 @@ var
   skip_next_mouse_move* = false
   command_mode* = false
   config*: Config
-
+  game_ready* = false
 proc roughly_zero[T](s: T): bool =
   abs(s) < CMP_EPSILON
 

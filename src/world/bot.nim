@@ -15,8 +15,8 @@ gdobj NimBot of KinematicBody:
       selected_material* {.gdExport.}: Material
     script_index* {.gdExport.} = 0
     disabled* {.gdExport.} = false
-    orig_rotation: Vector3
-    orig_translation: Vector3
+    orig_rotation* {.gdExport.}: Vector3
+    orig_translation* {.gdExport.}: Vector3
     skin: Spatial
     mesh: MeshInstance
     animation_player: AnimationPlayer
@@ -92,13 +92,14 @@ gdobj NimBot of KinematicBody:
 
   proc setup*() =
     self.script_index = max_bot_index
+    self.orig_rotation = self.rotation
+    self.orig_translation = self.translation
     inc max_bot_index
     self.name = "Bot_" & $self.script_index
     self.set_script()
     write_file self.script_ctx.script, ""
 
   method ready*() =
-    self.bind_signals("game_ready")
     if max_bot_index <= self.script_index:
       max_bot_index = self.script_index + 1
     self.set_script()
@@ -106,9 +107,13 @@ gdobj NimBot of KinematicBody:
       skin = self.get_node("Mannequiny").as(Spatial)
       mesh = self.skin.get_node("root/Skeleton/body001").as(MeshInstance)
       animation_player = self.skin.get_node("AnimationPlayer").as(AnimationPlayer)
-      orig_rotation = self.rotation
-      orig_translation = self.translation
       set_default_material()
+    if game_ready:
+      self.on_game_ready()
+    else:
+      self.bind_signals("game_ready")
+      self.translation = self.orig_translation
+      self.rotation = self.orig_rotation
 
   method on_game_ready() =
     if not self.disabled:
@@ -128,9 +133,8 @@ gdobj NimBot of KinematicBody:
 
   method reload() =
     self.animation_player.stop(true)
-    with self:
-      translation = self.orig_translation
-      rotation = self.orig_rotation
+    self.translation = self.orig_translation
+    self.rotation = self.orig_rotation
     self.load_script()
 
   proc on_script_loaded*(e: Engine) =
