@@ -5,5 +5,52 @@
       <option name="PARAMETERS" value="build --debugger:native" />
       <option name="WORKING_DIRECTORY" value="$ProjectFileDir$" />
     </exec>
+    <filter>
+      <option name="NAME" />
+      <option name="DESCRIPTION" />
+      <option name="REGEXP" value="$FILE_PATH$\($LINE$, $COLUMN$\) $MESSAGE$" />
+    </filter>
+    <filter>
+      <option name="NAME" />
+      <option name="DESCRIPTION" />
+      <option name="REGEXP" value="previous declaration here: $FILE_PATH$\($LINE$, $COLUMN$\)" />
+    </filter>
+    <filter>
+      <option name="NAME" />
+      <option name="DESCRIPTION" />
+      <option name="REGEXP" value=".*?$FILE_PATH$" />
+    </filter>
+    <filter>
+      <option name="NAME" />
+      <option name="DESCRIPTION" />
+      <option name="REGEXP" value="'$FILE_PATH$'" />
+    </filter>
+  </tool>
+  <tool name="Nimble test build" showInMainMenu="false" showInEditor="false" showInProject="false" showInSearchPopup="false" disabled="false" useConsole="true" showConsoleOnStdOut="false" showConsoleOnStdErr="false" synchronizeAfterRun="true">
+    <exec>
+      <option name="COMMAND" value="$ProjectFileDir$/tools/build_helpers" />
+      <option name="PARAMETERS" value="rebuild_last_test_for_debugger" />
+      <option name="WORKING_DIRECTORY" value="$ProjectFileDir$" />
+    </exec>
+    <filter>
+      <option name="NAME" />
+      <option name="DESCRIPTION" />
+      <option name="REGEXP" value="$FILE_PATH$\($LINE$, $COLUMN$\) $MESSAGE$" />
+    </filter>
+    <filter>
+      <option name="NAME" />
+      <option name="DESCRIPTION" />
+      <option name="REGEXP" value="previous declaration here: $FILE_PATH$\($LINE$, $COLUMN$\)" />
+    </filter>
+    <filter>
+      <option name="NAME" />
+      <option name="DESCRIPTION" />
+      <option name="REGEXP" value=".*?$FILE_PATH$" />
+    </filter>
+    <filter>
+      <option name="NAME" />
+      <option name="DESCRIPTION" />
+      <option name="REGEXP" value="'$FILE_PATH$'" />
+    </filter>
   </tool>
 </toolSet>

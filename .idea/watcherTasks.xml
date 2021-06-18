@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ProjectTasksOptions">
-    <TaskOptions isEnabled="true">
-      <option name="arguments" value="c -r $FilePath$ --verbose" />
+    <TaskOptions isEnabled="false">
+      <option name="arguments" value="run_test --test:$FilePath$" />
       <option name="checkSyntaxErrors" value="true" />
       <option name="description" />
       <option name="exitCodeBehavior" value="ALWAYS" />
@@ -20,17 +20,22 @@
           <FilterInfo>
             <option name="description" value="" />
             <option name="name" value="" />
-            <option name="regExp" value=".*?$FILE_PATH$" />
+            <option name="regExp" value="$FILE_PATH$\($LINE$\)" />
           </FilterInfo>
           <FilterInfo>
             <option name="description" value="" />
             <option name="name" value="" />
-            <option name="regExp" value="'$FILE_PATH$'" />
+            <option name="regExp" value="error: $FILE_PATH$\($LINE$,$COLUMN$\): $MESSAGE$" />
+          </FilterInfo>
+          <FilterInfo>
+            <option name="description" value="" />
+            <option name="name" value="" />
+            <option name="regExp" value="Error: unhandled exception: $FILE_PATH$\($LINE$,$COLUMN$\): $MESSAGE$" />
           </FilterInfo>
         </array>
       </option>
       <option name="outputFromStdout" value="false" />
-      <option name="program" value="nimble" />
+      <option name="program" value="$ProjectFileDir$/tools/build_helpers" />
       <option name="runOnExternalChanges" value="true" />
       <option name="scopeName" value="Nim test dir" />
       <option name="trackOnlyRoot" value="false" />
@@ -38,13 +43,13 @@
       <envs />
     </TaskOptions>
     <TaskOptions isEnabled="true">
-      <option name="arguments" value="build" />
+      <option name="arguments" value="c check $FilePathRelativeToProjectRoot$" />
       <option name="checkSyntaxErrors" value="true" />
       <option name="description" />
       <option name="exitCodeBehavior" value="ERROR" />
       <option name="fileExtension" value="nim" />
       <option name="immediateSync" value="false" />
-      <option name="name" value="build" />
+      <option name="name" value="check" />
       <option name="output" value="" />
       <option name="outputFilters">
         <array>
@@ -74,6 +79,88 @@
       <option name="program" value="nimble" />
       <option name="runOnExternalChanges" value="true" />
       <option name="scopeName" value="nim src" />
+      <option name="trackOnlyRoot" value="false" />
+      <option name="workingDir" value="$ProjectFileDir$" />
+      <envs />
+    </TaskOptions>
+    <TaskOptions isEnabled="false">
+      <option name="arguments" value="run_test" />
+      <option name="checkSyntaxErrors" value="true" />
+      <option name="description" />
+      <option name="exitCodeBehavior" value="ALWAYS" />
+      <option name="fileExtension" value="nim" />
+      <option name="immediateSync" value="false" />
+      <option name="name" value="nim retest" />
+      <option name="output" value="" />
+      <option name="outputFilters">
+        <array>
+          <FilterInfo>
+            <option name="description" value="" />
+            <option name="name" value="" />
+            <option name="regExp" value="$FILE_PATH$\($LINE$, $COLUMN$\) $MESSAGE$" />
+          </FilterInfo>
+          <FilterInfo>
+            <option name="description" value="" />
+            <option name="name" value="" />
+            <option name="regExp" value="$FILE_PATH$\($LINE$\)" />
+          </FilterInfo>
+          <FilterInfo>
+            <option name="description" value="" />
+            <option name="name" value="" />
+            <option name="regExp" value="error: $FILE_PATH$\($LINE$,$COLUMN$\): $MESSAGE$" />
+          </FilterInfo>
+          <FilterInfo>
+            <option name="description" value="" />
+            <option name="name" value="" />
+            <option name="regExp" value="Error: unhandled exception: $FILE_PATH$\($LINE$,$COLUMN$\): $MESSAGE$" />
+          </FilterInfo>
+        </array>
+      </option>
+      <option name="outputFromStdout" value="false" />
+      <option name="program" value="$ProjectFileDir$/tools/build_helpers" />
+      <option name="runOnExternalChanges" value="true" />
+      <option name="scopeName" value="Nim test script dir and src" />
+      <option name="trackOnlyRoot" value="false" />
+      <option name="workingDir" value="$ProjectFileDir$" />
+      <envs />
+    </TaskOptions>
+    <TaskOptions isEnabled="true">
+      <option name="arguments" value="c $FilePath$" />
+      <option name="checkSyntaxErrors" value="true" />
+      <option name="description" />
+      <option name="exitCodeBehavior" value="ERROR" />
+      <option name="fileExtension" value="nim" />
+      <option name="immediateSync" value="false" />
+      <option name="name" value="build tools" />
+      <option name="output" value="" />
+      <option name="outputFilters">
+        <array>
+          <FilterInfo>
+            <option name="description" value="" />
+            <option name="name" value="" />
+            <option name="regExp" value="$FILE_PATH$\($LINE$, $COLUMN$\) $MESSAGE$" />
+          </FilterInfo>
+          <FilterInfo>
+            <option name="description" value="" />
+            <option name="name" value="" />
+            <option name="regExp" value="$FILE_PATH$\($LINE$\)" />
+          </FilterInfo>
+          <FilterInfo>
+            <option name="description" value="" />
+            <option name="name" value="" />
+            <option name="regExp" value="error: $FILE_PATH$\($LINE$,$COLUMN$\): $MESSAGE$" />
+          </FilterInfo>
+          <FilterInfo>
+            <option name="description" value="" />
+            <option name="name" value="" />
+            <option name="regExp" value="Error: unhandled exception: $FILE_PATH$\($LINE$,$COLUMN$\): $MESSAGE$" />
+          </FilterInfo>
+        </array>
+      </option>
+      <option name="outputFromStdout" value="false" />
+      <option name="program" value="nimble" />
+      <option name="runOnExternalChanges" value="true" />
+      <option name="scopeName" value="tools" />
       <option name="trackOnlyRoot" value="false" />
       <option name="workingDir" value="$ProjectFileDir$" />
       <envs />

@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="tools" pattern="file[enu]:tools//*" />
+</component>

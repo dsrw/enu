@@ -8,5 +8,12 @@
         </build>
       </configuration>
     </target>
+    <target id="241742f4-78e9-4080-ae10-815c616271be" name="nimble test build" defaultType="TOOL">
+      <configuration id="eb6dcc5a-93ba-4dc5-ac8b-064355eb5d01" name="nimble test build" toolchainName="Default">
+        <build type="TOOL">
+          <tool actionId="Tool_External Tools_Nimble test build" />
+        </build>
+      </configuration>
+    </target>
   </component>
 </project>

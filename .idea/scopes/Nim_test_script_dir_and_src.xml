@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Nim test script dir and src" pattern="file[enu]:tests/*/scripts//*||file[enu]:src//*||file[enu]:vmlib/enu//*" />
+</component>
