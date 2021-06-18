@@ -6,23 +6,28 @@
       <option name="WORKING_DIRECTORY" value="$ProjectFileDir$" />
     </exec>
     <filter>
-      <option name="NAME" />
-      <option name="DESCRIPTION" />
+      <option name="NAME" value="" />
+      <option name="DESCRIPTION" value="" />
       <option name="REGEXP" value="$FILE_PATH$\($LINE$, $COLUMN$\) $MESSAGE$" />
     </filter>
     <filter>
-      <option name="NAME" />
-      <option name="DESCRIPTION" />
+      <option name="NAME" value="" />
+      <option name="DESCRIPTION" value="" />
+      <option name="REGEXP" value="$FILE_PATH$\($LINE$\) $MESSAGE$" />
+    </filter>
+    <filter>
+      <option name="NAME" value="" />
+      <option name="DESCRIPTION" value="" />
       <option name="REGEXP" value="previous declaration here: $FILE_PATH$\($LINE$, $COLUMN$\)" />
     </filter>
     <filter>
-      <option name="NAME" />
-      <option name="DESCRIPTION" />
+      <option name="NAME" value="" />
+      <option name="DESCRIPTION" value="" />
       <option name="REGEXP" value=".*?$FILE_PATH$" />
     </filter>
     <filter>
-      <option name="NAME" />
-      <option name="DESCRIPTION" />
+      <option name="NAME" value="" />
+      <option name="DESCRIPTION" value="" />
       <option name="REGEXP" value="'$FILE_PATH$'" />
     </filter>
   </tool>
@@ -33,22 +38,22 @@
       <option name="WORKING_DIRECTORY" value="$ProjectFileDir$" />
     </exec>
     <filter>
-      <option name="NAME" />
+      <option name="NAME" value="No name" />
       <option name="DESCRIPTION" />
       <option name="REGEXP" value="$FILE_PATH$\($LINE$, $COLUMN$\) $MESSAGE$" />
     </filter>
     <filter>
-      <option name="NAME" />
+      <option name="NAME" value="No name" />
       <option name="DESCRIPTION" />
       <option name="REGEXP" value="previous declaration here: $FILE_PATH$\($LINE$, $COLUMN$\)" />
     </filter>
     <filter>
-      <option name="NAME" />
+      <option name="NAME" value="No name" />
       <option name="DESCRIPTION" />
       <option name="REGEXP" value=".*?$FILE_PATH$" />
     </filter>
     <filter>
-      <option name="NAME" />
+      <option name="NAME" value="No name" />
       <option name="DESCRIPTION" />
       <option name="REGEXP" value="'$FILE_PATH$'" />
     </filter>
