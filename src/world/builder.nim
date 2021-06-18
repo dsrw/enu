@@ -49,7 +49,6 @@ gdobj Builder of Spatial:
 
   proc code_template(file: string, imports: string): string =
     result = default_builder(file, imports)
-    echo "template: ", result
 
   method ready() =
     if max_grid_index <= self.script_index:
