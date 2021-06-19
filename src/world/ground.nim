@@ -16,18 +16,6 @@ gdobj Ground of MeshInstance:
       self.bind_signals(self, w"target_move target_fire")
       self.bind_signals("mouse_released")
 
-  proc create_builder(point: Vector3) =
-    let
-      ps = load("res://components/Builder.tscn") as PackedScene
-      b = ps.instance() as Builder
-    assert not b.is_nil
-    b.paused = true
-    b.setup(point)
-    b.initial_index = action_index
-    data_node.add_child(b)
-    b.owner = data_node
-    save_scene()
-
   method on_mouse_released() =
     self.painting = false
 
@@ -59,19 +47,10 @@ gdobj Ground of MeshInstance:
             b.draw(p.x, p.y, p.z, action_index, true)
             return
 
-      self.create_builder(p)
+      create_builder(p, data_node)
 
     elif tool_mode == ObjectMode:
-      let
-        proto = load("res://components/Bot.tscn") as PackedScene
-        bot = proto.instance() as NimBot
-      assert not bot.is_nil
-      bot.translation = p + vec3(0.5, 0, 0.5)
-      bot.paused = true
-      bot.setup()
-      data_node.add_child(bot)
-      bot.owner = data_node
-      save_scene()
+      create_bot(p, data_node)
 
   method on_target_move(point, normal: Vector3) =
     let previous_point = self.point

@@ -2,6 +2,7 @@ import random
 
 # API
 proc quit*(exit_code = 0) = discard
+proc create_new() = discard
 
 proc echo_console(msg: string) = discard
 proc echo(msg: varargs[string, `$`]) = echo_console msg.join

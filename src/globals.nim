@@ -97,6 +97,11 @@ proc trigger*(node: Object, signal: string, args: varargs[Variant, `new_variant`
 proc trigger*(signal: string, args: varargs[Variant]) =
   trigger(game_node, signal, args)
 
+proc destroy*(node: Node) =
+  node.get_parent.remove_child(node)
+  node.queue_free()
+  save_scene()
+
 proc lerp*(self, other, t: float): float {.inline.} =
   self + t * (other - self)
 

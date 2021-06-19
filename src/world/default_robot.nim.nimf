@@ -1,6 +1,7 @@
 #? stdtmpl
-#proc default_robot(file_name, imports: string): string =
+#proc default_robot(file_name, imports: string, is_clone: bool): string =
 import types
+const is_clone = ${is_clone}
 ${imports}
 template name(n: untyped) = class_name(n, ScriptNode)
 preprocess "name", "${file_name}", "ScriptNode"

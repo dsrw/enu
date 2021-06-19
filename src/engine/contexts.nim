@@ -17,6 +17,7 @@ type
     id: int
     load_vars*: proc()
     reload_script: proc()
+    is_clone*: bool
 
 using self: auto
 
@@ -24,13 +25,17 @@ const ADVANCE_STEP = 0.5.seconds
 
 var
   module_names: HashSet[string]
-  active_node: Node
+  current_active_node: Node
   ctxs: Table[Engine, ScriptCtx]
   failed: seq[tuple[ctx: ScriptCtx, ex: ref VMQuit]]
   starting = true
   modules_to_load: HashSet[ScriptCtx]
 
 template ctx: untyped = self.script_ctx
+
+proc destroy*(ctx: ScriptCtx) =
+  if ctx.engine in ctxs:
+    ctxs.del(ctx.engine)
 
 proc hash*(s: ScriptCtx): Hash = s.id.hash
 proc init*(t: typedesc[ScriptCtx], prefix: string): ScriptCtx =
@@ -39,7 +44,8 @@ proc init*(t: typedesc[ScriptCtx], prefix: string): ScriptCtx =
   ctxs[e] = result
   modules_to_load.incl result
 
-proc current_ctx*(): ScriptCtx = ctxs[current_engine()]
+proc active_ctx*(): ScriptCtx = ctxs[active_engine()]
+proc active_node*(): Node = current_active_node
 
 proc is_script_loadable*(self): bool =
   ctx.script != "none" and ctx.script.file_exists
@@ -60,7 +66,7 @@ proc start_advance_timer*(ctx: ScriptCtx) =
 
 proc advance*(self; delta: float64) =
   let now = get_mono_time()
-  active_node = self
+  current_active_node = self
   let e = ctx.engine
   if e.callback == nil or (not e.callback(delta)):
     ctx.timer = MonoTime.high
@@ -74,20 +80,20 @@ proc advance*(self; delta: float64) =
 
 proc load_vars*(self) =
   let self_name = if self.is_nil: "nil" else: self.name
-  let active_name = if active_node.is_nil: "nil" else: active_node.name
+  let active_name = if active_node().is_nil: "nil" else: active_node().name
   let e = ctx.engine
   when compiles(self.on_load_vars):
     self.on_load_vars()
 
 proc begin_move(self; direction: Vector3, steps: float): bool =
   self.load_vars()
-  current_engine().callback = self.on_begin_move(direction, steps)
-  result = not current_engine().callback.is_nil
+  active_engine().callback = self.on_begin_move(direction, steps)
+  result = not active_engine().callback.is_nil
 
 proc begin_turn(self; direction: Vector3, degrees: float): bool =
   self.load_vars()
-  current_engine().callback = self.on_begin_turn(direction, degrees)
-  result = not current_engine().callback.is_nil
+  active_engine().callback = self.on_begin_turn(direction, degrees)
+  result = not active_engine().callback.is_nil
 
 proc error*(e: Engine, ex: ref VMQuit) =
   e.running = false
@@ -114,6 +120,15 @@ proc retry_failed_scripts =
 
       for f in failed:
         f.ctx.engine.error(f.ex)
+      failed = @[]
+
+proc clone(self): bool =
+  let node = active_node()
+  let target = node.get_node("OwnedNodes")
+  let ae = active_engine()
+  self.on_clone(target, active_ctx())
+  set_active(ae)
+  result = false
 
 proc load_script*(self; script = "", retry_failed = true) =
   modules_to_load.excl ctx
@@ -129,11 +144,14 @@ proc load_script*(self; script = "", retry_failed = true) =
   try:
     if not self.is_script_loadable:
       return
+    if ctx.is_clone:
+      ctx.paused = false
     if not ctx.paused:
       let module_name = ctx.script.split_file.name
-      module_names.incl module_name
       var others = module_names
-      others.excl module_name
+      if not ctx.is_clone:
+        module_names.incl module_name
+        others.excl module_name
       let imports = if others.card > 0:
         "import " & others.to_seq.join(", ")
       else:
@@ -141,35 +159,38 @@ proc load_script*(self; script = "", retry_failed = true) =
       let code = self.code_template(module_name & ".nim", imports)
 
       let initialized = ctx.engine.initialized
+      let suffex = if ctx.is_clone: "_clone" & $self.script_index else: ""
       ctx.load_vars = proc() = self.load_vars()
-      ctx.engine.load(config.script_dir, ctx.script, code, config.lib_dir)
+      ctx.engine.load(config.script_dir, ctx.script, code, config.lib_dir, suffex)
       if not initialized:
         with ctx.engine:
           expose "yield_script", proc(a: VmArgs):bool =
-            current_engine().callback = current_engine().saved_callback
-            current_engine().saved_callback = nil
+            active_engine().callback = active_engine().saved_callback
+            active_engine().saved_callback = nil
             true
 
-          expose("begin_move", a => self.begin_move(get_vec3(a, 0), get_float(a, 1)))
-          expose("begin_turn", a => self.begin_turn(get_vec3(a, 0), get_float(a, 1)))
-          expose("echo_console", a => echo_console(get_string(a, 0)))
+          expose "begin_move", a => self.begin_move(get_vec3(a, 0), get_float(a, 1))
+          expose "begin_turn", a => self.begin_turn(get_vec3(a, 0), get_float(a, 1))
+          expose "echo_console", a => echo_console(get_string(a, 0))
+          expose "create_new", a => self.clone()
           expose "sleep_impl", proc(a: VmArgs): bool =
             let seconds = get_float(a, 0)
             var duration = 0.0
             when compiles(self.on_sleep):
               self.on_sleep(seconds)
-            current_engine().callback = proc(delta: float): bool =
+            active_engine().callback = proc(delta: float): bool =
               duration += delta
               return duration < seconds
             true
           expose "quit", proc(a: VmArgs): bool =
-            let e = current_engine()
+            let e = active_engine()
             e.exit_code = some(a.get_int(0).int)
             e.pause()
             e.running = false
             result = false
         self.on_script_loaded(ctx.engine)
     if not ctx.paused:
+      current_active_node = self
       self.update_running_state ctx.engine.run()
   except VMQuit as e:
     if starting:

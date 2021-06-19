@@ -42,8 +42,8 @@ var
   current: Engine
 
 proc hash*(e: Engine): Hash = e.id.hash
-proc current_engine*(): Engine = current
-proc set_current(e: Engine) =
+proc active_engine*(): Engine = current
+proc set_active*(e: Engine) =
   current = e
 
 proc init*(t: typedesc[Engine]): Engine =
@@ -51,57 +51,58 @@ proc init*(t: typedesc[Engine]): Engine =
   result.id = get_id()
 
 proc init_interpreter(script_dir, vmlib: string) =
-  trace:
-    let std_paths = STDLIB_PATHS.map_it join_path(vmlib, "stdlib", it)
-    let source_paths = std_paths & join_path(vmlib, "enu") & @[parent_dir MAIN_SCRIPT] & @[script_dir]
-    interpreter = create_interpreter(MAIN_SCRIPT, source_paths)
-    log_trace("create_interpreter")
-    with interpreter:
-      register_error_hook proc(config, info, msg, severity: auto) {.gcsafe.} =
-        let e = current_engine()
-        if severity == Severity.Error and config.error_counter >= config.error_max:
-          let file_name = if info.file_index.int >= 0:
-            config.m.file_infos[info.file_index.int].full_path.string
-          else:
-            "???"
-          let msg = &"{file_name}({int info.line},{int info.col}): {msg}"
-          echo "error: ", msg
-          e.errors.add (msg, info)
-          e.exit_code = some(99)
-          raise (ref VMQuit)(info: info, msg: msg)
+  let std_paths = STDLIB_PATHS.map_it join_path(vmlib, "stdlib", it)
+  let source_paths = std_paths & join_path(vmlib, "enu") & @[parent_dir MAIN_SCRIPT] & @[script_dir]
+  interpreter = create_interpreter(MAIN_SCRIPT, source_paths)
+  log_trace("create_interpreter")
+  with interpreter:
+    register_error_hook proc(config, info, msg, severity: auto) {.gcsafe.} =
+      let e = active_engine()
+      if severity == Severity.Error and config.error_counter >= config.error_max:
+        let file_name = if info.file_index.int >= 0:
+          config.m.file_infos[info.file_index.int].full_path.string
+        else:
+          "???"
+        let msg = &"{file_name}({int info.line},{int info.col}): {msg}"
+        echo "error: ", msg
+        e.errors.add (msg, info)
+        e.exit_code = some(99)
+        raise (ref VMQuit)(info: info, msg: msg)
 
-      register_enter_hook proc(c, pc, tos, instr: auto) =
-        let e = current_engine()
-        let info = c.debug[pc]
-        if info.file_index.int == 0 and e.previous_line != info:
-          if e.line_changed != nil:
-            e.line_changed(info, e.previous_line)
-          (e.previous_line, e.current_line) = (e.current_line, info)
+    register_enter_hook proc(c, pc, tos, instr: auto) =
+      let e = active_engine()
+      let info = c.debug[pc]
+      if info.file_index.int == 0 and e.previous_line != info:
+        if e.line_changed != nil:
+          e.line_changed(info, e.previous_line)
+        (e.previous_line, e.current_line) = (e.current_line, info)
 
-        if e.pause_requested:
-          e.pause_requested = false
-          e.ctx = c
-          e.pc = pc
-          e.tos = tos
-          raise new_exception(VMPause, "vm paused")
-
-    log_trace("hooks")
+      if e.pause_requested:
+        e.pause_requested = false
+        e.ctx = c
+        e.pc = pc
+        e.tos = tos
+        raise new_exception(VMPause, "vm paused")
 
 proc pause*(e: Engine) =
   e.pause_requested = true
 
-proc load*(e: Engine, script_dir, file_name, code, vmlib: string) =
+proc load*(e: Engine, script_dir, file_name, code, vmlib: string, module_suffix = "") =
   e.code = code
-  e.file_name = file_name
-  e.module_name = file_name.split_file.name
-  set_current e
+  if module_suffix == "":
+    e.module_name = file_name.split_file.name
+    e.file_name = file_name
+  else:
+    e.module_name = file_name.split_file.name & module_suffix
+    e.file_name = e.module_name
+  set_active e
   if interpreter.is_nil:
     init_interpreter(script_dir, vmlib)
     e.is_main_module = true
   e.initialized = true
 
 proc run*(e: Engine): bool =
-  set_current e
+  set_active e
   e.exit_code = none(int)
   e.errors = @[]
   try:
@@ -153,7 +154,7 @@ proc call_proc*(e: Engine, proc_name: string, module_name = "", args: varargs[PN
   return interpreter.call_routine(foreign_proc, args)
 
 proc call*(e: Engine, proc_name: string): bool =
-  set_current e
+  set_active e
   try:
     discard e.call_proc(proc_name)
     false
@@ -164,7 +165,7 @@ proc expose*(e: Engine, proc_name: string,
              routine: proc(a: VmArgs): bool) {.gcsafe.} =
   interpreter.implement_routine "*", e.module_name, proc_name, proc(a: VmArgs) {.gcsafe.} =
     if routine(a):
-      current_engine().pause()
+      active_engine().pause()
 
 proc call_float*(e: Engine, proc_name: string): float =
   e.call_proc(proc_name).get_float()
@@ -190,7 +191,7 @@ proc call_int*(e: Engine, proc_name: string): int =
   e.call_proc(proc_name).get_int.to_int
 
 proc resume*(e: Engine): bool =
-  set_current e
+  set_active e
   result = try:
     discard exec_from_ctx(e.ctx, e.pc, e.tos)
     false

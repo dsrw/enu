@@ -10,9 +10,10 @@ gdobj SelectionArea of Area:
     bot*: NimBot
 
   method ready*() =
-    trace:
-      self.bot = self.get_node("..") as NimBot
-      bind_signals(self, self, signals)
+    self.bot = self.get_node("..") as NimBot
+    bind_signals(self, self, signals)
+    if self.bot.script_ctx.is_clone:
+      self.collision_layer = 0
 
   method on_target_in*() =
     if tool_mode == CodeMode:

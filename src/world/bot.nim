@@ -6,6 +6,7 @@ import engine/contexts
 export contexts
 
 include "default_robot.nim.nimf"
+proc create_bot*(point: Vector3, parent: Node, script = "", is_clone = false): Node {.discardable.}
 
 var max_bot_index = 0
 gdobj NimBot of KinematicBody:
@@ -22,11 +23,15 @@ gdobj NimBot of KinematicBody:
     animation_player: AnimationPlayer
 
   proc init*() =
+    self.bind_signals(self, "deleted")
     self.script_ctx = ScriptCtx.init("bot")
     self.speed = 1.0
 
+  method on_deleted*() =
+    self.script_ctx.destroy()
+
   proc code_template(file: string, imports: string): string =
-    result = default_robot(config.script_dir & "/" & file, imports)
+    result = default_robot(config.script_dir & "/" & file, imports, self.script_ctx.is_clone)
 
   proc update_material*(value: Material) =
     self.mesh.set_surface_material(0, value)
@@ -41,10 +46,8 @@ gdobj NimBot of KinematicBody:
     self.set_default_material()
 
   proc select*() =
-    show_editor self.script_ctx.script, self.script_ctx.engine
-
-  proc destroy*() =
-    self.get_parent.remove_child(self)
+    if not self.script_ctx.is_clone:
+      show_editor self.script_ctx.script, self.script_ctx.engine
 
   proc on_load_vars() =
     let e = self.script_ctx.engine
@@ -66,7 +69,7 @@ gdobj NimBot of KinematicBody:
         else:
           discard self.move_and_slide(moving * self.speed, UP)
           return true
-      current_ctx().start_advance_timer()
+      active_ctx().start_advance_timer()
     else:
       self.translation = finish
 
@@ -86,23 +89,25 @@ gdobj NimBot of KinematicBody:
         else:
           self.transform = final_transform
           false
-      current_ctx().start_advance_timer()
+      active_ctx().start_advance_timer()
     else:
       self.transform = final_transform
 
-  proc setup*() =
+  proc setup*(set_script = true) =
     self.script_index = max_bot_index
     self.orig_rotation = self.rotation
     self.orig_translation = self.translation
     inc max_bot_index
     self.name = "Bot_" & $self.script_index
-    self.set_script()
-    write_file self.script_ctx.script, ""
+    if not self.script_ctx.is_clone:
+      self.set_script()
+      write_file self.script_ctx.script, ""
 
   method ready*() =
     if max_bot_index <= self.script_index:
       max_bot_index = self.script_index + 1
-    self.set_script()
+    if not self.script_ctx.is_clone:
+      self.set_script()
     with self:
       skin = self.get_node("Mannequiny").as(Spatial)
       mesh = self.skin.get_node("root/Skeleton/body001").as(MeshInstance)
@@ -120,6 +125,9 @@ gdobj NimBot of KinematicBody:
       self.bind_signals(w"reload pause reload_all")
       self.load_script()
 
+  proc on_clone(target: Node, active_ctx: ScriptCtx) =
+    let b = create_bot(vec3(), target, self.script_ctx.script, is_clone = true) as NimBot
+
   proc update_running_state(running: bool) =
     self.engine.running = running
 
@@ -133,9 +141,15 @@ gdobj NimBot of KinematicBody:
 
   method reload() =
     self.animation_player.stop(true)
+    let children = self.get_node("OwnedNodes").get_children
+    for v in children:
+      let child = v.as_object(Node)
+      child.destroy()
+      child.trigger("deleted")
     self.translation = self.orig_translation
     self.rotation = self.orig_rotation
-    self.load_script()
+    if not self.script_ctx.is_clone:
+      self.load_script()
 
   proc on_script_loaded*(e: Engine) =
     e.expose "play", proc(a: VmArgs): bool =
@@ -156,3 +170,20 @@ gdobj NimBot of KinematicBody:
 
   method on_pause*() =
     self.paused = not self.paused
+
+proc create_bot*(point: Vector3, parent: Node, script = "", is_clone = false): Node {.discardable.} =
+  let
+    proto = load("res://components/Bot.tscn") as PackedScene
+    b = proto.instance() as NimBot
+    is_clone = parent != data_node
+  assert not b.is_nil
+  b.script_ctx.is_clone = is_clone
+  b.translation = point + vec3(0.5, 0, 0.5)
+  b.paused = true
+  b.setup()
+  if is_clone:
+    b.script_ctx.script = script
+  parent.add_child(b)
+  b.owner = parent
+  save_scene()
+  result = b

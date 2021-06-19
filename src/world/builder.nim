@@ -1,4 +1,4 @@
-import godotapi / [spatial, grid_map]
+import godotapi / [spatial, grid_map, resource_loader, packed_scene]
 import godot
 import std / [tables, math, sets, sugar, sequtils, hashes, os, monotimes]
 import core, globals, world / [terrain, grid]
@@ -11,6 +11,8 @@ var max_grid_index = 0
 
 type
   Timer = tuple[until: DateTime, callback: proc()]
+
+proc create_builder*(point: Vector3, parent: Node): Node {.discardable.}
 
 gdobj Builder of Spatial:
   var
@@ -53,7 +55,8 @@ gdobj Builder of Spatial:
   method ready() =
     if max_grid_index <= self.script_index:
       max_grid_index = self.script_index + 1
-    self.set_script()
+    if not self.script_ctx.is_clone:
+      self.set_script()
     self.translation = self.original_translation
     self.grid = self.get_node("Grid") as Grid
     self.terrain = game_node.find_node("Terrain") as Terrain
@@ -74,8 +77,21 @@ gdobj Builder of Spatial:
     self.script_index = max_grid_index
     inc max_grid_index
     self.name = "Builder_" & $self.script_index
-    self.set_script()
-    write_file self.script, ""
+    if not self.script_ctx.is_clone:
+      self.set_script()
+      write_file self.script, ""
+
+  proc on_clone(target: Node, ctx: ScriptCtx) =
+    discard
+
+  # proc on_clone(target: Node, active_ctx: ScriptCtx): bool =
+  #   let b = create_bot(vec3(), target) as NimBot
+  #   b.script_ctx.script = self.script_ctx.script
+  #   active_ctx.engine.running = false
+  #   b.script_ctx.clone_ready = proc() =
+  #     active_ctx.engine.running = active_ctux.engine.resume()
+  #   active_ctx.engine.running = false
+  #   true
 
   proc save_blocks*() =
     let data = if self.draw_mode == VoxelMode:
@@ -261,7 +277,7 @@ gdobj Builder of Spatial:
           self.blocks_remaining_this_frame -= 1
           self.drop_block()
         return count.float < steps
-    current_ctx().start_advance_timer()
+    active_ctx().start_advance_timer()
 
   proc on_begin_turn(axis = UP, degrees: float): Callback =
     let map = {LEFT: UP, RIGHT: DOWN, UP: RIGHT, DOWN: LEFT}.to_table
@@ -280,7 +296,7 @@ gdobj Builder of Spatial:
         else:
           self.transform = final_transform
           false
-      current_ctx().start_advance_timer()
+      active_ctx().start_advance_timer()
     else:
       let axis = self.position.basis.xform(axis)
       self.position.basis = self.position.basis.rotated(axis, deg_to_rad(degrees))
@@ -367,6 +383,9 @@ gdobj Builder of Spatial:
 
   method reload() =
     let duration = if self.engine.running: 0.5.seconds else: 0.seconds
+    for v in self.get_children:
+      let node = v.as_object(Node)
+      node.destroy()
     self.set_timer duration, proc() =
       self.reset(clear = true, set_vars = false)
       self.paused = false
@@ -382,13 +401,9 @@ gdobj Builder of Spatial:
   method on_pause*() =
     self.paused = not self.paused
 
-  method on_deleted() =
-    self.get_parent.remove_child(self)
-    save_scene()
-
   method on_last_block_deleted(offset: int) =
     if offset == self.script_index:
-      self.on_deleted()
+      self.destroy()
 
   method on_grid_block_added(loc: Vector3, index: int) =
     if loc in self.holes:
@@ -409,3 +424,18 @@ gdobj Builder of Spatial:
   method on_terrain_block_removed(offset: int, loc: Vector3, index: int, keep: bool) =
     if offset == self.script_index:
       self.on_grid_block_removed(loc, index, keep)
+
+proc create_builder*(point: Vector3, parent: Node): Node {.discardable.} =
+  let
+    ps = load("res://components/Builder.tscn") as PackedScene
+    b = ps.instance() as Builder
+    is_clone = parent != data_node
+  assert not b.is_nil
+  b.script_ctx.is_clone = parent != data_node
+  b.paused = true
+  b.setup(point)
+  b.initial_index = action_index
+  parent.add_child(b)
+  b.owner = parent
+  save_scene()
+  result = b

@@ -24,6 +24,9 @@ self.ctrl.set = proc(name: string, new_speed:float) =
   speed = new_speed
 self.ctrl.get = proc(name: string): float = speed
 
+self.ctrl.create_new = proc() =
+  create_new()
+
 proc play*(animation_name: string)  = discard
 proc set_speed*(spd: float)         = speed = spd
 
