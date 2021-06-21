@@ -6,6 +6,7 @@ template name(n: untyped) = class_name(n, ScriptNode3D)
 preprocess "name", "${file_name}", "ScriptNode3D"
 
 include builder
-include "${file_name}"
+block:
+  include "${file_name}"
 
 quit()

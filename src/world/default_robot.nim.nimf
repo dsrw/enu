@@ -1,12 +1,14 @@
 #? stdtmpl
 #proc default_robot(file_name, imports: string, is_clone: bool): string =
-import types
+import types, class_macros
 const is_clone = ${is_clone}
 ${imports}
 template name(n: untyped) = class_name(n, ScriptNode)
-preprocess "name", "${file_name}", "ScriptNode"
-
+const enu_root = true
+preprocess "${file_name}", "ScriptNode"
 include robot
-include "${file_name}"
+block:
+  const enu_root = false
+  include "${file_name}"
 
 quit()

@@ -9,7 +9,7 @@ type
     id: int
     name*: string
 
-  Controller*  = object of RootObj
+  Controller*  = object
     action_running*: bool
     advance_state_machine*: proc(): bool
     yield_script*: proc()
@@ -34,39 +34,6 @@ const
   FORWARD* = vec3(0, 0, -1)
   RIGHT* = vec3(1, 0, 0)
   LEFT* = vec3(-1, 0, 0)
-
-macro preprocess*(ident_name, file, class_name: static string): untyped =
-  let ast = parse_stmt file.static_read
-  # only checking top level for now. Make this more robust.
-  for node in ast:
-    if node.kind in [nnkCommand, nnkCall]:
-      if node.len == 2 and node[1].kind == nnkIdent and node[0].eq_ident(ident_name):
-        return node
-    return parse_stmt(&"let self = {class_name}(ctrl: Controller())")
-
-macro class_name*(name, base_class: untyped): untyped =
-  name.expect_kind nnkIdent
-  let name_str = name.str_val
-  let type_name = (name_str & "Type").to_upper_ascii.nim_ident_normalize.ident
-  let var_name = name_str.ident
-  let cradle_name = (name_str & "_cradle").to_lower_ascii.nim_ident_normalize.ident
-  let clone_name = name_str & "_clone"
-  result = quote do:
-    when is_clone and not declared(self):
-      let self {.inject.} = `type_name`(name: `clone_name`, ctrl: Controller())
-      `cradle_name` = self
-    when not is_clone and not declared(self) and not declared(`var_name`) and not declared(`type_name`):
-      type
-        `type_name`* = ref object of `base_class`
-          create_new*: proc()
-
-      let `var_name`* {.inject.}  = `type_name`(name: `name_str`, ctrl: Controller())
-      let self {.inject.} = `var_name`
-      var `cradle_name`* {.inject.}: `type_name`
-
-      proc new*(instance: `type_name`): `type_name` {.discardable.} =
-        instance.ctrl.create_new()
-        result = `cradle_name`
 
 template forward*(target: ScriptNode, steps = 1.0) =
   target.ctrl.begin_move(FORWARD, steps, self)
