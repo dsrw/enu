@@ -18,11 +18,25 @@ type
     set*: proc(var_name: string, value: float)
     get*: proc(var_name: string): float
     create_new*: proc()
+    set_color*: proc(col: ColorIndex)
 
   ScriptNode* = ref object of Node
     ctrl*: Controller
 
   ScriptNode3D* = ref object of ScriptNode
+
+  ColorIndex* = enum
+    eraser = 0,
+    blue = 1,
+    red = 2,
+    green = 3,
+    black = 4,
+    white = 5
+
+  DrawMode* = enum
+    GridMode, VoxelMode
+
+  Energy* = range[0.0..100.0]
 
 proc vec3*(x, y, z: float): Vector3 {.inline.} =
   Vector3(x:x, y:y, z:z)

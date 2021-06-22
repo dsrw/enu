@@ -67,19 +67,27 @@ proc start_advance_timer*(ctx: ScriptCtx) =
 proc advance*(self; delta: float64) =
   let now = get_mono_time()
   current_active_node = self
-  let e = ctx.engine
-  if e.callback == nil or (not e.callback(delta)):
-    ctx.timer = MonoTime.high
-    discard e.call_proc("set_action_running", e.module_name, false)
-    self.update_running_state ctx.engine.resume()
-  elif now >= ctx.timer:
-    ctx.timer = now + ADVANCE_STEP
-    e.saved_callback = e.callback
-    e.callback = nil
-    discard e.resume()
+  let c = ctx
+  let e = c.engine
+
+  var resume_script = true
+  while resume_script:
+    resume_script = false
+    if e.callback == nil or (not e.callback(delta)):
+      ctx.timer = MonoTime.high
+      discard e.call_proc("set_action_running", e.module_name, false)
+      self.update_running_state ctx.engine.resume()
+      when compiles(self.blocks_per_frame):
+        if self.blocks_per_frame > 0 and e.running and self.blocks_remaining_this_frame >= 1:
+          echo "RESUME!!"
+          resume_script = true
+    elif now >= ctx.timer:
+      ctx.timer = now + ADVANCE_STEP
+      e.saved_callback = e.callback
+      e.callback = nil
+      discard e.resume()
 
 proc load_vars*(self) =
-  let self_name = if self.is_nil: "nil" else: self.name
   let active_name = if active_node().is_nil: "nil" else: active_node().name
   let e = ctx.engine
   when compiles(self.on_load_vars):
@@ -126,9 +134,12 @@ proc clone(self): bool =
   let node = active_node()
   let target = node.get_node("OwnedNodes")
   let ae = active_engine()
-  self.on_clone(target, active_ctx())
+  let new_node = self.on_clone(target, active_ctx())
+  let new_engine = new_node.script_ctx.engine
+  ae.callback = proc(delta: float): bool =
+    not new_engine.initialized
   set_active(ae)
-  result = false
+  result = true
 
 proc load_script*(self; script = "", retry_failed = true) =
   modules_to_load.excl ctx
@@ -173,7 +184,7 @@ proc load_script*(self; script = "", retry_failed = true) =
           expose "begin_turn", a => self.begin_turn(get_vec3(a, 0), get_float(a, 1))
           expose "echo_console", a => echo_console(get_string(a, 0))
           expose "create_new", a => self.clone()
-          expose "sleep_impl", proc(a: VmArgs): bool =
+          expose "sleep", proc(a: VmArgs): bool =
             let seconds = get_float(a, 0)
             var duration = 0.0
             when compiles(self.on_sleep):

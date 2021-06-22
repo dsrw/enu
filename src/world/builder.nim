@@ -12,7 +12,7 @@ var max_grid_index = 0
 type
   Timer = tuple[until: DateTime, callback: proc()]
 
-proc create_builder*(point: Vector3, parent: Node): Node {.discardable.}
+proc create_builder*(point: Vector3, parent: Node, script = "", is_clone = false, script_index = -1): Node {.discardable.}
 
 gdobj Builder of Spatial:
   var
@@ -28,10 +28,10 @@ gdobj Builder of Spatial:
     saved_holes* {.gdExport}: seq[Vector3]
     original_translation* {.gdExport.}: Vector3
     index: int = 1
-    blocks_per_frame = 0.0
+    blocks_per_frame* = 0.0
     blocks_remaining_this_frame = 0.0
     speed = 0.0
-    position = init_transform()
+    position* = init_transform()
     drawing = true
     save_points: Table[string, tuple[position: Transform, index: int, drawing: bool]]
     grid: Grid
@@ -50,7 +50,7 @@ gdobj Builder of Spatial:
     self.script_ctx = ScriptCtx.init("grid")
 
   proc code_template(file: string, imports: string): string =
-    result = default_builder(file, imports)
+    result = default_builder(config.script_dir & "/" & file, imports, self.script_ctx.is_clone)
 
   method ready() =
     if max_grid_index <= self.script_index:
@@ -65,33 +65,45 @@ gdobj Builder of Spatial:
 
     self.bind_signals self.terrain,
       w"block_selected last_block_deleted terrain_block_added terrain_block_removed"
-    self.bind_signals self.grid, w"selected deleted grid_block_added grid_block_removed"
+    self.bind_signals self.grid, w"selected grid_block_added grid_block_removed"
+    self.bind_signals self, @["deleted"]
     self.bind_signals w"reload pause reload_all"
 
     if self.saved_blocks.len > 0 or self.saved_holes.len > 0:
       self.restore_blocks()
 
-  proc setup*(translation: Vector3) =
+  proc setup*(translation: Vector3, script_index = -1) =
     self.translation = translation
     self.original_translation = translation
-    self.script_index = max_grid_index
+    if script_index == -1:
+      self.script_index = max_grid_index
+    else:
+      self.script_index = script_index
     inc max_grid_index
     self.name = "Builder_" & $self.script_index
     if not self.script_ctx.is_clone:
       self.set_script()
       write_file self.script, ""
 
-  proc on_clone(target: Node, ctx: ScriptCtx) =
-    discard
+  proc on_clone(target: Node, ctx: ScriptCtx): Builder =
+    let parent = target.get_parent.as(Spatial)
+    var t = parent.global_transform.origin
+    var diff = vec3()
+    let builder = parent.as(Builder)
+    if not builder.is_nil:
+      t = builder.position.origin
+      diff = t - self.global_transform.origin
 
-  # proc on_clone(target: Node, active_ctx: ScriptCtx): bool =
-  #   let b = create_bot(vec3(), target) as NimBot
-  #   b.script_ctx.script = self.script_ctx.script
-  #   active_ctx.engine.running = false
-  #   b.script_ctx.clone_ready = proc() =
-  #     active_ctx.engine.running = active_ctux.engine.resume()
-  #   active_ctx.engine.running = false
-  #   true
+    if not builder.is_nil and self.draw_mode == GridMode:
+     diff = vec3()
+
+    result = create_builder(t, target, self.script_ctx.script, is_clone = true).as(Builder)
+    result.draw_mode = self.draw_mode
+    result.saved_holes = self.saved_holes.map_it(it + diff)
+
+    result.saved_blocks = self.saved_blocks.map_it(it + diff)
+    result.saved_block_colors = self.saved_block_colors
+    result.restore_blocks()
 
   proc save_blocks*() =
     let data = if self.draw_mode == VoxelMode:
@@ -158,6 +170,7 @@ gdobj Builder of Spatial:
 
     self.speed = 1.0
     self.scale_factor = 1.0
+    dump self.grid.is_nil
     self.grid.scale = vec3(1, 1, 1)
     self.index = 1
     self.drawing = true
@@ -276,8 +289,21 @@ gdobj Builder of Spatial:
           inc count
           self.blocks_remaining_this_frame -= 1
           self.drop_block()
-        return count.float < steps
+        result = count.float < steps
+        # if not result and self.blocks_remaining_this_frame > 0:
+        #   self.script_ctx.resume_again = true
+        # return count.float < steps
     active_ctx().start_advance_timer()
+
+  method on_deleted*() =
+    self.destroy_children()
+    self.clear()
+    echo "CLEARING!!!"
+    let duration = if self.engine.running: 0.5.seconds else: 0.5.seconds
+    self.set_timer duration, proc() =
+      self.paused = false
+      self.script_ctx.destroy()
+      self.destroy()
 
   proc on_begin_turn(axis = UP, degrees: float): Callback =
     let map = {LEFT: UP, RIGHT: DOWN, UP: RIGHT, DOWN: LEFT}.to_table
@@ -381,11 +407,15 @@ gdobj Builder of Spatial:
   proc set_timer(duration: TimeInterval, callback: proc()) =
     self.timers.add (now() + duration, callback)
 
+  proc destroy_children() =
+    let children = self.get_node("OwnedNodes").get_children
+    for v in children:
+      let child = v.as_object(Node)
+      child.trigger("deleted")
+
   method reload() =
     let duration = if self.engine.running: 0.5.seconds else: 0.seconds
-    for v in self.get_children:
-      let node = v.as_object(Node)
-      node.destroy()
+    self.destroy_children()
     self.set_timer duration, proc() =
       self.reset(clear = true, set_vars = false)
       self.paused = false
@@ -403,7 +433,7 @@ gdobj Builder of Spatial:
 
   method on_last_block_deleted(offset: int) =
     if offset == self.script_index:
-      self.destroy()
+      self.trigger("deleted")
 
   method on_grid_block_added(loc: Vector3, index: int) =
     if loc in self.holes:
@@ -425,16 +455,33 @@ gdobj Builder of Spatial:
     if offset == self.script_index:
       self.on_grid_block_removed(loc, index, keep)
 
-proc create_builder*(point: Vector3, parent: Node): Node {.discardable.} =
+# proc create_builder*(point: Vector3, parent: Node): Node {.discardable.} =
+#   let
+#     ps = load("res://components/Builder.tscn") as PackedScene
+#     b = ps.instance() as Builder
+#     is_clone = parent != data_node
+#   assert not b.is_nil
+#   b.script_ctx.is_clone = parent != data_node
+#   b.paused = true
+#   b.setup(point)
+#   b.initial_index = action_index
+#   parent.add_child(b)
+#   b.owner = parent
+#   save_scene()
+#   result = b
+
+proc create_builder*(point: Vector3, parent: Node, script = "", is_clone = false, script_index = -1): Node {.discardable.} =
   let
-    ps = load("res://components/Builder.tscn") as PackedScene
-    b = ps.instance() as Builder
+    proto = load("res://components/Builder.tscn") as PackedScene
+    b = proto.instance() as Builder
     is_clone = parent != data_node
   assert not b.is_nil
-  b.script_ctx.is_clone = parent != data_node
+  b.script_ctx.is_clone = is_clone
   b.paused = true
-  b.setup(point)
+  b.setup(point, script_index)
   b.initial_index = action_index
+  if is_clone:
+    b.script_ctx.script = script
   parent.add_child(b)
   b.owner = parent
   save_scene()

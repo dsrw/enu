@@ -14,6 +14,8 @@ block:
 self.ctrl.create_new = proc() =
   potato_cradle = clone_obj
 
+proc sleep(time: float) = discard
+
 block:
   const is_clone = true
 
@@ -27,9 +29,9 @@ block:
     assert s1 != s2
     assert s2 == s3
 
-    let p = potato.new(color = "orange")
+    let p = potato.new(label = "orange")
     assert not p.is_nil
     assert p of PotatoType
     assert p.length == 5
     assert p != potato
-    assert p.color == "orange"
+    assert p.label == "orange"

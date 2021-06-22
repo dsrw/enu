@@ -19,3 +19,5 @@ script = ExtResource( 3 )
 __meta__ = {
 "_editor_clip_": 0
 }
+
+[node name="OwnedNodes" type="Node" parent="."]

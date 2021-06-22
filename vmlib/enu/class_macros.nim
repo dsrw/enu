@@ -1,4 +1,4 @@
-import macros, strformat, strutils, sugar
+import macros, strformat, strutils, sugar, types
 
 macro preprocess*(file, class_name: untyped): untyped =
   try:
@@ -55,11 +55,22 @@ proc build_ctors(name_str: string, type_name, vars, cradle_name: NimNode): NimNo
     let stmt = quote do:
       result.user_ctrl.`setter`(`named_var`)
     ctor_body.add(stmt)
+  var speed = "speed".ident
+  var color = "color".ident
+  ctor_body.add quote do:
+    if `speed` != -1.0:
+      result.ctrl.set("speed", `speed`)
+    if `color` != eraser:
+      result.ctrl.set_color(`color`)
 
   let instance_def = new_ident_defs("instance".ident, type_name)
+  # add baked in constructor params for speed, color, etc.
+  # probably shouldn't be here.
+  let speed_def = new_ident_defs(speed, new_empty_node(), new_float_lit_node(-1.0))
+  let color_def = new_ident_defs(color, new_empty_node(), bind_sym"eraser")
   result = new_proc(
     name = "new".ident.postfix("*"),
-    params = @[type_name] & instance_def & vars[0][0..^1],
+    params = @[type_name] & instance_def & vars[0][0..^1] & speed_def & color_def,
     pragmas = nnkPragma.new_tree("discardable".ident),
     body = ctor_body
   )
@@ -76,6 +87,10 @@ proc build_accessors(vars: NimNode): NimNode =
         `var_name`
       self.user_ctrl.`setter_name` = proc(val: `typ`) =
         `var_name` = val
+  let col = "col".ident
+  result.add quote do:
+    self.ctrl.set_color = proc(`col`: ColorIndex) =
+      color = `col`
 
 proc build_public_interface(vars, type_name: NimNode): NimNode =
   result = new_stmt_list()
@@ -162,3 +177,6 @@ macro class_name*(name, base_class: untyped): untyped =
     when not enu_root:
       `vars`
       `accessors`
+      when is_clone:
+        # TODO: make this better
+        sleep(0.1)

@@ -1,7 +1,7 @@
 import strformat, strutils, helpers, types
 export helpers
 
-include loops, core
+include loops
 
 var
   speed*: range[0.0..250.0] = 1.0
@@ -29,6 +29,9 @@ self.ctrl.set = proc(name: string, new_speed:float) =
   speed = new_speed
 self.ctrl.get = proc(name: string): float = speed
 
+self.ctrl.create_new = proc() =
+  create_new()
+
 proc change_color(amount: int) =
   var color_index = int color
   color_index += amount
@@ -38,7 +41,6 @@ proc change_color(amount: int) =
     color_index = int ColorIndex.high
   color = ColorIndex color_index
 
-proc sleep*(seconds: float)         = discard
 proc reset*(clear = false)          = discard
 proc save*(name = "default")        = discard
 proc restore*(name = "default")     = discard

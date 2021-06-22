@@ -1,7 +1,7 @@
 import godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
                    input_event, animation_player, resource_loader, packed_scene]
 import godot, std / [math, tables, with, times, sugar, os, monotimes]
-import globals, core
+import globals, core, world/builder
 import engine/contexts
 export contexts
 
@@ -29,6 +29,7 @@ gdobj NimBot of KinematicBody:
 
   method on_deleted*() =
     self.script_ctx.destroy()
+    self.destroy()
 
   proc code_template(file: string, imports: string): string =
     result = default_robot(config.script_dir & "/" & file, imports, self.script_ctx.is_clone)
@@ -125,8 +126,15 @@ gdobj NimBot of KinematicBody:
       self.bind_signals(w"reload pause reload_all")
       self.load_script()
 
-  proc on_clone(target: Node, active_ctx: ScriptCtx) =
-    let b = create_bot(vec3(), target, self.script_ctx.script, is_clone = true) as NimBot
+  proc on_clone(target: Node, active_ctx: ScriptCtx): NimBot =
+    let parent = target.get_parent.as(Spatial)
+    var t = parent.global_transform.origin
+
+    let builder = parent.as(Builder)
+    if not builder.is_nil:
+      let to = builder.position.origin
+      t = to
+    create_bot(t, target, self.script_ctx.script, is_clone = true).as(NimBot)
 
   proc update_running_state(running: bool) =
     self.engine.running = running
@@ -144,7 +152,6 @@ gdobj NimBot of KinematicBody:
     let children = self.get_node("OwnedNodes").get_children
     for v in children:
       let child = v.as_object(Node)
-      child.destroy()
       child.trigger("deleted")
     self.translation = self.orig_translation
     self.rotation = self.orig_rotation

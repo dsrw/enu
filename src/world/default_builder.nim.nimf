@@ -1,12 +1,14 @@
 #? stdtmpl
-#proc default_builder(file_name, imports: string): string =
-import types
+#proc default_builder(file_name, imports: string, is_clone: bool): string =
+import types, class_macros
+const is_clone = ${is_clone}
 ${imports}
 template name(n: untyped) = class_name(n, ScriptNode3D)
-preprocess "name", "${file_name}", "ScriptNode3D"
-
+const enu_root = true
+preprocess "${file_name}", "ScriptNode3D"
 include builder
 block:
+  const enu_root = false
   include "${file_name}"
 
 quit()
