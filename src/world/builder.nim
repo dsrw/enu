@@ -298,7 +298,6 @@ gdobj Builder of Spatial:
   method on_deleted*() =
     self.destroy_children()
     self.clear()
-    echo "CLEARING!!!"
     let duration = if self.engine.running: 0.5.seconds else: 0.5.seconds
     self.set_timer duration, proc() =
       self.paused = false
@@ -454,21 +453,6 @@ gdobj Builder of Spatial:
   method on_terrain_block_removed(offset: int, loc: Vector3, index: int, keep: bool) =
     if offset == self.script_index:
       self.on_grid_block_removed(loc, index, keep)
-
-# proc create_builder*(point: Vector3, parent: Node): Node {.discardable.} =
-#   let
-#     ps = load("res://components/Builder.tscn") as PackedScene
-#     b = ps.instance() as Builder
-#     is_clone = parent != data_node
-#   assert not b.is_nil
-#   b.script_ctx.is_clone = parent != data_node
-#   b.paused = true
-#   b.setup(point)
-#   b.initial_index = action_index
-#   parent.add_child(b)
-#   b.owner = parent
-#   save_scene()
-#   result = b
 
 proc create_builder*(point: Vector3, parent: Node, script = "", is_clone = false, script_index = -1): Node {.discardable.} =
   let

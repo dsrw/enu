@@ -1,4 +1,4 @@
-name potato(length = 5, width = 2, label: string)
+name potato(length = 5, width = 2, color = red, label: string)
 
 assert length == 5
 assert self.length == 5

@@ -79,7 +79,6 @@ proc advance*(self; delta: float64) =
       self.update_running_state ctx.engine.resume()
       when compiles(self.blocks_per_frame):
         if self.blocks_per_frame > 0 and e.running and self.blocks_remaining_this_frame >= 1:
-          echo "RESUME!!"
           resume_script = true
     elif now >= ctx.timer:
       ctx.timer = now + ADVANCE_STEP
