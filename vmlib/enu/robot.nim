@@ -1,4 +1,4 @@
-import helpers, strutils, types
+import helpers, strutils, types, math
 export helpers
 
 include loops
@@ -7,7 +7,7 @@ let skip_3d = true
 
 var
   speed* = 1.0
-  player* = Node()
+  color*: ColorIndex
 
 include base_api
 
@@ -23,6 +23,21 @@ self.ctrl.yield_script = proc() = yield_script()
 self.ctrl.set = proc(name: string, new_speed:float) =
   speed = new_speed
 self.ctrl.get = proc(name: string): float = speed
+
+self.ctrl.stash = proc() =
+  stash()
+
+self.ctrl.get_position = proc(): Vector3 =
+  get_position()
+
+self.ctrl.get_rotation = proc(): Vector3 =
+  get_rotation()
+
+self.ctrl.look_at = proc(target: ScriptNode) =
+  look_at(target)
+
+self.ctrl.add_stashed = proc() =
+  add_stashed()
 
 self.ctrl.create_new = proc() =
   create_new()

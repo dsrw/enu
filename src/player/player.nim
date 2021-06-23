@@ -4,7 +4,7 @@ import godotapi / [kinematic_body, spatial, input, input_event,
                          collision_shape]
 import godot except print
 import math, print
-import ".." / [core, globals, game]
+import core, globals, game, engine/engine, engine/contexts
 import aim_target
 
 let
@@ -82,15 +82,15 @@ gdobj Player of KinematicBody:
       result.y = velocity_current.y + gravity * delta
 
   method ready*() =
-    trace:
-      state.player = self
-      self.camera_rig = self.get_node("CameraRig") as Spatial
-      self.collision_shape = self.get_node("CollisionShape") as CollisionShape
-      self.camera = self.camera_rig.get_node("Camera") as Camera
-      self.aim_ray  = self.camera_rig.get_node("Camera/AimRay") as RayCast
-      self.world_ray = game_node.get_node("WorldRay") as RayCast
-      self.aim_target = self.camera_rig.get_node("AimTarget") as AimTarget
-      self.position_start = self.camera_rig.translation
+    state.player = self
+    self.camera_rig = self.get_node("CameraRig") as Spatial
+    self.collision_shape = self.get_node("CollisionShape") as CollisionShape
+    self.camera = self.camera_rig.get_node("Camera") as Camera
+    self.aim_ray  = self.camera_rig.get_node("Camera/AimRay") as RayCast
+    self.world_ray = game_node.get_node("WorldRay") as RayCast
+    self.aim_target = self.camera_rig.get_node("AimTarget") as AimTarget
+    self.position_start = self.camera_rig.translation
+    self.load_script()
 
   proc current_raycast*: RayCast =
     if get_game().mouse_captured:
@@ -128,6 +128,24 @@ gdobj Player of KinematicBody:
         else:
           self.aim_ray.cast_to = vec3(0, 0, -100)
           self.aim_target.update(self.aim_ray)
+
+  proc load_script() =
+    let ctx = ScriptCtx(engine: Engine.init())
+    ctx.script = config.lib_dir & "/enu/players.nim"
+    let code = read_file ctx.script
+    ctx.engine.load(config.script_dir, ctx.script, code, config.lib_dir, "")
+    ctx.engine.expose "quit", proc(a: VmArgs): bool =
+      engine.pause(ctx.engine)
+      ctx.engine.running = false
+      result = false
+    ctx.engine.expose "get_position", proc(a: VmArgs): bool =
+      let n = self.global_transform.origin.to_node
+      a.set_result(n)
+      return false
+    ctx.engine.expose "get_rotation", proc(a: VmArgs): bool =
+      a.set_result(self.rotation_degrees.to_node)
+      return false
+    discard ctx.engine.run()
 
   method physics_process*(delta: float) =
     trace:

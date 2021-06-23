@@ -70,6 +70,8 @@ proc advance*(self; delta: float64) =
   let c = ctx
   let e = c.engine
 
+  when compiles(self.blocks_per_frame):
+    self.blocks_remaining_this_frame += self.blocks_per_frame
   var resume_script = true
   while resume_script:
     resume_script = false

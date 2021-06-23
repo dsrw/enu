@@ -2,7 +2,7 @@ import godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
                    input_event, animation_player, resource_loader, packed_scene]
 import godot, std / [math, tables, with, times, sugar, os, monotimes]
 import globals, core, world/builder
-import engine/contexts
+import engine / [contexts, engine]
 export contexts
 
 include "default_robot.nim.nimf"
@@ -165,6 +165,13 @@ gdobj NimBot of KinematicBody:
         self.animation_player.stop(true)
       else:
         self.animation_player.play(animation_name)
+      return false
+    e.expose "get_position", proc(a: VmArgs): bool =
+      let n = self.global_transform.origin.to_node
+      a.set_result(n)
+      return false
+    e.expose "get_rotation", proc(a: VmArgs): bool =
+      a.set_result(self.rotation_degrees.to_node)
       return false
 
   method on_reload*() =

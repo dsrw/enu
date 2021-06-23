@@ -1,10 +1,10 @@
-import strformat, strutils, helpers, types
+import strformat, strutils, helpers, types, math
 export helpers
 
 include loops
 
 var
-  speed*: range[0.0..250.0] = 1.0
+  speed* = 1.0
   move_speed = 1.0
   drawing* = true
   color*: ColorIndex
@@ -31,6 +31,15 @@ self.ctrl.get = proc(name: string): float = speed
 
 self.ctrl.create_new = proc() =
   create_new()
+
+self.ctrl.get_position = proc(): Vector3 =
+  get_position()
+
+self.ctrl.get_rotation = proc(): Vector3 =
+  get_rotation()
+
+self.ctrl.look_at = proc(target: ScriptNode) =
+  look_at(target)
 
 proc change_color(amount: int) =
   var color_index = int color

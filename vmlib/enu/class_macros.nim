@@ -171,7 +171,7 @@ macro class_name*(name, base_class, throw_errors: untyped): untyped =
         if throw_errors:
           error("expected `name my_name` or `name my_name(my_param1 = 1, my_param2 = 2, ...)`", name)
         return
-    echo params.repr
+
     let
       type_name = (name_str & "Type").to_upper_ascii.nim_ident_normalize.ident
       var_name = name_str.ident
@@ -209,4 +209,4 @@ macro class_name*(name, base_class, throw_errors: untyped): untyped =
           sleep(0.1)
   except:
     if throw_errors:
-      raise get_current_exception()
+      raise

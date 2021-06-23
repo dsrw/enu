@@ -5,7 +5,7 @@ import core
 import godot
 export Interpreter
 
-export VmArgs, get_float, get_int, get_string, get_bool
+export VmArgs, get_float, get_int, get_string, get_bool, set_result, to_int
 
 type
   VMError* = object of CatchableError

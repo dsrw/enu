@@ -1,6 +1,6 @@
 import godotapi / [spatial, grid_map, resource_loader, packed_scene]
 import godot
-import std / [tables, math, sets, sugar, sequtils, hashes, os, monotimes]
+import std / [tables, math, sets, sugar, sequtils, hashes, os, monotimes, macros]
 import core, globals, world / [terrain, grid]
 import engine/contexts
 export contexts
@@ -164,7 +164,6 @@ gdobj Builder of Spatial:
   proc set_defaults() =
     self.position = init_transform()
     self.translation = self.original_translation
-    self.rotation = vec3()
     if self.draw_mode == VoxelMode:
       self.position.origin = self.translation
 
@@ -279,7 +278,6 @@ gdobj Builder of Spatial:
     else:
       var count = 0
       result = proc(delta: float): bool =
-        self.blocks_remaining_this_frame += self.blocks_per_frame
         var remaining = self.blocks_remaining_this_frame
         var per_frame = self.blocks_per_frame
         while count.float < steps and self.blocks_remaining_this_frame >= 1:
@@ -363,6 +361,36 @@ gdobj Builder of Spatial:
     e.expose "load_defaults", proc(a: VmArgs): bool =
       self.set_vars()
       false
+    e.expose "get_position", proc(a: VmArgs): bool =
+      let v = if self.draw_mode == GridMode:
+        self.global_transform.origin
+      else:
+        self.position.origin
+      a.set_result(v.to_node)
+      false
+    e.expose "get_rotation", proc(a: VmArgs): bool =
+      if self.draw_mode == GridMode:
+        a.set_result(self.rotation_degrees.to_node)
+      else:
+        proc nm(f: float): float =
+          if f.is_equal_approx(0):
+            return 0
+          elif f < 0:
+            return f + (2 * PI)
+          else:
+            return f
+
+        proc nm(v: Vector3): Vector3 =
+          vec3(v.x.nm, v.y.nm, v.z.nm)
+
+        let e = self.position.basis.get_euler
+
+        let n = e.nm
+        let v = vec3(nm(n.x).rad_to_deg, nm(n.y).rad_to_deg, nm(n.z).rad_to_deg)
+        let m = if v.z > 0: 1.0 else: -1.0
+        let v2 = vec3(0.0, (v.x - v.y) * m, 0.0)
+        a.set_result(v2.to_node)
+        return false
 
   proc clear() =
     if self.draw_mode == VoxelMode:
