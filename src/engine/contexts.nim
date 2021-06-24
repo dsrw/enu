@@ -96,11 +96,21 @@ proc load_vars*(self) =
 
 proc begin_move(self; direction: Vector3, steps: float): bool =
   self.load_vars()
+  var steps = steps
+  var direction = direction
+  if steps < 0:
+    steps = steps * -1
+    direction = direction * -1
   active_engine().callback = self.on_begin_move(direction, steps)
   result = not active_engine().callback.is_nil
 
 proc begin_turn(self; direction: Vector3, degrees: float): bool =
   self.load_vars()
+  var degrees = degrees
+  var direction = direction
+  if degrees < 0:
+    degrees = degrees * -1
+    direction = direction * -1
   active_engine().callback = self.on_begin_turn(direction, degrees)
   result = not active_engine().callback.is_nil
 
