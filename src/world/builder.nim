@@ -293,9 +293,10 @@ gdobj Builder of Spatial:
         # return count.float < steps
     active_ctx().start_advance_timer()
 
-  method on_deleted*() =
+  method on_deleted*(clear = true) =
     self.destroy_children()
-    self.clear()
+    if clear:
+      self.clear()
     let duration = if self.engine.running: 0.5.seconds else: 0.5.seconds
     self.set_timer duration, proc() =
       self.paused = false
@@ -460,7 +461,8 @@ gdobj Builder of Spatial:
 
   method on_last_block_deleted(offset: int) =
     if offset == self.script_index:
-      self.trigger("deleted")
+      # nothing to clear
+      self.on_deleted(clear = false)
 
   method on_grid_block_added(loc: Vector3, index: int) =
     if loc in self.holes:
