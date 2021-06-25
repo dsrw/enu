@@ -288,9 +288,6 @@ gdobj Builder of Spatial:
           self.blocks_remaining_this_frame -= 1
           self.drop_block()
         result = count.float < steps
-        # if not result and self.blocks_remaining_this_frame > 0:
-        #   self.script_ctx.resume_again = true
-        # return count.float < steps
     active_ctx().start_advance_timer()
 
   method on_deleted*(clear = true) =
