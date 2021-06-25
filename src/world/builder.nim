@@ -169,7 +169,6 @@ gdobj Builder of Spatial:
 
     self.speed = 1.0
     self.scale_factor = 1.0
-    dump self.grid.is_nil
     self.grid.scale = vec3(1, 1, 1)
     self.index = 1
     self.drawing = true
