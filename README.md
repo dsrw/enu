@@ -1,3 +1,6 @@
+*Note: This is the development branch of Enu 0.2, and is currently unstable and undocumented. It has only been tested on macos,
+and may not build on other platforms.*
+
 # Enu
 
 3D live coding, implemented in Nim.
