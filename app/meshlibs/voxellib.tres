@@ -3,6 +3,7 @@
 [sub_resource type="Voxel" id=1]
 voxel_name = "air"
 transparent = true
+transparency_index = 1
 geometry_type = 1
 collision_aabbs = [ AABB( 0, 0, 0, 1, 1, 1 ) ]
 collision_mask = 2147483648

@@ -29,7 +29,7 @@ requires "nim >= 1.4.0",
          "https://github.com/dsrw/Nim#1d5093d",
          "cligen 1.2.2",
          "json_serialization",
-         "print >= 1.0"
+         "hpprint"
 
 proc gen: string =
   if generator_path == "":

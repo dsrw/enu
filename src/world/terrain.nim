@@ -1,4 +1,4 @@
-import godotapi / [mesh, voxel_terrain, voxel_tool, voxel, voxel_library, shader_material]
+import godotapi / [mesh, voxel_terrain, voxel_mesher_blocky, voxel_tool, voxel, voxel_library, shader_material]
 import godot, sets, tables, hashes
 import ".." / [globals, core]
 
@@ -39,7 +39,7 @@ gdobj Terrain of VoxelTerrain:
     # to do highlighting, we rely on each builder having its own
     # materials within the terrain.
     # This duplicates the voxels in the library so we have a pool with different materials.
-    let l = self.voxel_library
+    let l = self.mesher.as(VoxelMesherBlocky).library
     self.voxel_count = l.voxel_count.int
 
     for i in 0..<l.voxel_count:
@@ -95,7 +95,7 @@ gdobj Terrain of VoxelTerrain:
 
     let
       loc = vec3(x, y, z)
-      blk = self.voxel_to_block(loc)
+      blk = self.voxel_to_data_block(loc)
       vox: Vox = (loc, (index, offset, keep))
 
     if self.in_view(loc):
@@ -119,7 +119,7 @@ gdobj Terrain of VoxelTerrain:
     result = point - diffed
 
   proc get_vox*(point: Vector3): Option[VoxData] =
-    let blk = self.voxel_to_block(point)
+    let blk = self.voxel_to_data_block(point)
     if blk in self.buffers:
       let buf = self.buffers[blk]
       if point in buf:
@@ -238,11 +238,11 @@ gdobj Terrain of VoxelTerrain:
       if not m.is_nil:
         m.set_shader_param("emission_energy", default_energy)
 
-  method on_block_loaded(location: Vector3, buffer: VoxelBuffer) =
+  method on_block_loaded(location: Vector3) =
     self.loading_buffers.add location
     self.visible_buffers.incl location
 
-  method on_block_unloaded(location: Vector3, buffer: VoxelBuffer) =
+  method on_block_unloaded(location: Vector3) =
     self.visible_buffers.excl location
     self.lost_voxels.del location
 
