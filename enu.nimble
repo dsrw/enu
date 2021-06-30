@@ -25,7 +25,7 @@ src_dir       = "src"
 bin           = @["enu" & lib_ext]
 
 requires "nim >= 1.4.0",
-         "https://github.com/dsrw/godot-nim#7c2f345",
+         "https://github.com/dsrw/godot-nim#8449349",
          "https://github.com/dsrw/Nim#1d5093d",
          "cligen 1.2.2",
          "json_serialization",
