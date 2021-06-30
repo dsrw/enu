@@ -12,13 +12,14 @@ var max_grid_index = 0
 type
   Timer = tuple[until: DateTime, callback: proc()]
 
-proc create_builder*(point: Vector3, parent: Node, script = "", is_clone = false, script_index = -1): Node {.discardable.}
+proc create_builder*(point: Vector3, parent: Node, script = "", is_clone = false): Node {.discardable.}
 
 gdobj Builder of Spatial:
   var
     script_ctx: ScriptCtx
     draw_mode* {.gdExport.}: DrawMode
     script_index* {.gdExport.} = 0
+    owner_script_index = -1
     initial_index* {.gdExport.} = 1
     # FIXME `saved_blocks` and `saved_block_colors` should be
     # a single `seq[(Vector, int)]`. Will need `to_variant`
@@ -86,18 +87,18 @@ gdobj Builder of Spatial:
       write_file self.script, ""
 
   proc on_clone(target: Node, ctx: ScriptCtx): Builder =
-    let parent = target.get_parent.as(Spatial)
-    var t = parent.global_transform.origin
+    let owner = target.get_parent.as(Spatial)
+    var t = owner.global_transform.origin
     var diff = vec3()
-    let builder = parent.as(Builder)
+    let builder = owner.as(Builder)
     if not builder.is_nil:
       t = builder.position.origin
       diff = t - self.global_transform.origin
-
     if not builder.is_nil and self.draw_mode == GridMode:
-     diff = vec3()
-
+      diff = vec3()
     result = create_builder(t, target, self.script_ctx.script, is_clone = true).as(Builder)
+    if not builder.is_nil:
+      result.owner_script_index = builder.script_index
     result.draw_mode = self.draw_mode
     result.saved_holes = self.saved_holes.map_it(it + diff)
 
@@ -105,9 +106,15 @@ gdobj Builder of Spatial:
     result.saved_block_colors = self.saved_block_colors
     result.restore_blocks()
 
+  proc active_script_index: int =
+    if self.owner_script_index > -1:
+      self.owner_script_index
+    else:
+      self.script_index
+
   proc save_blocks*() =
     let data = if self.draw_mode == VoxelMode:
-      self.terrain.export_data(self.script_index, vec3())
+      self.terrain.export_data(self.active_script_index, vec3())
     else:
       self.grid.export_data()
     self.saved_blocks = @[]
@@ -134,7 +141,7 @@ gdobj Builder of Spatial:
       self.kept_holes[loc] = self.holes[loc]
     else:
       if self.draw_mode == VoxelMode:
-        self.terrain.draw(x, y, z, index, self.script_index, keep, trigger)
+        self.terrain.draw(x, y, z, index, self.active_script_index, keep, trigger)
       else:
         self.grid.draw(x, y, z, index, keep, trigger)
 
@@ -175,6 +182,31 @@ gdobj Builder of Spatial:
     self.overwrite = false
     self.move_mode = false
 
+  proc switch_to_grid_mode() =
+    let offset = self.active_script_index
+    var holes: Table[Vector3, int]
+
+    let data = self.grid.export_data()
+    self.grid.clear(all = true)
+    self.position.origin += self.translation
+    for loc, index in self.holes:
+      holes[loc + self.translation] = index
+    self.holes = holes
+    self.terrain.import_data(data, offset, self.translation)
+
+  proc switch_to_voxel_mode() =
+    let offset = self.active_script_index
+    var holes: Table[Vector3, int]
+
+    let data = self.terrain.export_data(offset, self.translation)
+    self.set_timer 0.5.seconds, proc() =
+      self.terrain.clear(offset, all = true)
+    self.position.origin -= self.translation
+    for loc, index in self.holes:
+      holes[loc - self.translation] = index
+    self.holes = holes
+    self.grid.import_data(data)
+
   proc switch_mode(mode: DrawMode, move_mode: bool, scale_factor: float) =
     var mode = mode
     if move_mode:
@@ -184,25 +216,10 @@ gdobj Builder of Spatial:
     self.move_mode = move_mode
     if mode != self.draw_mode:
       debug &"switching to {mode} mode"
-      let offset = self.script_index
-      var holes: Table[Vector3, int]
       if self.draw_mode == VoxelMode:
-        let data = self.terrain.export_data(offset, self.translation)
-        self.set_timer 0.5.seconds, proc() =
-          self.terrain.clear(offset, all = true)
-        self.position.origin -= self.translation
-        for loc, index in self.holes:
-          holes[loc - self.translation] = index
-        self.holes = holes
-        self.grid.import_data(data)
+        self.switch_to_voxel_mode()
       else:
-        let data = self.grid.export_data()
-        self.grid.clear(all = true)
-        self.position.origin += self.translation
-        for loc, index in self.holes:
-          holes[loc + self.translation] = index
-        self.holes = holes
-        self.terrain.import_data(data, offset, self.translation)
+        self.switch_to_grid_mode()
       self.draw_mode = mode
       self.save_blocks()
 
@@ -345,7 +362,7 @@ gdobj Builder of Spatial:
       if self.draw_mode == GridMode:
         self.grid.set_energy(color, energy)
       else:
-        self.terrain.set_energy(color, energy, self.script_index)
+        self.terrain.set_energy(color, energy, self.active_script_index)
       false
     e.expose("save", a => self.save(get_string(a, 0)))
     e.expose("restore", a => self.restore(get_string(a, 0)))
@@ -391,7 +408,7 @@ gdobj Builder of Spatial:
 
   proc clear() =
     if self.draw_mode == VoxelMode:
-      self.terrain.clear(self.script_index)
+      self.terrain.clear(self.active_script_index)
     else:
       self.grid.clear()
 
@@ -421,12 +438,24 @@ gdobj Builder of Spatial:
     self.draw(p.x, p.y, p.z, action_index)
     self.load_script()
 
+  proc find_root: Node =
+    var target: Node = self
+    while target.get_parent.name == "OwnedNodes":
+      target = target.get_parent.get_parent
+    result = target
+
   method on_block_selected(offset: int) =
-    if offset == self.script_index:
-      show_editor self.script, self.engine
+    if offset == self.active_script_index:
+      var t = self.find_root().as(Builder)
+      if t.is_nil:
+        t = self
+      show_editor t.script, t.engine
 
   method on_selected() =
-    show_editor self.script, self.engine
+    var t = self.find_root().as(Builder)
+    if t.is_nil:
+      t = self
+    show_editor t.script, t.engine
 
   proc set_timer(duration: TimeInterval, callback: proc()) =
     self.timers.add (now() + duration, callback)
@@ -480,7 +509,7 @@ gdobj Builder of Spatial:
     if offset == self.script_index:
       self.on_grid_block_removed(loc, index, keep)
 
-proc create_builder*(point: Vector3, parent: Node, script = "", is_clone = false, script_index = -1): Node {.discardable.} =
+proc create_builder*(point: Vector3, parent: Node, script = "", is_clone = false): Node {.discardable.} =
   let
     proto = load("res://components/Builder.tscn") as PackedScene
     b = proto.instance() as Builder
@@ -488,7 +517,7 @@ proc create_builder*(point: Vector3, parent: Node, script = "", is_clone = false
   assert not b.is_nil
   b.script_ctx.is_clone = is_clone
   b.paused = true
-  b.setup(point, script_index)
+  b.setup(point)
   b.initial_index = action_index
   if is_clone:
     b.script_ctx.script = script

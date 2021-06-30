@@ -3,7 +3,7 @@ import godotapi / [kinematic_body, spatial, input, input_event,
                          ray_cast, scene_tree, input_event_pan_gesture, viewport, camera, global_constants,
                          collision_shape]
 import godot except print
-import math, print
+import math
 import core, globals, game, engine/engine, engine/contexts
 import aim_target
 
