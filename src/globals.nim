@@ -29,15 +29,6 @@ type
     scene* {.dont_serialize.}: string
     lib_dir* {.dont_serialize.}: string
 
-const
-  CMP_EPSILON = 0.00001
-  UP* = vec3(0, 1, 0)
-  DOWN* = vec3(0, -1, 0)
-  BACK* = vec3(0, 0, 1)
-  FORWARD* = vec3(0, 0, -1)
-  RIGHT* = vec3(1, 0, 0)
-  LEFT* = vec3(-1, 0, 0)
-
 var
   editing*: proc:bool
   show_editor*: proc(file: string, engine: Engine)
@@ -61,8 +52,6 @@ var
   command_mode* = false
   config*: Config
   game_ready* = false
-proc roughly_zero[T](s: T): bool =
-  abs(s) < CMP_EPSILON
 
 proc debug*(args: varargs[string, `$`]) =
   logger("debug", args.join)
@@ -101,28 +90,3 @@ proc destroy*(node: Node) =
   node.get_parent.remove_child(node)
   node.queue_free()
   save_scene()
-
-proc lerp*(self, other, t: float): float {.inline.} =
-  self + t * (other - self)
-
-proc wrap*[T](value, min, max: T): float =
-  let range = max - min
-  if range.roughly_zero:
-    min
-  else:
-    value - (range * floor((value - min) / range))
-
-proc x*(b: Basis): Vector3 {.inline.} =
-  vec3(b[0].x, b[1].x, b[2].x)
-
-proc y*(b: Basis): Vector3 {.inline.} =
-  vec3(b[0].y, b[1].y, b[2].y)
-
-proc z*(b: Basis): Vector3 {.inline.} =
-  vec3(b[0].z, b[1].z, b[2].z)
-
-proc round*(v: Vector3): Vector3 {.inline.} =
-  vec3(v.x.round(), v.y.round(), v.z.round())
-
-proc is_axis_aligned*(v: Vector3): bool {.inline.} =
-  v in [UP, DOWN, LEFT, RIGHT, FORWARD, BACK]

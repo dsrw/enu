@@ -1,7 +1,7 @@
 ### Sugar ###
 from sugar import dup
-import std/with, strformat, strutils, sequtils, sets, tables, times, std/monotimes
-export dup, with, strformat, strutils, sequtils, sets, tables
+import std/with, strformat, strutils, sequtils, sets, tables, times, std/monotimes, hpprint
+export dup, with, strformat, strutils, sequtils, sets, tables, hpprint
 
 ### Debug
 from sugar import dump
@@ -81,6 +81,14 @@ proc optional_get*[T](self: var HashSet[T], key: T): Option[T] =
 ### Vector3 ###
 import core/godotcoretypes, core/vector3, math
 
+const
+  UP* = vec3(0, 1, 0)
+  DOWN* = vec3(0, -1, 0)
+  BACK* = vec3(0, 0, 1)
+  FORWARD* = vec3(0, 0, -1)
+  RIGHT* = vec3(1, 0, 0)
+  LEFT* = vec3(-1, 0, 0)
+
 proc vec3*(x, y, z: int): Vector3 {.inline.} =
   vec3(x.float, y.float, z.float)
 
@@ -94,6 +102,27 @@ proc first*[T](arr: openArray[T], test: proc(x: T): bool): Option[T] =
   for item in arr:
     if test(item):
       return some(item)
+
+proc round*(v: Vector3): Vector3 {.inline.} =
+  vec3(v.x.round(), v.y.round(), v.z.round())
+
+proc is_axis_aligned*(v: Vector3): bool {.inline.} =
+  v in [UP, DOWN, LEFT, RIGHT, FORWARD, BACK]
+
+# math
+const CMP_EPSILON = 0.00001
+proc roughly_zero[T](s: T): bool =
+  abs(s) < CMP_EPSILON
+
+proc lerp*(self, other, t: float): float {.inline.} =
+  self + t * (other - self)
+
+proc wrap*[T](value, min, max: T): float =
+  let range = max - min
+  if range.roughly_zero:
+    min
+  else:
+    value - (range * floor((value - min) / range))
 
 ### string ###
 proc w*(str: string): seq[string] = str.split_whitespace()
