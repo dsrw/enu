@@ -43,6 +43,8 @@ type
 
   Energy* = range[0.0..100.0]
 
+  Direction* = object
+
 proc vec3*(x, y, z: float): Vector3 {.inline.} =
   Vector3(x:x, y:y, z:z)
 
