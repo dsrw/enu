@@ -80,7 +80,8 @@ proc advance*(self; delta: float64) =
       discard e.call_proc("set_action_running", e.module_name, false)
       self.update_running_state ctx.engine.resume()
       when compiles(self.blocks_per_frame):
-        if self.blocks_per_frame > 0 and e.running and self.blocks_remaining_this_frame >= 1:
+        if not e.callback.is_nil and self.blocks_per_frame > 0 and
+           e.running and self.blocks_remaining_this_frame >= 1:
           resume_script = true
     elif now >= ctx.timer:
       ctx.timer = now + ADVANCE_STEP
@@ -143,6 +144,7 @@ proc retry_failed_scripts =
 
 proc clone(self): bool =
   let node = active_node()
+  # TODO: Fix this
   let target = node.get_node("OwnedNodes")
   let ae = active_engine()
   let new_node = self.on_clone(target, active_ctx())
