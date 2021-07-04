@@ -10,18 +10,11 @@ and may not build on other platforms. The stable branch is in better shape.*
 Enu lets you build and explore worlds using a familiar block-building interface and a Logo inspired API.
 It aspires to make 3D development more accessible, and will eventually be usable to create standalone games.
 
-# Install
-
-Download from https://github.com/dsrw/enu/releases. The Windows version isn't signed, and
-UAC will warn that it's untrusted. This will be fixed in a future release.
-
-The Linux version hasn't been tested particularly well, but it works for me under Ubuntu 20.04. Please report any issues.
-
-The world format will change in a future release. Worlds created in 0.1 won't be supported in future versions.
-
 # Demo
 
-See the [Enu 0.1 demo video](https://youtu.be/upg77dMBGDE):
+[Building 3D Games with Enu 0.2 - NimConf 2021](https://youtu.be/ECJsq7BeZ8w)
+
+[Enu 0.1 demo video](https://youtu.be/upg77dMBGDE):
 
 [![Enu 0.1 Demo](media/screenshot_1.png)](https://youtu.be/upg77dMBGDE)
 
@@ -102,6 +95,15 @@ or:
   forward()
 ```
 ![Color Cycle Example](media/cycle_example.png)
+
+# Install
+
+Download from https://github.com/dsrw/enu/releases. The Windows version isn't signed, and
+UAC will warn that it's untrusted. This will be fixed in a future release.
+
+The Linux version hasn't been tested particularly well, but it works for me under Ubuntu 20.04. Please report any issues.
+
+The world format will change in a future release. Worlds created in 0.1 won't be supported in future versions.
 
 # Build and Run
 
