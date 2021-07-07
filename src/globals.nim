@@ -13,7 +13,7 @@ type
     player*: Node
     game*: Node
 
-  VoxData* = tuple[index, offset: int, keep: bool]
+  VoxData* = tuple[index: int, keep: bool]
   Vox* = tuple[location: Vector3, data: VoxData]
   VoxTable* = Table[Vector3, VoxData]
 

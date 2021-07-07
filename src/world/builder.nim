@@ -1,7 +1,7 @@
 import godotapi / [spatial, grid_map, resource_loader, packed_scene]
 import godot
 import std / [tables, math, sets, sugar, sequtils, hashes, os, monotimes, macros]
-import core, globals, world / [terrain, grid]
+import core, globals, world / [terrain]
 import engine/contexts
 export contexts
 
@@ -17,7 +17,6 @@ proc create_builder*(point: Vector3, parent: Node, script = "", is_clone = false
 gdobj Builder of Spatial:
   var
     script_ctx: ScriptCtx
-    draw_mode* {.gdExport.}: DrawMode
     script_index* {.gdExport.} = 0
     owner_script_index = -1
     initial_index* {.gdExport.} = 1
@@ -35,7 +34,6 @@ gdobj Builder of Spatial:
     position* = init_transform()
     drawing = true
     save_points: Table[string, tuple[position: Transform, index: int, drawing: bool]]
-    grid: Grid
     terrain: Terrain
     holes, kept_holes: Table[Vector3, int]
     overwrite = false
@@ -59,14 +57,13 @@ gdobj Builder of Spatial:
     if not self.script_ctx.is_clone:
       self.set_script()
     self.translation = self.original_translation
-    self.grid = self.get_node("Grid") as Grid
-    self.terrain = game_node.find_node("Terrain") as Terrain
-    assert self.grid != nil
+    #self.grid = self.get_node("Grid") as Grid
+    self.terrain = self.find_node("Terrain") as Terrain
+    #assert self.grid != nil
     assert self.terrain != nil
 
     self.bind_signals self.terrain,
       w"block_selected last_block_deleted terrain_block_added terrain_block_removed"
-    self.bind_signals self.grid, w"selected grid_block_added grid_block_removed"
     self.bind_signals self, @["deleted"]
     self.bind_signals w"reload pause reload_all"
 
@@ -94,12 +91,9 @@ gdobj Builder of Spatial:
     if not builder.is_nil:
       t = builder.position.origin
       diff = t - self.global_transform.origin
-    if not builder.is_nil and self.draw_mode == GridMode:
-      diff = vec3()
     result = create_builder(t, target, self.script_ctx.script, is_clone = true).as(Builder)
     if not builder.is_nil:
       result.owner_script_index = builder.script_index
-    result.draw_mode = self.draw_mode
     result.saved_holes = self.saved_holes.map_it(it + diff)
 
     result.saved_blocks = self.saved_blocks.map_it(it + diff)
@@ -113,10 +107,7 @@ gdobj Builder of Spatial:
       self.script_index
 
   proc save_blocks*() =
-    let data = if self.draw_mode == VoxelMode:
-      self.terrain.export_data(self.active_script_index, vec3())
-    else:
-      self.grid.export_data()
+    let data = self.terrain.export_data(vec3())
     self.saved_blocks = @[]
     self.saved_block_colors = @[]
     for vox in data:
@@ -140,10 +131,7 @@ gdobj Builder of Spatial:
        not self.overwrite and index != self.holes[loc]:
       self.kept_holes[loc] = self.holes[loc]
     else:
-      if self.draw_mode == VoxelMode:
-        self.terrain.draw(x, y, z, index, self.active_script_index, keep, trigger)
-      else:
-        self.grid.draw(x, y, z, index, keep, trigger)
+      self.terrain.draw(x, y, z, index, keep, trigger)
 
   proc update_running_state(running: bool) =
     self.engine.running = running
@@ -155,15 +143,8 @@ gdobj Builder of Spatial:
       debug(self.script & " done.")
 
   proc includes_any_location*(locations: seq[Vector3]): bool =
-    if self.draw_mode == GridMode:
-      for l in self.grid.get_used_cells():
-        let loc = l.asVector3() + self.translation
-        if loc in locations:
-          return true
     for loc in self.holes.keys:
       var loc = loc
-      if self.draw_mode == GridMode:
-        loc += self.translation
       if loc in locations:
         return true
     return false
@@ -171,57 +152,15 @@ gdobj Builder of Spatial:
   proc set_defaults() =
     self.position = init_transform()
     self.translation = self.original_translation
-    if self.draw_mode == VoxelMode:
-      self.position.origin = self.translation
+    #if self.draw_mode == VoxelMode:
+    #  self.position.origin = self.translation
 
     self.speed = 1.0
     self.scale_factor = 1.0
-    self.grid.scale = vec3(1, 1, 1)
     self.index = 1
     self.drawing = true
     self.overwrite = false
     self.move_mode = false
-
-  proc switch_to_grid_mode() =
-    let offset = self.active_script_index
-    var holes: Table[Vector3, int]
-
-    let data = self.grid.export_data()
-    self.grid.clear(all = true)
-    self.position.origin += self.translation
-    for loc, index in self.holes:
-      holes[loc + self.translation] = index
-    self.holes = holes
-    self.terrain.import_data(data, offset, self.translation)
-
-  proc switch_to_voxel_mode() =
-    let offset = self.active_script_index
-    var holes: Table[Vector3, int]
-
-    let data = self.terrain.export_data(offset, self.translation)
-    self.set_timer 0.5.seconds, proc() =
-      self.terrain.clear(offset, all = true)
-    self.position.origin -= self.translation
-    for loc, index in self.holes:
-      holes[loc - self.translation] = index
-    self.holes = holes
-    self.grid.import_data(data)
-
-  proc switch_mode(mode: DrawMode, move_mode: bool, scale_factor: float) =
-    var mode = mode
-    if move_mode:
-      mode = GridMode
-    if scale_factor != 1.0:
-      mode = GridMode
-    self.move_mode = move_mode
-    if mode != self.draw_mode:
-      debug &"switching to {mode} mode"
-      if self.draw_mode == VoxelMode:
-        self.switch_to_voxel_mode()
-      else:
-        self.switch_to_grid_mode()
-      self.draw_mode = mode
-      self.save_blocks()
 
   proc on_load_vars() =
     var old_speed = self.speed
@@ -241,10 +180,9 @@ gdobj Builder of Spatial:
     if self.speed != old_speed:
       self.blocks_remaining_this_frame = 0
     if scale_factor != self.scale_factor:
-      self.grid.scale = vec3(scale_factor, scale_factor, scale_factor)
+      self.terrain.scale = vec3(scale_factor, scale_factor, scale_factor)
       self.scale_factor = scale_factor
 
-    self.switch_mode(mode, move_mode, self.scale_factor)
     self.set_vars()
 
   method physics_process(delta: float64) =
@@ -271,7 +209,7 @@ gdobj Builder of Spatial:
   proc set_vars() =
     let module_name = self.engine.module_name
     self.engine.call_proc("set_vars", module_name = module_name, self.index, self.drawing,
-                          self.speed, self.scale_factor, int self.draw_mode,
+                          self.speed, self.scale_factor, 0,
                           self.overwrite, self.move_mode)
 
   proc on_begin_move(direction: Vector3, steps: float): Callback =
@@ -359,10 +297,7 @@ gdobj Builder of Spatial:
       let
         color = get_int(a, 0).int
         energy = get_float(a, 1)
-      if self.draw_mode == GridMode:
-        self.grid.set_energy(color, energy)
-      else:
-        self.terrain.set_energy(color, energy, self.active_script_index)
+      self.terrain.set_energy(color, energy)
       false
     e.expose("save", a => self.save(get_string(a, 0)))
     e.expose("restore", a => self.restore(get_string(a, 0)))
@@ -376,41 +311,32 @@ gdobj Builder of Spatial:
       self.set_vars()
       false
     e.expose "get_position", proc(a: VmArgs): bool =
-      let v = if self.draw_mode == GridMode:
-        self.global_transform.origin
-      else:
-        self.position.origin
+      let v = self.position.origin
       a.set_result(v.to_node)
       false
     e.expose "get_rotation", proc(a: VmArgs): bool =
-      if self.draw_mode == GridMode:
-        a.set_result(self.rotation_degrees.to_node)
-      else:
-        proc nm(f: float): float =
-          if f.is_equal_approx(0):
-            return 0
-          elif f < 0:
-            return f + (2 * PI)
-          else:
-            return f
+      proc nm(f: float): float =
+        if f.is_equal_approx(0):
+          return 0
+        elif f < 0:
+          return f + (2 * PI)
+        else:
+          return f
 
-        proc nm(v: Vector3): Vector3 =
-          vec3(v.x.nm, v.y.nm, v.z.nm)
+      proc nm(v: Vector3): Vector3 =
+        vec3(v.x.nm, v.y.nm, v.z.nm)
 
-        let e = self.position.basis.get_euler
+      let e = self.position.basis.get_euler
 
-        let n = e.nm
-        let v = vec3(nm(n.x).rad_to_deg, nm(n.y).rad_to_deg, nm(n.z).rad_to_deg)
-        let m = if v.z > 0: 1.0 else: -1.0
-        let v2 = vec3(0.0, (v.x - v.y) * m, 0.0)
-        a.set_result(v2.to_node)
-        return false
+      let n = e.nm
+      let v = vec3(nm(n.x).rad_to_deg, nm(n.y).rad_to_deg, nm(n.z).rad_to_deg)
+      let m = if v.z > 0: 1.0 else: -1.0
+      let v2 = vec3(0.0, (v.x - v.y) * m, 0.0)
+      a.set_result(v2.to_node)
+      return false
 
   proc clear() =
-    if self.draw_mode == VoxelMode:
-      self.terrain.clear(self.active_script_index)
-    else:
-      self.grid.clear()
+    self.terrain.clear()
 
   proc reset(clear = true, set_vars = true) =
     self.set_defaults()
@@ -431,8 +357,8 @@ gdobj Builder of Spatial:
       self.draw(p.x, p.y, p.z, self.index)
 
   proc build() =
-    if self.draw_mode == VoxelMode:
-      self.position.origin = self.translation
+    #if self.draw_mode == VoxelMode:
+    #  self.position.origin = self.translation
 
     let p = self.position.origin
     self.draw(p.x, p.y, p.z, action_index)
@@ -501,9 +427,8 @@ gdobj Builder of Spatial:
     self.save_blocks()
     save_scene()
 
-  method on_terrain_block_added(offset: int, loc: Vector3, index: int) =
-    if offset == self.script_index:
-      self.on_grid_block_added(loc, index)
+  method on_terrain_block_added(loc: Vector3, index: int) =
+    self.on_grid_block_added(loc, index)
 
   method on_terrain_block_removed(offset: int, loc: Vector3, index: int, keep: bool) =
     if offset == self.script_index:
