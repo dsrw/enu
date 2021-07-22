@@ -370,12 +370,11 @@ gdobj Builder of Spatial:
       target = target.get_parent.get_parent
     result = target
 
-  method on_block_selected(offset: int) =
-    if offset == self.active_script_index:
-      var t = self.find_root().as(Builder)
-      if t.is_nil:
-        t = self
-      show_editor t.script, t.engine
+  method on_block_selected =
+    var t = self.find_root().as(Builder)
+    if t.is_nil:
+      t = self
+    show_editor t.script, t.engine
 
   method on_selected() =
     var t = self.find_root().as(Builder)

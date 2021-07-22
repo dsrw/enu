@@ -75,6 +75,9 @@ gdobj Terrain of VoxelTerrain:
       blk = self.voxel_to_data_block(loc)
       vox: Vox = (loc, (index, keep))
 
+    while not self.bounds.contains(loc):
+      self.bounds = self.bounds.grow(16)
+
     if self.in_view(loc):
       self.set_voxel(loc, index)
     elif blk in self.visible_buffers:
@@ -192,7 +195,6 @@ gdobj Terrain of VoxelTerrain:
         it.data.keep and not all
 
   proc highlight() =
-    echo "highlighting"
     for i in 0..<self.library.voxel_count.int:
       let m = self.get_material(i).as(ShaderMaterial)
       if not m.is_nil:
@@ -213,7 +215,6 @@ gdobj Terrain of VoxelTerrain:
     self.lost_voxels.del location
 
   method on_target_move(point, normal: Vector3) =
-    echo "target moving"
     let
       prev_point = self.current_point
       prev_normal = self.current_normal
@@ -255,6 +256,7 @@ gdobj Terrain of VoxelTerrain:
 
   method on_target_fire() =
     let vox = self.get_vox(self.targeted_voxel)
+    dump vox
     if vox:
       if tool_mode == BlockMode:
         self.painting = true
@@ -263,7 +265,7 @@ gdobj Terrain of VoxelTerrain:
         self.draw_plane = self.current_point * self.current_normal
 
       if tool_mode == CodeMode:
-        self.trigger("block_selected", 0)
+        self.trigger("block_selected")
         self.deselect()
 
   method on_target_remove() =
