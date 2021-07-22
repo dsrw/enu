@@ -6,7 +6,6 @@ type
   DrawMode* = enum
     GridMode, VoxelMode
   Buffers = Table[Vector3, VoxTable]
-const MAX_MATERIALS = 16
 let
   highlight_energy = 1.0.to_variant()
   default_energy = 0.1.to_variant()
@@ -36,9 +35,11 @@ gdobj Terrain of VoxelTerrain:
 
   proc clone_materials =
     let count = self.mesher.as(VoxelMesherBlocky).library.voxel_count
-    for i in 0..<MAX_MATERIALS:
+    for i in 0..int.high:
       let m = self.get_material(i)
-      if not m.is_nil:
+      if m.is_nil:
+        break
+      else:
         let m = m.duplicate.as(ShaderMaterial)
         m.set_shader_param("emission_energy", default_energy)
         self.set_material(i, m)
