@@ -167,8 +167,8 @@ gdobj Builder of Spatial:
     let
       e = self.engine
       mode = DrawMode self.engine.get_int("mode", e.module_name)
-      move_mode = self.engine.get_bool("move_mode", e.module_name)
       scale_factor = self.engine.get_float("scale", e.module_name)
+    self.move_mode = self.engine.get_bool("move_mode", e.module_name)
     self.speed = self.engine.get_float("speed", e.module_name)
     self.index = self.engine.get_int("color", e.module_name)
     self.drawing = self.engine.get_bool("drawing", e.module_name)
@@ -213,6 +213,7 @@ gdobj Builder of Spatial:
                           self.overwrite, self.move_mode)
 
   proc on_begin_move(direction: Vector3, steps: float): Callback =
+    dump self.move_mode
     if self.move_mode:
       let steps = steps.float
       var duration = 0.0
