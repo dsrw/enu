@@ -57,9 +57,7 @@ gdobj Builder of Spatial:
     if not self.script_ctx.is_clone:
       self.set_script()
     self.translation = self.original_translation
-    #self.grid = self.get_node("Grid") as Grid
     self.terrain = self.find_node("Terrain") as Terrain
-    #assert self.grid != nil
     assert self.terrain != nil
 
     self.bind_signals self.terrain,
@@ -152,9 +150,6 @@ gdobj Builder of Spatial:
   proc set_defaults() =
     self.position = init_transform()
     self.translation = self.original_translation
-    #if self.draw_mode == VoxelMode:
-    #  self.position.origin = self.translation
-
     self.speed = 1.0
     self.scale_factor = 1.0
     self.index = 1
@@ -357,9 +352,6 @@ gdobj Builder of Spatial:
       self.draw(p.x, p.y, p.z, self.index)
 
   proc build() =
-    #if self.draw_mode == VoxelMode:
-    #  self.position.origin = self.translation
-
     let p = self.position.origin
     self.draw(p.x, p.y, p.z, action_index)
     self.load_script()

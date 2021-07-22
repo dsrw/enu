@@ -141,29 +141,15 @@ gdobj Terrain of VoxelTerrain:
 
   proc add_voxel(blk: Vector3, vox: Vox) =
     let (loc, data) = vox
-    # if data.offset notin self.offset_buffers:
-    #   self.offset_buffers[data.offset] = Buffers()
-    # if blk notin self.offset_buffers[data.offset]:
-    #   self.offset_buffers[data.offset][blk] = VoxTable()
     if blk notin self.buffers:
       self.buffers[blk] = VoxTable()
 
-    #self.offset_buffers[data.offset][blk][loc] = data
     self.buffers[blk][loc] = data
 
   proc del_voxel(blk: Vector3, vox: Vox) =
     let (loc, data) = vox
-    # if data.offset notin self.offset_buffers or
-    #    blk notin self.offset_buffers[data.offset]:
-    #   return
-    #
-    # self.offset_buffers[data.offset][blk].del loc
     self.buffers[blk].del loc
 
-    # if self.offset_buffers[data.offset][blk].len == 0:
-    #   self.offset_buffers[data.offset].del(blk)
-    # if self.offset_buffers[data.offset].len == 0:
-    #   self.offset_buffers.del(data.offset)
     if self.buffers[blk].len == 0:
       self.buffers.del(blk)
 
