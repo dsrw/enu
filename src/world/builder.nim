@@ -213,7 +213,6 @@ gdobj Builder of Spatial:
                           self.overwrite, self.move_mode)
 
   proc on_begin_move(direction: Vector3, steps: float): Callback =
-    dump self.move_mode
     if self.move_mode:
       let steps = steps.float
       var duration = 0.0

@@ -256,7 +256,6 @@ gdobj Terrain of VoxelTerrain:
 
   method on_target_fire() =
     let vox = self.get_vox(self.targeted_voxel)
-    dump vox
     if vox:
       if tool_mode == BlockMode:
         self.painting = true
