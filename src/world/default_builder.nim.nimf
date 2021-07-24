@@ -5,7 +5,7 @@ const is_clone = ${is_clone}
 ${imports}
 template name(n: untyped) = class_name(n, ScriptNode, false)
 const enu_root = true
-preprocess "${file_name}", "ScriptNode3D"
+preprocess "${file_name}", "ScriptNode"
 include builder
 block:
   const enu_root = false

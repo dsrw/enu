@@ -5,10 +5,8 @@ include loops
 
 var
   speed* = 1.0
-  move_speed = 1.0
   drawing* = true
   color*: ColorIndex
-  mode* = VoxelMode
   overwrite* = false
   move_mode* = false
   scale* = 1.0
@@ -16,29 +14,29 @@ var
 
 include base_api
 
-self.ctrl.begin_move = proc(direction: Vector3, steps: float, self: ScriptNode) =
+me.ctrl.begin_move = proc(direction: Vector3, steps: float, self: ScriptNode) =
   self.wait begin_move(direction, steps)
 
-self.ctrl.begin_turn = proc(axis: Vector3, degrees: float, self: ScriptNode) =
+me.ctrl.begin_turn = proc(axis: Vector3, degrees: float, self: ScriptNode) =
   self.wait begin_turn(axis, degrees)
 
-self.ctrl.advance_state_machine = proc(): bool = advance_state_machine()
-self.ctrl.yield_script = proc() = yield_script()
+me.ctrl.advance_state_machine = proc(): bool = advance_state_machine()
+me.ctrl.yield_script = proc() = yield_script()
 
-self.ctrl.set = proc(name: string, new_speed:float) =
+me.ctrl.set = proc(name: string, new_speed:float) =
   speed = new_speed
-self.ctrl.get = proc(name: string): float = speed
+me.ctrl.get = proc(name: string): float = speed
 
-self.ctrl.create_new = proc() =
+me.ctrl.create_new = proc() =
   create_new()
 
-self.ctrl.get_position = proc(): Vector3 =
+me.ctrl.get_position = proc(): Vector3 =
   get_position()
 
-self.ctrl.get_rotation = proc(): Vector3 =
+me.ctrl.get_rotation = proc(): Vector3 =
   get_rotation()
 
-self.ctrl.look_at = proc(target: ScriptNode) =
+me.ctrl.look_at = proc(target: ScriptNode) =
   look_at(target)
 
 proc change_color(amount: int) =
@@ -74,12 +72,11 @@ proc energy*(color: ColorIndex): var float =
 # Helpers
 proc load_defaults()             = discard
 
-proc set_vars*(color_index: int, drw: bool, spd, scl: float, draw_mode: int, ow, mv: bool) =
+proc set_vars*(color_index: int, drw: bool, spd, scl: float, ow, mv: bool) =
   color = ColorIndex color_index
   drawing = drw
   speed = spd
   scale = scl
-  mode = DrawMode draw_mode
   overwrite = ow
   move_mode = mv
 
@@ -89,20 +86,13 @@ proc fill_square*(length = 1) =
       forward(length - l)
       right()
 
-template move*(body: untyped): untyped =
-  let prev_speed = speed
+proc move*(new_target: ScriptNode) =
+  target = new_target
   move_mode = true
-  speed = move_speed
-  body
-  move_mode = false
-  move_speed = speed
-  speed = prev_speed
 
-template build*(body: untyped): untyped =
-  let prev_move_mode = move_mode
+proc build*(new_target: ScriptNode) =
+  target = new_target
   move_mode = false
-  body
-  move_mode = prev_move_mode
 
 proc print*(args: varargs[string, `$`]) =
   echo_console args.join

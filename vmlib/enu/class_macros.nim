@@ -13,7 +13,7 @@ macro preprocess*(file, class_name: untyped): untyped =
       if node.kind in [nnkCommand, nnkCall]:
         if node.len == 2 and node[1].kind in [nnkIdent, nnkCall] and node[0].eq_ident(ident_name):
           return node
-    return parse_stmt(&"let self = {class_name}(ctrl: Controller())")
+    return parse_stmt(&"let me = {class_name}(ctrl: Controller())")
   except:
     # we don't have line info here, so we shouldn't
     # report errors. The same code will be parsed again
@@ -106,13 +106,13 @@ proc build_accessors(vars: NimNode, throw_errors: bool): NimNode =
     let setter_name = ("set_" & name).ident
     let getter_name = ("get_" & name).ident
     result.add quote do:
-      self.user_ctrl.`getter_name` = proc(): `typ` =
+      me.user_ctrl.`getter_name` = proc(): `typ` =
         `var_name`
-      self.user_ctrl.`setter_name` = proc(val: `typ`) =
+      me.user_ctrl.`setter_name` = proc(val: `typ`) =
         `var_name` = val
   let col = "col".ident
   result.add quote do:
-    self.ctrl.set_color = proc(`col`: ColorIndex) =
+    me.ctrl.set_color = proc(`col`: ColorIndex) =
       color = `col`
 
 proc build_public_interface(vars, type_name: NimNode, throw_errors: bool): NimNode =
@@ -188,8 +188,8 @@ macro class_name*(name, base_class, throw_errors: untyped): untyped =
 
     result = quote do:
       when is_clone and enu_root:
-        let self {.inject.} = `type_name`(name: `clone_name`, ctrl: Controller(), user_ctrl: `controller_type`())
-        `cradle_name` = self
+        let me {.inject.} = `type_name`(name: `clone_name`, ctrl: Controller(), user_ctrl: `controller_type`())
+        `cradle_name` = me
       when not is_clone and enu_root:
         `controller`
         type
@@ -197,8 +197,8 @@ macro class_name*(name, base_class, throw_errors: untyped): untyped =
             create_new*: proc()
             user_ctrl*: `controller_type`
         `iface`
-        let self {.inject.} = `type_name`(name: `name_str`, user_ctrl: `controller_type`(), ctrl: Controller())
-        let `var_name`* {.inject.} = self
+        let me {.inject.} = `type_name`(name: `name_str`, user_ctrl: `controller_type`(), ctrl: Controller())
+        let `var_name`* {.inject.} = me
         var `cradle_name`*: `type_name`
         `ctors`
       when not enu_root:

@@ -28,8 +28,6 @@ type
   ScriptNode* = ref object of Node
     ctrl*: Controller
 
-  ScriptNode3D* = ref object of ScriptNode
-
   ColorIndex* = enum
     eraser = 0,
     blue = 1,
@@ -37,9 +35,6 @@ type
     green = 3,
     black = 4,
     white = 5
-
-  DrawMode* = enum
-    GridMode, VoxelMode
 
   Energy* = range[0.0..100.0]
 
@@ -327,17 +322,17 @@ proc `speed=`*(self: ScriptNode, speed: float) =
 proc speed*(self: ScriptNode): float =
   self.ctrl.get("speed")
 
-template up*(target: ScriptNode3D, steps = 1.0) =
-  target.ctrl.begin_move(UP, steps, self)
+template up*(target: ScriptNode, steps = 1.0) =
+  target.ctrl.begin_move(UP, steps, me)
 
-template down*(target: ScriptNode3D, steps = 1.0) =
-  target.ctrl.begin_move(DOWN, steps, self)
+template down*(target: ScriptNode, steps = 1.0) =
+  target.ctrl.begin_move(DOWN, steps, me)
 
-template turn_up*(target: ScriptNode3D, degrees = 90.0) =
-  target.ctrl.begin_turn(UP, degrees, self)
+template turn_up*(target: ScriptNode, degrees = 90.0) =
+  target.ctrl.begin_turn(UP, degrees, me)
 
-template turn_down*(target: ScriptNode3D, degrees = 90.0) =
-  target.ctrl.begin_turn(DOWN, degrees, self)
+template turn_down*(target: ScriptNode, degrees = 90.0) =
+  target.ctrl.begin_turn(DOWN, degrees, me)
 
 proc look_at*(actor: ScriptNode) =
   actor.ctrl.look_at(actor)

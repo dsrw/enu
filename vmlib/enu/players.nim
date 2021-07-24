@@ -1,7 +1,7 @@
 import types
 
 type
-  PlayerType* = ref object of ScriptNode3D
+  PlayerType* = ref object of ScriptNode
 
 let player* = PlayerType(ctrl: Controller())
 let self = player

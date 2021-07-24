@@ -3,9 +3,8 @@ import godot, sets, tables, hashes
 import ".." / [globals, core]
 
 type
-  DrawMode* = enum
-    GridMode, VoxelMode
   Buffers = Table[Vector3, VoxTable]
+
 let
   highlight_energy = 1.0.to_variant()
   default_energy = 0.1.to_variant()

@@ -12,7 +12,7 @@ proc advance_state_machine(): bool =
     true
 
 proc set_action_running*(running: bool) =
-  self.ctrl.action_running = running
+  me.ctrl.action_running = running
 
 template wait(node: ScriptNode, body: untyped) =
   node.ctrl.action_running = true

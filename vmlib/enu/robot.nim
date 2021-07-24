@@ -11,35 +11,35 @@ var
 
 include base_api
 
-self.ctrl.begin_move = proc(direction: Vector3, steps: float, self: ScriptNode) =
+me.ctrl.begin_move = proc(direction: Vector3, steps: float, self: ScriptNode) =
   self.wait begin_move(direction, steps)
 
-self.ctrl.begin_turn = proc(axis: Vector3, degrees: float, self: ScriptNode) =
+me.ctrl.begin_turn = proc(axis: Vector3, degrees: float, self: ScriptNode) =
   self.wait begin_turn(axis, degrees)
 
-self.ctrl.advance_state_machine = proc(): bool = advance_state_machine()
-self.ctrl.yield_script = proc() = yield_script()
+me.ctrl.advance_state_machine = proc(): bool = advance_state_machine()
+me.ctrl.yield_script = proc() = yield_script()
 
-self.ctrl.set = proc(name: string, new_speed:float) =
+me.ctrl.set = proc(name: string, new_speed:float) =
   speed = new_speed
-self.ctrl.get = proc(name: string): float = speed
+me.ctrl.get = proc(name: string): float = speed
 
-self.ctrl.stash = proc() =
+me.ctrl.stash = proc() =
   stash()
 
-self.ctrl.get_position = proc(): Vector3 =
+me.ctrl.get_position = proc(): Vector3 =
   get_position()
 
-self.ctrl.get_rotation = proc(): Vector3 =
+me.ctrl.get_rotation = proc(): Vector3 =
   get_rotation()
 
-self.ctrl.look_at = proc(target: ScriptNode) =
+me.ctrl.look_at = proc(target: ScriptNode) =
   look_at(target)
 
-self.ctrl.add_stashed = proc() =
+me.ctrl.add_stashed = proc() =
   add_stashed()
 
-self.ctrl.create_new = proc() =
+me.ctrl.create_new = proc() =
   create_new()
 
 proc play*(animation_name: string)  = discard

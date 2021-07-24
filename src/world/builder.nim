@@ -30,7 +30,7 @@ gdobj Builder of Spatial:
     index: int = 1
     blocks_per_frame* = 0.0
     blocks_remaining_this_frame = 0.0
-    speed = 0.0
+    speed = 1.0
     position* = init_transform()
     drawing = true
     save_points: Table[string, tuple[position: Transform, index: int, drawing: bool]]
@@ -161,7 +161,6 @@ gdobj Builder of Spatial:
     var old_speed = self.speed
     let
       e = self.engine
-      mode = DrawMode self.engine.get_int("mode", e.module_name)
       scale_factor = self.engine.get_float("scale", e.module_name)
     self.move_mode = self.engine.get_bool("move_mode", e.module_name)
     self.speed = self.engine.get_float("speed", e.module_name)
@@ -204,7 +203,7 @@ gdobj Builder of Spatial:
   proc set_vars() =
     let module_name = self.engine.module_name
     self.engine.call_proc("set_vars", module_name = module_name, self.index, self.drawing,
-                          self.speed, self.scale_factor, 0,
+                          self.speed, self.scale_factor,
                           self.overwrite, self.move_mode)
 
   proc on_begin_move(direction: Vector3, steps: float): Callback =

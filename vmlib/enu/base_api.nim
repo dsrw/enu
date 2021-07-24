@@ -9,6 +9,8 @@ proc add_stashed() = discard
 proc get_position(): Vector3 = discard
 proc get_rotation(): Vector3 = discard
 
+var target: ScriptNode = me
+
 proc add(node: ScriptNode) =
   node.stash()
   add_stashed()
@@ -25,18 +27,16 @@ proc echo(msg: varargs[string, `$`]) = echo_console msg.join
 proc begin_move(direction: Vector3, steps: float) = discard
 proc begin_turn(axis: Vector3, steps: float) = discard
 
-proc forward(steps = 1.0) = self.wait begin_move(FORWARD, steps)
-proc back(steps = 1.0) = self.wait begin_move(BACK, steps)
-proc left(steps = 1.0): Direction {.discardable.} = self.wait begin_move(LEFT, steps)
-proc right(steps = 1.0): Direction {.discardable.} = self.wait begin_move(RIGHT, steps)
+proc forward(steps = 1.0) = target.ctrl.begin_move(FORWARD, steps, me)
+proc back(steps = 1.0) = target.ctrl.begin_move(BACK, steps, me)
+proc left(steps = 1.0): Direction {.discardable.} = target.ctrl.begin_move(LEFT, steps, me)
+proc right(steps = 1.0): Direction {.discardable.} = target.ctrl.begin_move(RIGHT, steps, me)
 proc l(steps = 1.0): Direction {.discardable.} = left(steps)
 proc r(steps = 1.0): Direction {.discardable.} = right(steps)
-
-when not declared(skip_3d):
-  proc up(steps = 1.0): Direction {.discardable.} = self.wait begin_move(UP, steps)
-  proc u(steps = 1.0): Direction {.discardable.} = up(steps)
-  proc down(steps = 1.0): Direction {.discardable.} = self.wait begin_move(DOWN, steps)
-  proc d(steps = 1.0): Direction {.discardable.} = down(steps)
+proc up(steps = 1.0): Direction {.discardable.} = target.ctrl.begin_move(UP, steps, me)
+proc u(steps = 1.0): Direction {.discardable.} = up(steps)
+proc down(steps = 1.0): Direction {.discardable.} = target.ctrl.begin_move(DOWN, steps, me)
+proc d(steps = 1.0): Direction {.discardable.} = down(steps)
 
 proc turn(direction: proc(steps = 1.0): Direction, degrees = 90.0) =
   var axis = if direction == r: RIGHT
@@ -45,16 +45,15 @@ proc turn(direction: proc(steps = 1.0): Direction, degrees = 90.0) =
              elif direction == left: LEFT
              else: Vector3()
 
-  when not declared(skip_3d):
-    if axis == Vector3():
-      axis = if direction == u: UP
-      elif direction == up: UP
-      elif direction == d: DOWN
-      elif direction == down: DOWN
-      else: Vector3()
+  if axis == Vector3():
+    axis = if direction == u: UP
+    elif direction == up: UP
+    elif direction == d: DOWN
+    elif direction == down: DOWN
+    else: Vector3()
 
   assert axis != Vector3(), "Invalid direction"
-  self.wait begin_turn(axis, degrees)
+  target.ctrl.begin_turn(axis, degrees, me)
 
 proc t(direction: proc(steps = 1.0): Direction, degrees = 90.0) =
   turn(direction, degrees)
