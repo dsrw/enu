@@ -5,16 +5,12 @@ import core, globals, world / [builder, bot, terrain]
 gdobj Ground of MeshInstance:
   var
     point, normal: Vector3
-    #terrain: Terrain
     painting = false
 
   method ready*() =
-    trace:
-      let level = self.get_parent.get_parent
-      #self.terrain = level.get_node("Terrain") as Terrain
-      #assert not self.terrain.is_nil
-      self.bind_signals(self, w"target_move target_fire")
-      self.bind_signals("mouse_released")
+    let level = self.get_parent.get_parent
+    self.bind_signals(self, w"target_move target_fire")
+    self.bind_signals("mouse_released")
 
   method on_mouse_released() =
     self.painting = false
@@ -30,18 +26,13 @@ gdobj Ground of MeshInstance:
 
     if tool_mode == BlockMode:
       self.painting = true
-      # for loc in voxels:
-      #   let vox = self.terrain.get_vox(loc)
-      #   if vox:
-      #     self.terrain.draw(p.x, p.y, p.z, action_index, vox.get.offset, true)
-      #     return
       for c in data_node.get_children():
         let b = c.as_object(Node)
         if b of Builder:
           let b = b.as(Builder)
           echo "Looking at ", b.name
           if b.includes_any_location(voxels):
-            b.draw(p.x, p.y, p.z, action_index, true)
+            b.draw(p, action_index)
             return
 
       create_builder(p, data_node)

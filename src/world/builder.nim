@@ -1,4 +1,4 @@
-import godotapi / [spatial, grid_map, resource_loader, packed_scene]
+import godotapi / [spatial, resource_loader, packed_scene]
 import godot
 import std / [tables, math, sets, sugar, sequtils, hashes, os, monotimes, macros]
 import core, globals, world / [terrain]
@@ -123,13 +123,17 @@ gdobj Builder of Spatial:
     for (loc, index) in zip(self.saved_blocks, self.saved_block_colors):
       self.draw(loc.x, loc.y, loc.z, index, true, false)
 
-  proc draw*(x, y, z: float, index: int, keep = false, trigger = true) =
+  proc draw(x, y, z: float, index: int, keep = false, trigger = true) =
     let loc = vec3(x, y, z)
     if not keep and loc in self.holes and
        not self.overwrite and index != self.holes[loc]:
       self.kept_holes[loc] = self.holes[loc]
     else:
       self.terrain.draw(x, y, z, index, keep, trigger)
+
+  proc draw*(loc: Vector3, index: int) =
+    let loc = loc - self.translation
+    self.draw(loc.x, loc.y, loc.z, index, keep = true)
 
   proc update_running_state(running: bool) =
     self.engine.running = running
@@ -141,11 +145,11 @@ gdobj Builder of Spatial:
       debug(self.script & " done.")
 
   proc includes_any_location*(locations: seq[Vector3]): bool =
-    for loc in self.holes.keys:
-      var loc = loc
-      if loc in locations:
+    let holes = to_seq(self.holes.keys)
+    for loc in locations:
+      let loc = loc - self.translation
+      if self.terrain.get_vox(loc) or loc in holes:
         return true
-    return false
 
   proc set_defaults() =
     self.position = init_transform()
