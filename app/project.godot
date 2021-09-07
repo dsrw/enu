@@ -262,4 +262,6 @@ file_logging/log_path="user://logs/enu.log"
 [rendering]
 
 quality/depth_prepass/enable=false
+batching/options/use_batching=false
+batching/options/use_batching_in_editor=false
 quality/filters/msaa=3
