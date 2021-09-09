@@ -1,7 +1,7 @@
 ### Sugar ###
 from sugar import dup
-import std/with, strformat, strutils, sequtils, sets, tables, times, std/monotimes, hpprint
-export dup, with, strformat, strutils, sequtils, sets, tables, hpprint
+import std/with, strformat, strutils, sequtils, sets, tables, times, std/monotimes, print
+export dup, with, strformat, strutils, sequtils, sets, tables, print
 
 ### Debug
 from sugar import dump
