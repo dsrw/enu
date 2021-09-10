@@ -18,9 +18,8 @@ __meta__ = {
 }
 
 [node name="Viewport" type="Viewport" parent="ViewportContainer"]
-size = Vector2( 960, 540 )
+size = Vector2( 1920, 1080 )
 handle_input_locally = false
-msaa = 3
 render_target_update_mode = 3
 shadow_atlas_size = 100
 
