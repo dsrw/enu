@@ -356,7 +356,8 @@ gdobj Builder of Spatial:
 
   proc build() =
     let p = self.position.origin
-    self.draw(p.x, p.y, p.z, action_index)
+    let index = if action_index > 0: action_index else: 1
+    self.draw(p.x, p.y, p.z, index)
     self.load_script()
 
   proc find_root: Node =
