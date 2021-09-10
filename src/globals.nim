@@ -18,7 +18,7 @@ type
   VoxTable* = Table[Vector3, VoxData]
 
   Config* = object of RootObj
-    downscale*: int
+    scale_factor*: float
     font_size*: int
     dock_icon_size*: float
     world*: string

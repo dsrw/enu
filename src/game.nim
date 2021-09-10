@@ -1,4 +1,4 @@
-import godotapi / [input, input_event, gd_os, node, scene_tree, viewport_container,
+import godotapi / [input, input_event, gd_os, node, scene_tree, viewport,
                    packed_scene, resource_saver, sprite, control, viewport,
                    performance, label, theme, dynamic_font, resource_loader, main_loop,
                    gd_os, project_settings, input_map, input_event, input_event_action]
@@ -12,7 +12,7 @@ var
 gdobj Game of Node:
   var
     reticle*: Control
-    viewport_container: ViewportContainer
+    scaled_viewport: Viewport
     triggered = false
     scene_packer: PackedScene
     save_requested: Option[DateTime]
@@ -23,6 +23,7 @@ gdobj Game of Node:
     save_thread: system.Thread[Game]
     last_index = 1
     saved_mouse_position: Vector2
+    scale_factor* = 1.0
 
   proc pack_scene() {.thread.} =
     echo $self.scene_packer.pack(data_node)
@@ -70,11 +71,13 @@ gdobj Game of Node:
   proc mouse_captured*(): bool =
     get_mouse_mode() == MOUSE_MODE_CAPTURED
 
-  proc shrink*(): int =
-    self.viewport_container.stretch_shrink.int
+  proc screen_scale*(): float =
+    self.scale_factor
 
-  proc `shrink=`*(val: int) =
-    self.viewport_container.stretch_shrink = val
+  proc `screen_scale=`*(val: float) =
+    self.scale_factor = val
+    self.scaled_viewport.size = self.get_viewport().size * val
+    echo "Scale factor: ", val
 
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
@@ -103,9 +106,11 @@ gdobj Game of Node:
       work_dir = get_user_data_dir()
       config_file = join_path(work_dir, "config.json")
 
+    echo "Screen size: ", get_screen_size(-1)
+
     if not file_exists(config_file):
       let default_config = Config(
-        downscale: int screen_scale,
+        scale_factor: self.scale_factor,
         font_size: (14 * screen_scale).int,
         dock_icon_size: 50 * screen_scale,
         world: "default",
@@ -151,11 +156,12 @@ gdobj Game of Node:
       echo &"loaded {config.scene}"
 
   method ready* =
-    self.viewport_container = self.get_node("ViewportContainer").as(ViewportContainer)
+    self.scaled_viewport = self.get_node("ViewportContainer/Viewport").as(Viewport)
+    assert not self.scaled_viewport.is_nil
+    self.bind_signals(self.get_viewport(), "size_changed")
     self.scene_packer = gdnew[PackedScene]()
     self.load_world()
     self.get_tree().set_auto_accept_quit(false)
-    assert not self.viewport_container.is_nil
     state.game = self
     let (theme_holder, theme) = if hostOS == "macosx":
       ( self.find_node("ThemeHolder").as(Container),
@@ -171,7 +177,7 @@ gdobj Game of Node:
     font.size = config.font_size
     bold_font.size = config.font_size
     theme_holder.theme = theme
-    self.shrink = config.downscale
+    self.screen_scale = config.scale_factor
 
     self.mouse_captured = true
     self.reticle = self.find_node("Reticle").as(Control)
@@ -262,6 +268,9 @@ gdobj Game of Node:
     self.mouse_captured = false#self.saved_mouse_captured_state
     command_mode = false
     self.trigger("command_mode_disabled")
+
+  method on_size_changed() =
+    self.screen_scale = self.scale_factor
 
   method unhandled_input*(event: InputEvent) =
     if event.is_action_pressed("command_mode"):
