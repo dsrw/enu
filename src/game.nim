@@ -2,7 +2,7 @@ import godotapi / [input, input_event, gd_os, node, scene_tree, viewport,
                    packed_scene, resource_saver, sprite, control, viewport,
                    performance, label, theme, dynamic_font, resource_loader, main_loop,
                    gd_os, project_settings, input_map, input_event, input_event_action]
-import godot, threadpool, times, os, json_serialization
+import godot, threadpool, times, os, stats, json_serialization
 import core, globals
 
 const version = static_exec("git describe --tags HEAD")
@@ -24,14 +24,30 @@ gdobj Game of Node:
     last_index = 1
     saved_mouse_position: Vector2
     scale_factor* = 1.0
+    fpses: seq[float]
 
   proc pack_scene() {.thread.} =
     echo $self.scene_packer.pack(data_node)
 
   method process*(delta: float) =
     timer += delta
+    self.fpses.add get_monitor(TIME_FPS)
+
     if timer >= 1:
+      let
+        fps = self.fpses.mean()
+        variance = self.fpses.variance()
+      self.fpses = @[]
       timer = 0
+      if variance <= 0.5 and fps >= config.target_fps.float * 0.98:
+        self.screen_scale = self.screen_scale * 1.01
+      elif variance < 2.0 and fps >= config.target_fps.float * 0.95:
+        discard
+      elif self.screen_scale > 0.5 / config.screen_scale:
+        self.screen_scale = self.screen_scale * 0.9
+      else:
+        self.screen_scale = 0.5 / config.screen_scale
+
       var
         total: times.Duration
         highest: tuple[name: string, duration: times.Duration]
@@ -39,8 +55,8 @@ gdobj Game of Node:
         if dur > highest.duration:
           highest = (name, dur)
         total += dur
-      let fps = get_monitor(TIME_FPS)
-      self.stats.text = &"FPS: {fps}\nUser: {total}\n{highest.name}: {highest.duration}"
+
+      self.stats.text = &"FPS: {fps}\nUser: {total}\n{highest.name}: {highest.duration}\nscale_factor: {self.scale_factor}\nvariance: {variance}"
       durations.clear()
 
     trace:
@@ -77,7 +93,7 @@ gdobj Game of Node:
   proc `screen_scale=`*(val: float) =
     self.scale_factor = val
     self.scaled_viewport.size = self.get_viewport().size * val
-    echo "Scale factor: ", val
+    echo "Scale factor: ", val, " viewport size: ", self.scaled_viewport.size
 
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
@@ -102,7 +118,7 @@ gdobj Game of Node:
 
   proc init* =
     let
-      screen_scale = get_screen_dpi().int / 96
+      screen_scale = get_screen_scale(-1)
       work_dir = get_user_data_dir()
       config_file = join_path(work_dir, "config.json")
 
@@ -114,7 +130,8 @@ gdobj Game of Node:
         font_size: (14 * screen_scale).int,
         dock_icon_size: 50 * screen_scale,
         world: "default",
-        show_stats: false
+        show_stats: false,
+        target_fps: 60
       )
       JSON.save_file(config_file, default_config, pretty = true)
     config = JSON.load_file(config_file, Config)
@@ -122,6 +139,7 @@ gdobj Game of Node:
     config.script_dir = join_path(config.world_dir, "scripts")
     config.scene = join_path(config.world_dir, "data.tscn")
     config.screen_scale = screen_scale
+    config.scale_factor = 1.0
     create_dir(config.script_dir)
     echo get_executable_path()
     let exe_dir = parent_dir get_executable_path()
@@ -158,7 +176,6 @@ gdobj Game of Node:
   method ready* =
     self.scaled_viewport = self.get_node("ViewportContainer/Viewport").as(Viewport)
     assert not self.scaled_viewport.is_nil
-    self.bind_signals(self.get_viewport(), "size_changed")
     self.scene_packer = gdnew[PackedScene]()
     self.load_world()
     self.get_tree().set_auto_accept_quit(false)
@@ -268,9 +285,6 @@ gdobj Game of Node:
     self.mouse_captured = false#self.saved_mouse_captured_state
     command_mode = false
     self.trigger("command_mode_disabled")
-
-  method on_size_changed() =
-    self.screen_scale = self.scale_factor
 
   method unhandled_input*(event: InputEvent) =
     if event.is_action_pressed("command_mode"):

@@ -23,6 +23,7 @@ type
     dock_icon_size*: float
     world*: string
     show_stats*: bool
+    target_fps*: int
     world_dir* {.dont_serialize.}: string
     script_dir* {.dont_serialize.}: string
     screen_scale* {.dont_serialize.}: float

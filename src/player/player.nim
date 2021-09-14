@@ -117,9 +117,7 @@ gdobj Player of KinematicBody:
         self.camera_rig.rotation = r
         if not get_game().mouse_captured:
           let
-            mouse_pos = self.get_viewport()
-                            .get_mouse_position() * float get_game().scale_factor
-
+            mouse_pos = self.get_viewport().get_mouse_position()
             cast_from = self.camera.project_ray_origin(mouse_pos)
             cast_to = self.aim_ray.translation + self.camera.project_ray_normal(mouse_pos) * 100
           self.world_ray.cast_to = cast_to
@@ -194,8 +192,7 @@ gdobj Player of KinematicBody:
         return
     if event of InputEventMouseMotion and get_game().mouse_captured:
       if not skip_next_mouse_move:
-        self.input_relative += event.as(InputEventMouseMotion).relative() /
-                               get_game().scale_factor
+        self.input_relative += event.as(InputEventMouseMotion).relative()
       else:
         skip_next_mouse_move = false
     if editing() and not self.skip_release and (event of InputEventJoypadButton or event of InputEventJoypadMotion):
