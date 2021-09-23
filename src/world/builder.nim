@@ -39,7 +39,6 @@ gdobj Builder of Spatial:
     overwrite = false
     built = false
     move_mode = false
-    scale_factor = 1.0
     # If we delete a voxel while it's queued up to be drawn by godot voxel,
     # the voxel gets drawn anyway, and the polys hang around until they
     # move out of draw distance. Wait a bit before clearing. FIXME.
@@ -155,7 +154,6 @@ gdobj Builder of Spatial:
     self.position = init_transform()
     self.translation = self.original_translation
     self.speed = 1.0
-    self.scale_factor = 1.0
     self.index = 1
     self.drawing = true
     self.overwrite = false
@@ -177,9 +175,9 @@ gdobj Builder of Spatial:
       self.speed
     if self.speed != old_speed:
       self.blocks_remaining_this_frame = 0
-    if scale_factor != self.scale_factor:
+    if scale_factor != self.terrain.scale.x:
       self.terrain.scale = vec3(scale_factor, scale_factor, scale_factor)
-      self.scale_factor = scale_factor
+      echo "setting scale to ", scale_factor
 
     self.set_vars()
 
@@ -207,7 +205,7 @@ gdobj Builder of Spatial:
   proc set_vars() =
     let module_name = self.engine.module_name
     self.engine.call_proc("set_vars", module_name = module_name, self.index, self.drawing,
-                          self.speed, self.scale_factor,
+                          self.speed, self.terrain.scale.x,
                           self.overwrite, self.move_mode)
 
   proc on_begin_move(direction: Vector3, steps: float): Callback =
