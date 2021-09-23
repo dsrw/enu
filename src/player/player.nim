@@ -117,7 +117,8 @@ gdobj Player of KinematicBody:
         self.camera_rig.rotation = r
         if not get_game().mouse_captured:
           let
-            mouse_pos = self.get_viewport().get_mouse_position()
+            mouse_pos = self.get_viewport().
+                             get_mouse_position() * float get_game().scale_factor
             cast_from = self.camera.project_ray_origin(mouse_pos)
             cast_to = self.aim_ray.translation + self.camera.project_ray_normal(mouse_pos) * 100
           self.world_ray.cast_to = cast_to
