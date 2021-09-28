@@ -18,7 +18,6 @@ gdobj Builder of Spatial:
   var
     script_ctx: ScriptCtx
     script_index* {.gdExport.} = 0
-    owner_script_index = -1
     initial_index* {.gdExport.} = 1
     # FIXME `saved_blocks` and `saved_block_colors` should be
     # a single `seq[(Vector, int)]`. Will need `to_variant`
@@ -43,6 +42,7 @@ gdobj Builder of Spatial:
     # the voxel gets drawn anyway, and the polys hang around until they
     # move out of draw distance. Wait a bit before clearing. FIXME.
     timers: seq[Timer]
+    root_builder: Builder
 
   proc init*() =
     self.script_ctx = ScriptCtx.init("grid")
@@ -55,8 +55,12 @@ gdobj Builder of Spatial:
       max_grid_index = self.script_index + 1
     if not self.script_ctx.is_clone:
       self.set_script()
+    if self.script_ctx.is_clone:
+      self.root_builder = self.find_root().as(Builder)
     self.translation = self.original_translation
     self.terrain = self.find_node("Terrain") as Terrain
+    if not self.root_builder.is_nil:
+     self.terrain.root_terrain = self.root_builder.terrain
     assert self.terrain != nil
 
     self.bind_signals self.terrain,
@@ -86,25 +90,17 @@ gdobj Builder of Spatial:
     var diff = vec3()
     let builder = owner.as(Builder)
     if not builder.is_nil:
-      t = builder.position.origin
+      t = builder.position.origin.snapped(vec3(1, 1, 1))
       diff = t - self.global_transform.origin
     result = create_builder(t, target, self.script_ctx.script, is_clone = true).as(Builder)
-    if not builder.is_nil:
-      result.owner_script_index = builder.script_index
     result.saved_holes = self.saved_holes.map_it(it + diff)
 
     result.saved_blocks = self.saved_blocks.map_it(it + diff)
     result.saved_block_colors = self.saved_block_colors
     result.restore_blocks()
 
-  proc active_script_index: int =
-    if self.owner_script_index > -1:
-      self.owner_script_index
-    else:
-      self.script_index
-
   proc save_blocks*() =
-    let data = self.terrain.export_data(vec3())
+    let data = self.terrain.export_data()
     self.saved_blocks = @[]
     self.saved_block_colors = @[]
     for vox in data:
@@ -123,10 +119,17 @@ gdobj Builder of Spatial:
       self.draw(loc.x, loc.y, loc.z, index, true, false)
 
   proc draw(x, y, z: float, index: int, keep = false, trigger = true) =
-    let loc = vec3(x, y, z)
-    if not keep and loc in self.holes and
+    let
+      loc = vec3(x, y, z)
+      root_loc = loc + self.translation
+      root = self.root_builder
+
+    if (not keep) and loc in self.holes and
        not self.overwrite and index != self.holes[loc]:
       self.kept_holes[loc] = self.holes[loc]
+    elif (not keep) and not root.is_nil and root_loc in root.holes and
+         not self.overwrite and index != root.holes[root_loc]:
+      root.kept_holes[root_loc] = root.holes[root_loc]
     else:
       self.terrain.draw(x, y, z, index, keep, trigger)
 
@@ -365,7 +368,7 @@ gdobj Builder of Spatial:
     result = target
 
   method on_block_selected =
-    var t = self.find_root().as(Builder)
+    var t = self.root_builder
     if t.is_nil:
       t = self
     show_editor t.script, t.engine
@@ -411,21 +414,31 @@ gdobj Builder of Spatial:
   method on_grid_block_added(loc: Vector3, index: int) =
     if loc in self.holes:
       self.holes[loc] = index
-    self.save_blocks()
+      self.save_blocks()
+    elif not self.root_builder.is_nil:
+      let loc = loc + self.translation
+      if loc in self.root_builder.holes:
+        self.root_builder.holes[loc] = index
+        self.root_builder.save_blocks()
     save_scene()
 
   method on_grid_block_removed(loc: Vector3, index: int, keep: bool) =
     if not keep:
-      self.holes[loc] = -1
-    self.save_blocks()
+      if not self.root_builder.is_nil:
+        let loc = loc + self.translation
+        self.root_builder.kept_holes[loc] = -1
+        self.root_builder.holes[loc] = -1
+        self.root_builder.save_blocks()
+      else:
+        self.holes[loc] = -1
+        self.save_blocks()
     save_scene()
 
   method on_terrain_block_added(loc: Vector3, index: int) =
     self.on_grid_block_added(loc, index)
 
   method on_terrain_block_removed(offset: int, loc: Vector3, index: int, keep: bool) =
-    if offset == self.script_index:
-      self.on_grid_block_removed(loc, index, keep)
+    self.on_grid_block_removed(loc, index, keep)
 
 proc create_builder*(point: Vector3, parent: Node, script = "", is_clone = false): Node {.discardable.} =
   let

@@ -10,7 +10,7 @@ gdobj AimTarget of Sprite3D:
   method ready*() =
     trace:
       self.set_as_top_level(true)
-      self.bind_signals(w"retarget hide_target show_target")
+      self.bind_signals(w"retarget hide_target show_target collider_exiting")
 
   method on_retarget*() =
     if self.last_collider != nil:
@@ -80,3 +80,7 @@ gdobj AimTarget of Sprite3D:
         collider.trigger("target_move", local_point, local_normal)
 
     self.last_collider = collider
+
+  method on_collider_exiting(collider: Spatial) =
+    if collider == self.last_collider:
+      self.last_collider = nil

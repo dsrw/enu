@@ -31,6 +31,7 @@ gdobj Terrain of VoxelTerrain:
     # There's probably a better way to do this, or to avoid the behavior (bug?)
     # all together.
     lost_voxels: Table[Vector3, seq[Vox]]
+    root_terrain*: Terrain
 
   proc clone_materials =
     let count = self.mesher.as(VoxelMesherBlocky).library.voxel_count
@@ -47,7 +48,7 @@ gdobj Terrain of VoxelTerrain:
     self.bind_signals(self, w"""
       target_in target_out target_move
       target_fire target_remove block_loaded
-      block_unloaded""")
+      block_unloaded tree_exiting""")
     self.bind_signals("mouse_released")
     self.library = self.mesher.as(VoxelMesherBlocky).library
     self.clone_materials()
@@ -152,16 +153,10 @@ gdobj Terrain of VoxelTerrain:
     if self.buffers[blk].len == 0:
       self.buffers.del(blk)
 
-  proc export_data*(location: Vector3): seq[Vox] =
+  proc export_data*(): seq[Vox] =
     for blk, table in self.buffers:
       for loc, data in table:
-        result.add (loc - location, data)
-    echo &"exported {result.len} blocks"
-
-  proc import_data*(bulk_data: seq[Vox], location: Vector3) =
-    for (loc, data) in bulk_data:
-      self.draw(loc + location, data.index, data.keep, trigger = false)
-    echo &"imported {bulk_data.len} blocks"
+        result.add (loc, data)
 
   proc clear*(all = false) =
     for blk in self.visible_buffers:
@@ -240,13 +235,21 @@ gdobj Terrain of VoxelTerrain:
     self.erasing = false
     self.draw_plane = vec3()
 
+  method on_tree_exiting() =
+    game_node.trigger("collider_exiting", self)
+
   method on_target_fire() =
     let vox = self.get_vox(self.targeted_voxel)
     if vox:
       if tool_mode == BlockMode:
         self.painting = true
         let point = self.targeted_voxel + self.current_normal
-        self.draw(point, action_index, true)
+        if not self.root_terrain.is_nil:
+          let t = self.get_parent().as(Spatial).translation #+ vec3(2,0,1)
+          self.root_terrain.draw(t + point, action_index, true)
+          self.root_terrain.draw_plane = (t + self.current_point) * self.current_normal
+        else:
+          self.draw(point, action_index, true)
         self.draw_plane = self.current_point * self.current_normal
 
       if tool_mode == CodeMode:
