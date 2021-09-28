@@ -61,10 +61,8 @@ gdobj Player of KinematicBody:
          get_action_strength("jump") - get_action_strength("crouch"),
          get_action_strength("move_back") - get_action_strength("move_front"))
 
-  proc calculate_velocity(velocity_current: Vector3,
-                          move_direction: Vector3,
-                          delta: float,
-                          flying, running: bool): Vector3 =
+  proc calculate_velocity(velocity_current: Vector3, move_direction: Vector3,
+                          delta: float, flying, running: bool): Vector3 =
     let speed = if running: move_speed * 2 else: move_speed
     result = move_direction * delta * speed
     if result.length() > max_speed:
@@ -219,9 +217,9 @@ gdobj Player of KinematicBody:
           self.set_collision_mask_bit(i, not self.flying)
       elif self.is_on_floor():
         self.velocity += vec3(0, jump_impulse, 0)
-        self.jump_time = time
+        self.jump_time = some time
       else:
-        self.jump_time = time
+        self.jump_time = some time
     elif event.is_action_released("jump"):
       self.jump_down = false
 
@@ -234,7 +232,7 @@ gdobj Player of KinematicBody:
         self.run_time = nil_time
         self.always_run = not self.always_run
       else:
-        self.run_time = time
+        self.run_time = some time
       self.running = not self.always_run
     elif event.is_action_released("run"):
       self.running = self.always_run

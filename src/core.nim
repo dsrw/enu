@@ -66,8 +66,11 @@ proc `-`*(time: MonoTime, interval: TimeInterval): MonoTime =
 import options
 export options
 
-converter to_option*[T](val: T): Option[T] =
-  some(val)
+# converter to_option*[T](val: T): Option[T] =
+#   some(val)
+
+converter from_option*[T](val: Option[T]): T =
+  val.get()
 
 converter to_bool*[T](option: Option[T]): bool =
   option.is_some
