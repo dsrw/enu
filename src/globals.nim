@@ -1,7 +1,7 @@
 import godotapi / [node, scene_tree, voxel_buffer],
        godot, hashes,
        engine/engine, core,
-       strformat, math, strutils, sequtils, compiler/lineinfos, tables, sets, json_serialization
+       strformat, math, strutils, sequtils, compiler/lineinfos, tables, sets
 
 export strformat.`&`
 
@@ -17,18 +17,17 @@ type
   Vox* = tuple[location: Vector3, data: VoxData]
   VoxTable* = Table[Vector3, VoxData]
 
-  Config* = object of RootObj
-    scale_factor*: float
+  Config* = object
     font_size*: int
     dock_icon_size*: float
     world*: string
     show_stats*: bool
     target_fps*: float
-    world_dir* {.dont_serialize.}: string
-    script_dir* {.dont_serialize.}: string
-    screen_scale* {.dont_serialize.}: float
-    scene* {.dont_serialize.}: string
-    lib_dir* {.dont_serialize.}: string
+    min_render_scale*: float
+    world_dir*: string
+    script_dir*: string
+    scene*: string
+    lib_dir*: string
 
 var
   editing*: proc:bool

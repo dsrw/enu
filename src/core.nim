@@ -69,6 +69,13 @@ export options
 # converter to_option*[T](val: T): Option[T] =
 #   some(val)
 
+proc `||=`*[T](opt: var Option[T], val: T): T {.discardable.} =
+  if not opt.is_some:
+    opt = some(val)
+    result = val
+  else:
+    result = opt.get()
+
 converter from_option*[T](val: Option[T]): T =
   val.get()
 

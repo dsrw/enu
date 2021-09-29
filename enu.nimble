@@ -28,7 +28,6 @@ requires "nim >= 1.4.0",
          "https://github.com/dsrw/godot-nim#f2af444",
          "https://github.com/dsrw/Nim#1d5093d",
          "cligen 1.2.2",
-         "json_serialization",
          "print"
 
 proc gen: string =

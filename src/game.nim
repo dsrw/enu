@@ -2,13 +2,22 @@ import godotapi / [input, input_event, gd_os, node, scene_tree, viewport,
                    packed_scene, resource_saver, sprite, control, viewport,
                    performance, label, theme, dynamic_font, resource_loader, main_loop,
                    gd_os, project_settings, input_map, input_event, input_event_action]
-import godot, json_serialization
-import std / [threadpool, monotimes, times, os, stats]
+import godot
+import std / [threadpool, monotimes, times, os, stats, jsonutils, json]
 import core, globals
 
 const
   version = static_exec("git describe --tags HEAD")
   initial_backoff = 1.seconds
+
+type
+  UserConfig = object
+    font_size: Option[int]
+    dock_icon_size: Option[float]
+    world: Option[string]
+    show_stats: Option[bool]
+    target_fps: Option[float]
+    min_render_scale: Option[float]
 
 var
   timer = 0.0
@@ -46,14 +55,14 @@ gdobj Game of Node:
         self.backoff += self.backoff
       self.downscale_at = time + 2.seconds
       self.upscale_at = time + self.backoff
-      self.screen_scale = self.screen_scale * 0.9
+      self.render_scale = self.render_scale * 0.9
 
-      if self.screen_scale < 0.5 / config.screen_scale:
-        self.screen_scale = 0.5 / config.screen_scale
+      if self.render_scale < config.min_render_scale:
+        self.render_scale = config.min_render_scale
 
     elif time > self.upscale_at and fps >= config.target_fps - 2:
       self.upscaling = true
-      self.screen_scale = self.screen_scale * 1.02
+      self.render_scale = self.render_scale * 1.02
       self.downscale_at = time
       self.upscale_at = time + 1.seconds
 
@@ -99,10 +108,10 @@ gdobj Game of Node:
   proc mouse_captured*(): bool =
     get_mouse_mode() == MOUSE_MODE_CAPTURED
 
-  proc screen_scale*(): float =
+  proc render_scale*(): float =
     self.scale_factor
 
-  proc `screen_scale=`*(val: float) =
+  proc `render_scale=`*(val: float) =
     self.scale_factor = val
     self.scaled_viewport.size = self.get_viewport().size * val
 
@@ -135,26 +144,30 @@ gdobj Game of Node:
 
     echo "Screen size: ", get_screen_size(-1)
 
-    if not file_exists(config_file):
-      let default_config = Config(
-        scale_factor: self.scale_factor,
-        font_size: (14 * screen_scale).int,
-        dock_icon_size: 50 * screen_scale,
-        world: "default",
-        show_stats: false,
-        target_fps: 60
-      )
-      JSON.save_file(config_file, default_config, pretty = true)
-    config = JSON.load_file(config_file, Config)
-    config.world_dir = join_path(work_dir, config.world)
-    config.script_dir = join_path(config.world_dir, "scripts")
-    config.scene = join_path(config.world_dir, "data.tscn")
-    config.screen_scale = screen_scale
-    config.scale_factor = 1.0
-    create_dir(config.script_dir)
-    echo get_executable_path()
-    let exe_dir = parent_dir get_executable_path()
-    config.lib_dir = join_path(exe_dir, "..", "..", "..", "vmlib")
+    var initial_user_config = UserConfig()
+    if file_exists(config_file):
+      let opt = Joptions(allow_missing_keys: true, allow_extra_keys: true)
+      initial_user_config.from_json(read_file(config_file).parse_json, opt)
+
+    var uc = initial_user_config
+    config = Config()
+    with config:
+      font_size = uc.font_size ||= (14 * screen_scale).int
+      dock_icon_size = uc.dock_icon_size ||= 50 * screen_scale
+      world = uc.world ||= "default"
+      show_stats = uc.show_stats ||= false
+      target_fps = uc.target_fps ||= 60
+      min_render_scale = uc.min_render_scale ||= 0.5 / screen_scale
+      world_dir = join_path(work_dir, config.world)
+      script_dir = join_path(config.world_dir, "scripts")
+      script_dir = join_path(config.world_dir, "scripts")
+      scene = join_path(config.world_dir, "data.tscn")
+      lib_dir = join_path(get_executable_path().parent_dir(), "..", "..", "..", "vmlib")
+
+    if uc != initial_user_config:
+      create_dir(config.script_dir)
+      config_file.write_file(uc.to_json.pretty)
+
     self.add_platform_input_actions()
 
     when defined(dist):
@@ -206,7 +219,7 @@ gdobj Game of Node:
     font.size = config.font_size
     bold_font.size = config.font_size
     theme_holder.theme = theme
-    self.screen_scale = config.scale_factor
+    self.render_scale = 1.0
 
     self.mouse_captured = true
     self.reticle = self.find_node("Reticle").as(Control)
