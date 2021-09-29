@@ -36,6 +36,7 @@ gdobj Game of Node:
     echo $self.scene_packer.pack(data_node)
 
   method process*(delta: float) =
+    stop_at = get_mono_time() + (1.0 / 30).seconds
     let
       fps = get_monitor(TIME_FPS)
       time = get_mono_time()

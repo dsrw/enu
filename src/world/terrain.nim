@@ -159,21 +159,27 @@ gdobj Terrain of VoxelTerrain:
         result.add (loc, data)
 
   proc clear*(all = false) =
-    for blk in self.visible_buffers:
-      if blk in self.buffers:
-        for loc, data in self.buffers[blk]:
-          if (all or not data.keep):
-            self.voxel_tool.set_voxel(loc, 0)
 
-    for blk, table in self.buffers:
-      for loc, data in table:
-        if all or not data.keep:
-          self.buffers[blk].del(loc)
+    # for blk in self.visible_buffers:
+    #   if blk in self.buffers:
+    #     for loc, data in self.buffers[blk]:
+    #       if (all or not data.keep):
+    #         self.voxel_tool.set_voxel(loc, 0)
+    #
+    # for blk, table in self.buffers:
+    #   for loc, data in table:
+    #     if all or not data.keep:
+    #       self.buffers[blk].del(loc)
+    #
+    # let lost_voxels = self.lost_voxels
+    # for blk, voxes in lost_voxels:
+    #   self.lost_voxels[blk] = voxes.filter_it:
+    #     it.data.keep and not all
+    self.visible_buffers.reset()
+    self.buffers.reset()
+    self.loading_buffers.reset()
 
-    let lost_voxels = self.lost_voxels
-    for blk, voxes in lost_voxels:
-      self.lost_voxels[blk] = voxes.filter_it:
-        it.data.keep and not all
+    self.generator = gdnew[VoxelGeneratorFlat]()
 
   proc highlight() =
     for i in 0..<self.library.voxel_count.int:
@@ -265,7 +271,7 @@ gdobj Terrain of VoxelTerrain:
         let data = data.get
         self.draw(loc, 0)
         if self.buffers.len == 0:
-          self.trigger("last_block_deleted", 0)
+          self.trigger("last_block_deleted")
         else:
-          self.trigger("terrain_block_removed", 0 , loc, data.index, data.keep)
+          self.trigger("terrain_block_removed", loc, data.index, data.keep)
       self.draw_plane = self.current_point * self.current_normal

@@ -65,15 +65,16 @@ proc start_advance_timer*(ctx: ScriptCtx) =
   ctx.timer = get_mono_time() + ADVANCE_STEP
 
 proc advance*(self; delta: float64) =
-  let now = get_mono_time()
   current_active_node = self
-  let c = ctx
-  let e = c.engine
+  let
+    now = get_mono_time()
+    c = ctx
+    e = c.engine
 
   when compiles(self.blocks_per_frame):
     self.blocks_remaining_this_frame += self.blocks_per_frame
   var resume_script = true
-  while resume_script:
+  while resume_script and get_mono_time() < stop_at:
     resume_script = false
     if e.callback == nil or (not e.callback(delta)):
       ctx.timer = MonoTime.high

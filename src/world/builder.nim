@@ -113,6 +113,7 @@ gdobj Builder of Spatial:
       self.saved_holes.add loc
 
   proc restore_blocks*() =
+    return
     for loc in self.saved_holes:
       self.holes[loc] = -1
     for (loc, index) in zip(self.saved_blocks, self.saved_block_colors):
@@ -406,12 +407,10 @@ gdobj Builder of Spatial:
   method on_pause*() =
     self.paused = not self.paused
 
-  method on_last_block_deleted(offset: int) =
-    if offset == self.script_index:
-      # nothing to clear
-      self.on_deleted(clear = false)
+  method on_last_block_deleted() =
+    self.on_deleted(clear = false)
 
-  method on_grid_block_added(loc: Vector3, index: int) =
+  method on_terrain_block_added(loc: Vector3, index: int) =
     if loc in self.holes:
       self.holes[loc] = index
       self.save_blocks()
@@ -422,7 +421,7 @@ gdobj Builder of Spatial:
         self.root_builder.save_blocks()
     save_scene()
 
-  method on_grid_block_removed(loc: Vector3, index: int, keep: bool) =
+  method on_terrain_block_removed(loc: Vector3, index: int, keep: bool) =
     if not keep:
       if not self.root_builder.is_nil:
         let loc = loc + self.translation
@@ -433,12 +432,6 @@ gdobj Builder of Spatial:
         self.holes[loc] = -1
         self.save_blocks()
     save_scene()
-
-  method on_terrain_block_added(loc: Vector3, index: int) =
-    self.on_grid_block_added(loc, index)
-
-  method on_terrain_block_removed(offset: int, loc: Vector3, index: int, keep: bool) =
-    self.on_grid_block_removed(loc, index, keep)
 
 proc create_builder*(point: Vector3, parent: Node, script = "", is_clone = false): Node {.discardable.} =
   let

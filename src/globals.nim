@@ -1,7 +1,7 @@
-import godotapi / [node, scene_tree, voxel_buffer],
-       godot, hashes,
-       engine/engine, core,
-       strformat, math, strutils, sequtils, compiler/lineinfos, tables, sets, json_serialization
+import godotapi / [node, scene_tree, voxel_buffer]
+import godot, json_serialization, compiler/lineinfos
+import core, engine/engine
+import std / [strformat, math, strutils, sequtils, tables, sets, hashes, monotimes]
 
 export strformat.`&`
 
@@ -53,6 +53,7 @@ var
   command_mode* = false
   config*: Config
   game_ready* = false
+  stop_at* = get_mono_time()
 
 proc debug*(args: varargs[string, `$`]) =
   logger("debug", args.join)
