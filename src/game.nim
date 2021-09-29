@@ -160,7 +160,6 @@ gdobj Game of Node:
       min_render_scale = uc.min_render_scale ||= 0.5 / screen_scale
       world_dir = join_path(work_dir, config.world)
       script_dir = join_path(config.world_dir, "scripts")
-      script_dir = join_path(config.world_dir, "scripts")
       scene = join_path(config.world_dir, "data.tscn")
       lib_dir = join_path(get_executable_path().parent_dir(), "..", "..", "..", "vmlib")
 
