@@ -5,9 +5,9 @@ import ".." / [globals, core]
 type
   Buffers = Table[Vector3, VoxTable]
 
-let
-  highlight_energy = 1.0.to_variant()
-  default_energy = 0.1.to_variant()
+const
+  highlight_energy = 1.0
+  default_energy = 0.1
 
 gdobj Terrain of VoxelTerrain:
   var
@@ -33,6 +33,16 @@ gdobj Terrain of VoxelTerrain:
     lost_voxels: Table[Vector3, seq[Vox]]
     root_terrain*: Terrain
 
+  proc `highlighted=`*(val: bool) =
+    self.highlighted = val
+    var energy = if val: highlight_energy else: default_energy
+    for i in 0..<self.library.voxel_count.int:
+      let m = self.get_material(i).as(ShaderMaterial)
+      if not m.is_nil:
+        m.set_shader_param("emission_energy", energy.to_variant)
+
+  proc highlight*: bool = self.highlighted
+
   proc clone_materials =
     let count = self.mesher.as(VoxelMesherBlocky).library.voxel_count
     for i in 0..int.high:
@@ -41,7 +51,7 @@ gdobj Terrain of VoxelTerrain:
         break
       else:
         let m = m.duplicate.as(ShaderMaterial)
-        m.set_shader_param("emission_energy", default_energy)
+        m.set_shader_param("emission_energy", default_energy.to_variant)
         self.set_material(i, m)
 
   method ready*() =
@@ -175,18 +185,6 @@ gdobj Terrain of VoxelTerrain:
       self.lost_voxels[blk] = voxes.filter_it:
         it.data.keep and not all
 
-  proc highlight() =
-    for i in 0..<self.library.voxel_count.int:
-      let m = self.get_material(i).as(ShaderMaterial)
-      if not m.is_nil:
-        m.set_shader_param("emission_energy", highlight_energy)
-
-  proc deselect() =
-    for i in 0..<self.library.voxel_count.int:
-      let m = self.get_material(i).as(ShaderMaterial)
-      if not m.is_nil:
-        m.set_shader_param("emission_energy", default_energy)
-
   method on_block_loaded(location: Vector3) =
     self.loading_buffers.add location
     self.visible_buffers.incl location
@@ -205,11 +203,8 @@ gdobj Terrain of VoxelTerrain:
     if targeted_voxel != self.targeted_voxel:
       self.targeted_voxel = targeted_voxel
 
-    if tool_mode == CodeMode:
-      if not self.highlighted:
-        self.highlighted = true
-        self.deselect()
-        self.highlight()
+    if not self.highlighted and tool_mode == CodeMode:
+      self.get_parent.trigger("highlight", true)
 
     if self.painting and tool_mode == BlockMode:
       let plane = point * normal
@@ -221,12 +216,13 @@ gdobj Terrain of VoxelTerrain:
         self.on_target_remove()
 
   method on_target_out() =
-    self.highlighted = false
-    self.deselect()
+    self.get_parent.trigger("deselect", true)
     if tool_mode == ObjectMode:
       game_node.trigger("show_target")
 
   method on_target_in() =
+    if tool_mode == CodeMode:
+      self.get_parent.trigger("highlight", true)
     if tool_mode == ObjectMode:
       game_node.trigger("hide_target")
 
@@ -254,7 +250,7 @@ gdobj Terrain of VoxelTerrain:
 
       if tool_mode == CodeMode:
         self.trigger("block_selected")
-        self.deselect()
+        self.get_parent.trigger("deselect", true)
 
   method on_target_remove() =
     let loc = self.targeted_voxel

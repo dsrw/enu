@@ -14,6 +14,12 @@ type
 
 proc create_builder*(point: Vector3, parent: Node, script = "", is_clone = false): Node {.discardable.}
 
+iterator child_objects(self: Node): Node =
+  let children = self.get_node("OwnedNodes").get_children
+  for v in children:
+    let child = v.as_object(Node)
+    yield child
+
 gdobj Builder of Spatial:
   var
     script_ctx: ScriptCtx
@@ -65,7 +71,8 @@ gdobj Builder of Spatial:
 
     self.bind_signals self.terrain,
       w"block_selected last_block_deleted terrain_block_added terrain_block_removed"
-    self.bind_signals self, @["deleted"]
+
+    self.bind_signals self, w"highlight deselect deleted"
     self.bind_signals w"reload pause reload_all"
 
     if self.saved_blocks.len > 0 or self.saved_holes.len > 0:
@@ -383,9 +390,7 @@ gdobj Builder of Spatial:
     self.timers.add (now() + duration, callback)
 
   proc destroy_children() =
-    let children = self.get_node("OwnedNodes").get_children
-    for v in children:
-      let child = v.as_object(Node)
+    for child in self.child_objects:
       child.trigger("deleted")
 
   method reload() =
@@ -439,6 +444,22 @@ gdobj Builder of Spatial:
 
   method on_terrain_block_removed(offset: int, loc: Vector3, index: int, keep: bool) =
     self.on_grid_block_removed(loc, index, keep)
+
+  method on_highlight(find_root: bool) =
+    if find_root and not self.root_builder.is_nil:
+      self.root_builder.trigger("highlight", false)
+    else:
+      self.terrain.highlighted = true
+      for child in self.child_objects:
+        child.trigger("highlight", false)
+
+  method on_deselect(find_root: bool) =
+    if find_root and not self.root_builder.is_nil:
+      self.root_builder.trigger("deselect", false)
+    else:
+      self.terrain.highlighted = false
+      for child in self.child_objects:
+        child.trigger("deselect", false)
 
 proc create_builder*(point: Vector3, parent: Node, script = "", is_clone = false): Node {.discardable.} =
   let
