@@ -61,6 +61,8 @@ void fragment() {
   {
     float view_distance = distance(VERTEX, CAMERA_MATRIX[2].xyz);
     if (view_distance > draw_distance) {
+      // Neat crystal effect for distance fade. Breaks shadows. Probably fixable.
+      //ALPHA = 1.0 - (view_distance - draw_distance) / 20.0;
       discard;
     }
     /*float fade=clamp(smoothstep(distance_fade_min,distance_fade_max,fade_distance),0.0,1.0);
