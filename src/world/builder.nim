@@ -173,7 +173,7 @@ gdobj Builder of Spatial:
     var old_speed = self.speed
     let
       e = self.engine
-      scale_factor = self.engine.get_float("scale", e.module_name)
+      scale_factor = self.engine.get_float("scale", e.module_name).round(3)
     self.move_mode = self.engine.get_bool("move_mode", e.module_name)
     self.speed = self.engine.get_float("speed", e.module_name)
     self.index = self.engine.get_int("color", e.module_name)
@@ -185,8 +185,8 @@ gdobj Builder of Spatial:
       self.speed
     if self.speed != old_speed:
       self.blocks_remaining_this_frame = 0
-    if scale_factor != self.terrain.scale.x:
-      self.terrain.scale = vec3(scale_factor, scale_factor, scale_factor)
+    if scale_factor != self.scale.x.round(3):
+      self.scale = vec3(scale_factor, scale_factor, scale_factor)
       echo "setting scale to ", scale_factor
 
     self.set_vars()
@@ -215,7 +215,7 @@ gdobj Builder of Spatial:
   proc set_vars() =
     let module_name = self.engine.module_name
     self.engine.call_proc("set_vars", module_name = module_name, self.index, self.drawing,
-                          self.speed, self.terrain.scale.x,
+                          self.speed, self.scale.x,
                           self.overwrite, self.move_mode)
 
   proc on_begin_move(direction: Vector3, steps: float): Callback =
