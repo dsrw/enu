@@ -14,6 +14,7 @@ let
   move_speed = 500.0
   gravity = -240.0
   jump_impulse = 50.0
+  climb_stair_impulse = 25.0
   fly_toggle = 0.3.seconds
   float_time = 0.3.seconds
   run_toggle = 0.3.seconds
@@ -30,6 +31,8 @@ gdobj Player of KinematicBody:
     camera: Camera
     aim_ray: RayCast
     world_ray: RayCast
+    high_ray: RayCast
+    low_ray: RayCast
     aim_target*: AimTarget
     flying = false
     running = false
@@ -86,6 +89,8 @@ gdobj Player of KinematicBody:
     self.camera = self.camera_rig.get_node("Camera") as Camera
     self.aim_ray  = self.camera_rig.get_node("Camera/AimRay") as RayCast
     self.world_ray = game_node.get_node("WorldRay") as RayCast
+    self.high_ray = self.get_node("HighRay") as RayCast
+    self.low_ray = self.get_node("LowRay") as RayCast
     self.aim_target = self.camera_rig.get_node("AimTarget") as AimTarget
     self.position_start = self.camera_rig.translation
     self.load_script()
@@ -172,6 +177,15 @@ gdobj Player of KinematicBody:
         let velocity = self.calculate_velocity(self.velocity, move_direction,
                                                delta, self.flying, self.running)
         self.velocity = self.move_and_slide(velocity, UP)
+
+        # climb 1m blocks automatically
+        if move_direction.length > 0.5:
+          self.low_ray.cast_to = move_direction * 0.3
+          self.high_ray.cast_to = move_direction * 0.3
+
+          if self.is_on_floor() and self.low_ray.is_colliding() and not self.high_ray.is_colliding():
+            self.velocity += vec3(0, climb_stair_impulse, 0)
+
         # drop us back in the middle of the world if we fall through
         if self.translation.y < -10:
           self.translation = vec3(0, 100, 0)
