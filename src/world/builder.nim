@@ -416,7 +416,7 @@ gdobj Builder of Spatial:
       # nothing to clear
       self.on_deleted(clear = false)
 
-  method on_grid_block_added(loc: Vector3, index: int) =
+  method on_terrain_block_added(loc: Vector3, index: int) =
     if loc in self.holes:
       self.holes[loc] = index
       self.save_blocks()
@@ -425,9 +425,11 @@ gdobj Builder of Spatial:
       if loc in self.root_builder.holes:
         self.root_builder.holes[loc] = index
         self.root_builder.save_blocks()
+    else:
+      self.save_blocks()
     save_scene()
 
-  method on_grid_block_removed(loc: Vector3, index: int, keep: bool) =
+  method on_terrain_block_removed(offset: int, loc: Vector3, index: int, keep: bool) =
     if not keep:
       if not self.root_builder.is_nil:
         let loc = loc + self.translation
@@ -438,12 +440,6 @@ gdobj Builder of Spatial:
         self.holes[loc] = -1
         self.save_blocks()
     save_scene()
-
-  method on_terrain_block_added(loc: Vector3, index: int) =
-    self.on_grid_block_added(loc, index)
-
-  method on_terrain_block_removed(offset: int, loc: Vector3, index: int, keep: bool) =
-    self.on_grid_block_removed(loc, index, keep)
 
   method on_highlight(find_root: bool) =
     if find_root and not self.root_builder.is_nil:
