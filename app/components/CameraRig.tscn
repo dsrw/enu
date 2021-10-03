@@ -18,6 +18,6 @@ collision_mask = 524305
 collide_with_areas = true
 
 [node name="AimTarget" type="Sprite3D" parent="."]
-pixel_size = 0.001
+pixel_size = 0.002
 texture = ExtResource( 5 )
 script = ExtResource( 1 )
