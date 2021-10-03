@@ -163,8 +163,8 @@ gdobj Game of Node:
       scene = join_path(config.world_dir, "data.tscn")
       lib_dir = join_path(get_executable_path().parent_dir(), "..", "..", "..", "vmlib")
 
+    create_dir(config.script_dir)
     if uc != initial_user_config:
-      create_dir(config.script_dir)
       config_file.write_file(uc.to_json.pretty)
 
     self.add_platform_input_actions()
