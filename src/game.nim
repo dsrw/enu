@@ -77,7 +77,8 @@ gdobj Game of Node:
           highest = (name, dur)
         total += dur
 
-      self.stats.text = &"FPS: {fps}\nUser: {total}\n{highest.name}: {highest.duration}\nscale_factor: {self.scale_factor}"
+      let vram = get_monitor(RENDER_VIDEO_MEM_USED)
+      self.stats.text = &"FPS: {fps}\nUser: {total}\n{highest.name}: {highest.duration}\nscale_factor: {self.scale_factor}\nvram: {vram}"
       durations.clear()
 
     trace:
