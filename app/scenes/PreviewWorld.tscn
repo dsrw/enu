@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=8 format=2]
 
 [ext_resource path="res://materials/blue-block-grid.tres" type="Material" id=1]
 [ext_resource path="res://components/Bot.tscn" type="PackedScene" id=2]
@@ -9,6 +9,7 @@ size = Vector3( 1, 1, 1 )
 [sub_resource type="Voxel" id=2]
 voxel_name = "air"
 transparent = true
+transparency_index = 1
 
 [sub_resource type="Voxel" id=3]
 voxel_name = "solid"
@@ -26,6 +27,9 @@ cube_tiles/front = Vector2( 0, 0 )
 voxels/0 = SubResource( 2 )
 voxels/1 = SubResource( 3 )
 
+[sub_resource type="VoxelMesherBlocky" id=5]
+library = SubResource( 4 )
+
 [node name="PreviewWorld" type="Spatial"]
 
 [node name="Cube" type="MeshInstance" parent="."]
@@ -42,9 +46,8 @@ transform = Transform( 0.984808, -0.0301537, 0.17101, 0, 0.984808, 0.173648, -0.
 light_energy = 4.0
 
 [node name="TerrainPreview" type="VoxelTerrain" parent="."]
-voxel_library = SubResource( 4 )
+mesher = SubResource( 5 )
 
 [node name="bot" parent="." instance=ExtResource( 2 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.8, 0 )
-orig_rotation = Vector3( 0, -110, 0 )
-orig_translation = Vector3( 0, -0.8, 0 )
+orig_transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.8, 0 )

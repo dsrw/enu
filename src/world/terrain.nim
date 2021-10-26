@@ -1,6 +1,6 @@
 import godotapi / [mesh, voxel_terrain, resource_loader, voxel_mesher_blocky, voxel_tool, voxel, voxel_library, shader_material]
 import godot, sets, tables, hashes
-import ".." / [globals, core]
+import globals, core, player/player, math
 
 type
   Buffers = Table[Vector3, VoxTable]
@@ -8,6 +8,8 @@ type
 const
   highlight_energy = 1.0
   default_energy = 0.1
+
+proc create_bot(transform: Transform, parent: Node, up_axis = UP)
 
 gdobj Terrain of VoxelTerrain:
   var
@@ -247,8 +249,10 @@ gdobj Terrain of VoxelTerrain:
         else:
           self.draw(point, action_index, true)
         self.draw_plane = self.current_point * self.current_normal
-
-      if tool_mode == CodeMode:
+      elif tool_mode == ObjectMode:
+        var transform = init_transform().translated(self.to_global(self.current_point))
+        create_bot(transform, data_node, up_axis = self.current_normal)
+      elif tool_mode == CodeMode:
         self.trigger("block_selected")
         self.get_parent.trigger("deselect", true)
 
@@ -265,3 +269,8 @@ gdobj Terrain of VoxelTerrain:
         else:
           self.trigger("terrain_block_removed", 0 , loc, data.index, data.keep)
       self.draw_plane = self.current_point * self.current_normal
+
+import world/bot
+
+proc create_bot(transform: Transform, parent: Node, up_axis = UP) =
+  bot.create_bot(transform, parent, up_axis = up_axis)

@@ -38,7 +38,7 @@ gdobj Ground of MeshInstance:
       create_builder(p, data_node)
 
     elif tool_mode == ObjectMode:
-      create_bot(p, data_node)
+      create_bot(init_transform().translated(p + vec3(0.5, 0, 0.5)), data_node)
 
   method on_target_move(point, normal: Vector3) =
     let previous_point = self.point

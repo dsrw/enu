@@ -16,8 +16,7 @@ type
     dock_icon_size: Option[float]
     world: Option[string]
     show_stats: Option[bool]
-    target_fps: Option[float]
-    min_render_scale: Option[float]
+    mega_pixels: Option[float]
 
 var
   timer = 0.0
@@ -35,40 +34,40 @@ gdobj Game of Node:
     save_thread: system.Thread[Game]
     last_index = 1
     saved_mouse_position: Vector2
-    scale_factor* = 1.0
-    downscale_at: MonoTime
-    upscale_at: MonoTime
-    backoff = initial_backoff
-    upscaling = false
+    scale_factor* = 0.0
+    rescale_at = get_mono_time()
 
   proc pack_scene() {.thread.} =
     echo $self.scene_packer.pack(data_node)
 
   method process*(delta: float) =
-    let
-      fps = get_monitor(TIME_FPS)
-      time = get_mono_time()
+    # when false:
+    #   # dynamic scaling. Needs work.
+    #   if time > self.downscale_at and (fps < config.target_fps - 1 or fps > config.target_fps + 1):
+    #     if self.upscaling:
+    #       self.upscaling = false
+    #       self.backoff += self.backoff
+    #     self.downscale_at = time + 2.seconds
+    #     self.upscale_at = time + self.backoff
+    #     self.render_scale = self.render_scale * 0.9
+    #
+    #     if self.render_scale < config.render_scale:
+    #       self.render_scale = config.render_scale
+    #
+    #   elif time > self.upscale_at and fps >= config.target_fps - 2:
+    #     self.upscaling = true
+    #     self.render_scale = self.render_scale * 1.02
+    #     self.downscale_at = time
+    #     self.upscale_at = time + 1.seconds
+    #
+    #   timer += delta
+    #   if timer >= 1:
+    #     timer = 0
 
-    if time > self.downscale_at and (fps < config.target_fps - 1 or fps > config.target_fps + 1):
-      if self.upscaling:
-        self.upscaling = false
-        self.backoff += self.backoff
-      self.downscale_at = time + 2.seconds
-      self.upscale_at = time + self.backoff
-      self.render_scale = self.render_scale * 0.9
-
-      if self.render_scale < config.min_render_scale:
-        self.render_scale = config.min_render_scale
-
-    elif time > self.upscale_at and fps >= config.target_fps - 2:
-      self.upscaling = true
-      self.render_scale = self.render_scale * 1.02
-      self.downscale_at = time
-      self.upscale_at = time + 1.seconds
-
-    timer += delta
-    if timer >= 1:
-      timer = 0
+    if config.show_stats:
+      let
+        fps = get_monitor(TIME_FPS)
+        time = get_mono_time()
       var
         total: times.Duration
         highest: tuple[name: string, duration: times.Duration]
@@ -79,7 +78,12 @@ gdobj Game of Node:
 
       let vram = get_monitor(RENDER_VIDEO_MEM_USED)
       self.stats.text = &"FPS: {fps}\nUser: {total}\n{highest.name}: {highest.duration}\nscale_factor: {self.scale_factor}\nvram: {vram}"
-      durations.clear()
+
+    if get_mono_time() > self.rescale_at:
+      self.rescale_at = MonoTime.high
+      self.rescale()
+
+    durations.clear()
 
     trace:
       if self.saving and not self.save_thread.running:
@@ -92,29 +96,10 @@ gdobj Game of Node:
       elif self.quitting and not self.saving:
         self.get_tree().quit()
 
-  proc `mouse_captured=`*(captured: bool) =
-    if captured:
-      # center mouse before capturing to ensure clicks are handled on macos
-      let center = self.get_viewport().get_visible_rect().size * 0.5
-      self.saved_mouse_position = self.get_viewport().get_mouse_position()
-      trigger("mouse_captured")
-      warp_mouse_position(center)
-      set_mouse_mode MOUSE_MODE_CAPTURED
-      skip_next_mouse_move = true
-    else:
-      trigger("mouse_released")
-      set_mouse_mode MOUSE_MODE_VISIBLE
-      warp_mouse_position(self.saved_mouse_position)
-
-  proc mouse_captured*(): bool =
-    get_mouse_mode() == MOUSE_MODE_CAPTURED
-
-  proc render_scale*(): float =
-    self.scale_factor
-
-  proc `render_scale=`*(val: float) =
-    self.scale_factor = val
-    self.scaled_viewport.size = self.get_viewport().size * val
+  proc rescale*() =
+    let vp = self.get_viewport().size
+    self.scale_factor = config.mega_pixels * 1_000_000 / (vp.x * vp.y)
+    self.scaled_viewport.size = self.get_viewport().size * self.scale_factor
 
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
@@ -157,8 +142,7 @@ gdobj Game of Node:
       dock_icon_size = uc.dock_icon_size ||= 50 * screen_scale
       world = uc.world ||= "default"
       show_stats = uc.show_stats ||= false
-      target_fps = uc.target_fps ||= 60
-      min_render_scale = uc.min_render_scale ||= 0.5 / screen_scale
+      mega_pixels = uc.mega_pixels ||= 2.0
       world_dir = join_path(work_dir, config.world)
       script_dir = join_path(config.world_dir, "scripts")
       scene = join_path(config.world_dir, "data.tscn")
@@ -219,18 +203,10 @@ gdobj Game of Node:
     font.size = config.font_size
     bold_font.size = config.font_size
     theme_holder.theme = theme
-    self.render_scale = 1.0
 
-    self.mouse_captured = true
     self.reticle = self.find_node("Reticle").as(Control)
     self.stats = self.find_node("stats").as(Label)
     self.stats.visible = config.show_stats
-
-    globals.capture_mouse = proc() =
-      self.mouse_captured = true
-
-    globals.release_mouse = proc() =
-      self.mouse_captured = false
 
     globals.reload_scripts = proc() =
       trigger("save")
@@ -362,4 +338,4 @@ gdobj Game of Node:
       elif event.is_action_pressed("mode_8"):
         self.obj_mode(7)
 
-proc get_game*(): Game = state.game as Game
+proc get_game*(): Game = state.nodes.game as Game

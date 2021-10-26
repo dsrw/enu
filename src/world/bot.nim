@@ -1,12 +1,12 @@
 import godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
                    input_event, animation_player, resource_loader, packed_scene]
 import godot, std / [math, tables, with, times, sugar, os, monotimes]
-import globals, core, world/builder
+import globals, core
 import engine / [contexts, engine]
 export contexts
 
 include "default_robot.nim.nimf"
-proc create_bot*(point: Vector3, parent: Node, script = "", is_clone = false): Node {.discardable.}
+proc create_bot*(transform: Transform, parent: Node, script = "", is_clone = false, up_axis = UP): Node {.discardable.}
 
 var max_bot_index = 0
 gdobj NimBot of KinematicBody:
@@ -16,11 +16,11 @@ gdobj NimBot of KinematicBody:
       selected_material* {.gdExport.}: Material
     script_index* {.gdExport.} = 0
     disabled* {.gdExport.} = false
-    orig_rotation* {.gdExport.}: Vector3
-    orig_translation* {.gdExport.}: Vector3
+    orig_transform* {.gdExport.}: Transform
     skin: Spatial
     mesh: MeshInstance
     animation_player: AnimationPlayer
+    up_axis {.gdExport.} = UP
 
   proc init*() =
     self.bind_signals(self, "deleted")
@@ -48,7 +48,9 @@ gdobj NimBot of KinematicBody:
 
   proc select*() =
     if not self.script_ctx.is_clone:
-      show_editor self.script_ctx.script, self.script_ctx.engine
+      state.open_file = self.script_ctx.script
+      state.open_engine = self.script_ctx.engine
+      state.editing = true
 
   proc on_load_vars() =
     let e = self.script_ctx.engine
@@ -57,25 +59,71 @@ gdobj NimBot of KinematicBody:
   proc on_begin_move(direction: Vector3, steps: float): Callback =
     var duration = 0.0
     let
-      moving = direction.rotated(UP, self.rotation.y)
-      finish = self.translation + moving * steps
+      axis = self.up_axis
+      sum = axis.x + axis.y + axis.z
+      moving = direction.rotated(axis, self.rotation.y)
       finish_time = 1.0 / self.speed * steps
 
     when not defined(enu_simulate):
+      var velocity = gravity * self.up_axis
       result = proc(delta: float): bool =
         duration += delta
         if duration >= finish_time:
-          self.translation = finish
+          self.translation = self.translation.snapped(vec3(0.1, 0.1, 0.1))
           return false
         else:
-          discard self.move_and_slide(moving * self.speed, UP)
+          let inverse = vec3(sum, sum, sum) - axis
+
+          #result = move_direction * delta * speed
+          #result.y = velocity_current.y + gravity * delta
+          var v = moving * self.speed
+
+          v = (v * inverse) + (axis * (velocity + (vec3(1, 1, 1) * gravity / 3 * delta)))
+          dump v
+          #v.y = velocity.y + gravity * delta
+          velocity = self.move_and_slide(v, axis)
           return true
       active_ctx().start_advance_timer()
     else:
-      self.translation = finish
+      self.translation = self.translation + moving * steps
+    # g
+    # let steps = steps.float
+    # var duration = 0.0
+    # let
+    #   moving = self.transform.basis.xform(direction)
+    #   finish = self.translation + moving * steps
+    #   finish_time = 1.0 / self.speed * steps
+    #
+    # result = proc(delta: float): bool =
+    #   duration += delta
+    #   if duration >= finish_time:
+    #     self.translation = finish
+    #     return false
+    #   else:
+    #     self.translation = self.translation + (moving * self.speed * delta)
+    #     return true
+
+    # \g
+    # var duration = 0.0
+    # let
+    #   moving = direction.rotated(UP, self.rotation.y)
+    #   finish = self.translation + moving * steps
+    #   finish_time = 1.0 / self.speed * steps
+    #
+    # when not defined(enu_simulate):
+    #   result = proc(delta: float): bool =
+    #     duration += delta
+    #     if duration >= finish_time:
+    #       self.translation = finish
+    #       return false
+    #     else:
+    #       discard self.move_and_slide(moving * self.speed, UP)
+    #       return true
+    #   active_ctx().start_advance_timer()
+    # else:
+    #   self.translation = finish
 
   proc on_begin_turn(axis: Vector3, degrees: float): Callback =
-    assert axis in [LEFT, RIGHT]
     let degrees = degrees * -axis.x
     var duration = 0.0
     # TODO: Why can't this be a one liner?
@@ -93,11 +141,24 @@ gdobj NimBot of KinematicBody:
       active_ctx().start_advance_timer()
     else:
       self.transform = final_transform
+    # let map = {LEFT: UP, RIGHT: DOWN, UP: RIGHT, DOWN: LEFT}.to_table
+    # let axis = self.transform.basis.xform(map[axis])
+    # var duration = 0.0
+    # var final_transform = self.transform
+    # final_transform.basis = final_transform.basis.rotated(axis, deg_to_rad(degrees))
+    #                                              .orthonormalized()
+    # result = proc(delta: float): bool =
+    #   duration += delta
+    #   self.rotate(axis, deg_to_rad(degrees * delta * self.speed))
+    #   if duration <= 1.0 / self.speed:
+    #     true
+    #   else:
+    #     self.transform = final_transform
+    #     false
 
   proc setup*(set_script = true) =
     self.script_index = max_bot_index
-    self.orig_rotation = self.rotation
-    self.orig_translation = self.translation
+    self.orig_transform = self.transform
     inc max_bot_index
     self.name = "Bot_" & $self.script_index
     if not self.script_ctx.is_clone:
@@ -118,8 +179,7 @@ gdobj NimBot of KinematicBody:
       self.on_game_ready()
     else:
       self.bind_signals("game_ready")
-      self.translation = self.orig_translation
-      self.rotation = self.orig_rotation
+      self.transform = self.orig_transform
 
   method on_game_ready() =
     if not self.disabled:
@@ -128,13 +188,12 @@ gdobj NimBot of KinematicBody:
 
   proc on_clone(target: Node, active_ctx: ScriptCtx): NimBot =
     let parent = target.get_parent.as(Spatial)
-    var t = parent.global_transform.origin
 
-    let builder = parent.as(Builder)
-    if not builder.is_nil:
-      let to = builder.position.origin
-      t = to
-    create_bot(t, target, self.script_ctx.script, is_clone = true).as(NimBot)
+    # let builder = parent.as(Builder)
+    # if not builder.is_nil:
+    #   let to = builder.position.origin
+    #   t = to
+    create_bot(parent.global_transform, target, self.script_ctx.script, is_clone = true).as(NimBot)
 
   proc update_running_state(running: bool) =
     self.engine.running = running
@@ -153,8 +212,7 @@ gdobj NimBot of KinematicBody:
     for v in children:
       let child = v.as_object(Node)
       child.trigger("deleted")
-    self.translation = self.orig_translation
-    self.rotation = self.orig_rotation
+    self.transform = self.orig_transform
     if not self.script_ctx.is_clone:
       self.load_script()
 
@@ -175,7 +233,7 @@ gdobj NimBot of KinematicBody:
       return false
 
   method on_reload*() =
-    if not editing() or open_file == self.script:
+    if not state.editing or open_file == self.script:
       self.paused = false
       self.reload()
 
@@ -185,14 +243,15 @@ gdobj NimBot of KinematicBody:
   method on_pause*() =
     self.paused = not self.paused
 
-proc create_bot*(point: Vector3, parent: Node, script = "", is_clone = false): Node {.discardable.} =
+proc create_bot*(transform: Transform, parent: Node, script = "", is_clone = false, up_axis = UP): Node {.discardable.} =
   let
     proto = load("res://components/Bot.tscn") as PackedScene
     b = proto.instance() as NimBot
     is_clone = parent != data_node
   assert not b.is_nil
+  b.up_axis = up_axis
   b.script_ctx.is_clone = is_clone
-  b.translation = point + vec3(0.5, 0, 0.5)
+  b.transform = transform
   b.paused = true
   b.setup()
   if is_clone:
