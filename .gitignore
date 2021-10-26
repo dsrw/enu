@@ -26,3 +26,5 @@ vmlib/stdlib
 dist_config.json
 .vscode
 /.last_test
+nimble.develop
+nimble.paths
