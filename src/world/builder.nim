@@ -378,13 +378,17 @@ gdobj Builder of Spatial:
     var t = self.root_builder
     if t.is_nil:
       t = self
-    show_editor t.script, t.engine
+    state.open_file = t.script
+    state.open_engine = t.engine
+    state.editing = true
 
   method on_selected() =
     var t = self.find_root().as(Builder)
     if t.is_nil:
       t = self
-    show_editor t.script, t.engine
+    state.open_file = t.script
+    state.open_engine = t.engine
+    state.editing = true
 
   proc set_timer(duration: TimeInterval, callback: proc()) =
     self.timers.add (now() + duration, callback)
@@ -402,7 +406,7 @@ gdobj Builder of Spatial:
       self.load_script()
 
   method on_reload() =
-    if not editing() or open_file == self.script:
+    if not state.editing or state.open_file == self.script:
       self.reload()
 
   method on_reload_all() =

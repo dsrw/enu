@@ -1,12 +1,11 @@
 import godotapi / [text_edit, scene_tree, node, input_event, global_constants,
                          input_event_key, style_box_flat]
-import godot, strutils, tables, compiler/lineinfos
-import ".." / [core, globals, game, engine/engine]
+import godot, compiler/lineinfos, model_citizen
+import std / [strutils, tables]
+import core, globals, game, engine/engine
 
 gdobj Editor of TextEdit:
   var
-    engine: Engine
-    file_name = ""
     ff = false
     comment_color* {.gdExport.} = init_color(0.5, 0.5, 0.5)
     mouse_was_captured = false
@@ -43,8 +42,8 @@ gdobj Editor of TextEdit:
   method unhandled_input*(event: InputEvent) =
     if self.visible:
       if event.is_action_pressed("ui_cancel"):
-        if not (event of InputEventJoypadButton) or not command_mode:
-          hide_editor()
+        if not (event of InputEventJoypadButton) or not state.command_mode:
+          state.editing = false
           self.get_tree().set_input_as_handled()
 
   proc configure_highlighting =
@@ -59,8 +58,8 @@ gdobj Editor of TextEdit:
 
   proc highlight_errors =
     self.clear_executing_line()
-    if not self.engine.is_nil:
-      for err in self.engine.errors:
+    if not state.open_engine.is_nil:
+      for err in state.open_engine.errors:
         self.set_line_as_marked(int64(err.info.line - 1), true)
 
   proc `executing_line=`*(line: int) =
@@ -75,36 +74,43 @@ gdobj Editor of TextEdit:
     self.bind_signals(self, w"text_changed")
     var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
     self.og_bg_color = stylebox.bg_color
-    show_editor = proc(file_name: string, engine: Engine) =
-      self.engine = engine
-      self.file_name = file_name
-      self.visible = true
-      self.text = read_file(file_name)
-      self.mouse_was_captured = get_game().mouse_captured
-      if self.mouse_was_captured:
-        release_mouse()
+    # TODO
+    state.target_flags.track proc(added, removed: set[TargetFlag]) =
+      if CommandMode in added:
+        if self.dirty:
+          reload_scripts()
+        self.mouse_filter = MOUSE_FILTER_IGNORE
+        self.shortcut_keys_enabled = false
+        self.readonly = true
+        var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
+        stylebox.bg_color = Color(r: 0, g: 0, b: 0, a: 0.4)
 
-      self.grab_focus()
-      open_file = file_name
-      self.clear_errors()
-      self.highlight_errors()
+      if CommandMode in removed:
+        self.mouse_filter = MOUSE_FILTER_STOP
+        self.shortcut_keys_enabled = true
+        self.readonly = false
+        var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
+        stylebox.bg_color = self.og_bg_color
 
-      self.executing_line = int self.engine.current_line.line - 1
-      self.engine.line_changed = proc(current: TLineInfo, previous: TLineInfo) =
-        self.executing_line = int current.line - 1
+      if Editing in added:
+        self.visible = true
+        self.text = read_file(state.open_file)
 
-    editing = proc: bool = self.visible
+        self.grab_focus()
+        self.clear_errors()
+        self.highlight_errors()
 
-    hide_editor = proc =
-      if self.dirty:
-        reload_scripts()
-      trigger("retarget")
-      self.release_focus()
-      if self.mouse_was_captured:
-        capture_mouse()
-      self.visible = false
-      self.engine.line_changed = nil
-      self.engine = nil
+        self.executing_line = int state.open_engine.current_line.line - 1
+        state.open_engine.line_changed = proc(current: TLineInfo, previous: TLineInfo) =
+          self.executing_line = int current.line - 1
+
+      if Editing in removed:
+        if self.dirty:
+          reload_scripts()
+        self.release_focus()
+        self.visible = false
+        state.open_engine.line_changed = nil
+        state.open_engine = nil
 
     self.configure_highlighting()
 
@@ -112,23 +118,7 @@ gdobj Editor of TextEdit:
     if self.file_name != "":
       self.dirty = false
       self.clear_errors()
-      write_file(self.file_name, self.text)
+      write_file(state.open_file, self.text)
 
   method on_script_error* =
     self.highlight_errors()
-
-  method on_command_mode_enabled =
-    if self.dirty:
-      reload_scripts()
-    self.mouse_filter = MOUSE_FILTER_IGNORE
-    self.shortcut_keys_enabled = false
-    self.readonly = true
-    var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
-    stylebox.bg_color = Color(r: 0, g: 0, b: 0, a: 0.4)
-
-  method on_command_mode_disabled =
-    self.mouse_filter = MOUSE_FILTER_STOP
-    self.shortcut_keys_enabled = true
-    self.readonly = false
-    var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
-    stylebox.bg_color = self.og_bg_color

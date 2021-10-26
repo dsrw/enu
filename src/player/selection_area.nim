@@ -19,18 +19,11 @@ gdobj SelectionArea of Area:
     if tool_mode == CodeMode:
       self.bot.highlight()
     else:
-      get_player().aim_target.hide()
-      self.bot.highlight()
-      if get_game().mouse_captured:
-        get_game().reticle.visible = true
+      state.reticle = true
 
   method on_target_out*() =
-    if tool_mode == CodeMode:
-      self.bot.deselect()
-    else:
-      self.bot.deselect()
-      get_player().aim_target.show()
-      get_game().reticle.visible = false
+    self.bot.deselect()
+    state.reticle = true
 
   method on_target_fire*() =
     if tool_mode == CodeMode:
@@ -39,6 +32,5 @@ gdobj SelectionArea of Area:
   method on_target_remove*() =
     if tool_mode != CodeMode:
       self.bot.destroy()
-      get_player().aim_target.show()
-      get_game().reticle.visible = false
+      state.targeting = true
       save_scene()

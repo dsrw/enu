@@ -1,6 +1,7 @@
 import godotapi / [sprite_3d, ray_cast, spatial]
-import godot, strutils, math
-import ".." / [globals, core]
+import godot, model_citizen
+import std / [strutils, math]
+import globals, core
 
 gdobj AimTarget of Sprite3D:
   var
@@ -10,17 +11,20 @@ gdobj AimTarget of Sprite3D:
   method ready*() =
     trace:
       self.set_as_top_level(true)
-      self.bind_signals(w"retarget hide_target show_target collider_exiting")
+      self.bind_signals(w"collider_exiting")
 
-  method on_retarget*() =
-    if self.last_collider != nil:
-      self.last_collider.trigger("target_out")
-      self.last_collider = nil
-      self.last_point = vec3()
-      self.last_normal = vec3()
-
-  method on_hide_target() = self.visible = false
-  method on_show_target() = self.visible = true
+    state.target_flags.track proc(added, removed: set[TargetFlag]) =
+      if Targeting in added:
+        self.visible = true
+      if Targeting in removed:
+        self.visible = false
+      if ((added + removed) * {Targeting, Reticle}).len > 0:
+        # retarget
+        if self.last_collider != nil:
+          self.last_collider.trigger("target_out")
+          self.last_collider = nil
+          self.last_point = vec3()
+          self.last_normal = vec3()
 
   proc update*(ray: RayCast) =
     ray.force_raycast_update()
@@ -33,10 +37,10 @@ gdobj AimTarget of Sprite3D:
       if self.last_collider != nil:
         self.last_collider.trigger("target_out")
       if collider != nil:
-        self.visible = tool_mode != CodeMode
+        state.targeting = tool_mode != CodeMode
         collider.trigger("target_in")
       else:
-        self.visible = false
+        state.targeting = false
 
     if collider != nil:
       let
@@ -58,7 +62,7 @@ gdobj AimTarget of Sprite3D:
                              .snapped(half)
         factor = local_normal.inverse_normalized() * 0.5
 
-      if not local_normal.snapped(fuzzy).is_axis_aligned:
+      if not local_normal.is_axis_aligned:
         # All local normals should be axis aligned because we're dealing with cubes.
         # If it isn't, we probably got a corner or something.
         return
@@ -71,7 +75,7 @@ gdobj AimTarget of Sprite3D:
 
       let
         align_normal = self.transform.origin + global_normal
-        axis = if local_normal.abs.snapped(fuzzy) != UP: UP else: FORWARD
+        axis = if local_normal.abs != UP: UP else: FORWARD
       self.look_at(align_normal, axis)
 
       if (self.last_point, self.last_normal) != (local_point, local_normal):

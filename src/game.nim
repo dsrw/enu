@@ -2,7 +2,7 @@ import godotapi / [input, input_event, gd_os, node, scene_tree, viewport,
                    packed_scene, resource_saver, sprite, control, viewport,
                    performance, label, theme, dynamic_font, resource_loader, main_loop,
                    gd_os, project_settings, input_map, input_event, input_event_action]
-import godot
+import godot, model_citizen
 import std / [threadpool, monotimes, times, os, stats, jsonutils, json]
 import core, globals
 
@@ -23,7 +23,7 @@ var
   timer = 0.0
 gdobj Game of Node:
   var
-    reticle*: Control
+    reticle: Control
     scaled_viewport: Viewport
     triggered = false
     scene_packer: PackedScene
@@ -204,7 +204,7 @@ gdobj Game of Node:
     self.scene_packer = gdnew[PackedScene]()
     self.load_world()
     self.get_tree().set_auto_accept_quit(false)
-    state.game = self
+    state.nodes.game = self
     let (theme_holder, theme) = if hostOS == "macosx":
       ( self.find_node("ThemeHolder").as(Container),
         load("res://themes/AppleTheme.tres").as(Theme))
@@ -249,6 +249,23 @@ gdobj Game of Node:
 
     globals.pause = proc() =
       trigger("pause")
+
+    state.target_flags.track proc(added, removed: set[TargetFlag]) =
+      if MouseCaptured in added:
+        let center = self.get_viewport().get_visible_rect().size * 0.5
+        self.saved_mouse_position = self.get_viewport().get_mouse_position()
+        warp_mouse_position(center)
+        set_mouse_mode MOUSE_MODE_CAPTURED
+      if MouseCaptured in removed:
+        set_mouse_mode MOUSE_MODE_VISIBLE
+        warp_mouse_position(self.saved_mouse_position)
+
+      if Reticle in added:
+        self.reticle.visible = true
+      if Reticle in removed:
+        self.reticle.visible = false
+
+    state.mouse_captured = true
     game_ready = true
     trigger("game_ready")
 
@@ -277,8 +294,8 @@ gdobj Game of Node:
       self.block_mode(self.last_index)
     else:
       tool_mode = CodeMode
-      self.trigger("retarget")
-      self.reticle.visible = self.mouse_captured
+      state.mouse_captured = true
+      state.reticle = true
       action_index = 0
       if update_actionbar:
         self.trigger("update_actionbar", 0)
@@ -286,41 +303,26 @@ gdobj Game of Node:
   proc block_mode*(index: int, update_actionbar = true) =
     self.last_index = index
     tool_mode = BlockMode
-    self.trigger("retarget")
-    self.reticle.visible = false
+    state.reticle = false
     action_index = index
     if update_actionbar:
       self.trigger("update_actionbar", index)
 
   proc obj_mode*(index: int, update_actionbar = true) =
     tool_mode = ObjectMode
-    self.trigger("retarget")
-    self.reticle.visible = false
+    state.reticle = true
     action_index = index
     if update_actionbar:
       self.trigger("update_actionbar", index)
 
-  proc enable_command_mode*() =
-    self.saved_mouse_captured_state = self.mouse_captured
-    self.mouse_captured = true
-    command_mode = true
-    self.trigger("command_mode_enabled")
-
-  proc disable_command_mode*() =
-    self.mouse_captured = false#self.saved_mouse_captured_state
-    command_mode = false
-    self.trigger("command_mode_disabled")
-
   method on_size_changed() =
-    self.backoff = initial_backoff
-    self.downscale_at = get_mono_time()
-    self.upscale_at = get_mono_time()
+    self.rescale_at = get_mono_time()
 
   method unhandled_input*(event: InputEvent) =
     if event.is_action_pressed("command_mode"):
-      self.enable_command_mode()
+      state.command_mode = true
     elif event.is_action_released("command_mode"):
-      self.disable_command_mode()
+      state.command_mode = false
     elif event.is_action_pressed("save_and_reload"):
       globals.save_and_reload()
       self.get_tree().set_input_as_handled()
@@ -334,14 +336,9 @@ gdobj Game of Node:
       if host_os != "macosx":
         self.quitting = true
         save_scene(true)
-    elif not globals.editing():
+    elif not state.editing:
       if event.is_action_pressed("toggle_mouse_captured"):
-        self.mouse_captured = not self.mouse_captured
-        if not self.mouse_captured:
-          set_custom_mouse_cursor(nil)
-          self.reticle.visible = false
-        elif tool_mode == CodeMode:
-          self.reticle.visible = true
+        state.mouse_captured = not state.mouse_captured
         self.get_tree().set_input_as_handled()
 
       if event.is_action_pressed("toggle_fullscreen"):

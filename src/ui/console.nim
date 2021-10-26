@@ -1,7 +1,8 @@
 import godotapi / [text_edit, scene_tree, node, input_event, input_event_key,
                          rich_text_label, global_constants]
-import godot, strutils
-import ".." / [globals, core]
+import godot, model_citizen
+import std / strutils
+import globals, core
 
 gdobj Console of RichTextLabel:
   var
@@ -22,19 +23,18 @@ gdobj Console of RichTextLabel:
 
   method ready*() =
     trace:
-      self.bind_signals w"mouse_captured mouse_released clear_console toggle_console"
+      self.bind_signals w"clear_console toggle_console"
+    state.target_flags.track proc(added, removed: set[TargetFlag]) =
+      if MouseCaptured in added:
+        self.mouse_filter = MOUSE_FILTER_IGNORE
+      if MouseCaptured in removed:
+        self.mouse_filter = self.default_mouse_filter
 
   method process*(delta: float) =
     trace:
       if not self.log_text.is_empty():
         discard self.append_bbcode(self.log_text)
         self.log_text = ""
-
-  method on_mouse_captured() =
-    self.mouse_filter = MOUSE_FILTER_IGNORE
-
-  method on_mouse_released() =
-    self.mouse_filter = self.default_mouse_filter
 
   method on_clear_console() =
     self.clear()

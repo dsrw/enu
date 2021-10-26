@@ -3,6 +3,7 @@ import godotapi / [kinematic_body, spatial, input, input_event,
                          ray_cast, scene_tree, input_event_pan_gesture, viewport, camera, global_constants,
                          collision_shape]
 import godot except print
+import model_citizen
 import math
 import core, globals, game, engine/engine, engine/contexts
 import aim_target
@@ -12,7 +13,6 @@ let
   angle_x_max = PI / 2.25
   max_speed = 50.0
   move_speed = 500.0
-  gravity = -240.0
   jump_impulse = 50.0
   climb_stair_impulse = 25.0
   fly_toggle = 0.3.seconds
@@ -25,27 +25,20 @@ let
 
 gdobj Player of KinematicBody:
   var
+    flying, running, always_run, skip_release, skip_next_mouse_move, jump_down: bool
+    aim_ray, world_ray, high_ray, low_ray: RayCast
+    jump_time, run_time: Option[DateTime]
+
     position_start: Vector3
     input_relative = vec2()
     camera_rig: Spatial
     camera: Camera
-    aim_ray: RayCast
-    world_ray: RayCast
-    high_ray: RayCast
-    low_ray: RayCast
-    aim_target*: AimTarget
-    flying = false
-    running = false
-    always_run = false
+    aim_target: AimTarget
     velocity = vec3()
-    jump_time: Option[DateTime]
-    run_time: Option[DateTime]
     pan_delta = 0.0
     index = 0
     collision_shape: CollisionShape
-    jump_down = false
     command_timer = 0.0
-    skip_release = false
 
   proc get_look_direction(): Vector2 =
     vec2(get_action_strength("look_right") - get_action_strength("look_left"),
@@ -83,7 +76,6 @@ gdobj Player of KinematicBody:
       result.y = velocity_current.y + gravity * delta
 
   method ready*() =
-    state.player = self
     self.camera_rig = self.get_node("CameraRig") as Spatial
     self.collision_shape = self.get_node("CollisionShape") as CollisionShape
     self.camera = self.camera_rig.get_node("Camera") as Camera
@@ -92,18 +84,23 @@ gdobj Player of KinematicBody:
     self.high_ray = self.get_node("HighRay") as RayCast
     self.low_ray = self.get_node("LowRay") as RayCast
     self.aim_target = self.camera_rig.get_node("AimTarget") as AimTarget
+
     self.position_start = self.camera_rig.translation
+    state.nodes.player = self
     self.load_script()
+    state.target_flags.track proc(added, removed: set[TargetFlag]) =
+      if MouseCaptured in removed:
+        self.skip_next_mouse_move = true
 
   proc current_raycast*: RayCast =
-    if get_game().mouse_captured:
+    if state.mouse_captured:
       self.aim_ray
     else:
       self.world_ray
 
   method process*(delta: float) {.gdExport.} =
     trace:
-      if not editing() or command_mode:
+      if not state.editing or state.command_mode:
         var transform = self.camera_rig.global_transform
         transform.origin = self.global_transform.origin + self.position_start
 
@@ -118,7 +115,7 @@ gdobj Player of KinematicBody:
         var r = self.camera_rig.rotation
         r.y = wrap(r.y, -PI, PI)
         self.camera_rig.rotation = r
-        if not get_game().mouse_captured:
+        if not state.mouse_captured:
           let
             mouse_pos = self.get_viewport().
                              get_mouse_position() * float get_game().scale_factor
@@ -151,13 +148,13 @@ gdobj Player of KinematicBody:
 
   method physics_process*(delta: float) =
     trace:
-      if command_mode and self.command_timer > 0:
+      if state.command_mode and self.command_timer > 0:
         self.command_timer -= delta
         if self.command_timer <= 0:
-          get_game().disable_command_mode()
+          state.command_mode = false
 
       const forward_rotation = deg_to_rad(-90.0)
-      if not editing() or command_mode:
+      if not state.editing or state.command_mode:
         let
           input_direction = self.get_input_direction()
           basis   = self.camera_rig.global_transform.basis
@@ -203,20 +200,21 @@ gdobj Player of KinematicBody:
       let event = event as InputEventJoypadMotion
       if event.axis == JOY_ANALOG_L2 or event.axis == JOY_ANALOG_R2:
         return
-    if event of InputEventMouseMotion and get_game().mouse_captured:
-      if not skip_next_mouse_move:
+
+    if event of InputEventMouseMotion and state.mouse_captured:
+      if not self.skip_next_mouse_move:
         self.input_relative += event.as(InputEventMouseMotion).relative()
       else:
-        skip_next_mouse_move = false
-    if editing() and not self.skip_release and (event of InputEventJoypadButton or event of InputEventJoypadMotion):
+        self.skip_next_mouse_move = false
+    if state.editing and not self.skip_release and (event of InputEventJoypadButton or event of InputEventJoypadMotion):
       let active_input = self.has_active_input(event.device.int)
-      if command_mode and not active_input:
+      if state.command_mode and not active_input:
         self.command_timer = input_command_timeout
-      elif command_mode and active_input:
+      elif state.command_mode and active_input:
         self.command_timer = 0.0
       elif active_input:
         self.command_timer = 0.0
-        get_game().enable_command_mode()
+        state.command_mode = true
 
     if event.is_action_pressed("jump"):
       self.jump_down = true
@@ -269,7 +267,7 @@ gdobj Player of KinematicBody:
 
     let ray = self.current_raycast
     if event.is_action_pressed("fire"):
-      if not editing():
+      if not state.editing:
         self.skip_release = true
       if ray.is_colliding():
         var trigger_event = "target_fire"
@@ -285,4 +283,4 @@ gdobj Player of KinematicBody:
     elif event.is_action_released("remove"):
       get_game().trigger("mouse_released")
 
-proc get_player*(): Player = state.player as Player
+proc get_player*(): Player = state.nodes.player as Player
