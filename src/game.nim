@@ -3,7 +3,7 @@ import godotapi / [input, input_event, gd_os, node, scene_tree, viewport,
                    performance, label, theme, dynamic_font, resource_loader, main_loop,
                    gd_os, project_settings, input_map, input_event, input_event_action]
 import godot, model_citizen
-import std / [threadpool, monotimes, times, os, stats, jsonutils, json]
+import std / [threadpool, monotimes, times, os, stats, jsonutils, json, math]
 import core, globals
 
 const
@@ -98,8 +98,8 @@ gdobj Game of Node:
 
   proc rescale*() =
     let vp = self.get_viewport().size
-    self.scale_factor = config.mega_pixels * 1_000_000 / (vp.x * vp.y)
-    self.scaled_viewport.size = self.get_viewport().size * self.scale_factor
+    self.scale_factor = sqrt(config.mega_pixels * 1_000_000.0 / (vp.x * vp.y))
+    self.scaled_viewport.size = vp * self.scale_factor
 
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
