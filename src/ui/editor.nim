@@ -74,7 +74,7 @@ gdobj Editor of TextEdit:
     self.bind_signals(self, w"text_changed")
     var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
     self.og_bg_color = stylebox.bg_color
-    # TODO
+
     state.target_flags.track proc(added, removed: set[TargetFlag]) =
       if CommandMode in added:
         if self.dirty:

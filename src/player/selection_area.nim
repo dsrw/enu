@@ -32,5 +32,5 @@ gdobj SelectionArea of Area:
   method on_target_remove*() =
     if tool_mode != CodeMode:
       self.bot.destroy()
-      state.targeting = true
+      state.target_block = true
       save_scene()

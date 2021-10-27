@@ -5,7 +5,7 @@ import engine / engine
 
 type
   TargetFlag* = enum
-    Reticle, Targeting, MouseCaptured, CommandMode, Editing
+    Reticle, TargetBlock, MouseCaptured, CommandMode, Editing
 
   GameState* = object
     target_flags*: TrackedSet[TargetFlag]
@@ -26,12 +26,10 @@ proc set_flag(flags: var set[TargetFlag], flag: TargetFlag, add: bool) =
 proc apply_target_flags(state: var GameState) =
   let requested = state.requested_target_flags
   var flags: set[TargetFlag]
-  flags.set_flag(CommandMode, CommandMode in requested)
-  flags.set_flag(Targeting, Targeting in requested)
-  flags.set_flag(Editing, Editing in requested)
 
-  if MouseCaptured in requested:
-    flags.incl(MouseCaptured)
+  for flag in {CommandMode, TargetBlock, Editing, MouseCaptured}:
+    if flag in requested: flags.incl(flag)
+
   if Editing in requested:
     flags.excl(MouseCaptured)
   if CommandMode in requested:
@@ -49,18 +47,18 @@ proc `command_mode=`*(state: var GameState, command_mode: bool) =
   state.requested_target_flags.set_flag(CommandMode, command_mode)
   state.apply_target_flags()
 
-proc `targeting=`*(state: var GameState, targeting: bool) =
-  if targeting:
-    state.requested_target_flags.incl(Targeting)
+proc `target_block=`*(state: var GameState, target_block: bool) =
+  if target_block:
+    state.requested_target_flags.incl(TargetBlock)
     state.requested_target_flags.excl(Reticle)
   else:
-    state.requested_target_flags.excl(Targeting)
+    state.requested_target_flags.excl(TargetBlock)
   state.apply_target_flags()
 
 proc `reticle=`*(state: var GameState, reticle: bool) =
   if reticle:
     state.requested_target_flags.incl(Reticle)
-    state.requested_target_flags.excl(Targeting)
+    state.requested_target_flags.excl(TargetBlock)
   else:
     state.requested_target_flags.excl(Reticle)
   state.apply_target_flags()
@@ -71,7 +69,7 @@ proc `editing=`*(state: var GameState, editing: bool) =
 
 proc mouse_captured*(state: GameState): bool = MouseCaptured in state.target_flags
 proc command_mode*(state: GameState): bool = CommandMode in state.target_flags
-proc targeting*(state: GameState): bool = Targeting in state.target_flags
+proc target_block*(state: GameState): bool = TargetBlock in state.target_flags
 proc reticle*(state: GameState): bool = Reticle in state.target_flags
 proc editing*(state: GameState): bool = Editing in state.target_flags
 
@@ -83,7 +81,7 @@ when is_main_module:
   state.reticle = true
   check:
     not state.reticle
-    not state.targeting
+    not state.target_block
     not state.command_mode
     not state.mouse_captured
 
@@ -91,12 +89,12 @@ when is_main_module:
   check:
     state.reticle
     state.mouse_captured
-    not state.targeting
+    not state.target_block
 
-  state.targeting = true
+  state.target_block = true
   check:
     state.mouse_captured
-    state.targeting
+    state.target_block
     not state.reticle
 
   state.mouse_captured = false
@@ -104,7 +102,7 @@ when is_main_module:
   check:
     not state.reticle
     not state.mouse_captured
-    not state.targeting
+    not state.target_block
     not state.command_mode
 
   var added: set[TargetFlag]
@@ -121,7 +119,7 @@ when is_main_module:
     state.command_mode
     state.mouse_captured
     state.reticle
-    not state.targeting
+    not state.target_block
 
   state.command_mode = false
   check:
