@@ -286,7 +286,7 @@ gdobj Game of Node:
 
   proc obj_mode*(index: int, update_actionbar = true) =
     tool_mode = ObjectMode
-    state.reticle = true
+    state.reticle = false
     action_index = index
     if update_actionbar:
       self.trigger("update_actionbar", index)
