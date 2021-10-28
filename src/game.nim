@@ -82,7 +82,7 @@ gdobj Game of Node:
       self.quitting = true
       save_scene(true)
     if what == main_loop.NOTIFICATION_WM_ABOUT:
-      alert(&"Enu {version}\n\n© 2020 Scott Wadden", "Enu")
+      alert(&"Enu {version}\n\n© 2021 Scott Wadden", "Enu")
 
   proc add_platform_input_actions =
     let suffix = "." & host_os
