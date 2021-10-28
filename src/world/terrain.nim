@@ -208,6 +208,12 @@ gdobj Terrain of VoxelTerrain:
     if not self.highlighted and tool_mode == CodeMode:
       self.get_parent.trigger("highlight", true)
 
+    if tool_mode == ObjectMode:
+      if normal == UP:
+        state.target_block = true
+      else:
+        state.reticle = true
+
     if self.painting and tool_mode == BlockMode:
       let plane = point * normal
       if self.draw_plane == plane:
