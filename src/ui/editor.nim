@@ -95,7 +95,7 @@ gdobj Editor of TextEdit:
       if Editing in added:
         self.visible = true
         self.text = read_file(state.open_file)
-
+        self.file_name = state.open_file
         self.grab_focus()
         self.clear_errors()
         self.highlight_errors()
