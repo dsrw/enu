@@ -187,7 +187,6 @@ gdobj Builder of Spatial:
       self.blocks_remaining_this_frame = 0
     if scale_factor != self.scale.x.round(3):
       self.scale = vec3(scale_factor, scale_factor, scale_factor)
-      echo "setting scale to ", scale_factor
 
     self.set_vars()
 
@@ -406,7 +405,7 @@ gdobj Builder of Spatial:
       self.load_script()
 
   method on_reload() =
-    if not state.editing or state.open_file == self.script:
+    if state.open_file == self.script:
       self.reload()
 
   method on_reload_all() =

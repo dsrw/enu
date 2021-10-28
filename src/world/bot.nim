@@ -73,55 +73,13 @@ gdobj NimBot of KinematicBody:
           return false
         else:
           let inverse = vec3(sum, sum, sum) - axis
-
-          #result = move_direction * delta * speed
-          #result.y = velocity_current.y + gravity * delta
           var v = moving * self.speed
-
           v = (v * inverse) + (axis * (velocity + (vec3(1, 1, 1) * gravity / 3 * delta)))
-          dump v
-          #v.y = velocity.y + gravity * delta
           velocity = self.move_and_slide(v, axis)
           return true
       active_ctx().start_advance_timer()
     else:
       self.translation = self.translation + moving * steps
-    # g
-    # let steps = steps.float
-    # var duration = 0.0
-    # let
-    #   moving = self.transform.basis.xform(direction)
-    #   finish = self.translation + moving * steps
-    #   finish_time = 1.0 / self.speed * steps
-    #
-    # result = proc(delta: float): bool =
-    #   duration += delta
-    #   if duration >= finish_time:
-    #     self.translation = finish
-    #     return false
-    #   else:
-    #     self.translation = self.translation + (moving * self.speed * delta)
-    #     return true
-
-    # \g
-    # var duration = 0.0
-    # let
-    #   moving = direction.rotated(UP, self.rotation.y)
-    #   finish = self.translation + moving * steps
-    #   finish_time = 1.0 / self.speed * steps
-    #
-    # when not defined(enu_simulate):
-    #   result = proc(delta: float): bool =
-    #     duration += delta
-    #     if duration >= finish_time:
-    #       self.translation = finish
-    #       return false
-    #     else:
-    #       discard self.move_and_slide(moving * self.speed, UP)
-    #       return true
-    #   active_ctx().start_advance_timer()
-    # else:
-    #   self.translation = finish
 
   proc on_begin_turn(axis: Vector3, degrees: float): Callback =
     let degrees = degrees * -axis.x
@@ -141,20 +99,6 @@ gdobj NimBot of KinematicBody:
       active_ctx().start_advance_timer()
     else:
       self.transform = final_transform
-    # let map = {LEFT: UP, RIGHT: DOWN, UP: RIGHT, DOWN: LEFT}.to_table
-    # let axis = self.transform.basis.xform(map[axis])
-    # var duration = 0.0
-    # var final_transform = self.transform
-    # final_transform.basis = final_transform.basis.rotated(axis, deg_to_rad(degrees))
-    #                                              .orthonormalized()
-    # result = proc(delta: float): bool =
-    #   duration += delta
-    #   self.rotate(axis, deg_to_rad(degrees * delta * self.speed))
-    #   if duration <= 1.0 / self.speed:
-    #     true
-    #   else:
-    #     self.transform = final_transform
-    #     false
 
   proc setup*(set_script = true) =
     self.script_index = max_bot_index
@@ -170,11 +114,13 @@ gdobj NimBot of KinematicBody:
       max_bot_index = self.script_index + 1
     if not self.script_ctx.is_clone:
       self.set_script()
-    with self:
-      skin = self.get_node("Mannequiny").as(Spatial)
-      mesh = self.skin.get_node("root/Skeleton/body001").as(MeshInstance)
-      animation_player = self.skin.get_node("AnimationPlayer").as(AnimationPlayer)
-      set_default_material()
+
+    self.skin = self.get_node("Mannequiny").as(Spatial)
+    var node = self.skin.get_node("root/Skeleton/body001")
+    var n = node.is_nil
+    self.mesh = node.as(MeshInstance)
+    self.animation_player = self.skin.get_node("AnimationPlayer").as(AnimationPlayer)
+    self.set_default_material()
     if game_ready:
       self.on_game_ready()
     else:
@@ -189,10 +135,6 @@ gdobj NimBot of KinematicBody:
   proc on_clone(target: Node, active_ctx: ScriptCtx): NimBot =
     let parent = target.get_parent.as(Spatial)
 
-    # let builder = parent.as(Builder)
-    # if not builder.is_nil:
-    #   let to = builder.position.origin
-    #   t = to
     create_bot(parent.global_transform, target, self.script_ctx.script, is_clone = true).as(NimBot)
 
   proc update_running_state(running: bool) =
@@ -233,7 +175,7 @@ gdobj NimBot of KinematicBody:
       return false
 
   method on_reload*() =
-    if not state.editing or open_file == self.script:
+    if state.open_file == self.script:
       self.paused = false
       self.reload()
 
