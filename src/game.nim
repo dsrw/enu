@@ -246,7 +246,6 @@ gdobj Game of Node:
       self.block_mode(self.last_index)
     else:
       tool_mode = CodeMode
-      state.mouse_captured = true
       state.reticle = true
       state.retarget()
       action_index = 0
