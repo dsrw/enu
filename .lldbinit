@@ -1,0 +1,4 @@
+# add the following to ~/.lldbinit to enable loading this config.
+# settings set target.load-cwd-lldbinit true
+
+command script import --allow-reload ./tools/lldbnim.py
