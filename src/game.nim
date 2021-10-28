@@ -272,6 +272,7 @@ gdobj Game of Node:
       tool_mode = CodeMode
       state.mouse_captured = true
       state.reticle = true
+      state.retarget()
       action_index = 0
       if update_actionbar:
         self.trigger("update_actionbar", 0)
@@ -280,6 +281,7 @@ gdobj Game of Node:
     self.last_index = index
     tool_mode = BlockMode
     state.reticle = false
+    state.retarget()
     action_index = index
     if update_actionbar:
       self.trigger("update_actionbar", index)
@@ -287,6 +289,7 @@ gdobj Game of Node:
   proc obj_mode*(index: int, update_actionbar = true) =
     tool_mode = ObjectMode
     state.reticle = false
+    state.retarget()
     action_index = index
     if update_actionbar:
       self.trigger("update_actionbar", index)

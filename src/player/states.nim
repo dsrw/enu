@@ -5,7 +5,7 @@ import engine / engine
 
 type
   TargetFlag* = enum
-    Reticle, TargetBlock, MouseCaptured, CommandMode, Editing
+    Reticle, TargetBlock, MouseCaptured, CommandMode, Editing, Retarget
 
   GameState* = object
     target_flags*: TrackedSet[TargetFlag]
@@ -17,6 +17,8 @@ type
       player: Node
     ]
 
+let EventFlags = {Retarget}
+
 proc set_flag(flags: var set[TargetFlag], flag: TargetFlag, add: bool) =
   if add:
     flags.incl(flag)
@@ -25,9 +27,10 @@ proc set_flag(flags: var set[TargetFlag], flag: TargetFlag, add: bool) =
 
 proc apply_target_flags(state: var GameState) =
   let requested = state.requested_target_flags
+
   var flags: set[TargetFlag]
 
-  for flag in {CommandMode, TargetBlock, Editing, MouseCaptured}:
+  for flag in {CommandMode, TargetBlock, Editing, MouseCaptured, Retarget}:
     if flag in requested: flags.incl(flag)
 
   if Editing in requested:
@@ -38,6 +41,8 @@ proc apply_target_flags(state: var GameState) =
     flags.incl(Reticle)
 
   state.target_flags.set = flags
+  state.requested_target_flags = requested - EventFlags
+
 
 proc `mouse_captured=`*(state: var GameState, captured: bool) =
   state.requested_target_flags.set_flag(MouseCaptured, captured)
@@ -72,6 +77,9 @@ proc command_mode*(state: GameState): bool = CommandMode in state.target_flags
 proc target_block*(state: GameState): bool = TargetBlock in state.target_flags
 proc reticle*(state: GameState): bool = Reticle in state.target_flags
 proc editing*(state: GameState): bool = Editing in state.target_flags
+proc retarget*(state: var GameState) =
+  state.requested_target_flags.incl(Retarget)
+  state.apply_target_flags()
 
 when is_main_module:
   import std / [unittest, sugar]
