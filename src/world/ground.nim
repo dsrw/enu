@@ -30,7 +30,6 @@ gdobj Ground of MeshInstance:
         let b = c.as_object(Node)
         if b of Builder:
           let b = b.as(Builder)
-          echo "Looking at ", b.name
           if b.includes_any_location(voxels):
             b.draw(p, action_index)
             return
