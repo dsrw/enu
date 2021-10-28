@@ -3,12 +3,11 @@ import godotapi / [input, input_event, gd_os, node, scene_tree, viewport,
                    performance, label, theme, dynamic_font, resource_loader, main_loop,
                    gd_os, project_settings, input_map, input_event, input_event_action]
 import godot, model_citizen
-import std / [threadpool, monotimes, times, os, stats, jsonutils, json, math]
+import std / [monotimes, times, os, jsonutils, json, math]
 import core, globals
 
 const
   version = static_exec("git describe --tags HEAD")
-  initial_backoff = 1.seconds
 
 type
   UserConfig = object
@@ -41,29 +40,6 @@ gdobj Game of Node:
     echo $self.scene_packer.pack(data_node)
 
   method process*(delta: float) =
-    # when false:
-    #   # dynamic scaling. Needs work.
-    #   if time > self.downscale_at and (fps < config.target_fps - 1 or fps > config.target_fps + 1):
-    #     if self.upscaling:
-    #       self.upscaling = false
-    #       self.backoff += self.backoff
-    #     self.downscale_at = time + 2.seconds
-    #     self.upscale_at = time + self.backoff
-    #     self.render_scale = self.render_scale * 0.9
-    #
-    #     if self.render_scale < config.render_scale:
-    #       self.render_scale = config.render_scale
-    #
-    #   elif time > self.upscale_at and fps >= config.target_fps - 2:
-    #     self.upscaling = true
-    #     self.render_scale = self.render_scale * 1.02
-    #     self.downscale_at = time
-    #     self.upscale_at = time + 1.seconds
-    #
-    #   timer += delta
-    #   if timer >= 1:
-    #     timer = 0
-
     if config.show_stats:
       let
         fps = get_monitor(TIME_FPS)
@@ -182,7 +158,7 @@ gdobj Game of Node:
       echo &"loaded {config.scene}"
 
   method ready* =
-    self.scaled_viewport = self.get_node("ViewportContainer/Viewport").as(Viewport)
+    self.scaled_viewport = self.get_node("ViewportContainer/Viewport") as Viewport
     self.bind_signals(self.get_viewport(), "size_changed")
     assert not self.scaled_viewport.is_nil
     self.scene_packer = gdnew[PackedScene]()

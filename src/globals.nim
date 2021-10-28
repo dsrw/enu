@@ -34,7 +34,6 @@ var
   game_node*: Node
   data_node*: Node
   tool_mode* = BlockMode
-  open_file* = ""
   action_index* = 1
   action_count* = 6
   config*: Config
