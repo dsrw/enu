@@ -8,7 +8,7 @@ gdobj AimTarget of Sprite3D:
     last_collider: Spatial
     last_point, last_normal: Vector3
 
-  method ready*() =
+  method ready*() {.gdExport.} =
     trace:
       self.set_as_top_level(true)
       self.bind_signals(w"collider_exiting")
@@ -18,7 +18,7 @@ gdobj AimTarget of Sprite3D:
         self.visible = true
       if TargetBlock in removed:
         self.visible = false
-      if ((added + removed) * {TargetBlock, Reticle}).len > 0:
+      if ((added + removed) * {TargetBlock, Reticle, Retarget}).len > 0:
         # retarget
         if self.last_collider != nil:
           self.last_collider.trigger("target_out")
@@ -29,13 +29,14 @@ gdobj AimTarget of Sprite3D:
   proc update*(ray: RayCast) =
     ray.force_raycast_update()
     let collider = if ray.is_colliding():
-      ray.get_collider().as(Spatial)
+      ray.get_collider() as Spatial
     else:
       nil
 
     if collider != self.last_collider:
       if self.last_collider != nil:
         self.last_collider.trigger("target_out")
+      self.last_collider = collider
       if collider != nil:
         state.target_block = tool_mode != CodeMode
         collider.trigger("target_in")
@@ -48,9 +49,6 @@ gdobj AimTarget of Sprite3D:
       var
         global_normal = ray.get_collision_normal()
         local_point: Vector3
-
-
-      #self.translation = collider.to_global collision_point#collision_point #+ (collision_normal * 0.01)
 
       let inverse_normal = global_normal.inverse_normalized()
       let
@@ -82,8 +80,6 @@ gdobj AimTarget of Sprite3D:
         self.last_point = local_point
         self.last_normal = local_normal
         collider.trigger("target_move", local_point, local_normal)
-
-    self.last_collider = collider
 
   method on_collider_exiting(collider: Spatial) =
     if collider == self.last_collider:
