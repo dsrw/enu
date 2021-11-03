@@ -34,6 +34,7 @@ gdobj Terrain of VoxelTerrain:
     # all together.
     lost_voxels: Table[Vector3, seq[Vox]]
     root_terrain*: Terrain
+    rotational_change*: Vector3
 
   proc `highlighted=`*(val: bool) =
     self.highlighted = val

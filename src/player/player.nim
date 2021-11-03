@@ -1,12 +1,12 @@
 import godotapi / [kinematic_body, spatial, input, input_event,
                          input_event_mouse_motion, input_event_joypad_motion,
                          ray_cast, scene_tree, input_event_pan_gesture, viewport, camera, global_constants,
-                         collision_shape]
+                         collision_shape, kinematic_collision]
 import godot except print
 import model_citizen
 import math
 import core, globals, game, engine/engine, engine/contexts
-import aim_target
+import aim_target, world/terrain
 
 let
   angle_x_min = -PI / 2.25
@@ -63,6 +63,7 @@ gdobj Player of KinematicBody:
     result = move_direction * delta * speed
     if result.length() > max_speed:
       result = result.normalized() * max_speed
+
     if not flying:
       let float_time = if running:
         float_time + float_time
@@ -148,33 +149,44 @@ gdobj Player of KinematicBody:
 
   method physics_process*(delta: float) =
     trace:
+      for i in 0..(self.get_slide_count() - 1):
+        let collision = self.get_slide_collision(i)
+        let collider = collision.collider
+        if collider of Terrain:
+          let collider = collider as Terrain
+          self.camera_rig.rotation = self.camera_rig.rotation + collider.rotational_change
+
       if state.command_mode and self.command_timer > 0:
         self.command_timer -= delta
         if self.command_timer <= 0:
           state.command_mode = false
 
       const forward_rotation = deg_to_rad(-90.0)
-      if not state.editing or state.command_mode:
-        let
-          input_direction = self.get_input_direction()
-          basis   = self.camera_rig.global_transform.basis
-          right   = basis.x * input_direction.x
-          up      = UP * input_direction.y
-          forward = (basis.x * input_direction.z).rotated(UP, forward_rotation)
+      let process_input = not state.editing or state.command_mode
+      let
+        input_direction = if process_input: self.get_input_direction()
+                          else: vec3()
+        basis   = self.camera_rig.global_transform.basis
+        right   = basis.x * input_direction.x
+        up      = UP * input_direction.y
+        forward = (basis.x * input_direction.z).rotated(UP, forward_rotation)
 
-        var
-          move_direction = forward + right
+      var move_direction = forward + right
 
-        if move_direction.length() > 1.0:
-          move_direction = move_direction.normalized()
+      if move_direction.length() > 1.0:
+        move_direction = move_direction.normalized()
 
-        move_direction.y = 0
-        move_direction += up
+      move_direction.y = 0
+      move_direction += up
 
-        let velocity = self.calculate_velocity(self.velocity, move_direction,
-                                               delta, self.flying, self.running)
-        self.velocity = self.move_and_slide(velocity, UP)
 
+
+      var velocity = self.calculate_velocity(self.velocity, move_direction,
+                                             delta, self.flying, self.running)
+
+      self.velocity = self.move_and_slide(velocity, UP)
+
+      if process_input:
         # climb 1m blocks automatically
         if move_direction.length > 0.5:
           self.low_ray.cast_to = move_direction * 0.3

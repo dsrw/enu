@@ -191,6 +191,10 @@ gdobj Builder of Spatial:
     self.set_vars()
 
   method physics_process(delta: float64) =
+    let previous = self.rotation()
+    defer:
+      self.terrain.rotational_change = self.rotation() - previous
+
     if self.timers.len > 0:
       var timers = self.timers
       self.timers = @[]
