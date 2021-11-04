@@ -29,7 +29,8 @@ requires "nim >= 1.6.0",
          "https://github.com/dsrw/Nim#baaa50d",
          "https://github.com/dsrw/model_citizen#583f566",
          "cligen 1.5.19",
-         "print"
+         "print",
+         "chroma"
 
 proc gen: string =
   if generator_path == "":

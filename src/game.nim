@@ -316,4 +316,4 @@ gdobj Game of Node:
       elif event.is_action_pressed("mode_8"):
         self.obj_mode(7)
 
-proc get_game*(): Game = state.nodes.game as Game
+proc get_game*(): Game = Game(state.nodes.game)

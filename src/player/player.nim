@@ -295,4 +295,4 @@ gdobj Player of KinematicBody:
     elif event.is_action_released("remove"):
       get_game().trigger("mouse_released")
 
-proc get_player*(): Player = state.nodes.player as Player
+proc get_player*(): Player = Player(state.nodes.player)

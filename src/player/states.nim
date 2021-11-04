@@ -1,9 +1,10 @@
-import godotapi / node
 import std / tables
-import model_citizen
+import model_citizen, chroma
 import engine / engine
 
 type
+  V3*[T: int | float] = tuple[x, y, z: T]
+
   TargetFlag* = enum
     Reticle, TargetBlock, MouseCaptured, CommandMode, Editing, Retarget
 
@@ -13,9 +14,33 @@ type
     open_file*: string
     open_engine*: Engine
     nodes*: tuple[
-      game: Node,
-      player: Node
+      game: RootRef,
+      player: RootRef
     ]
+    units*: seq[Unit]
+
+  UnitKinds* = enum
+    RobotUnit, VoxelObjectUnit
+
+  Robot* = object
+  VoxelObject* = object
+    placed_blocks: tuple[location: V3[int], color: Color]
+    drawn_blocks: tuple[location: V3[int], color: Color]
+    holes: tuple[location: V3[int], color: Color]
+    draw_position: V3[float]
+    starting_color: Color
+
+  Unit* = object
+    units: seq[Unit]
+    local: bool
+    starting_position: V3[float]
+    position: V3[float]
+    scale: float
+    speed: float
+
+    case kind: UnitKinds
+    of RobotUnit: robot: Robot
+    of VoxelObjectUnit: voxel_object: VoxelObject
 
 let EventFlags = {Retarget}
 
@@ -42,7 +67,6 @@ proc apply_target_flags(state: var GameState) =
 
   state.target_flags.set = flags
   state.requested_target_flags = requested - EventFlags
-
 
 proc `mouse_captured=`*(state: var GameState, captured: bool) =
   state.requested_target_flags.set_flag(MouseCaptured, captured)
@@ -82,7 +106,7 @@ proc retarget*(state: var GameState) =
   state.apply_target_flags()
 
 when is_main_module:
-  import std / [unittest, sugar]
+  import std/unittest
 
   var state = GameState()
 
