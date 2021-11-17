@@ -1,9 +1,12 @@
-import std / tables
+import std / [tables, monotimes]
 import model_citizen, chroma
-import engine / engine
+import core/godotcoretypes except Color
+from core/godotcoretypes as GD import nil
+import engine/engine
 
 type
   V3*[T: int | float] = tuple[x, y, z: T]
+  V2*[T: int | float] = tuple[x, y: T]
 
   TargetFlag* = enum
     Reticle, TargetBlock, MouseCaptured, CommandMode, Editing, Retarget
@@ -12,6 +15,7 @@ type
     target_flags*: TrackedSet[TargetFlag]
     requested_target_flags: set[TargetFlag]
     open_file*: string
+    config*: Config
     open_engine*: Engine
     nodes*: tuple[
       game: RootRef,
@@ -19,28 +23,58 @@ type
     ]
     units*: seq[Unit]
 
-  UnitKinds* = enum
-    RobotUnit, VoxelObjectUnit
+  Unit* = ref object of RootObj
+    parent*: Unit
+    units*: seq[Unit]
+    local*: bool
+    starting_position*: V3[float]
+    position*: V3[float]
+    scale*: float
+    speed*: float
+    script_ctx*: ScriptCtx
+    disabled*: bool
 
-  Robot* = object
-  VoxelObject* = object
-    placed_blocks: tuple[location: V3[int], color: Color]
-    drawn_blocks: tuple[location: V3[int], color: Color]
-    holes: tuple[location: V3[int], color: Color]
-    draw_position: V3[float]
-    starting_color: Color
+  BlockKind = enum
+    Hole, Manual, Computed
 
-  Unit* = object
-    units: seq[Unit]
-    local: bool
-    starting_position: V3[float]
-    position: V3[float]
-    scale: float
-    speed: float
+  Block* = object
+    position: V3[int]
+    color: Color
+    kind: BlockKind
 
-    case kind: UnitKinds
-    of RobotUnit: robot: Robot
-    of VoxelObjectUnit: voxel_object: VoxelObject
+  Robot* = ref object of Unit
+  Build* = ref object of Unit
+    blocks*: Table[V2, seq[Block]]
+    draw_position*: V3[float]
+    starting_color*: Color
+    blocks_per_frame*: float
+    blocks_remaining_this_frame*: float
+    drawing*: bool
+    moving*: bool
+    save_points*: Table[string, tuple[position: GD.Transform, index: int, drawing: bool]]
+
+  Callback* = proc(delta: float): bool
+  ScriptCtx* = ref object
+    script*: string
+    engine*: Engine
+    timer*: MonoTime
+    prefix*: string
+    paused*: bool
+    id*: int
+    load_vars*: proc()
+    reload_script*: proc()
+    is_clone*: bool
+
+  Config* = object
+    font_size*: int
+    dock_icon_size*: float
+    world*: string
+    show_stats*: bool
+    mega_pixels*: float
+    world_dir*: string
+    script_dir*: string
+    scene*: string
+    lib_dir*: string
 
 let EventFlags = {Retarget}
 

@@ -131,9 +131,9 @@ gdobj Player of KinematicBody:
 
   proc load_script() =
     let ctx = ScriptCtx(engine: Engine.init())
-    ctx.script = config.lib_dir & "/enu/players.nim"
+    ctx.script = state.config.lib_dir & "/enu/players.nim"
     let code = read_file ctx.script
-    ctx.engine.load(config.script_dir, ctx.script, code, config.lib_dir, "")
+    ctx.engine.load(state.config.script_dir, ctx.script, code, state.config.lib_dir, "")
     ctx.engine.expose "quit", proc(a: VmArgs): bool =
       engine.pause(ctx.engine)
       ctx.engine.running = false

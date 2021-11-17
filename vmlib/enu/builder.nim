@@ -7,7 +7,6 @@ var
   speed* = 1.0
   drawing* = true
   color*: ColorIndex
-  overwrite* = false
   move_mode* = false
   scale* = 1.0
   energies: Table[ColorIndex, float]
@@ -72,12 +71,11 @@ proc energy*(color: ColorIndex): var float =
 # Helpers
 proc load_defaults()             = discard
 
-proc set_vars*(color_index: int, drw: bool, spd, scl: float, ow, mv: bool) =
+proc set_vars*(color_index: int, drw: bool, spd, scl: float, mv: bool) =
   color = ColorIndex color_index
   drawing = drw
   speed = spd
   scale = scl
-  overwrite = ow
   move_mode = mv
 
 proc fill_square*(length = 1) =

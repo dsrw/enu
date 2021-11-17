@@ -13,17 +13,6 @@ type
   Vox* = tuple[location: Vector3, data: VoxData]
   VoxTable* = Table[Vector3, VoxData]
 
-  Config* = object
-    font_size*: int
-    dock_icon_size*: float
-    world*: string
-    show_stats*: bool
-    mega_pixels*: float
-    world_dir*: string
-    script_dir*: string
-    scene*: string
-    lib_dir*: string
-
 var
   reload_scripts*: proc()
   save_and_reload*: proc()
@@ -36,7 +25,6 @@ var
   tool_mode* = BlockMode
   action_index* = 1
   action_count* = 6
-  config*: Config
   game_ready* = false
   gravity* = -240.0
   state* = GameState()
@@ -49,6 +37,11 @@ proc info*(args: varargs[string, `$`]) =
 
 proc err*(args: varargs[string, `$`]) =
   logger "err", args.join
+
+proc vec3*[T](v: V3[T]): Vector3 =
+  vec3(float v.x, float v.y, float v.z)
+
+proc v3*(v: Vector3): V3[float] = (float v.x, float v.y, float v.z)
 
 proc bind_signals*(receiver, sender: Node, signals: varargs[string]) =
   let send_node = if sender == nil:

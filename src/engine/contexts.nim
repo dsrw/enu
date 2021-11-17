@@ -2,21 +2,9 @@ import std / [monotimes, os, hashes, sets, strutils]
 import core, globals, engine/engine, types
 import godot
 import godotapi / [node]
+import player/states
 
 export engine
-
-type
-  Callback* = proc(delta: float): bool
-  ScriptCtx* = ref object
-    speed: float
-    script*: string
-    engine*: Engine
-    timer: MonoTime
-    prefix: string
-    paused: bool
-    load_vars*: proc()
-    reload_script: proc()
-    is_clone*: bool
 
 using self: auto
 
@@ -24,13 +12,13 @@ const ADVANCE_STEP = 0.5.seconds
 
 var
   module_names: HashSet[string]
-  current_active_node: Node
+  current_active_node: RootRef
   ctxs: Table[Engine, ScriptCtx]
   failed: seq[tuple[ctx: ScriptCtx, ex: ref VMQuit]]
   starting = true
   modules_to_load: HashSet[ScriptCtx]
 
-template ctx: untyped = self.script_ctx
+template ctx: untyped = self.unit.script_ctx
 
 proc destroy*(ctx: ScriptCtx) =
   if ctx.engine in ctxs:
@@ -43,7 +31,7 @@ proc init*(t: typedesc[ScriptCtx], prefix: string): ScriptCtx =
   modules_to_load.incl result
 
 proc active_ctx*(): ScriptCtx = ctxs[active_engine()]
-proc active_node*(): Node = current_active_node
+proc active_node*(): RootRef = current_active_node
 
 proc is_script_loadable*(self): bool =
   ctx.script != "none" and ctx.script.file_exists
@@ -52,12 +40,12 @@ proc engine*(self): Engine = ctx.engine
 proc script*(self): string = ctx.script
 proc paused*(self): bool = ctx.paused
 proc `paused=`*(self; paused: bool) = ctx.paused = paused
-proc speed*(self): float = ctx.speed
-proc `speed=`*(self; speed: float) = ctx.speed = speed
+proc speed*(self): float = self.unit.speed
+proc `speed=`*(self; speed: float) = self.unit.speed = speed
 
 proc set_script*(self) =
   let path = ctx.prefix & &"_{self.script_index}.nim"
-  ctx.script = join_path(config.script_dir, path)
+  ctx.script = join_path(state.config.script_dir, path)
 
 proc start_advance_timer*(ctx: ScriptCtx) =
   ctx.timer = get_mono_time() + ADVANCE_STEP
@@ -87,7 +75,7 @@ proc advance*(self; delta: float64) =
       discard e.resume()
 
 proc load_vars*(self) =
-  let active_name = if active_node().is_nil: "nil" else: active_node().name
+  let active_name = if active_node().is_nil: "nil" else: Node(active_node()).name
   let e = ctx.engine
   when compiles(self.on_load_vars):
     self.on_load_vars()
@@ -140,12 +128,12 @@ proc retry_failed_scripts =
       failed = @[]
 
 proc clone(self): bool =
-  let node = active_node()
+  let node = Node(active_node())
   # TODO: Fix this
   let target = node.get_node("OwnedNodes")
   let ae = active_engine()
   let new_node = self.on_clone(target, active_ctx())
-  let new_engine = new_node.script_ctx.engine
+  let new_engine = new_node.unit.script_ctx.engine
   ae.callback = proc(delta: float): bool =
     not new_engine.initialized
   set_active(ae)
@@ -182,7 +170,7 @@ proc load_script*(self; script = "", retry_failed = true) =
       let initialized = ctx.engine.initialized
       let suffex = if ctx.is_clone: "_clone" & $self.script_index else: ""
       ctx.load_vars = proc() = self.load_vars()
-      ctx.engine.load(config.script_dir, ctx.script, code, config.lib_dir, suffex)
+      ctx.engine.load(state.config.script_dir, ctx.script, code, state.config.lib_dir, suffex)
       if not initialized:
         with ctx.engine:
           expose "yield_script", proc(a: VmArgs):bool =

@@ -40,7 +40,7 @@ gdobj Game of Node:
     echo $self.scene_packer.pack(data_node)
 
   method process*(delta: float) =
-    if config.show_stats:
+    if state.config.show_stats:
       let
         fps = get_monitor(TIME_FPS)
         time = get_mono_time()
@@ -63,7 +63,7 @@ gdobj Game of Node:
 
     trace:
       if self.saving and not self.save_thread.running:
-        debug $save(config.scene, self.scene_packer)
+        debug $save(state.config.scene, self.scene_packer)
         self.saving = false
       elif not self.saving and self.save_requested and now() > self.save_requested.get:
         self.save_requested = none(DateTime)
@@ -74,7 +74,7 @@ gdobj Game of Node:
 
   proc rescale*() =
     let vp = self.get_viewport().size
-    self.scale_factor = sqrt(config.mega_pixels * 1_000_000.0 / (vp.x * vp.y))
+    self.scale_factor = sqrt(state.config.mega_pixels * 1_000_000.0 / (vp.x * vp.y))
     self.scaled_viewport.size = vp * self.scale_factor
 
   method notification*(what: int) =
@@ -112,19 +112,19 @@ gdobj Game of Node:
       initial_user_config.from_json(read_file(config_file).parse_json, opt)
 
     var uc = initial_user_config
-    config = Config()
-    with config:
+    state.config = Config()
+    with state.config:
       font_size = uc.font_size ||= (14 * screen_scale).int
       dock_icon_size = uc.dock_icon_size ||= 50 * screen_scale
       world = uc.world ||= "default"
       show_stats = uc.show_stats ||= false
       mega_pixels = uc.mega_pixels ||= 2.0
-      world_dir = join_path(work_dir, config.world)
-      script_dir = join_path(config.world_dir, "scripts")
-      scene = join_path(config.world_dir, "data.tscn")
+      world_dir = join_path(work_dir, state.config.world)
+      script_dir = join_path(state.config.world_dir, "scripts")
+      scene = join_path(state.config.world_dir, "data.tscn")
       lib_dir = join_path(get_executable_path().parent_dir(), "..", "..", "..", "vmlib")
 
-    create_dir(config.script_dir)
+    create_dir(state.config.script_dir)
     if uc != initial_user_config:
       config_file.write_file(uc.to_json.pretty)
 
@@ -138,24 +138,24 @@ gdobj Game of Node:
       elif host_os == "linux":
         config.lib_dir = join_path(exe_dir.parent_dir, "lib", "vmlib")
 
-    print config
+    print state.config
 
   proc load_world() =
     data_node = self.find_node("data")
     assert not data_node.is_nil
 
-    if file_exists(config.scene):
+    if file_exists(state.config.scene):
       let
         pos = data_node.get_position_in_parent()
         parent = data_node.getParent()
-        packed_scene = load(config.scene) as PackedScene
+        packed_scene = load(state.config.scene) as PackedScene
 
       parent.remove_child(data_node)
       data_node = packed_scene.instance()
       parent.add_child(data_node)
       parent.move_child(data_node, pos)
       data_node.owner = parent
-      echo &"loaded {config.scene}"
+      echo &"loaded {state.config.scene}"
 
   method ready* =
     self.scaled_viewport = self.get_node("ViewportContainer/Viewport") as Viewport
@@ -176,13 +176,13 @@ gdobj Game of Node:
       bold_font = theme.get_font("bold_font", "RichTextLabel")
                         .as(DynamicFont)
 
-    font.size = config.font_size
-    bold_font.size = config.font_size
+    font.size = state.config.font_size
+    bold_font.size = state.config.font_size
     theme_holder.theme = theme
 
     self.reticle = self.find_node("Reticle").as(Control)
     self.stats = self.find_node("stats").as(Label)
-    self.stats.visible = config.show_stats
+    self.stats.visible = state.config.show_stats
 
     globals.reload_scripts = proc() =
       trigger("save")
