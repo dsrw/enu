@@ -1,6 +1,6 @@
 import std / [monotimes, os, hashes, sets, strutils]
 import core, globals, engine/engine, types
-import godot, compiler/idgen
+import godot
 import godotapi / [node]
 
 export engine
@@ -14,7 +14,6 @@ type
     timer: MonoTime
     prefix: string
     paused: bool
-    id: int
     load_vars*: proc()
     reload_script: proc()
     is_clone*: bool
@@ -37,10 +36,9 @@ proc destroy*(ctx: ScriptCtx) =
   if ctx.engine in ctxs:
     ctxs.del(ctx.engine)
 
-proc hash*(s: ScriptCtx): Hash = s.id.hash
 proc init*(t: typedesc[ScriptCtx], prefix: string): ScriptCtx =
   let e = Engine.init()
-  result = ScriptCtx(id: get_id(), engine: e, timer: MonoTime.high, prefix: prefix)
+  result = ScriptCtx(engine: e, timer: MonoTime.high, prefix: prefix)
   ctxs[e] = result
   modules_to_load.incl result
 

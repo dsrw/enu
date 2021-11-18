@@ -24,11 +24,11 @@ bin_dir       = "app/_dlls"
 src_dir       = "src"
 bin           = @["enu" & lib_ext]
 
-requires "nim >= 1.4.0",
+requires "nim >= 1.6.0",
          "https://github.com/dsrw/godot-nim#f2af444",
-         "https://github.com/dsrw/Nim#1d5093d",
+         "https://github.com/dsrw/Nim#baaa50d",
          "https://github.com/dsrw/model_citizen#583f566",
-         "cligen 1.2.2",
+         "cligen 1.5.19",
          "print"
 
 proc gen: string =

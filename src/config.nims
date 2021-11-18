@@ -3,6 +3,7 @@
 --threads:on
 --tlsEmulation:off
 --threadAnalysis:off
+--define:nimPreviewHashRef
 
 if project_name() == "enu":
   --app:lib

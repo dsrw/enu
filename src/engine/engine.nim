@@ -1,4 +1,4 @@
-import compiler / [vm, vmdef, options, lineinfos, ast, idgen]
+import compiler / [vm, vmdef, options, lineinfos, ast]
 import types, eval
 import std / [os, strformat, with, parseutils, hashes]
 import core
@@ -29,7 +29,6 @@ type
     errors*: seq[tuple[msg: string, info: TLineInfo]]
     callback*: Callback
     saved_callback*: Callback
-    id: int
     running*: bool
 
 const
@@ -41,14 +40,12 @@ var
   interpreter: Interpreter
   current: Engine
 
-proc hash*(e: Engine): Hash = e.id.hash
 proc active_engine*(): Engine = current
 proc set_active*(e: Engine) =
   current = e
 
 proc init*(t: typedesc[Engine]): Engine =
   result = Engine()
-  result.id = get_id()
 
 proc init_interpreter(script_dir, vmlib: string) =
   let std_paths = STDLIB_PATHS.map_it join_path(vmlib, "stdlib", it)
