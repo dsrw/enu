@@ -24,15 +24,7 @@ proc on_clone(target: Node, ctx: ScriptCtx): Builder =
   # result.saved_block_colors = self.saved_block_colors
   # result.restore_blocks()
 
-proc draw(self: Build, position: Vector3, index: int, keep = false) =
-  if (not keep) and loc in self.holes and
-     not self.overwrite and index != self.holes[loc]:
-    self.kept_holes[loc] = self.holes[loc]
-  elif (not keep) and not root.is_nil and root_loc in root.holes and
-       not self.overwrite and index != root.holes[root_loc]:
-    root.kept_holes[root_loc] = root.holes[root_loc]
-  else:
-    self.terrain.draw(x, y, z, index, keep, trigger)
+
 
 proc update_running_state(running: bool) =
   self.engine.running = running

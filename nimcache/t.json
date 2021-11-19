@@ -1,0 +1,8 @@
+{"compile":[
+],
+"link":[
+"/Users/scott/src/github.com/dsrw/enu/nimcache/stdlib_system.o",
+"/Users/scott/src/github.com/dsrw/enu/nimcache/enu_t.o"
+],
+"linkcmd": "clang   -o /Users/scott/src/github.com/dsrw/enu/t  /Users/scott/src/github.com/dsrw/enu/nimcache/stdlib_system.o /Users/scott/src/github.com/dsrw/enu/nimcache/enu_t.o    -ldl"
+}

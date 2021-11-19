@@ -1,7 +1,7 @@
 --define:useRealtimeGC
 --define:vmExecHooks
 --threads:on
---tlsEmulation:off
+#--tlsEmulation:off
 --threadAnalysis:off
 --define:nimPreviewHashRef
 

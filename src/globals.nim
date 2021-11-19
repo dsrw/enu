@@ -1,7 +1,7 @@
 import godot,
        godotapi / [node, scene_tree, voxel_buffer],
        std / [strformat, strutils, sequtils, tables, sets]
-import engine/engine, core, player/states
+import engine/engine, core, models
 
 export strformat.`&`, states
 
