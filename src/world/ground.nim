@@ -1,6 +1,6 @@
 import godotapi / [mesh_instance, node, spatial, resource_loader, packed_scene]
 import godot, sugar
-import core, globals, world / [builder, bot, terrain]
+import core, globals, world / [build_node, bot]
 
 gdobj Ground of MeshInstance:
   var
@@ -8,7 +8,6 @@ gdobj Ground of MeshInstance:
     painting = false
 
   method ready*() =
-    let level = self.get_parent.get_parent
     self.bind_signals(self, w"target_move target_fire")
     self.bind_signals("mouse_released")
 
@@ -28,8 +27,8 @@ gdobj Ground of MeshInstance:
       self.painting = true
       for c in data_node.get_children():
         let b = c.as_object(Node)
-        if b of Builder:
-          let b = b.as(Builder)
+        if b of BuildNode:
+          let b = b.as(BuildNode)
           if b.includes_any_location(voxels):
             b.draw(p, action_index)
             return

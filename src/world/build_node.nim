@@ -1,6 +1,6 @@
 import godotapi / [spatial, resource_loader, packed_scene]
 import godot
-import std / [tables, math, sets, sugar, sequtils, hashes, os, monotimes, macros]
+import std / [tables, math, sets, sugar, sequtils, hashes, os, monotimes]
 import core, globals, world / [terrain]
 import engine/contexts
 export contexts
@@ -20,7 +20,7 @@ iterator child_objects(self: Node): Node =
     let child = v.as_object(Node)
     yield child
 
-gdobj Builder of Spatial:
+gdobj BuildNode of Spatial:
   var
     script_ctx: ScriptCtx
     script_index* {.gdExport.} = 0
@@ -48,7 +48,7 @@ gdobj Builder of Spatial:
     # the voxel gets drawn anyway, and the polys hang around until they
     # move out of draw distance. Wait a bit before clearing. FIXME.
     timers: seq[Timer]
-    root_builder: Builder
+    root_builder: BuildNode
 
   proc init*() =
     self.script_ctx = ScriptCtx.init("grid")
@@ -62,7 +62,7 @@ gdobj Builder of Spatial:
     if not self.script_ctx.is_clone:
       self.set_script()
     if self.script_ctx.is_clone:
-      self.root_builder = self.find_root().as(Builder)
+      self.root_builder = self.find_root().as(BuildNode)
     self.translation = self.original_translation
     self.terrain = self.find_node("Terrain") as Terrain
     if not self.root_builder.is_nil:
@@ -86,20 +86,20 @@ gdobj Builder of Spatial:
     else:
       self.script_index = script_index
     inc max_grid_index
-    self.name = "Builder_" & $self.script_index
+    self.name = "Build_" & $self.script_index
     if not self.script_ctx.is_clone:
       self.set_script()
       write_file self.script, ""
 
-  proc on_clone(target: Node, ctx: ScriptCtx): Builder =
+  proc on_clone(target: Node, ctx: ScriptCtx): BuildNode =
     let owner = target.get_parent.as(Spatial)
     var t = owner.global_transform.origin
     var diff = vec3()
-    let builder = owner.as(Builder)
+    let builder = owner.as(BuildNode)
     if not builder.is_nil:
       t = builder.position.origin.snapped(vec3(1, 1, 1))
       diff = t - self.global_transform.origin
-    result = create_builder(t, target, self.script_ctx.script, is_clone = true).as(Builder)
+    result = create_builder(t, target, self.script_ctx.script, is_clone = true).as(BuildNode)
     result.saved_holes = self.saved_holes.map_it(it + diff)
 
     result.saved_blocks = self.saved_blocks.map_it(it + diff)
@@ -386,7 +386,7 @@ gdobj Builder of Spatial:
     state.editing = true
 
   method on_selected() =
-    var t = self.find_root().as(Builder)
+    var t = self.find_root().as(BuildNode)
     if t.is_nil:
       t = self
     state.open_file = t.script
@@ -466,8 +466,8 @@ gdobj Builder of Spatial:
 
 proc create_builder*(point: Vector3, parent: Node, script = "", is_clone = false): Node {.discardable.} =
   let
-    proto = load("res://components/Builder.tscn") as PackedScene
-    b = proto.instance() as Builder
+    proto = load("res://components/BuildNode.tscn") as PackedScene
+    b = proto.instance() as BuildNode
     is_clone = parent != data_node
   assert not b.is_nil
   b.script_ctx.is_clone = is_clone

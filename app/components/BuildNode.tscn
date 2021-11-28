@@ -1,6 +1,6 @@
 [gd_scene load_steps=26 format=2]
 
-[ext_resource path="res://components/Builder.gdns" type="Script" id=1]
+[ext_resource path="res://components/BuildNode.gdns" type="Script" id=1]
 [ext_resource path="res://textures/tile_nrm.png" type="Texture" id=4]
 [ext_resource path="res://textures/green_block.png" type="Texture" id=5]
 [ext_resource path="res://textures/black_block.png" type="Texture" id=6]
@@ -239,7 +239,7 @@ shader_param/uv2_offset = Vector3( 0, 0, 0 )
 shader_param/texture_albedo = ExtResource( 7 )
 shader_param/texture_normal = ExtResource( 4 )
 
-[node name="Builder" type="Spatial"]
+[node name="Build" type="Spatial"]
 script = ExtResource( 1 )
 
 [node name="OwnedNodes" type="Spatial" parent="."]
