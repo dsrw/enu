@@ -24,11 +24,12 @@ gdobj Console of RichTextLabel:
   method ready*() =
     trace:
       self.bind_signals w"clear_console toggle_console"
-    state.target_flags.track proc(added, removed: set[TargetFlag]) =
-      if MouseCaptured in added:
-        self.mouse_filter = MOUSE_FILTER_IGNORE
-      if MouseCaptured in removed:
-        self.mouse_filter = self.default_mouse_filter
+    state.target_flags.track proc(changes: auto) =
+      for change in changes:
+        if MouseCaptured == change.obj and Added in change.kinds:
+          self.mouse_filter = MOUSE_FILTER_IGNORE
+        elif MouseCaptured == change.obj and Removed in change.kinds:
+          self.mouse_filter = self.default_mouse_filter
 
   method process*(delta: float) =
     trace:

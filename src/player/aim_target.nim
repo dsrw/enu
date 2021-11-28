@@ -13,12 +13,14 @@ gdobj AimTarget of Sprite3D:
       self.set_as_top_level(true)
       self.bind_signals(w"collider_exiting")
 
-    state.target_flags.track proc(added, removed: set[TargetFlag]) =
-      if TargetBlock in added:
-        self.visible = true
-      if TargetBlock in removed:
-        self.visible = false
-      if ((added + removed) * {TargetBlock, Reticle, Retarget}).len > 0:
+    state.target_flags.track proc(changes: auto) =
+      for change in changes:
+        if TargetBlock == change.obj and Added in change.kinds:
+          self.visible = true
+        elif TargetBlock == change.obj and Removed in change.kinds:
+          self.visible = false
+
+      if changes.any_it(it.obj in {TargetBlock, Reticle, Retarget}):
         # retarget
         if self.last_collider != nil:
           self.last_collider.trigger("target_out")

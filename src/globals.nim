@@ -1,9 +1,9 @@
 import godot,
        godotapi / [node, scene_tree, voxel_buffer],
        std / [strformat, strutils, sequtils, tables, sets]
-import engine/engine, core, player/states
+import engine/engine, core, models / [states, types]
 
-export strformat.`&`, states
+export strformat.`&`, states, types
 
 type
   ToolMode* = enum
@@ -12,17 +12,6 @@ type
   VoxData* = tuple[index: int, keep: bool]
   Vox* = tuple[location: Vector3, data: VoxData]
   VoxTable* = Table[Vector3, VoxData]
-
-  Config* = object
-    font_size*: int
-    dock_icon_size*: float
-    world*: string
-    show_stats*: bool
-    mega_pixels*: float
-    world_dir*: string
-    script_dir*: string
-    scene*: string
-    lib_dir*: string
 
 var
   reload_scripts*: proc()
@@ -39,7 +28,7 @@ var
   config*: Config
   game_ready* = false
   gravity* = -240.0
-  state* = GameState()
+  state* = GameState.init
 
 proc debug*(args: varargs[string, `$`]) =
   logger("debug", args.join)

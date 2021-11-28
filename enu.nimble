@@ -25,11 +25,12 @@ src_dir       = "src"
 bin           = @["enu" & lib_ext]
 
 requires "nim >= 1.6.0",
-         "https://github.com/dsrw/godot-nim#f2af444",
+         "https://github.com/pragmagic/godot-nim#982ab52",
          "https://github.com/dsrw/Nim#baaa50d",
-         "https://github.com/dsrw/model_citizen#583f566",
+         "https://github.com/dsrw/model_citizen 0.2.1",
          "cligen 1.5.19",
-         "print"
+         "chroma",
+         "print 1.0.2"
 
 proc gen: string =
   if generator_path == "":

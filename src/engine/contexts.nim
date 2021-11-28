@@ -5,19 +5,6 @@ import godotapi / [node]
 
 export engine
 
-type
-  Callback* = proc(delta: float): bool
-  ScriptCtx* = ref object
-    speed: float
-    script*: string
-    engine*: Engine
-    timer: MonoTime
-    prefix: string
-    paused: bool
-    load_vars*: proc()
-    reload_script: proc()
-    is_clone*: bool
-
 using self: auto
 
 const ADVANCE_STEP = 0.5.seconds

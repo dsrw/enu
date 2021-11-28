@@ -202,20 +202,21 @@ gdobj Game of Node:
     globals.pause = proc() =
       trigger("pause")
 
-    state.target_flags.track proc(added, removed: set[TargetFlag]) =
-      if MouseCaptured in added:
-        let center = self.get_viewport().get_visible_rect().size * 0.5
-        self.saved_mouse_position = self.get_viewport().get_mouse_position()
-        warp_mouse_position(center)
-        set_mouse_mode MOUSE_MODE_CAPTURED
-      if MouseCaptured in removed:
-        set_mouse_mode MOUSE_MODE_VISIBLE
-        warp_mouse_position(self.saved_mouse_position)
+    state.target_flags.track proc(changes: auto) =
+      for change in changes:
+        if change.obj == MouseCaptured and Added in change.kinds:
+          let center = self.get_viewport().get_visible_rect().size * 0.5
+          self.saved_mouse_position = self.get_viewport().get_mouse_position()
+          warp_mouse_position(center)
+          set_mouse_mode MOUSE_MODE_CAPTURED
+        elif change.obj == MouseCaptured and Removed in change.kinds:
+          set_mouse_mode MOUSE_MODE_VISIBLE
+          warp_mouse_position(self.saved_mouse_position)
 
-      if Reticle in added:
-        self.reticle.visible = true
-      if Reticle in removed:
-        self.reticle.visible = false
+        if change.obj == Reticle and Added in change.kinds:
+          self.reticle.visible = true
+        elif change.obj == Reticle and Removed in change.kinds:
+          self.reticle.visible = false
 
     state.mouse_captured = true
     game_ready = true
@@ -316,4 +317,4 @@ gdobj Game of Node:
       elif event.is_action_pressed("mode_8"):
         self.obj_mode(7)
 
-proc get_game*(): Game = state.nodes.game as Game
+proc get_game*(): Game = Game(state.nodes.game)
