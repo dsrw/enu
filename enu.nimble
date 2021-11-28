@@ -27,9 +27,9 @@ bin           = @["enu" & lib_ext]
 requires "nim >= 1.6.0",
          "https://github.com/dsrw/godot-nim#f2af444",
          "https://github.com/dsrw/Nim#baaa50d",
-         "https://github.com/dsrw/model_citizen 0.1.2",
+         "https://github.com/dsrw/model_citizen 0.2.1",
          "cligen 1.5.19",
-         "print",
+         "print 1.0.2",
          "chroma"
 
 proc gen: string =

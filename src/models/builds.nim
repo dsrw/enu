@@ -1,40 +1,43 @@
-import std / [math, hashes, tables, sets]
-import print, compiler/vmdef
+import std / [hashes, tables, sets]
+import pkg / [print, model_citizen, compiler/vmdef]
 import types
-const BufferSize: V2[int] = (16, 16)
+const BufferSize = (16, 16, 16)
 
-proc hash(v: Voxel): Hash = v.position.hash
+proc init*(t: typedesc[Build], root = false, position = (0.0, 0.0, 0.0)): Build =
+  Build(root: root, voxels: result.voxels.type.init, position: position)
 
-proc find_root(self: Build): Build =
-  result = self
+proc code_template(self: Unit, file: string, imports: string): string =
+  default_builder(state.config.script_dir & "/" & file, imports, self.script_ctx.is_clone)
+
+proc find_root(self: Build): tuple[build: Build, offset: V3[float]] =
+  result.build = self
   var parent = self.parent
-  while parent != nil:
+  while parent != nil and not result.build.root:
     if parent of Build:
-      result = Build(parent)
+      result.build = Build(parent)
+      result.offset += result.build.position
     parent = parent.parent
 
-proc draw(self: Build, voxel: Voxel) =
+proc draw(self: Build, position: V3[int], voxel: Voxel) =
   var target = self
+  var offset: V3[float]
   if voxel.kind in {Manual, Hole}:
-    target = self.find_root
+    (target, offset) = self.find_root
 
-  let buf: V2[int] = ((voxel.position.x / BufferSize.x).floor.int,
-                      (voxel.position.y / BufferSize.y).floor.int)
-
-  self.voxels.mget_or_put(buf, HashSet[Voxel].default)
-             .incl voxel
+  let buf = (position / BufferSize)
+  let position = position - offset.to_int - (buf * BufferSize)
+  target.voxels[buf][position] = voxel
 
 when is_main_module:
   import unittest
-  #converter toint(a: distinct int): int =
-  #  int(a)
 
+  var b = Build.init(root = true)
+  b.draw (1, 1, 1), Voxel(kind: Computed)
+  check (1, 1, 1) in b.voxels[(0, 0, 0)]
+  b.draw (17, 17, 17), Voxel(kind: Computed)
+  check (1, 1, 1) in b.voxels[(1, 1, 1)]
+  var c = Build.init(position = (5, 5, 5))
+  c.parent = b
 
-  var b = Build()
-  b.draw Voxel(position: (1, 1, 1), kind: Computed)
-  echo "hi"
-  # type MyInt = distinct int
-  # let a = MyInt(5)
-  # let c: int = a.toint
-  print b
-  echo "bye"
+  c.draw (14, 14, 14), Voxel(kind: Manual)
+  print c

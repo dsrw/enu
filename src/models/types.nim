@@ -1,4 +1,4 @@
-import std / [tables, monotimes, sets]
+import std / [tables, monotimes, sets, genasts, macros]
 import model_citizen, chroma
 from core/godotcoretypes as GD import nil
 import engine/engine
@@ -11,7 +11,7 @@ type
     Reticle, TargetBlock, MouseCaptured, CommandMode, Editing, Retarget
 
   GameState* = object
-    target_flags*: TrackedSet[TargetFlag]
+    target_flags*: ZenSet[TargetFlag]
     requested_target_flags: set[TargetFlag]
     open_file*: string
     config*: Config
@@ -39,17 +39,17 @@ type
     Hole, Manual, Computed
 
   Voxel* = object
-    position*: V3[int]
     color*: Color
     kind*: VoxelKind
 
   Build* = ref object of Unit
-    voxels*: Table[V2[int], HashSet[Voxel]]
+    voxels*: ZenTable[V3[int], ZenTable[V3[int], Voxel]]
     draw_position*: V3[float]
     starting_color*: Color
     voxels_per_frame*: float
     drawing*: bool
     moving*: bool
+    root*: bool
     save_points*: Table[string, tuple[position: GD.Transform, index: int, drawing: bool]]
 
   Callback* = proc(delta: float): bool
@@ -73,3 +73,21 @@ type
     script_dir*: string
     scene*: string
     lib_dir*: string
+
+macro ops(syms: varargs[untyped]): untyped =
+  result = new_stmt_list()
+  for sym in syms:
+    result.add:
+      gen_ast(sym, sym_eq = ident($sym & "=")):
+        proc sym*[T: float | int](a, b: V3[T]): V3[T] =
+          (T sym(a.x, b.x), T sym(a.y, b.y), T sym(a.z, b.z))
+        proc sym_eq*[T: float | int](a: var V3[T], b: V3[T]) =
+          a = sym(a, b)
+
+ops `*`, `/`, `+`, `-`
+
+converter to_float*(self: V3[int]): V3[float] =
+  (self.x.float, self.y.float, self.z.float)
+
+proc to_int*(self: V3[float]): V3[int] =
+  (self.x.int, self.y.int, self.z.int)

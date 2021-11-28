@@ -4,9 +4,6 @@ import states, engine/contexts
 proc init*(self: typedesc[VoxelObject]) =
   self.set_script()
 
-proc code_template(self: Unit, file: string, imports: string): string =
-  default_builder(state.config.script_dir & "/" & file, imports, self.script_ctx.is_clone)
-
 proc on_clone(target: Node, ctx: ScriptCtx): Builder =
   discard
   # TODO
