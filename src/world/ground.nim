@@ -1,6 +1,6 @@
 import godotapi / [mesh_instance, node, spatial, resource_loader, packed_scene]
 import godot, sugar
-import core, globals, world / [build_node, bot]
+import core, globals, world / [build_node, bot_node]
 
 gdobj Ground of MeshInstance:
   var

@@ -7,7 +7,7 @@ include helper
 import compiler / [vm, vmdef, options, lineinfos, ast, astalgo, renderer]
 
 config.script_dir &= "/instancing"
-let b = gdnew[NimBot]()
+let b = gdnew[BotNode]()
 
 let script = nim_filename().parent_dir & "/scripts/instancing/box.nim"
 b.paused = false

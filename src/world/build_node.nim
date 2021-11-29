@@ -748,7 +748,7 @@ proc create_builder*(point: Vector3, parent: Node, script = "", is_clone = false
   save_scene()
   result = b
 
-import world/bot
+import world/bot_node
 
 proc create_bot(transform: Transform, parent: Node, up_axis = UP) =
-  bot.create_bot(transform, parent, up_axis = up_axis)
+  bot_node.create_bot(transform, parent, up_axis = up_axis)

@@ -1,16 +1,16 @@
 import godotapi / [area, control]
 import godot
-import ".." / [core, globals, game, world/bot]
+import ".." / [core, globals, game, world/bot_node]
 import player
 
 const signals = ["target_in", "target_out", "target_fire", "target_remove"]
 
 gdobj SelectionArea of Area:
   var
-    bot*: NimBot
+    bot*: BotNode
 
   method ready*() =
-    self.bot = self.get_node("..") as NimBot
+    self.bot = self.get_node("..") as BotNode
     bind_signals(self, self, signals)
     if self.bot.script_ctx.is_clone:
       self.collision_layer = 0
