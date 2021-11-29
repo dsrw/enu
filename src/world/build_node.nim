@@ -3,7 +3,7 @@ import godotapi / [mesh, voxel_terrain, voxel_mesher_blocky, voxel_tool, voxel, 
 import godot
 import std / [tables, math, sets, sugar, sequtils, hashes, os, monotimes]
 import core, globals
-import engine/contexts
+import engine/contexts, models / [types, builds]
 export contexts
 
 include "default_builder.nim.nimf"
@@ -29,7 +29,7 @@ iterator child_objects(self: Node): Node =
 
 gdobj BuildNode of VoxelTerrain:
   var
-    script_ctx: ScriptCtx
+    unit* = Build.init
     script_index* {.gdExport.} = 0
     initial_index* {.gdExport.} = 1
     # FIXME `saved_blocks` and `saved_block_colors` should be
@@ -315,10 +315,10 @@ gdobj BuildNode of VoxelTerrain:
 
   # BuildNode
   proc init*() =
-    self.script_ctx = ScriptCtx.init("grid")
+    self.unit.script_ctx = ScriptCtx.init("grid")
 
   proc code_template(file: string, imports: string): string =
-    result = default_builder(config.script_dir & "/" & file, imports, self.script_ctx.is_clone)
+    result = default_builder(config.script_dir & "/" & file, imports, self.unit.script_ctx.is_clone)
 
   method ready() =
     # Terrain
@@ -333,9 +333,9 @@ gdobj BuildNode of VoxelTerrain:
     # BuildNode
     if max_grid_index <= self.script_index:
       max_grid_index = self.script_index + 1
-    if not self.script_ctx.is_clone:
+    if not self.unit.script_ctx.is_clone:
       self.set_script()
-    if self.script_ctx.is_clone:
+    if self.unit.script_ctx.is_clone:
       self.root_builder = self.find_root().as(BuildNode)
     self.translation = self.original_translation
 
@@ -357,7 +357,7 @@ gdobj BuildNode of VoxelTerrain:
       self.script_index = script_index
     inc max_grid_index
     self.name = "Build_" & $self.script_index
-    if not self.script_ctx.is_clone:
+    if not self.unit.script_ctx.is_clone:
       self.set_script()
       write_file self.script, ""
 
@@ -369,7 +369,7 @@ gdobj BuildNode of VoxelTerrain:
     if not builder.is_nil:
       t = builder.position.origin.snapped(vec3(1, 1, 1))
       diff = t - self.global_transform.origin
-    result = create_builder(t, target, self.script_ctx.script, is_clone = true).as(BuildNode)
+    result = create_builder(t, target, self.unit.script_ctx.script, is_clone = true).as(BuildNode)
     result.saved_holes = self.saved_holes.map_it(it + diff)
 
     result.saved_blocks = self.saved_blocks.map_it(it + diff)
@@ -530,7 +530,7 @@ gdobj BuildNode of VoxelTerrain:
     let duration = if self.engine.running: 0.5.seconds else: 0.5.seconds
     self.set_timer duration, proc() =
       self.paused = false
-      self.script_ctx.destroy()
+      self.unit.script_ctx.destroy()
       self.destroy()
 
   proc on_begin_turn(axis = UP, degrees: float): Callback =
@@ -737,12 +737,12 @@ proc create_builder*(point: Vector3, parent: Node, script = "", is_clone = false
     b = proto.instance() as BuildNode
     is_clone = parent != data_node
   assert not b.is_nil
-  b.script_ctx.is_clone = is_clone
+  b.unit.script_ctx.is_clone = is_clone
   b.paused = true
   b.setup(point)
   b.initial_index = action_index
   if is_clone:
-    b.script_ctx.script = script
+    b.unit.script_ctx.script = script
   parent.add_child(b)
   b.owner = parent
   save_scene()

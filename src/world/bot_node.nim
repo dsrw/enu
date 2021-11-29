@@ -2,7 +2,7 @@ import godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
                    input_event, animation_player, resource_loader, packed_scene]
 import godot, std / [math, tables, with, times, sugar, os, monotimes]
 import globals, core
-import engine / [contexts, engine]
+import engine / [contexts, engine], models / [types, bots]
 export contexts
 
 include "default_robot.nim.nimf"
@@ -11,7 +11,7 @@ proc create_bot*(transform: Transform, parent: Node, script = "", is_clone = fal
 var max_bot_index = 0
 gdobj BotNode of KinematicBody:
   var
-    script_ctx*: ScriptCtx
+    unit* = Bot.init
     material* {.gdExport.}, highlight_material* {.gdExport.},
       selected_material* {.gdExport.}: Material
     script_index* {.gdExport.} = 0
@@ -24,15 +24,15 @@ gdobj BotNode of KinematicBody:
 
   proc init*() =
     self.bind_signals(self, "deleted")
-    self.script_ctx = ScriptCtx.init("bot")
+    self.unit.script_ctx = ScriptCtx.init("bot")
     self.speed = 1.0
 
   method on_deleted*() =
-    self.script_ctx.destroy()
+    self.unit.script_ctx.destroy()
     self.destroy()
 
   proc code_template(file: string, imports: string): string =
-    result = default_robot(config.script_dir & "/" & file, imports, self.script_ctx.is_clone)
+    result = default_robot(config.script_dir & "/" & file, imports, self.unit.script_ctx.is_clone)
 
   proc update_material*(value: Material) =
     self.mesh.set_surface_material(0, value)
@@ -47,13 +47,13 @@ gdobj BotNode of KinematicBody:
     self.set_default_material()
 
   proc select*() =
-    if not self.script_ctx.is_clone:
-      state.open_file = self.script_ctx.script
-      state.open_engine = self.script_ctx.engine
+    if not self.unit.script_ctx.is_clone:
+      state.open_file = self.unit.script_ctx.script
+      state.open_engine = self.unit.script_ctx.engine
       state.editing = true
 
   proc on_load_vars() =
-    let e = self.script_ctx.engine
+    let e = self.unit.script_ctx.engine
     self.speed = e.get_float("speed", e.module_name)
 
   proc on_begin_move(direction: Vector3, steps: float): Callback =
@@ -105,14 +105,14 @@ gdobj BotNode of KinematicBody:
     self.orig_transform = self.transform
     inc max_bot_index
     self.name = "Bot_" & $self.script_index
-    if not self.script_ctx.is_clone:
+    if not self.unit.script_ctx.is_clone:
       self.set_script()
-      write_file self.script_ctx.script, ""
+      write_file self.unit.script_ctx.script, ""
 
   method ready*() =
     if max_bot_index <= self.script_index:
       max_bot_index = self.script_index + 1
-    if not self.script_ctx.is_clone:
+    if not self.unit.script_ctx.is_clone:
       self.set_script()
 
     self.skin = self.get_node("Mannequiny").as(Spatial)
@@ -135,7 +135,7 @@ gdobj BotNode of KinematicBody:
   proc on_clone(target: Node, active_ctx: ScriptCtx): BotNode =
     let parent = target.get_parent.as(Spatial)
 
-    create_bot(parent.global_transform, target, self.script_ctx.script, is_clone = true).as(BotNode)
+    create_bot(parent.global_transform, target, self.unit.script_ctx.script, is_clone = true).as(BotNode)
 
   proc update_running_state(running: bool) =
     self.engine.running = running
@@ -155,7 +155,7 @@ gdobj BotNode of KinematicBody:
       let child = v.as_object(Node)
       child.trigger("deleted")
     self.transform = self.orig_transform
-    if not self.script_ctx.is_clone:
+    if not self.unit.script_ctx.is_clone:
       self.load_script()
 
   proc on_script_loaded*(e: Engine) =
@@ -192,12 +192,12 @@ proc create_bot*(transform: Transform, parent: Node, script = "", is_clone = fal
     is_clone = parent != data_node
   assert not b.is_nil
   b.up_axis = up_axis
-  b.script_ctx.is_clone = is_clone
+  b.unit.script_ctx.is_clone = is_clone
   b.transform = transform
   b.paused = true
   b.setup()
   if is_clone:
-    b.script_ctx.script = script
+    b.unit.script_ctx.script = script
   parent.add_child(b)
   b.owner = parent
   save_scene()

@@ -17,7 +17,7 @@ var
   starting = true
   modules_to_load: HashSet[ScriptCtx]
 
-template ctx: untyped = self.script_ctx
+template ctx: untyped = self.unit.script_ctx
 
 proc destroy*(ctx: ScriptCtx) =
   if ctx.engine in ctxs:
@@ -132,7 +132,7 @@ proc clone(self): bool =
   let target = node.get_node("OwnedNodes")
   let ae = active_engine()
   let new_node = self.on_clone(target, active_ctx())
-  let new_engine = new_node.script_ctx.engine
+  let new_engine = new_node.unit.script_ctx.engine
   ae.callback = proc(delta: float): bool =
     not new_engine.initialized
   set_active(ae)

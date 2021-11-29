@@ -33,7 +33,7 @@ type
     script_ctx*: ScriptCtx
     disabled*: bool
 
-  Robot* = ref object of Unit
+  Bot* = ref object of Unit
 
   VoxelKind* = enum
     Hole, Manual, Computed

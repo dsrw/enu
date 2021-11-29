@@ -6,9 +6,6 @@ const BufferSize = (16, 16, 16)
 proc init*(t: typedesc[Build], root = false, position = (0.0, 0.0, 0.0)): Build =
   Build(root: root, voxels: result.voxels.type.init, position: position)
 
-proc code_template(self: Unit, file: string, imports: string): string =
-  default_builder(state.config.script_dir & "/" & file, imports, self.script_ctx.is_clone)
-
 proc find_root(self: Build): tuple[build: Build, offset: V3[float]] =
   result.build = self
   var parent = self.parent
