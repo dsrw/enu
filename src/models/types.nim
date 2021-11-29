@@ -45,7 +45,8 @@ type
   Build* = ref object of Unit
     voxels*: ZenTable[V3[int], ZenTable[V3[int], Voxel]]
     draw_position*: V3[float]
-    starting_color*: Color
+    starting_color*: int # TODO: Color
+    color*: int # TODO: Color
     voxels_per_frame*: float
     drawing*: bool
     moving*: bool

@@ -1,7 +1,8 @@
 import godotapi / [spatial, resource_loader, packed_scene]
+import godotapi / [mesh, voxel_terrain, voxel_mesher_blocky, voxel_tool, voxel, voxel_library, shader_material]
 import godot
 import std / [tables, math, sets, sugar, sequtils, hashes, os, monotimes]
-import core, globals, world / [terrain]
+import core, globals
 import engine/contexts
 export contexts
 
@@ -11,8 +12,14 @@ var max_grid_index = 0
 
 type
   Timer = tuple[until: DateTime, callback: proc()]
+  Buffers = Table[Vector3, VoxTable]
+
+const
+  highlight_energy = 1.0
+  default_energy = 0.1
 
 proc create_builder*(point: Vector3, parent: Node, script = "", is_clone = false): Node {.discardable.}
+proc create_bot(transform: Transform, parent: Node, up_axis = UP)
 
 iterator child_objects(self: Node): Node =
   let children = self.get_node("OwnedNodes").get_children
@@ -20,7 +27,7 @@ iterator child_objects(self: Node): Node =
     let child = v.as_object(Node)
     yield child
 
-gdobj BuildNode of Spatial:
+gdobj BuildNode of VoxelTerrain:
   var
     script_ctx: ScriptCtx
     script_index* {.gdExport.} = 0
@@ -39,7 +46,6 @@ gdobj BuildNode of Spatial:
     position* = init_transform()
     drawing = true
     save_points: Table[string, tuple[position: Transform, index: int, drawing: bool]]
-    terrain: Terrain
     holes, kept_holes: Table[Vector3, int]
     overwrite = false
     built = false
@@ -50,6 +56,264 @@ gdobj BuildNode of Spatial:
     timers: seq[Timer]
     root_builder: BuildNode
 
+  # terrain:
+  var
+    targeted_voxel: Vector3
+    current_normal: Vector3
+    draw_plane: Vector3
+    current_point: Vector3
+    voxel_tool: VoxelTool
+    buffers: Buffers
+    visible_buffers: HashSet[Vector3]
+    loading_buffers: seq[Vector3]
+    highlighted = false
+    painting, erasing = false
+    library: VoxelLibrary
+    # NOTE Voxels on the edges of buffers behave strangely. They often can't be drawn with
+    # voxel_tool, even if their buffer is visible. I'm not sure if this is a bug.
+    # To work around this, we add voxels that can't be displayed with their buffer
+    # (using an is_area_editable check) to a `lost_voxels` list, that we just try on each
+    # buffer load until we can draw them.
+    #
+    # There's probably a better way to do this, or to avoid the behavior (bug?)
+    # all together.
+    lost_voxels: Table[Vector3, seq[Vox]]
+    rotational_change*: Vector3
+
+# Terrain:
+  proc `highlighted=`*(val: bool) =
+    self.highlighted = val
+    var energy = if val: highlight_energy else: default_energy
+    for i in 0..<self.library.voxel_count.int:
+      let m = self.get_material(i).as(ShaderMaterial)
+      if not m.is_nil:
+        m.set_shader_param("emission_energy", energy.to_variant)
+
+  proc highlight*: bool = self.highlighted
+
+  proc clone_materials =
+    let count = self.mesher.as(VoxelMesherBlocky).library.voxel_count
+    for i in 0..int.high:
+      let m = self.get_material(i)
+      if m.is_nil:
+        break
+      else:
+        let m = m.duplicate.as(ShaderMaterial)
+        m.set_shader_param("emission_energy", default_energy.to_variant)
+        self.set_material(i, m)
+
+  proc in_view(loc: Vector3, log = false): bool =
+    self.voxel_tool.is_area_editable(init_aabb(loc, vec3(1,1,1)))
+
+  proc set_voxel(loc: Vector3, index: int) =
+    self.voxel_tool.set_voxel(loc, index)
+
+  proc set_energy*(color: int, energy: float) =
+    let index = color - 1
+    let m = self.get_material(index).as(ShaderMaterial)
+    if not m.is_nil:
+      m.set_shader_param("emission_energy", energy.to_variant)
+    else:
+      echo "can't find material"
+
+  proc draw_terrain*(x, y, z: float, index: int, keep = false, trigger = true) =
+    if self.voxel_tool.is_nil:
+      self.voxel_tool = self.get_voxel_tool()
+
+    let
+      loc = vec3(x, y, z)
+      blk = self.voxel_to_data_block(loc)
+      vox: Vox = (loc, (index, keep))
+
+    while not self.bounds.contains(loc):
+      self.bounds = self.bounds.grow(16)
+
+    if self.in_view(loc):
+      self.set_voxel(loc, index)
+    elif blk in self.visible_buffers:
+      self.lost_voxels.mget_or_put(blk, @[])
+                      .add vox
+    if index == 0:
+      self.del_voxel(blk, vox)
+    else:
+      self.add_voxel(blk, vox)
+
+    if keep and trigger:
+      self.trigger("terrain_block_added", loc, index)
+
+  proc draw_terrain*(loc: Vector3, index: int, keep = false, trigger = true) =
+    self.draw_terrain(loc.x, loc.y, loc.z, index, keep, trigger)
+
+  proc find_targeted_voxel(point, normal: Vector3): Vector3 =
+    let diffed = (vec3(1, 1, 1) + normal) * 0.5
+    result = point - diffed
+
+  proc get_vox*(point: Vector3): Option[VoxData] =
+    let blk = self.voxel_to_data_block(point)
+    if blk in self.buffers:
+      let buf = self.buffers[blk]
+      if point in buf:
+        result = some(buf[point])
+
+  method process*(delta: float) =
+    if self.loading_buffers.len > 0:
+      let lost_voxels = self.lost_voxels
+      for blk, voxels in lost_voxels:
+        var remaining_voxels: seq[Vox]
+        for (loc, data) in voxels:
+          self.try_draw(loc, data.index, data.keep, remaining_voxels)
+        if remaining_voxels.len > 0:
+          self.lost_voxels[blk] = remaining_voxels
+        else:
+          self.lost_voxels.del(blk)
+
+      for blk in self.loading_buffers:
+        if blk in self.buffers:
+          let voxels = self.buffers[blk]
+          for loc, data in voxels:
+            if not self.try_draw(loc, data.index):
+              self.lost_voxels.mget_or_put(blk, @[])
+                              .add (loc, data)
+
+      self.loading_buffers = @[]
+
+  proc try_draw(loc: Vector3, idx: int): bool =
+    result = if self.in_view(loc):
+      self.set_voxel(loc, idx)
+      true
+    else:
+      false
+
+  proc try_draw(loc: Vector3, idx: int, keep = false, buffers: var seq[Vox]) =
+    if not self.try_draw(loc, idx):
+      buffers.add (loc, (idx, keep))
+
+  proc add_voxel(blk: Vector3, vox: Vox) =
+    let (loc, data) = vox
+    if blk notin self.buffers:
+      self.buffers[blk] = VoxTable()
+
+    self.buffers[blk][loc] = data
+
+  proc del_voxel(blk: Vector3, vox: Vox) =
+    let (loc, data) = vox
+    self.buffers[blk].del loc
+
+    if self.buffers[blk].len == 0:
+      self.buffers.del(blk)
+
+  proc export_data*(): seq[Vox] =
+    for blk, table in self.buffers:
+      for loc, data in table:
+        result.add (loc, data)
+
+  proc clear*(all = false) =
+    for blk in self.visible_buffers:
+      if blk in self.buffers:
+        for loc, data in self.buffers[blk]:
+          if (all or not data.keep):
+            self.voxel_tool.set_voxel(loc, 0)
+
+    for blk, table in self.buffers:
+      for loc, data in table:
+        if all or not data.keep:
+          self.buffers[blk].del(loc)
+
+    let lost_voxels = self.lost_voxels
+    for blk, voxes in lost_voxels:
+      self.lost_voxels[blk] = voxes.filter_it:
+        it.data.keep and not all
+
+  method on_block_loaded(location: Vector3) =
+    self.loading_buffers.add location
+    self.visible_buffers.incl location
+
+  method on_block_unloaded(location: Vector3) =
+    self.visible_buffers.excl location
+    self.lost_voxels.del location
+
+  method on_target_move(point, normal: Vector3) =
+    let
+      prev_point = self.current_point
+      prev_normal = self.current_normal
+    self.current_point = point
+    self.current_normal = normal
+    let targeted_voxel = self.find_targeted_voxel(point, normal)
+    if targeted_voxel != self.targeted_voxel:
+      self.targeted_voxel = targeted_voxel
+
+    if not self.highlighted and tool_mode == CodeMode:
+      self.get_parent.trigger("highlight", true)
+
+    if tool_mode == ObjectMode:
+      if normal == UP:
+        state.target_block = true
+      else:
+        state.reticle = true
+
+    if self.painting and tool_mode == BlockMode:
+      let plane = point * normal
+      if self.draw_plane == plane:
+        self.on_target_fire()
+    elif self.erasing and tool_mode == BlockMode:
+      let plane = point * normal
+      if self.draw_plane == plane:
+        self.on_target_remove()
+
+  method on_target_out() =
+    self.get_parent.trigger("deselect", true)
+    if tool_mode == ObjectMode:
+      game_node.trigger("show_target")
+
+  method on_target_in() =
+    if tool_mode == CodeMode:
+      self.get_parent.trigger("highlight", true)
+    if tool_mode == ObjectMode:
+      game_node.trigger("hide_target")
+
+  method on_mouse_released() =
+    self.painting = false
+    self.erasing = false
+    self.draw_plane = vec3()
+
+  method on_tree_exiting() =
+    game_node.trigger("collider_exiting", self)
+
+  method on_target_fire() =
+    let vox = self.get_vox(self.targeted_voxel)
+    if vox:
+      if tool_mode == BlockMode:
+        self.painting = true
+        let point = self.targeted_voxel + self.current_normal
+        if not self.root_builder.is_nil:
+          let t = self.get_parent().as(Spatial).translation #+ vec3(2,0,1)
+          self.root_builder.draw_terrain(t + point, action_index, true)
+          self.root_builder.draw_plane = (t + self.current_point) * self.current_normal
+        else:
+          self.draw_terrain(point, action_index, true)
+        self.draw_plane = self.current_point * self.current_normal
+      elif tool_mode == ObjectMode:
+        var transform = init_transform().translated(self.to_global(self.current_point))
+        create_bot(transform, data_node, up_axis = self.current_normal)
+      elif tool_mode == CodeMode:
+        self.trigger("block_selected")
+        self.get_parent.trigger("deselect", true)
+
+  method on_target_remove() =
+    let loc = self.targeted_voxel
+    if tool_mode == BlockMode:
+      self.erasing = true
+      let data = self.get_vox(loc)
+      if data:
+        let data = data.get
+        self.draw_terrain(loc, 0)
+        if self.buffers.len == 0:
+          self.trigger("last_block_deleted", 0)
+        else:
+          self.trigger("terrain_block_removed", 0 , loc, data.index, data.keep)
+      self.draw_plane = self.current_point * self.current_normal
+
+  # BuildNode
   proc init*() =
     self.script_ctx = ScriptCtx.init("grid")
 
@@ -57,6 +321,16 @@ gdobj BuildNode of Spatial:
     result = default_builder(config.script_dir & "/" & file, imports, self.script_ctx.is_clone)
 
   method ready() =
+    # Terrain
+    self.bind_signals(self, w"""
+      target_in target_out target_move
+      target_fire target_remove block_loaded
+      block_unloaded tree_exiting""")
+    self.bind_signals("mouse_released")
+    self.library = self.mesher.as(VoxelMesherBlocky).library
+    self.clone_materials()
+
+    # BuildNode
     if max_grid_index <= self.script_index:
       max_grid_index = self.script_index + 1
     if not self.script_ctx.is_clone:
@@ -64,12 +338,8 @@ gdobj BuildNode of Spatial:
     if self.script_ctx.is_clone:
       self.root_builder = self.find_root().as(BuildNode)
     self.translation = self.original_translation
-    self.terrain = self.find_node("Terrain") as Terrain
-    if not self.root_builder.is_nil:
-     self.terrain.root_terrain = self.root_builder.terrain
-    assert self.terrain != nil
 
-    self.bind_signals self.terrain,
+    self.bind_signals self,
       w"block_selected last_block_deleted terrain_block_added terrain_block_removed"
 
     self.bind_signals self, w"highlight deselect deleted"
@@ -107,7 +377,7 @@ gdobj BuildNode of Spatial:
     result.restore_blocks()
 
   proc save_blocks*() =
-    let data = self.terrain.export_data()
+    let data = self.export_data()
     self.saved_blocks = @[]
     self.saved_block_colors = @[]
     for vox in data:
@@ -138,7 +408,7 @@ gdobj BuildNode of Spatial:
          not self.overwrite and index != root.holes[root_loc]:
       root.kept_holes[root_loc] = root.holes[root_loc]
     else:
-      self.terrain.draw(x, y, z, index, keep, trigger)
+      self.draw_terrain(x, y, z, index, keep, trigger)
 
   proc draw*(loc: Vector3, index: int) =
     let loc = loc - self.translation
@@ -157,7 +427,7 @@ gdobj BuildNode of Spatial:
     let holes = to_seq(self.holes.keys)
     for loc in locations:
       let loc = loc - self.translation
-      if self.terrain.get_vox(loc) or loc in holes:
+      if self.get_vox(loc) or loc in holes:
         return true
 
   proc set_defaults() =
@@ -193,7 +463,7 @@ gdobj BuildNode of Spatial:
   method physics_process(delta: float64) =
     let previous = self.rotation()
     defer:
-      self.terrain.rotational_change = self.rotation() - previous
+      self.rotational_change = self.rotation() - previous
 
     if self.timers.len > 0:
       var timers = self.timers
@@ -306,7 +576,7 @@ gdobj BuildNode of Spatial:
       let
         color = get_int(a, 0).int
         energy = get_float(a, 1)
-      self.terrain.set_energy(color, energy)
+      self.set_energy(color, energy)
       false
     e.expose("save", a => self.save(get_string(a, 0)))
     e.expose("restore", a => self.restore(get_string(a, 0)))
@@ -343,9 +613,6 @@ gdobj BuildNode of Spatial:
       let v2 = vec3(0.0, (v.x - v.y) * m, 0.0)
       a.set_result(v2.to_node)
       return false
-
-  proc clear() =
-    self.terrain.clear()
 
   proc reset(clear = true, set_vars = true) =
     self.set_defaults()
@@ -452,7 +719,7 @@ gdobj BuildNode of Spatial:
     if find_root and not self.root_builder.is_nil:
       self.root_builder.trigger("highlight", false)
     else:
-      self.terrain.highlighted = true
+      self.highlighted = true
       for child in self.child_objects:
         child.trigger("highlight", false)
 
@@ -460,7 +727,7 @@ gdobj BuildNode of Spatial:
     if find_root and not self.root_builder.is_nil:
       self.root_builder.trigger("deselect", false)
     else:
-      self.terrain.highlighted = false
+      self.highlighted = false
       for child in self.child_objects:
         child.trigger("deselect", false)
 
@@ -480,3 +747,8 @@ proc create_builder*(point: Vector3, parent: Node, script = "", is_clone = false
   b.owner = parent
   save_scene()
   result = b
+
+import world/bot
+
+proc create_bot(transform: Transform, parent: Node, up_axis = UP) =
+  bot.create_bot(transform, parent, up_axis = up_axis)

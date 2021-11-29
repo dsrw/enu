@@ -6,7 +6,7 @@ import godot except print
 import model_citizen
 import math
 import core, globals, game, engine/engine, engine/contexts
-import aim_target, world/terrain
+import aim_target
 
 let
   angle_x_min = -PI / 2.25
@@ -153,9 +153,11 @@ gdobj Player of KinematicBody:
       for i in 0..(self.get_slide_count() - 1):
         let collision = self.get_slide_collision(i)
         let collider = collision.collider
-        if collider of Terrain:
-          let collider = collider as Terrain
-          self.camera_rig.rotation = self.camera_rig.rotation + collider.rotational_change
+
+        # TODO maybe?:
+        # if collider of Terrain:
+        #   let collider = collider as Terrain
+        #   self.camera_rig.rotation = self.camera_rig.rotation + collider.rotational_change
 
       if state.command_mode and self.command_timer > 0:
         self.command_timer -= delta
