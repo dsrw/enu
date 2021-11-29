@@ -43,7 +43,7 @@
       <envs />
     </TaskOptions>
     <TaskOptions isEnabled="true">
-      <option name="arguments" value="c check $FilePathRelativeToProjectRoot$" />
+      <option name="arguments" value="check $FilePathRelativeToProjectRoot$" />
       <option name="checkSyntaxErrors" value="true" />
       <option name="description" />
       <option name="exitCodeBehavior" value="ERROR" />
@@ -76,7 +76,7 @@
         </array>
       </option>
       <option name="outputFromStdout" value="false" />
-      <option name="program" value="nimble" />
+      <option name="program" value="nim" />
       <option name="runOnExternalChanges" value="true" />
       <option name="scopeName" value="nim src" />
       <option name="trackOnlyRoot" value="false" />
@@ -124,7 +124,7 @@
       <option name="workingDir" value="$ProjectFileDir$" />
       <envs />
     </TaskOptions>
-    <TaskOptions isEnabled="true">
+    <TaskOptions isEnabled="false">
       <option name="arguments" value="c $FilePath$" />
       <option name="checkSyntaxErrors" value="true" />
       <option name="description" />
