@@ -27,9 +27,8 @@ bin           = @["enu" & lib_ext]
 requires "nim >= 1.6.0",
          "https://github.com/pragmagic/godot-nim#982ab52",
          "https://github.com/dsrw/Nim#baaa50d",
-         "https://github.com/dsrw/model_citizen 0.2.2",
+         "https://github.com/dsrw/model_citizen 0.2.4",
          "cligen 1.5.19",
-         "chroma",
          "print 1.0.2"
 
 proc gen: string =
@@ -50,7 +49,7 @@ task build_godot, "Build godot":
     exec &"{scons} custom_modules=../modules platform={target} {godot_opts} -j{cores}"
 
 task build_headless, "build headless godot":
-  target = "server"
+  target = "server use_static_cpp=no"
   build_godot_task()
 
 proc find_and_copy_dlls(dep_path, dest: string, dlls: varargs[string]) =

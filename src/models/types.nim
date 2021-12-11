@@ -1,39 +1,40 @@
-import std / [tables, monotimes, sets, genasts, macros]
-import model_citizen, chroma
-from core/godotcoretypes as GD import nil
+import std / [tables, monotimes]
+import model_citizen
+import pkg / core / [godotcoretypes, vector3, transforms]
+
+export Vector3, Transform, vector3, transforms
+
 import engine/engine
 
 type
-  V3*[T: int | float] = tuple[x, y, z: T]
-  V2*[T: int | float] = tuple[x, y: T]
-
   TargetFlag* = enum
     Reticle, TargetBlock, MouseCaptured, CommandMode, Editing, Retarget
 
-  GameState* = object
+  GameState*[T] = object
     target_flags*: ZenSet[TargetFlag]
     requested_target_flags: set[TargetFlag]
     open_file*: string
     config*: Config
     open_engine*: Engine
     nodes*: tuple[
-      game: RootRef,
-      player: RootRef
+      game: T,
+      player: T
     ]
-    units*: seq[Unit]
+    units*: ZenSeq[Unit[T]]
 
-  Unit* = ref object of RootObj
-    parent*: Unit
-    units*: seq[Unit]
+  Unit*[T] = ref object of RootObj
+    parent*: Unit[T]
+    units*: ZenSeq[Unit[T]]
     local*: bool
-    starting_position*: V3[float]
-    position*: V3[float]
+    start_transform*: Transform
+    transform*: Transform
     scale*: float
     speed*: float
     script_ctx*: ScriptCtx
     disabled*: bool
+    node*: T
 
-  Bot* = ref object of Unit
+  Bot*[T] = ref object of Unit[T]
 
   VoxelKind* = enum
     Hole, Manual, Computed
@@ -42,16 +43,16 @@ type
     color*: Color
     kind*: VoxelKind
 
-  Build* = ref object of Unit
-    voxels*: ZenTable[V3[int], ZenTable[V3[int], Voxel]]
-    draw_position*: V3[float]
-    starting_color*: int # TODO: Color
+  Build*[T] = ref object of Unit[T]
+    voxels*: ZenTable[Vector3, ZenTable[Vector3, Voxel]]
+    draw_position*: Vector3
+    start_color*: int # TODO: Color
     color*: int # TODO: Color
     voxels_per_frame*: float
     drawing*: bool
     moving*: bool
     root*: bool
-    save_points*: Table[string, tuple[position: GD.Transform, index: int, drawing: bool]]
+    save_points*: Table[string, tuple[position: Transform, index: int, drawing: bool]]
 
   Callback* = proc(delta: float): bool
   ScriptCtx* = ref object
@@ -75,21 +76,3 @@ type
     script_dir*: string
     scene*: string
     lib_dir*: string
-
-macro ops(syms: varargs[untyped]): untyped =
-  result = new_stmt_list()
-  for sym in syms:
-    result.add:
-      gen_ast(sym, sym_eq = ident($sym & "=")):
-        proc sym*[T: float | int](a, b: V3[T]): V3[T] =
-          (T sym(a.x, b.x), T sym(a.y, b.y), T sym(a.z, b.z))
-        proc sym_eq*[T: float | int](a: var V3[T], b: V3[T]) =
-          a = sym(a, b)
-
-ops `*`, `/`, `+`, `-`
-
-converter to_float*(self: V3[int]): V3[float] =
-  (self.x.float, self.y.float, self.z.float)
-
-proc to_int*(self: V3[float]): V3[int] =
-  (self.x.int, self.y.int, self.z.int)

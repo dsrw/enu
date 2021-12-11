@@ -6,8 +6,11 @@ private_access GameState
 
 let EventFlags = {Retarget}
 
-proc init*(t: typedesc[GameState]): GameState =
-  GameState(target_flags: ZenSet.init(TargetFlag))
+proc init*(_: typedesc[GameState], T: typedesc): GameState[T] =
+  GameState[T](
+    target_flags: ZenSet.init(TargetFlag),
+    units: ZenSeq.init(Unit[T])
+  )
 
 proc set_flag(flags: var set[TargetFlag], flag: TargetFlag, add: bool) =
   if add:
@@ -72,8 +75,8 @@ proc retarget*(state: var GameState) =
 
 when is_main_module:
   import std / [unittest, sequtils]
-
-  var state = GameState.init
+  type Node = ref object
+  var state = GameState.init(Node)
 
   state.reticle = true
   check:
@@ -105,7 +108,7 @@ when is_main_module:
   var added: set[TargetFlag]
   var removed: set[TargetFlag]
 
-  state.target_flags.track proc(changes: auto) =
+  state.target_flags.track proc(changes, _: auto) =
     added = {}
     removed = {}
     for change in changes:

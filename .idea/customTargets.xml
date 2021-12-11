@@ -15,5 +15,19 @@
         </build>
       </configuration>
     </target>
+    <target id="ec1719ee-3333-4715-a227-2df0f6f19e60" name="nim build current file" defaultType="TOOL">
+      <configuration id="27fdc462-d50d-4be8-92ef-1100e79b6dcb" name="nim build current file" toolchainName="Default">
+        <build type="TOOL">
+          <tool actionId="Tool_External Tools_nim build current file" />
+        </build>
+      </configuration>
+    </target>
+    <target id="42236d47-22eb-4c96-97bd-3198b08fe202" name="nim debug build current file" defaultType="TOOL">
+      <configuration id="ec558e26-c854-4aff-a53e-fa022046a066" name="nim debug build current file" toolchainName="Default">
+        <build type="TOOL">
+          <tool actionId="Tool_External Tools_nim debug build current file" />
+        </build>
+      </configuration>
+    </target>
   </component>
 </project>

@@ -28,7 +28,12 @@ var
   config*: Config
   game_ready* = false
   gravity* = -240.0
-  state* = GameState.init
+  state* = GameState.init(Node)
+  gid = 0
+
+proc gen_id*(): string =
+  result = $gid
+  gid.inc
 
 proc debug*(args: varargs[string, `$`]) =
   logger("debug", args.join)

@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="godot debug test" type="CLionExternalRunConfiguration" factoryName="Application" PROGRAM_PARAMS="--verbose --script tests/tests.gdns" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$ProjectFileDir$/tests/godot/app" PASS_PARENT_ENVS_2="true" PROJECT_NAME="enu" TARGET_NAME="nim debug build current file" CONFIG_NAME="nim debug build current file" RUN_PATH="$PROJECT_DIR$/vendor/godot/bin/godot_server.osx.opt.tools.64">
+    <method v="2">
+      <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+    </method>
+  </configuration>
+</component>

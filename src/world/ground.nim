@@ -27,13 +27,14 @@ gdobj Ground of MeshInstance:
       self.painting = true
       for c in data_node.get_children():
         let b = c.as_object(Node)
-        if b of BuildNode:
-          let b = b.as(BuildNode)
-          if b.includes_any_location(voxels):
-            b.draw(p, action_index)
-            return
+        # TODO
+        # if b of BuildNode:
+        #   let b = b.as(BuildNode)
+        #   if b.includes_any_location(voxels):
+        #     b.draw(p, action_index)
+        #     return
 
-      create_builder(p, data_node)
+      # create_builder(p, data_node)
 
     elif tool_mode == ObjectMode:
       create_bot(init_transform().translated(p + vec3(0.5, 0, 0.5)), data_node)

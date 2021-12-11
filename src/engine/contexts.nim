@@ -43,7 +43,7 @@ proc speed*(self): float = ctx.speed
 proc `speed=`*(self; speed: float) = ctx.speed = speed
 
 proc set_script*(self) =
-  let path = ctx.prefix & &"_{self.script_index}.nim"
+  let path = ctx.prefix & self.name & ".nim"
   ctx.script = join_path(config.script_dir, path)
 
 proc start_advance_timer*(ctx: ScriptCtx) =
@@ -167,7 +167,7 @@ proc load_script*(self; script = "", retry_failed = true) =
       let code = self.code_template(module_name & ".nim", imports)
 
       let initialized = ctx.engine.initialized
-      let suffex = if ctx.is_clone: "_clone" & $self.script_index else: ""
+      let suffex = if ctx.is_clone: "_clone" & self.name else: ""
       ctx.load_vars = proc() = self.load_vars()
       ctx.engine.load(config.script_dir, ctx.script, code, config.lib_dir, suffex)
       if not initialized:
