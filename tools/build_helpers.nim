@@ -1,3 +1,4 @@
+#!/usr/bin/env nim r --warnings:off --hints:off
 # bits of the build process that don't work from NimScript
 
 import godotapigen, os, cpuinfo, cligen, strformat,
@@ -34,6 +35,9 @@ proc copy_stdlib(destination: string) =
     copy_file join_path(STDLIB, file),
               join_path(destination, file)
 
+proc run_tests =
+  discard
+
 proc generate_api(directory = "godotapi", json = "api.json") =
   gen_api directory, join_path(directory, json)
 
@@ -44,4 +48,4 @@ proc write_info_plist(enu_version: string) =
   write_file("dist/Enu.app/Contents/Info.plist", generate_info_plist(enu_version))
 
 dispatch_multi [generate_api], [core_count], [copy_stdlib], [write_export_presets],
-               [write_info_plist], [save_test_file], [build_last_test]
+               [write_info_plist], [save_test_file], [build_last_test], [run_tests]

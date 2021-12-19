@@ -3,12 +3,12 @@ import pkg / [model_citizen, print]
 import types
 const BufferSize = vec3(16, 16, 16)
 
-proc init*(t: typedesc[Build], T: typedesc, root = false, transform = Transform()): Build[T] =
+proc init*(t: type Build, T: type, root = false, transform = Transform()): Build[T] =
   Build[T](
     root: root,
     voxels: result.voxels.type.init,
     transform: transform,
-    units: ZenSeq.init(Unit[T])
+    units: ZenSeq[Unit[T]].init
   )
 
 proc find_root[T](self: Build[T]): tuple[build: Build[T], offset: Vector3] =
@@ -32,8 +32,10 @@ proc draw(self: Build, position: Vector3, voxel: Voxel) =
 
 when is_main_module:
   import unittest
-  type Node = ref object of RootRef
+  type Node = ref object of RootObj
+
   var b = Build.init(Node, root = true)
+
   b.draw vec3(1, 1, 1), Voxel(kind: Computed)
   check vec3(1, 1, 1) in b.voxels[vec3(0, 0, 0)]
   b.draw vec3(17, 17, 17), Voxel(kind: Computed)

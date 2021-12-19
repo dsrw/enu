@@ -6,43 +6,50 @@ import godotapi/node
 import print
 
 type
-  NodeFactory*[T] = object
-    state: GameState[T]
+  Unit = types.Unit[Node]
+  Bot = types.Bot[Node]
+  GameState = types.GameState[Node]
+  NodeFactory* = object
+    state: GameState
 
-method add_to_scene(unit: Unit[Node], node: Node) =
+method add_to_scene(unit: Unit, node: Node) =
   assert false, "Not implemented"
 
-method remove_from_scene(unit: Unit[Node], node: Node) =
+method remove_from_scene(unit: Unit, parent_node: Node) =
   unit.parent = nil
-  node.remove_child(unit.node)
+  parent_node.remove_child(unit.node)
 
-method add_to_scene(unit: Bot[Node], node: Node) =
+method add_to_scene(unit: Bot, parent_node: Node) =
   var bot_node = unit.node as BotNode
   if bot_node.is_nil:
     bot_node = gdnew[BotNode]()
 
-  node.add_child(bot_node)
+  parent_node.add_child(bot_node)
   bot_node.unit = unit
   unit.node = bot_node
 
-proc watch(units: ZenSeq[Unit[Node]], node: Node, parent: Unit[Node]) =
-  units.track proc(changes, gid: auto) =
+proc find_nested_changes(parent: Change[Unit]) =
+  for change in parent.triggered_by:
+    assert change of Change[Unit]
+    let change = Change[Unit](change)
+    if Added in change.changes:
+      change.obj.parent = parent.obj
+      change.obj.add_to_scene(parent.obj.node)
+    elif Modified in change.changes:
+      find_nested_changes(change)
+    elif Removed in change.changes:
+      change.obj.remove_from_scene(change.obj.parent.node)
+
+proc watch*(f: NodeFactory, state: GameState) =
+  state.units.track proc(changes: auto) =
     for change in changes:
-      let unit = change.obj
-      if Added in change.kinds:
-        unit.parent = parent
-        unit.add_to_scene(node)
-        watch(unit.units, unit.node, unit)
-      elif Removed in change.kinds:
-        if not unit.parent.is_nil:
-          unit.parent.units.untrack(gid)
-        units.untrack(gid)
-        unit.units.untrack_all
-        unit.remove_from_scene(node)
+      if Added in change.changes:
+        change.obj.add_to_scene(state.nodes.game)
+      elif Modified in change.changes:
+        find_nested_changes(change)
+      elif Removed in change.changes:
+        change.obj.remove_from_scene(state.nodes.game)
 
-proc watch*[T](f: NodeFactory[T], state: GameState[T]) =
-  watch(state.units, state.nodes.game, nil)
-
-proc init*[T](_: typedesc[NodeFactory], state: GameState[T]): NodeFactory[T] =
-  result = NodeFactory[T](state: state)
+proc init*(_: type NodeFactory, state: GameState): NodeFactory =
+  result = NodeFactory(state: state)
   result.watch state

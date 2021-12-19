@@ -6,10 +6,10 @@ private_access GameState
 
 let EventFlags = {Retarget}
 
-proc init*(_: typedesc[GameState], T: typedesc): GameState[T] =
+proc init*(_: type GameState, T: type): GameState[T] =
   GameState[T](
-    target_flags: ZenSet.init(TargetFlag),
-    units: ZenSeq.init(Unit[T])
+    target_flags: Zen.init(set[TargetFlag]),
+    units: Zen.init(seq[Unit[T]])
   )
 
 proc set_flag(flags: var set[TargetFlag], flag: TargetFlag, add: bool) =
@@ -33,7 +33,7 @@ proc apply_target_flags(state: var GameState) =
   if Reticle in requested and MouseCaptured in flags:
     flags.incl(Reticle)
 
-  state.target_flags.set = flags
+  state.target_flags.value = flags
   state.requested_target_flags = requested - EventFlags
 
 proc `mouse_captured=`*(state: var GameState, captured: bool) =
@@ -112,8 +112,8 @@ when is_main_module:
     added = {}
     removed = {}
     for change in changes:
-      if Added in change.kinds: added.incl change.obj
-      if Removed in change.kinds: removed.incl change.obj
+      if Added in change.changes: added.incl change.obj
+      if Removed in change.changes: removed.incl change.obj
 
   state.command_mode = true
   check:

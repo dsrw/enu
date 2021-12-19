@@ -17,5 +17,5 @@ proc tests =
   u2.units += u3
   u2.units += u4
   u2.units -= u4
-  print state
+  #print state
 tests()

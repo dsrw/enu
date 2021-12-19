@@ -5,6 +5,9 @@
       <configuration sdkName="Python 3.9 (enu)" />
     </facet>
   </component>
+  <component name="ModuleRunConfigurationManager">
+    <shared />
+  </component>
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/vmlib/stdlib" />
