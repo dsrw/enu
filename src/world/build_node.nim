@@ -60,7 +60,6 @@ gdobj BuildNode of VoxelTerrain:
     self.loaded_blocks[location] = tracked_block
 
   method on_block_unloaded(location: Vector3) =
-    print self.loaded_blocks
     var tracked_block = self.loaded_blocks[location]
     tracked_block.voxels.untrack(tracked_block.gid)
     self.loaded_blocks.del(location)

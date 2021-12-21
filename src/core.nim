@@ -62,6 +62,9 @@ proc `+`*(time: MonoTime, interval: TimeInterval): MonoTime =
 proc `-`*(time: MonoTime, interval: TimeInterval): MonoTime =
   time - interval.to_duration
 
+### ref ###
+converter to_bool*(self: ref): bool = not self.is_nil
+
 ### options ###
 import options
 export options

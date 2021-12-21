@@ -80,6 +80,16 @@ type
     scene*: string
     lib_dir*: string
 
+proc local_to*[T](self: Vector3, unit: Unit[T]): Vector3 =
+  result = self
+  var unit = unit
+  while unit:
+    result -= unit.transform.origin
+    unit = unit.parent
+
+proc global_from*[T](self: Vector3, unit: Unit[T]): Vector3 =
+  result = -self.local_to(unit)
+
 proc init*(_: type Transform, origin = vec3()): Transform =
   result = init_transform()
   result.origin = origin

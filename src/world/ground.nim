@@ -25,8 +25,12 @@ gdobj Ground of MeshInstance:
 
     if tool_mode == BlockMode:
       self.painting = true
-      var t = Transform.init(origin = p)
-      state.units += Build.init(Node, transform = t, root = true)
+      let neighbour = state.units.find_first(voxels)
+      if neighbour:
+        let local = p.local_to(neighbour)
+        neighbour.draw(local, (Manual, init_color()))
+      else:
+        state.units += Build.init(Node, position = p, root = true)
 
       # for c in state.nodes.data.get_children():
       #   let b = c.as_object(Node)
