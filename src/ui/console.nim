@@ -26,9 +26,9 @@ gdobj Console of RichTextLabel:
       self.bind_signals w"clear_console toggle_console"
     state.target_flags.track proc(changes: auto) =
       for change in changes:
-        if MouseCaptured == change.obj and Added in change.kinds:
+        if MouseCaptured == change.obj and Added in change.changes:
           self.mouse_filter = MOUSE_FILTER_IGNORE
-        elif MouseCaptured == change.obj and Removed in change.kinds:
+        elif MouseCaptured == change.obj and Removed in change.changes:
           self.mouse_filter = self.default_mouse_filter
 
   method process*(delta: float) =

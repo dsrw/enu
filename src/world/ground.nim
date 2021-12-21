@@ -1,6 +1,6 @@
 import godotapi / [mesh_instance, node, spatial, resource_loader, packed_scene]
-import godot, sugar
-import core, globals, world / [build_node, bot_node]
+import pkg / [godot, model_citizen]
+import core, globals, sugar, world / [build_node, bot_node], models / [builds, bots]
 
 gdobj Ground of MeshInstance:
   var
@@ -25,8 +25,11 @@ gdobj Ground of MeshInstance:
 
     if tool_mode == BlockMode:
       self.painting = true
-      for c in data_node.get_children():
-        let b = c.as_object(Node)
+      var t = Transform.init(origin = p)
+      state.units += Build.init(Node, transform = t, root = true)
+
+      # for c in state.nodes.data.get_children():
+      #   let b = c.as_object(Node)
         # TODO
         # if b of BuildNode:
         #   let b = b.as(BuildNode)
@@ -37,7 +40,8 @@ gdobj Ground of MeshInstance:
       # create_builder(p, data_node)
 
     elif tool_mode == ObjectMode:
-      create_bot(init_transform().translated(p + vec3(0.5, 0, 0.5)), data_node)
+      var t = Transform.init(origin = p)
+      state.units += Bot.init(Node, transform = t)
 
   method on_target_move(point, normal: Vector3) =
     let previous_point = self.point

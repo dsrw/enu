@@ -12,22 +12,28 @@ gdobj SelectionArea of Area:
   method ready*() =
     self.bot = self.get_node("..") as BotNode
     bind_signals(self, self, signals)
-    if self.bot.unit.script_ctx.is_clone:
-      self.collision_layer = 0
+    # TODO
+    # if self.bot.unit.script_ctx.is_clone:
+    #   self.collision_layer = 0
 
   method on_target_in*() =
     if tool_mode == CodeMode:
-      self.bot.highlight()
+      discard
+      # TODO
+      #self.bot.highlight()
     else:
       state.reticle = true
 
   method on_target_out*() =
-    self.bot.deselect()
+    # TODO
+    #self.bot.deselect()
     state.reticle = true
 
   method on_target_fire*() =
     if tool_mode == CodeMode:
-      self.bot.select()
+      discard
+      # TODO
+      #self.bot.select()
 
   method on_target_remove*() =
     if tool_mode != CodeMode:

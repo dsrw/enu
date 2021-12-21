@@ -81,7 +81,7 @@ gdobj Player of KinematicBody:
     self.collision_shape = self.get_node("CollisionShape") as CollisionShape
     self.camera = self.camera_rig.get_node("Camera") as Camera
     self.aim_ray  = self.camera_rig.get_node("Camera/AimRay") as RayCast
-    self.world_ray = game_node.get_node("WorldRay") as RayCast
+    self.world_ray = state.nodes.game.get_node("WorldRay") as RayCast
     self.high_ray = self.get_node("HighRay") as RayCast
     self.low_ray = self.get_node("LowRay") as RayCast
     self.aim_target = self.camera_rig.get_node("AimTarget") as AimTarget
@@ -91,7 +91,7 @@ gdobj Player of KinematicBody:
     self.load_script()
     state.target_flags.track proc(changes: auto) =
       for change in changes:
-        if MouseCaptured == change.obj and Removed in change.kinds:
+        if MouseCaptured == change.obj and Removed in change.changes:
           self.skip_next_mouse_move = true
 
   proc current_raycast*: RayCast =

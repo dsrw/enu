@@ -242,7 +242,7 @@ shader_param/texture_normal = ExtResource( 8 )
 generator = SubResource( 1 )
 mesher = SubResource( 10 )
 bounds = AABB( -16, -16, -16, 32, 32, 32 )
-max_view_distance = 256
+max_view_distance = 32
 material/0 = SubResource( 11 )
 material/1 = SubResource( 12 )
 material/2 = SubResource( 13 )
@@ -250,5 +250,3 @@ material/3 = SubResource( 14 )
 material/4 = SubResource( 15 )
 material/5 = SubResource( 16 )
 script = ExtResource( 1 )
-
-[node name="OwnedNodes" type="Spatial" parent="."]

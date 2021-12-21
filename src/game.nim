@@ -4,7 +4,7 @@ import godotapi / [input, input_event, gd_os, node, scene_tree, viewport,
                    gd_os, project_settings, input_map, input_event, input_event_action]
 import godot, model_citizen
 import std / [monotimes, times, os, jsonutils, json, math]
-import core, globals
+import core, globals, world/node_factories
 
 const
   version = static_exec("git describe --tags HEAD")
@@ -24,20 +24,13 @@ gdobj Game of Node:
     reticle: Control
     scaled_viewport: Viewport
     triggered = false
-    scene_packer: PackedScene
-    save_requested: Option[DateTime]
     saved_mouse_captured_state = false
     stats: Label
-    saving = false
-    quitting = false
-    save_thread: system.Thread[Game]
     last_index = 1
     saved_mouse_position: Vector2
     scale_factor* = 0.0
     rescale_at = get_mono_time()
-
-  proc pack_scene() {.thread.} =
-    echo $self.scene_packer.pack(data_node)
+    node_factory: NodeFactory
 
   method process*(delta: float) =
     if config.show_stats:
@@ -61,17 +54,6 @@ gdobj Game of Node:
 
     durations.clear()
 
-    trace:
-      if self.saving and not self.save_thread.running:
-        debug $save(config.scene, self.scene_packer)
-        self.saving = false
-      elif not self.saving and self.save_requested and now() > self.save_requested.get:
-        self.save_requested = none(DateTime)
-        self.saving = true
-        create_thread[Game](self.save_thread, pack_scene, self)
-      elif self.quitting and not self.saving:
-        self.get_tree().quit()
-
   proc rescale*() =
     let vp = self.get_viewport().size
     self.scale_factor = sqrt(config.mega_pixels * 1_000_000.0 / (vp.x * vp.y))
@@ -79,8 +61,7 @@ gdobj Game of Node:
 
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
-      self.quitting = true
-      save_scene(true)
+      self.get_tree().quit()
     if what == main_loop.NOTIFICATION_WM_ABOUT:
       alert(&"Enu {version}\n\n© 2021 Scott Wadden", "Enu")
 
@@ -99,6 +80,8 @@ gdobj Game of Node:
         erase_action(action)
 
   proc init* =
+    state.nodes.game = self
+    self.node_factory = NodeFactory.init(state)
     let
       screen_scale = get_screen_scale(-1)
       work_dir = get_user_data_dir()
@@ -121,7 +104,6 @@ gdobj Game of Node:
       mega_pixels = uc.mega_pixels ||= 2.0
       world_dir = join_path(work_dir, config.world)
       script_dir = join_path(config.world_dir, "scripts")
-      scene = join_path(config.world_dir, "data.tscn")
       lib_dir = join_path(get_executable_path().parent_dir(), "..", "..", "..", "vmlib")
 
     create_dir(config.script_dir)
@@ -141,30 +123,32 @@ gdobj Game of Node:
     print config
 
   proc load_world() =
-    data_node = self.find_node("data")
-    assert not data_node.is_nil
-
-    if file_exists(config.scene):
-      let
-        pos = data_node.get_position_in_parent()
-        parent = data_node.getParent()
-        packed_scene = load(config.scene) as PackedScene
-
-      parent.remove_child(data_node)
-      data_node = packed_scene.instance()
-      parent.add_child(data_node)
-      parent.move_child(data_node, pos)
-      data_node.owner = parent
-      echo &"loaded {config.scene}"
+    discard
+    # TODO
+    # data_node = self.find_node("data")
+    # assert not data_node.is_nil
+    #
+    # if file_exists(config.scene):
+    #   let
+    #     pos = data_node.get_position_in_parent()
+    #     parent = data_node.getParent()
+    #     packed_scene = load(config.scene) as PackedScene
+    #
+    #   parent.remove_child(data_node)
+    #   data_node = packed_scene.instance()
+    #   parent.add_child(data_node)
+    #   parent.move_child(data_node, pos)
+    #   data_node.owner = parent
+    #   echo &"loaded {config.scene}"
 
   method ready* =
+    state.nodes.data = state.nodes.game.find_node("Level").get_node("data")
+    assert not state.nodes.data.is_nil
     self.scaled_viewport = self.get_node("ViewportContainer/Viewport") as Viewport
     self.bind_signals(self.get_viewport(), "size_changed")
     assert not self.scaled_viewport.is_nil
-    self.scene_packer = gdnew[PackedScene]()
     self.load_world()
     self.get_tree().set_auto_accept_quit(false)
-    state.nodes.game = self
     let (theme_holder, theme) = if hostOS == "macosx":
       ( self.find_node("ThemeHolder").as(Container),
         load("res://themes/AppleTheme.tres").as(Theme))
@@ -194,28 +178,26 @@ gdobj Game of Node:
       globals.save_scene()
 
     globals.save_scene = proc(immediate: bool) =
-      if immediate:
-        self.save_requested = some(now())
-      elif not self.save_requested:
-        self.save_requested = some(now() + 5.seconds)
+      discard
+      # TODO
 
     globals.pause = proc() =
       trigger("pause")
 
     state.target_flags.track proc(changes: auto) =
       for change in changes:
-        if change.obj == MouseCaptured and Added in change.kinds:
+        if change.obj == MouseCaptured and Added in change.changes:
           let center = self.get_viewport().get_visible_rect().size * 0.5
           self.saved_mouse_position = self.get_viewport().get_mouse_position()
           warp_mouse_position(center)
           set_mouse_mode MOUSE_MODE_CAPTURED
-        elif change.obj == MouseCaptured and Removed in change.kinds:
+        elif change.obj == MouseCaptured and Removed in change.changes:
           set_mouse_mode MOUSE_MODE_VISIBLE
           warp_mouse_position(self.saved_mouse_position)
 
-        if change.obj == Reticle and Added in change.kinds:
+        if change.obj == Reticle and Added in change.changes:
           self.reticle.visible = true
-        elif change.obj == Reticle and Removed in change.kinds:
+        elif change.obj == Reticle and Removed in change.changes:
           self.reticle.visible = false
 
     state.mouse_captured = true
@@ -289,7 +271,6 @@ gdobj Game of Node:
       trigger("toggle_console")
     elif event.is_action_pressed("quit"):
       if host_os != "macosx":
-        self.quitting = true
         save_scene(true)
     elif not state.editing:
       if event.is_action_pressed("toggle_mouse_captured"):

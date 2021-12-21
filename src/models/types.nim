@@ -1,8 +1,8 @@
 import std / [tables, monotimes]
 import model_citizen
-import pkg / core / [godotcoretypes, vector3, transforms]
+import pkg / core / [godotcoretypes, vector3, transforms, basis]
 
-export Vector3, Transform, vector3, transforms
+export Vector3, Transform, vector3, transforms, basis
 
 import engine/engine
 
@@ -10,14 +10,15 @@ type
   TargetFlag* = enum
     Reticle, TargetBlock, MouseCaptured, CommandMode, Editing, Retarget
 
-  GameState*[T] = object
+  GameState*[T] = ref object
     target_flags*: ZenSet[TargetFlag]
-    requested_target_flags: set[TargetFlag]
+    requested_target_flags*: set[TargetFlag]
     open_file*: string
     config*: Config
     open_engine*: Engine
     nodes*: tuple[
       game: T,
+      data: T,
       player: T
     ]
     units*: ZenSeq[Unit[T]]
@@ -39,12 +40,14 @@ type
   VoxelKind* = enum
     Hole, Manual, Computed
 
-  Voxel* = object
-    color*: Color
-    kind*: VoxelKind
+  VoxelInfo* = tuple
+    kind: VoxelKind
+    color: Color
+
+  VoxelBlock* = ZenTable[Vector3, VoxelInfo]
 
   Build*[T] = ref object of Unit[T]
-    voxels*: ZenTable[Vector3, ZenTable[Vector3, Voxel]]
+    voxels*: ZenTable[Vector3, VoxelBlock]
     draw_position*: Vector3
     start_color*: int # TODO: Color
     color*: int # TODO: Color
@@ -76,3 +79,9 @@ type
     script_dir*: string
     scene*: string
     lib_dir*: string
+
+proc init*(_: type Transform, origin = vec3()): Transform =
+  result = init_transform()
+  result.origin = origin
+
+proc init*(_: type Basis): Basis = init_basis()

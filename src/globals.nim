@@ -20,8 +20,6 @@ var
   pause*: proc()
   logger*: proc(level, msg: string)
   echo_console*: proc(msg: string)
-  game_node*: Node
-  data_node*: Node
   tool_mode* = BlockMode
   action_index* = 1
   action_count* = 6
@@ -46,8 +44,7 @@ proc err*(args: varargs[string, `$`]) =
 
 proc bind_signals*(receiver, sender: Node, signals: varargs[string]) =
   let send_node = if sender == nil:
-    if game_node == nil: game_node = receiver.get_tree().root.get_node("Game")
-    game_node
+    state.nodes.game
   else:
     sender
 
@@ -66,7 +63,7 @@ proc trigger*(node: Object, signal: string, args: varargs[Variant, `new_variant`
   node.emit_signal(signal, args)
 
 proc trigger*(signal: string, args: varargs[Variant]) =
-  trigger(game_node, signal, args)
+  trigger(state.nodes.game, signal, args)
 
 proc destroy*(node: Node) =
   node.get_parent.remove_child(node)

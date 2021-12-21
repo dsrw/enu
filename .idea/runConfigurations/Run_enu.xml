@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run enu" type="External_Tools_CONFIGURATION" factoryName="External_Tools_CONFIGURATION" singleton="true">
+    <method v="2">
+      <option name="ToolBeforeRunTask" enabled="true" actionId="Tool_External Tools_enu start" />
+    </method>
+  </configuration>
+</component>

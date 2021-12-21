@@ -14,6 +14,10 @@ gdobj BotNode of KinematicBody:
     mesh: MeshInstance
     animation_player: AnimationPlayer
 
+  proc setup*(unit: Bot[Node]) =
+    self.unit = unit
+    self.transform = unit.transform
+
   #proc bind_model(unit: Bot) =
 
   # proc init*() =
@@ -187,3 +191,7 @@ gdobj BotNode of KinematicBody:
 #   b.owner = parent
 #   save_scene()
 #   result = b
+
+let bot_scene = load("res://components/BotNode.tscn") as PackedScene
+proc init*(_: type BotNode): BotNode =
+  result = bot_scene.instance() as BotNode

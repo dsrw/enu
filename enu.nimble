@@ -27,7 +27,7 @@ bin           = @["enu" & lib_ext]
 requires "nim >= 1.6.0",
          "https://github.com/pragmagic/godot-nim#982ab52",
          "https://github.com/dsrw/Nim#baaa50d",
-         "https://github.com/dsrw/model_citizen 0.2.4",
+         "https://github.com/dsrw/model_citizen 0.3.2",
          "cligen 1.5.19",
          "print#head"
 
@@ -84,6 +84,11 @@ task edit, "Edit project in Godot":
 task start, "Run Enu":
   cd "app"
   exec godot_bin & " --verbose scenes/game.tscn"
+
+task build_and_start, "Build and start":
+  exec "nimble build"
+  #build_task()
+  start_task()
 
 task gen, "Generate build_helpers":
   discard gen()
