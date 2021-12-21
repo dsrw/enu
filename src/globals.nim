@@ -21,12 +21,10 @@ var
   logger*: proc(level, msg: string)
   echo_console*: proc(msg: string)
   tool_mode* = BlockMode
-  action_index* = 1
-  action_count* = 6
   config*: Config
   game_ready* = false
   gravity* = -240.0
-  state* = GameState.init(Node)
+  state* = GameState.init(Node, action_count = 6, action_index = 1)
   gid = 0
 
 proc gen_id*(): string =

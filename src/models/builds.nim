@@ -1,7 +1,9 @@
 import std / [hashes, tables, sets, options]
 import pkg / [model_citizen, print]
-import core, types
+import core, types, colors
 const BufferSize = vec3(16, 16, 16)
+
+const default_color = action_colors[blue]
 
 proc find_root[T](self: Build[T]): tuple[build: Build[T], offset: Vector3] =
   result.build = self
@@ -46,17 +48,19 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
   let position = position - offset
   target.voxels[position.buffer][position] = voxel
 
-proc init*(_: type Build, T: type, root = false, transform = Transform.init): Build[T] =
+proc init*(_: type Build, T: type, root = false, transform = Transform.init, color = default_color): Build[T] =
   Build[T](
     root: root,
     voxels: result.voxels.type.init,
     transform: transform,
-    units: ZenSeq[Unit[T]].init
+    units: ZenSeq[Unit[T]].init,
+    color: color,
+    start_color: color
   )
 
-proc init*(_: type Build, T: type, root = false, position: Vector3): Build[T] =
+proc init*(_: type Build, T: type, root = false, color = default_color, position: Vector3): Build[T] =
   let transform = Transform.init(origin = position)
-  result = Build.init(T, root = root, transform = transform)
+  result = Build.init(T, root = root, transform = transform, color = color)
 
 when is_main_module:
   import unittest

@@ -1,6 +1,8 @@
 import std / [tables, monotimes]
-import model_citizen
-import pkg / core / [godotcoretypes, vector3, transforms, basis]
+import pkg/model_citizen
+import pkg/core/godotcoretypes except Color
+import pkg / core / [vector3, transforms, basis]
+import models/colors
 
 export Vector3, Transform, vector3, transforms, basis
 
@@ -16,6 +18,8 @@ type
     open_file*: string
     config*: Config
     open_engine*: Engine
+    action_index*: int
+    action_count*: int
     nodes*: tuple[
       game: T,
       data: T,
@@ -49,8 +53,8 @@ type
   Build*[T] = ref object of Unit[T]
     voxels*: ZenTable[Vector3, VoxelBlock]
     draw_position*: Vector3
-    start_color*: int # TODO: Color
-    color*: int # TODO: Color
+    start_color*: Color # TODO: Color
+    color*: Color # TODO: Color
     voxels_per_frame*: float
     drawing*: bool
     moving*: bool

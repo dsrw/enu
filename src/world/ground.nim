@@ -28,9 +28,9 @@ gdobj Ground of MeshInstance:
       let neighbour = state.units.find_first(voxels)
       if neighbour:
         let local = p.local_to(neighbour)
-        neighbour.draw(local, (Manual, init_color()))
+        neighbour.draw(local, (Manual, state.selected_color))
       else:
-        state.units += Build.init(Node, position = p, root = true)
+        state.units += Build.init(Node, position = p, root = true, color = state.selected_color)
 
       # for c in state.nodes.data.get_children():
       #   let b = c.as_object(Node)

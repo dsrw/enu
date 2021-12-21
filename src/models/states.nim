@@ -1,15 +1,15 @@
 import std / [importutils, tables]
 import model_citizen
-import types
-
-private_access GameState
+import types, colors
 
 let EventFlags = {Retarget}
 
-proc init*(_: type GameState, T: type): GameState[T] =
+proc init*(_: type GameState, T: type, action_count = 0, action_index = 0): GameState[T] =
   GameState[T](
     target_flags: Zen.init(set[TargetFlag]),
-    units: Zen.init(seq[Unit[T]])
+    units: Zen.init(seq[Unit[T]]),
+    action_count: action_count,
+    action_index: action_index
   )
 
 proc set_flag(flags: var set[TargetFlag], flag: TargetFlag, add: bool) =
@@ -72,6 +72,9 @@ proc editing*(state: GameState): bool = Editing in state.target_flags
 proc retarget*(state: var GameState) =
   state.requested_target_flags.incl(Retarget)
   state.apply_target_flags()
+
+proc selected_color*(self: GameState): Color =
+  action_colors[Colors(self.action_index)]
 
 when is_main_module:
   import std / [unittest, sequtils]

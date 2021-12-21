@@ -205,18 +205,18 @@ gdobj Game of Node:
     trigger("game_ready")
 
   proc update_action_index*(change: int) =
-    action_index += change
-    if action_index < 0:
-      action_index = action_count
-      self.obj_mode(action_index)
-    if action_index == 0:
+    state.action_index += change
+    if state.action_index < 0:
+      state.action_index = state.action_count
+      self.obj_mode(state.action_index)
+    if state.action_index == 0:
       self.code_mode()
-    elif action_index == action_count:
-      self.obj_mode(action_index)
-    elif action_index > action_count:
+    elif state.action_index == state.action_count:
+      self.obj_mode(state.action_index)
+    elif state.action_index > state.action_count:
       self.code_mode()
     else:
-      self.block_mode(action_index)
+      self.block_mode(state.action_index)
 
   proc next_action*() =
     self.update_action_index(1)
@@ -225,13 +225,13 @@ gdobj Game of Node:
     self.update_action_index(-1)
 
   proc code_mode*(update_actionbar = true, restore = false) =
-    if restore and action_index == 0:
+    if restore and state.action_index == 0:
       self.block_mode(self.last_index)
     else:
       tool_mode = CodeMode
       state.reticle = true
       state.retarget()
-      action_index = 0
+      state.action_index = 0
       if update_actionbar:
         self.trigger("update_actionbar", 0)
 
@@ -240,7 +240,7 @@ gdobj Game of Node:
     tool_mode = BlockMode
     state.reticle = false
     state.retarget()
-    action_index = index
+    state.action_index = index
     if update_actionbar:
       self.trigger("update_actionbar", index)
 
@@ -248,7 +248,7 @@ gdobj Game of Node:
     tool_mode = ObjectMode
     state.reticle = false
     state.retarget()
-    action_index = index
+    state.action_index = index
     if update_actionbar:
       self.trigger("update_actionbar", index)
 
