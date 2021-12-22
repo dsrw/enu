@@ -136,6 +136,3 @@ proc wrap*[T](value, min, max: T): float =
     min
   else:
     value - (range * floor((value - min) / range))
-
-### string ###
-proc w*(str: string): seq[string] = str.split_whitespace()

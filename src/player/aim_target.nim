@@ -11,7 +11,7 @@ gdobj AimTarget of Sprite3D:
   method ready*() {.gdExport.} =
     trace:
       self.set_as_top_level(true)
-      self.bind_signals(w"collider_exiting")
+      self.bind_signals "collider_exiting"
 
     state.target_flags.track proc(changes: auto) =
       for change in changes:

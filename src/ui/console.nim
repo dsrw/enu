@@ -23,7 +23,7 @@ gdobj Console of RichTextLabel:
 
   method ready*() =
     trace:
-      self.bind_signals w"clear_console toggle_console"
+      self.bind_signals "clear_console", "toggle_console"
     state.target_flags.track proc(changes: auto) =
       for change in changes:
         if MouseCaptured == change.obj and Added in change.changes:

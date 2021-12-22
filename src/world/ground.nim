@@ -8,7 +8,7 @@ gdobj Ground of MeshInstance:
     painting = false
 
   method ready*() =
-    self.bind_signals(self, w"target_move target_fire")
+    self.bind_signals(self, "target_move", "target_fire")
     self.bind_signals("mouse_released")
 
   method on_mouse_released() =

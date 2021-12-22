@@ -32,8 +32,7 @@ type
     running*: bool
 
 const
-  STDLIB_PATHS = (w". core pure pure/collections pure/concurrency" &
-                  w"std fusion")
+  STDLIB_PATHS = [".", "core", "pure", "pure/collections", "pure/concurrency", "std", "fusion"]
   MAIN_SCRIPT = "scripts/main.nim"
 
 var

@@ -8,8 +8,8 @@ type
 gdobj Toolbar of HBoxContainer:
   var
     preview_maker: PreviewMaker
-    blocks = w"green red blue black white brown"
-    objects = w"bot"
+    blocks = @["green", "red", "blue", "black", "white", "brown"]
+    objects = @["bot"]
     preview_result: Option[PreviewResult]
     waiting = false
 

@@ -22,7 +22,7 @@ gdobj Editor of TextEdit:
       if stripped.high > 0:
         let last = $stripped[stripped.high]
 
-        if (stripped in w"var let const type") or last in w": =":
+        if (stripped in ["var", "let", "const", "type"]) or last in [":", "="]:
           let spaces = " ".repeat(line.indentation + 2)
           self.insert_text_at_cursor("\n" & spaces)
           self.get_tree.set_input_as_handled()
@@ -70,8 +70,8 @@ gdobj Editor of TextEdit:
     self.dirty = true
 
   method ready* =
-    self.bind_signals w"save script_error command_mode_enabled command_mode_disabled"
-    self.bind_signals(self, w"text_changed")
+    self.bind_signals "save", "script_error", "command_mode_enabled", "command_mode_disabled"
+    self.bind_signals(self, "text_changed")
     var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
     self.og_bg_color = stylebox.bg_color
 
