@@ -17,7 +17,7 @@ gdobj SelectionArea of Area:
     #   self.collision_layer = 0
 
   method on_target_in*() =
-    if tool_mode == CodeMode:
+    if state.tool == Code:
       discard
       # TODO
       #self.bot.highlight()
@@ -30,13 +30,13 @@ gdobj SelectionArea of Area:
     state.reticle = true
 
   method on_target_fire*() =
-    if tool_mode == CodeMode:
+    if state.tool == Code:
       discard
       # TODO
       #self.bot.select()
 
   method on_target_remove*() =
-    if tool_mode != CodeMode:
+    if state.tool != Code:
       self.bot.destroy()
       state.target_block = true
       save_scene()

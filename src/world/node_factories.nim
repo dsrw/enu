@@ -13,10 +13,10 @@ type
   NodeFactory* = object
     state: GameState
 
-method add_to_scene(unit: Unit, node: Node) =
+method add_to_scene(unit: Unit, node: Node) {.base.} =
   assert false, "Not implemented"
 
-method remove_from_scene(unit: Unit, parent_node: Node) =
+method remove_from_scene(unit: Unit, parent_node: Node) {.base.} =
   unit.parent = nil
   parent_node.remove_child(unit.node)
 
@@ -38,15 +38,15 @@ method add_to_scene(unit: Build, parent_node: Node) =
 
 proc find_nested_changes(parent: Change[Unit]) =
   for change in parent.triggered_by:
-    assert change of Change[Unit]
-    let change = Change[Unit](change)
-    if Added in change.changes:
-      change.obj.parent = parent.obj
-      change.obj.add_to_scene(parent.obj.node)
-    elif Modified in change.changes:
-      find_nested_changes(change)
-    elif Removed in change.changes:
-      change.obj.remove_from_scene(change.obj.parent.node)
+    if change of Change[Unit]:
+      let change = Change[Unit](change)
+      if Modified in change.changes:
+        find_nested_changes(change)
+      elif Added in change.changes:
+        change.obj.parent = parent.obj
+        change.obj.add_to_scene(parent.obj.node)
+      elif Removed in change.changes:
+        change.obj.remove_from_scene(change.obj.parent.node)
 
 proc watch*(f: NodeFactory, state: GameState) =
   state.units.track proc(changes: auto) =

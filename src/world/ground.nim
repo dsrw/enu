@@ -23,7 +23,7 @@ gdobj Ground of MeshInstance:
           for z in 0..2:
             p + vec3(x - 1, y - 1, z - 1)
 
-    if tool_mode == BlockMode:
+    if state.tool == Block:
       self.painting = true
       let neighbour = state.units.find_first(voxels)
       if neighbour:
@@ -43,7 +43,7 @@ gdobj Ground of MeshInstance:
 
       # create_builder(p, data_node)
 
-    elif tool_mode == ObjectMode:
+    elif state.tool == Place:
       var t = Transform.init(origin = p)
       state.units += Bot.init(Node, transform = t)
 
@@ -51,5 +51,5 @@ gdobj Ground of MeshInstance:
     let previous_point = self.point
     self.point = point
     self.normal = normal
-    if self.painting and previous_point != self.point and tool_mode == BlockMode:
+    if self.painting and previous_point != self.point and state.tool == Block:
       self.on_target_fire()

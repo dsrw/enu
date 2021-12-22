@@ -1,6 +1,7 @@
 import godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
                    input_event, animation_player, resource_loader, packed_scene]
-import godot, std / [math, tables, with, times, sugar, os, monotimes]
+import godot except print
+import std / [math, tables, with, times, sugar, os, monotimes]
 import globals, core, print
 import engine / [contexts, engine], models / [types, bots]
 export contexts

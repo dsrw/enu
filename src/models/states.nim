@@ -9,7 +9,8 @@ proc init*(_: type GameState, T: type, action_count = 0, action_index = 0): Game
     target_flags: Zen.init(set[TargetFlag]),
     units: Zen.init(seq[Unit[T]]),
     action_count: action_count,
-    action_index: action_index
+    action_index: action_index,
+    tool: Block
   )
 
 proc set_flag(flags: var set[TargetFlag], flag: TargetFlag, add: bool) =

@@ -1,7 +1,6 @@
-[gd_scene load_steps=19 format=2]
+[gd_scene load_steps=12 format=2]
 
 [ext_resource path="res://components/BuildNode.gdns" type="Script" id=1]
-[ext_resource path="res://shaders/terrain_voxel.shader" type="Shader" id=7]
 
 [sub_resource type="VoxelGeneratorFlat" id=1]
 channel = 0
@@ -118,33 +117,9 @@ voxels/6 = SubResource( 8 )
 [sub_resource type="VoxelMesherBlocky" id=10]
 library = SubResource( 9 )
 
-[sub_resource type="ShaderMaterial" id=11]
-shader = ExtResource( 7 )
-
-[sub_resource type="ShaderMaterial" id=12]
-shader = ExtResource( 7 )
-
-[sub_resource type="ShaderMaterial" id=13]
-shader = ExtResource( 7 )
-
-[sub_resource type="ShaderMaterial" id=14]
-shader = ExtResource( 7 )
-
-[sub_resource type="ShaderMaterial" id=15]
-shader = ExtResource( 7 )
-
-[sub_resource type="ShaderMaterial" id=16]
-shader = ExtResource( 7 )
-
 [node name="Build" type="VoxelTerrain"]
 generator = SubResource( 1 )
 mesher = SubResource( 10 )
 bounds = AABB( -16, -16, -16, 32, 32, 32 )
 max_view_distance = 256
-material/0 = SubResource( 11 )
-material/1 = SubResource( 12 )
-material/2 = SubResource( 13 )
-material/3 = SubResource( 14 )
-material/4 = SubResource( 15 )
-material/5 = SubResource( 16 )
 script = ExtResource( 1 )

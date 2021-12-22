@@ -12,6 +12,12 @@ type
   TargetFlag* = enum
     Reticle, TargetBlock, MouseCaptured, CommandMode, Editing, Retarget
 
+  UnitFlags* = enum
+    Highlighted
+
+  Tools* = enum
+    Code, Block, Place
+
   GameState*[T] = ref object
     target_flags*: ZenSet[TargetFlag]
     requested_target_flags*: set[TargetFlag]
@@ -20,6 +26,7 @@ type
     open_engine*: Engine
     action_index*: int
     action_count*: int
+    tool*: Tools
     nodes*: tuple[
       game: T,
       data: T,
@@ -30,6 +37,7 @@ type
   Unit*[T] = ref object of RootObj
     parent*: Unit[T]
     units*: ZenSeq[Unit[T]]
+    flags*: ZenSet[UnitFlags]
     local*: bool
     start_transform*: Transform
     transform*: Transform

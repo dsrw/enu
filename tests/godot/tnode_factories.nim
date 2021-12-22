@@ -19,5 +19,5 @@ when is_main_module:
     u2.units += u3
     u2.units += u4
     u2.units -= u4
-    #print state
+    u3.flags += Targeted
   tests()

@@ -48,6 +48,24 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
   let position = position - offset
   target.voxels[position.buffer][position] = voxel
 
+proc flag_tree[T](root: Unit[T], add: bool, flag: UnitFlags) =
+  if add:
+    root.flags += flag
+  else:
+    root.flags -= flag
+  for unit in root.units:
+    unit.flag_tree(add, flag)
+
+proc target_in*[T](self: Build[T], state: GameState[T]) =
+  if state.tool == Code:
+    let (root, _) = self.find_root
+    root.flag_tree(true, Highlighted)
+
+proc target_out*[T](self: Build[T], state: GameState[T]) =
+  if state.tool == Code:
+    let (root, _) = self.find_root
+    root.flag_tree(false, Highlighted)
+
 proc init*(_: type Build, T: type, root = false, transform = Transform.init, color = default_color): Build[T] =
   Build[T](
     root: root,
@@ -55,7 +73,8 @@ proc init*(_: type Build, T: type, root = false, transform = Transform.init, col
     transform: transform,
     units: ZenSeq[Unit[T]].init,
     color: color,
-    start_color: color
+    start_color: color,
+    flags: ZenSet[UnitFlags].init
   )
 
 proc init*(_: type Build, T: type, root = false, color = default_color, position: Vector3): Build[T] =
@@ -68,11 +87,12 @@ when is_main_module:
 
   var b = Build.init(Node, root = true)
 
-  b.draw vec3(1, 1, 1), VoxelInfo(kind: Computed)
+  b.draw vec3(1, 1, 1), (Computed, Color())
   check vec3(1, 1, 1) in b.voxels[vec3(0, 0, 0)]
-  b.draw vec3(17, 17, 17), VoxelInfo(kind: Computed)
-  check vec3(1, 1, 1) in b.voxels[vec3(1, 1, 1)]
+  b.draw vec3(17, 17, 17), (Computed, Color())
+  check vec3(17, 17, 17) in b.voxels[vec3(1, 1, 1)]
   var c = Build.init(Node, transform = Transform(origin: vec3(5, 5, 5)))
   c.parent = b
 
-  c.draw vec3(14, 14, 14), VoxelInfo(kind: Manual)
+  c.draw vec3(14, 14, 14), (Manual, Color())
+  c.flags += Targeted

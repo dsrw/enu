@@ -264,7 +264,7 @@ gdobj Player of KinematicBody:
     elif event.is_action_released("run"):
       self.running = self.always_run
 
-    if event of InputEventPanGesture and tool_mode == BlockMode:
+    if event of InputEventPanGesture and state.tool == Block:
       let pan = event as InputEventPanGesture
       self.pan_delta += pan.delta.y
       if self.pan_delta > 2:

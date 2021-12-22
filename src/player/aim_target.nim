@@ -40,7 +40,7 @@ gdobj AimTarget of Sprite3D:
         self.last_collider.trigger("target_out")
       self.last_collider = collider
       if collider != nil:
-        state.target_block = tool_mode != CodeMode
+        state.target_block = state.tool != Code
         collider.trigger("target_in")
       else:
         state.target_block = false

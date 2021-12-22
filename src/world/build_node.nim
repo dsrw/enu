@@ -18,7 +18,7 @@ gdobj BuildNode of VoxelTerrain:
     loaded_blocks*: Table[Vector3, TrackedBlock]
 
   proc init*() =
-    self.bind_signals(self, "block_loaded", "block_unloaded")#, "target_in", "target_out", "target_move",
+    self.bind_signals(self, "block_loaded", "block_unloaded", "target_in", "target_out")#, "target_move",
                             #"target_fire", "target_remove", "mouse_released")
 
   proc clone_materials =
@@ -32,11 +32,6 @@ gdobj BuildNode of VoxelTerrain:
         let m = m.duplicate.as(ShaderMaterial)
         m.set_shader_param("emission_energy", default_energy.to_variant)
         self.set_material(i, m)
-
-  proc setup*(unit: Build[Node]) =
-    self.unit = unit
-    self.transform = unit.transform
-    self.unit.draw(vec3(), (Manual, unit.start_color))
 
   proc draw(location: Vector3, info: VoxelInfo) =
     while not self.bounds.contains(location):
@@ -93,17 +88,35 @@ gdobj BuildNode of VoxelTerrain:
   #     if self.draw_plane == plane:
   #       self.on_target_remove()
   #
-  # method on_target_out() =
-  #   self.get_parent.trigger("deselect", true)
-  #   if tool_mode == ObjectMode:
-  #     game_node.trigger("show_target")
-  #
-  # method on_target_in() =
-  #   if tool_mode == CodeMode:
-  #     self.get_parent.trigger("highlight", true)
-  #   if tool_mode == ObjectMode:
-  #     game_node.trigger("hide_target")
-  #
+
+  proc set_energy(energy: float) =
+    let library = self.mesher.as(VoxelMesherBlocky).library
+    for i in 0..<library.voxel_count.int:
+      let m = self.get_material(i).as(ShaderMaterial)
+      if not m.is_nil:
+        m.set_shader_param("emission_energy", energy.to_variant)
+
+  proc select =
+    self.set_energy(highlight_energy)
+
+  proc deselect =
+    self.set_energy(default_energy)
+
+  method on_target_out() =
+    self.unit.target_out(state)
+
+  method on_target_in() =
+    self.unit.target_in(state)
+
+  proc track_changes() =
+    self.unit.flags.track proc(changes: auto) =
+      for change in changes:
+        if change.obj == Highlighted:
+          if Added in change.changes:
+            self.select
+          elif Removed in change.changes:
+            self.deselect
+
   # method on_mouse_released() =
   #   self.painting = false
   #   self.erasing = false
@@ -145,7 +158,11 @@ gdobj BuildNode of VoxelTerrain:
   #       else:
   #         self.trigger("terrain_block_removed", 0 , loc, data.index, data.keep)
   #     self.draw_plane = self.current_point * self.current_normal
-
+  proc setup*(unit: Build[Node]) =
+    self.unit = unit
+    self.transform = unit.transform
+    self.unit.draw(vec3(), (Manual, unit.start_color))
+    self.track_changes
 
 let build_scene = load("res://components/BuildNode.tscn") as PackedScene
 proc init*(_: type BuildNode): BuildNode =
