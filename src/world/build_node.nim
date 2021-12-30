@@ -18,8 +18,7 @@ gdobj BuildNode of VoxelTerrain:
     loaded_blocks*: Table[Vector3, TrackedBlock]
 
   proc init*() =
-    self.bind_signals(self, "block_loaded", "block_unloaded", "target_in", "target_out")#, "target_move",
-                            #"target_fire", "target_remove", "mouse_released")
+    self.bind_signals self, "block_loaded", "block_unloaded"
 
   proc clone_materials =
     # generate our own copy of the library materials, so we can manipulate them without impacting other builds.
@@ -33,7 +32,11 @@ gdobj BuildNode of VoxelTerrain:
         m.set_shader_param("emission_energy", default_energy.to_variant)
         self.set_material(i, m)
 
+  method ready() =
+    self.clone_materials()
+
   proc draw(location: Vector3, info: VoxelInfo) =
+    # grow bounds until the block fits
     while not self.bounds.contains(location):
       self.bounds = self.bounds.grow(16)
     self.get_voxel_tool.set_voxel(location, info.color.action_index.ord)
@@ -41,9 +44,6 @@ gdobj BuildNode of VoxelTerrain:
   proc draw_block(voxels: VoxelBlock) =
     for loc, info in voxels:
       self.draw(loc, info)
-
-  method ready() =
-    self.clone_materials()
 
   method on_block_loaded(location: Vector3) =
     var tracked_block: TrackedBlock
@@ -102,16 +102,10 @@ gdobj BuildNode of VoxelTerrain:
   proc deselect =
     self.set_energy(default_energy)
 
-  method on_target_out() =
-    self.unit.target_out(state)
-
-  method on_target_in() =
-    self.unit.target_in(state)
-
   proc track_changes() =
     self.unit.flags.track proc(changes: auto) =
       for change in changes:
-        if change.obj == Highlighted:
+        if change.obj == Highlight:
           if Added in change.changes:
             self.select
           elif Removed in change.changes:

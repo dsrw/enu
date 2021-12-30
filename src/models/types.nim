@@ -9,18 +9,22 @@ export Vector3, Transform, vector3, transforms, basis
 import engine/engine
 
 type
-  TargetFlag* = enum
+  TargetFlags* = enum
     Reticle, TargetBlock, MouseCaptured, CommandMode, Editing, Retarget
 
-  UnitFlags* = enum
-    Highlighted
+  ModelFlags* = enum
+    Highlight, Hover, TargetMoved
+
+  InputFlags* = enum
+    Primary, Secondary
 
   Tools* = enum
     Code, Block, Place
 
   GameState*[T] = ref object
-    target_flags*: ZenSet[TargetFlag]
-    requested_target_flags*: set[TargetFlag]
+    target_flags*: ZenSet[TargetFlags]
+    input_flags*: ZenSet[InputFlags]
+    requested_target_flags*: set[TargetFlags]
     open_file*: string
     config*: Config
     open_engine*: Engine
@@ -33,11 +37,20 @@ type
       player: T
     ]
     units*: ZenSeq[Unit[T]]
+    ground*: Ground[T]
 
-  Unit*[T] = ref object of RootObj
+  Model*[T] = ref object of RootObj
+    target_point*: Vector3
+    target_normal*: Vector3
+    flags*: ZenSet[ModelFlags]
+    node*: T
+
+  Ground*[T] = ref object of Model[T]
+    painting*: bool
+
+  Unit*[T] = ref object of Model[T]
     parent*: Unit[T]
     units*: ZenSeq[Unit[T]]
-    flags*: ZenSet[UnitFlags]
     local*: bool
     start_transform*: Transform
     transform*: Transform
@@ -45,7 +58,6 @@ type
     speed*: float
     script_ctx*: ScriptCtx
     disabled*: bool
-    node*: T
 
   Bot*[T] = ref object of Unit[T]
 

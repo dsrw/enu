@@ -48,7 +48,7 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
   let position = position - offset
   target.voxels[position.buffer][position] = voxel
 
-proc flag_tree[T](root: Unit[T], add: bool, flag: UnitFlags) =
+proc flag_tree[T](root: Unit[T], add: bool, flag: ModelFlags) =
   if add:
     root.flags += flag
   else:
@@ -56,30 +56,32 @@ proc flag_tree[T](root: Unit[T], add: bool, flag: UnitFlags) =
   for unit in root.units:
     unit.flag_tree(add, flag)
 
-proc target_in*[T](self: Build[T], state: GameState[T]) =
-  if state.tool == Code:
-    let (root, _) = self.find_root
-    root.flag_tree(true, Highlighted)
-
-proc target_out*[T](self: Build[T], state: GameState[T]) =
-  if state.tool == Code:
-    let (root, _) = self.find_root
-    root.flag_tree(false, Highlighted)
-
-proc init*(_: type Build, T: type, root = false, transform = Transform.init, color = default_color): Build[T] =
-  Build[T](
+proc init*(_: type Build, T: type, state: GameState[T], root = false, transform = Transform.init, color = default_color): Build[T] =
+  let self = Build[T](
     root: root,
     voxels: result.voxels.type.init,
     transform: transform,
     units: ZenSeq[Unit[T]].init,
     color: color,
     start_color: color,
-    flags: ZenSet[UnitFlags].init
+    flags: ZenSet[ModelFlags].init
   )
 
-proc init*(_: type Build, T: type, root = false, color = default_color, position: Vector3): Build[T] =
+  self.flags.track proc(changes: auto) =
+    for change in changes:
+      if change.obj == Hover and state.tool == Code:
+        if Added in change.changes:
+          let (root, _) = self.find_root
+          root.flag_tree(true, Highlight)
+        elif Removed in change.changes:
+          let (root, _) = self.find_root
+          root.flag_tree(false, Highlight)
+
+  result = self
+
+proc init*(_: type Build, T: type, state: GameState[T], root = false, color = default_color, position: Vector3): Build[T] =
   let transform = Transform.init(origin = position)
-  result = Build.init(T, root = root, transform = transform, color = color)
+  result = Build.init(T, state = state, root = root, transform = transform, color = color)
 
 when is_main_module:
   import unittest

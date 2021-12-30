@@ -284,18 +284,14 @@ gdobj Player of KinematicBody:
     if event.is_action_pressed("fire"):
       if not state.editing:
         self.skip_release = true
-      if ray.is_colliding():
-        var trigger_event = "target_fire"
-        trigger(ray.get_collider(), trigger_event)
+      state.input_flags += Primary
     elif event.is_action_released("fire"):
       self.skip_release = false
-      get_game().trigger("mouse_released")
+      state.input_flags -= Primary
 
     if event.is_action_pressed("remove"):
-      if ray.is_colliding():
-        var trigger_event = "target_remove"
-        trigger(ray.get_collider(), trigger_event)
+      state.input_flags += Secondary
     elif event.is_action_released("remove"):
-      get_game().trigger("mouse_released")
+      state.input_flags -= Secondary
 
 proc get_player*(): Player = Player(state.nodes.player)

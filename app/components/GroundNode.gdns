@@ -3,6 +3,6 @@
 [ext_resource path="res://_dlls/nimlib.gdnlib" type="GDNativeLibrary" id=1]
 
 [resource]
-resource_name = "Ground"
-class_name = "Ground"
+resource_name = "GroundNode"
+class_name = "GroundNode"
 library = ExtResource( 1 )

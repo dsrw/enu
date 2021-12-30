@@ -1,17 +1,14 @@
 import godotapi / [sprite_3d, ray_cast, spatial]
 import godot, model_citizen
-import std / [strutils, math]
-import globals, core
+import std / [strutils, math, wrapnils]
+import globals, core, world/nodes, models
 
 gdobj AimTarget of Sprite3D:
-  var
-    last_collider: Spatial
-    last_point, last_normal: Vector3
+  var target_model: Model[Node]
 
   method ready*() {.gdExport.} =
-    trace:
-      self.set_as_top_level(true)
-      self.bind_signals "collider_exiting"
+    self.set_as_top_level(true)
+    self.bind_signals "collider_exiting"
 
     state.target_flags.track proc(changes: auto) =
       for change in changes:
@@ -21,12 +18,10 @@ gdobj AimTarget of Sprite3D:
           self.visible = false
 
       if changes.any_it(it.obj in {TargetBlock, Reticle, Retarget}):
-        # retarget
-        if self.last_collider != nil:
-          self.last_collider.trigger("target_out")
-          self.last_collider = nil
-          self.last_point = vec3()
-          self.last_normal = vec3()
+        if self.target_model != nil:
+          self.target_model.flags -= Hover
+          self.target_model.target_point = vec3()
+          self.target_model.target_normal = vec3()
 
   proc update*(ray: RayCast) =
     ray.force_raycast_update()
@@ -34,26 +29,25 @@ gdobj AimTarget of Sprite3D:
       ray.get_collider() as Spatial
     else:
       nil
+    let unit = ?.collider.model
 
-    if collider != self.last_collider:
-      if self.last_collider != nil:
-        self.last_collider.trigger("target_out")
-      self.last_collider = collider
-      if collider != nil:
+    if unit != self.target_model:
+      if self.target_model != nil:
+        self.target_model.flags -= Hover
+      self.target_model = unit
+      if unit != nil:
         state.target_block = state.tool != Code
-        collider.trigger("target_in")
+        unit.flags += Hover
       else:
         state.target_block = false
 
     if collider != nil:
-      let
-        local_collision_point = collider.to_local(ray.get_collision_point())
       var
         global_normal = ray.get_collision_normal()
         local_point: Vector3
-
-      let inverse_normal = global_normal.inverse_normalized()
       let
+        local_collision_point = collider.to_local(ray.get_collision_point())
+        inverse_normal = global_normal.inverse_normalized()
         basis = collider.global_transform.basis
         half = vec3(0.5, 0.5, 0.5)
         full = vec3(1, 1, 1)
@@ -73,16 +67,18 @@ gdobj AimTarget of Sprite3D:
       self.translation = collider.to_global local_point + (local_normal * 0.01) / collider.scale
       self.scale = collider.scale
 
-      let
-        align_normal = self.transform.origin + global_normal
-        axis = if local_normal.abs != UP: UP else: FORWARD
+      let align_normal = self.transform.origin + global_normal
+      let axis = if local_normal.abs != UP: UP else: FORWARD
       self.look_at(align_normal, axis)
 
-      if (self.last_point, self.last_normal) != (local_point, local_normal):
-        self.last_point = local_point
-        self.last_normal = local_normal
-        collider.trigger("target_move", local_point, local_normal)
+      if unit:
+        if (unit.target_point, unit.target_normal) != (local_point, local_normal):
+          unit.target_point = local_point
+          unit.target_normal = local_normal
+          unit.flags += TargetMoved
+        else:
+          unit.flags -= TargetMoved
 
   method on_collider_exiting(collider: Spatial) =
-    if collider == self.last_collider:
-      self.last_collider = nil
+    if collider.model == self.target_model:
+      self.target_model = nil

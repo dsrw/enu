@@ -6,14 +6,15 @@ let EventFlags = {Retarget}
 
 proc init*(_: type GameState, T: type, action_count = 0, action_index = 0): GameState[T] =
   GameState[T](
-    target_flags: Zen.init(set[TargetFlag]),
+    target_flags: Zen.init(set[TargetFlags]),
+    input_flags: Zen.init(set[InputFlags]),
     units: Zen.init(seq[Unit[T]]),
     action_count: action_count,
     action_index: action_index,
     tool: Block
   )
 
-proc set_flag(flags: var set[TargetFlag], flag: TargetFlag, add: bool) =
+proc set_flag(flags: var set[TargetFlags], flag: TargetFlags, add: bool) =
   if add:
     flags.incl(flag)
   else:
@@ -22,7 +23,7 @@ proc set_flag(flags: var set[TargetFlag], flag: TargetFlag, add: bool) =
 proc apply_target_flags(state: var GameState) =
   let requested = state.requested_target_flags
 
-  var flags: set[TargetFlag]
+  var flags: set[TargetFlags]
 
   for flag in {CommandMode, TargetBlock, Editing, MouseCaptured, Retarget}:
     if flag in requested: flags.incl(flag)

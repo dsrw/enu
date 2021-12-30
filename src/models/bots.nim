@@ -6,7 +6,7 @@ proc init*(_: type Bot, T: type, transform = Transform.init): Bot[T] =
   Bot[T](
     units: Zen.init(seq[Unit[T]]),
     transform: transform,
-    flags: ZenSet[UnitFlags].init
+    flags: ZenSet[ModelFlags].init
   )
 
 # proc code_template(file: string, imports: string): string =

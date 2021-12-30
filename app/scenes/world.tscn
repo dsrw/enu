@@ -2,7 +2,7 @@
 
 [ext_resource path="res://scenes/env.tres" type="Environment" id=2]
 [ext_resource path="res://materials/default_ground.tres" type="Material" id=3]
-[ext_resource path="res://components/Ground.gdns" type="Script" id=4]
+[ext_resource path="res://components/GroundNode.gdns" type="Script" id=4]
 [ext_resource path="res://components/Player.tscn" type="PackedScene" id=6]
 
 [sub_resource type="PlaneMesh" id=1]
@@ -29,6 +29,7 @@ directional_shadow_mode = 0
 [node name="Ground" type="MeshInstance" parent="."]
 mesh = SubResource( 1 )
 material/0 = null
+script = ExtResource( 4 )
 
 [node name="StaticBody" type="StaticBody" parent="Ground"]
 collision_layer = 524288
