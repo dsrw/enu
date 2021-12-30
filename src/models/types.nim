@@ -80,6 +80,7 @@ type
     moving*: bool
     root*: bool
     save_points*: Table[string, tuple[position: Transform, index: int, drawing: bool]]
+    painting*: bool
 
   Callback* = proc(delta: float): bool
   ScriptCtx* = ref object
