@@ -154,8 +154,13 @@ gdobj BuildNode of VoxelTerrain:
   #     self.draw_plane = self.current_point * self.current_normal
   proc setup*(unit: Build[Node]) =
     self.unit = unit
+    self.unit.to_global = proc(local: Vector3): Vector3 =
+      self.to_global(local)
+    self.unit.to_local = proc(global: Vector3): Vector3 =
+      self.to_local(global)
     self.transform = unit.transform
     self.unit.draw(vec3(), (Manual, unit.start_color))
+
     self.track_changes
 
 let build_scene = load("res://components/BuildNode.tscn") as PackedScene

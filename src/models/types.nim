@@ -38,15 +38,17 @@ type
     ]
     units*: ZenSeq[Unit[T]]
     ground*: Ground[T]
+    draw_plane*: Vector3
 
   Model*[T] = ref object of RootObj
     target_point*: Vector3
     target_normal*: Vector3
     flags*: ZenSet[ModelFlags]
+    to_local*: proc(global: Vector3): Vector3
+    to_global*: proc(local: Vector3): Vector3
     node*: T
 
   Ground*[T] = ref object of Model[T]
-    painting*: bool
 
   Unit*[T] = ref object of Model[T]
     parent*: Unit[T]
@@ -73,14 +75,13 @@ type
   Build*[T] = ref object of Unit[T]
     voxels*: ZenTable[Vector3, VoxelBlock]
     draw_position*: Vector3
-    start_color*: Color # TODO: Color
-    color*: Color # TODO: Color
+    start_color*: Color
+    color*: Color
     voxels_per_frame*: float
     drawing*: bool
     moving*: bool
     root*: bool
     save_points*: Table[string, tuple[position: Transform, index: int, drawing: bool]]
-    painting*: bool
 
   Callback* = proc(delta: float): bool
   ScriptCtx* = ref object

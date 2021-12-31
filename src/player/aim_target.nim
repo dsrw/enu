@@ -75,7 +75,7 @@ gdobj AimTarget of Sprite3D:
         if (unit.target_point, unit.target_normal) != (local_point, local_normal):
           unit.target_point = local_point
           unit.target_normal = local_normal
-          unit.flags += TargetMoved
+          unit.flags.touch TargetMoved
         else:
           unit.flags -= TargetMoved
 

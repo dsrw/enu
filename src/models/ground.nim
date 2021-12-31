@@ -9,17 +9,19 @@ proc surrounding(point: Vector3): seq[Vector3] =
         for z in 0..2:
           point + vec3(x - 1, y - 1, z - 1)
 
-proc fire[T](self: Ground[T], state: GameState[T]) =
+proc fire[T](self: Ground[T], state: GameState[T], append = false) =
+  var add_to {.global.}: Build[T]
   let point = (self.target_point - vec3(0.5, 0, 0.5)).trunc
   if state.tool == Block:
-    self.painting = true
     let points = point.surrounding
-    let neighbour = state.units.find_first(points)
+    let neighbour = if append: add_to else: state.units.find_first(points)
     if neighbour:
       let local = point.local_to(neighbour)
       neighbour.draw(local, (Manual, state.selected_color))
     else:
-      state.units += Build.init(T, state, position = point, root = true, color = state.selected_color)
+      add_to = Build.init(T, state, position = point, root = true, color = state.selected_color)
+      state.units += add_to
+
   elif state.tool == Place:
     var t = Transform.init(origin = point)
     state.units += Bot.init(T, transform = t)
@@ -31,14 +33,14 @@ proc init*(_: type Ground, T: type, node: T, state: GameState[T]): Ground[T] =
     for change in changes:
       if Added in change.changes and Hover in self.flags:
         if change.obj == Primary:
-          self.fire(state)
+          self.fire(state, append = false)
       if Removed in change.changes and change.obj in {Primary, Secondary}:
-        self.painting = false
+        state.draw_plane = vec3()
 
   self.flags.track proc(changes: auto) =
-    if self.painting:
+    if Primary in state.input_flags and state.draw_plane == vec3():
       for change in changes:
         if Added in change.changes and change.obj == TargetMoved:
-          self.fire(state)
+          self.fire(state, append = true)
 
   result = self
