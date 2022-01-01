@@ -20,7 +20,7 @@ shape = SubResource( 1 )
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0 )
 
 [node name="VoxelViewer" type="VoxelViewer" parent="."]
-view_distance = 32
+view_distance = 256
 
 [node name="HighRay" type="RayCast" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0 )

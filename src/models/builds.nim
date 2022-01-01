@@ -46,6 +46,8 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
     (target, offset) = self.find_root
 
   let position = (position - offset).floor
+  if position.buffer notin target.voxels:
+    target.voxels[position.buffer] = ZenTable[Vector3, VoxelInfo].init
   target.voxels[position.buffer][position] = voxel
 
 proc flag_tree[T](root: Unit[T], add: bool, flag: ModelFlags) =
