@@ -22,6 +22,7 @@ gdobj AimTarget of Sprite3D:
           self.target_model.flags -= Hover
           self.target_model.target_point = vec3()
           self.target_model.target_normal = vec3()
+          self.target_model = nil
 
   proc update*(ray: RayCast) =
     ray.force_raycast_update()

@@ -87,8 +87,8 @@ proc init*(_: type Build, T: type, state: GameState[T], root = false, transform 
 
   self.flags.track proc(changes: auto) =
     for change in changes:
-      if change.obj == Hover and state.tool == Code:
-        if Added in change.changes:
+      if change.obj == Hover:
+        if Added in change.changes and state.tool == Code:
           let (root, _) = self.find_root
           root.flag_tree(true, Highlight)
         elif Removed in change.changes:
