@@ -15,9 +15,21 @@ gdobj BotNode of KinematicBody:
     mesh: MeshInstance
     animation_player: AnimationPlayer
 
+  proc update_material*(value: Material) =
+    self.mesh.set_surface_material(0, value)
+
   proc setup*(unit: Bot[Node]) =
     self.unit = unit
     self.transform = unit.transform
+
+  proc set_default_material() =
+    self.update_material(self.material)
+
+  method ready() =
+    self.skin = self.get_node("Mannequiny").as(Spatial)
+    self.mesh = self.skin.get_node("root/Skeleton/body001").as(MeshInstance)
+    self.animation_player = self.skin.get_node("AnimationPlayer").as(AnimationPlayer)
+    self.set_default_material()
 
   #proc bind_model(unit: Bot) =
 
