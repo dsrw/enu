@@ -71,7 +71,8 @@ proc remove(self: Build, state: GameState) =
 
 proc fire(self: Build, state: GameState) =
   if state.tool.value == Block:
-    self.draw(self.target_point, (Manual, state.selected_color))
+    let point = (self.target_point + (self.target_normal * 0.5)).floor
+    self.draw(point, (Manual, state.selected_color))
     state.draw_plane = self.to_global(self.target_point) * self.target_normal
 
 proc init*(_: type Build, T: type, state: GameState[T], root = false, transform = Transform.init, color = default_color): Build[T] =
