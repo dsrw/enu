@@ -18,7 +18,7 @@ proc set_flag(flags: var set[TargetFlags], flag: TargetFlags, add: bool) =
   else:
     flags.excl(flag)
 
-proc apply_target_flags(state: var GameState) =
+proc apply_target_flags(state: GameState) =
   let requested = state.requested_target_flags
 
   var flags: set[TargetFlags]
@@ -35,15 +35,15 @@ proc apply_target_flags(state: var GameState) =
 
   state.target_flags.value = flags
 
-proc `mouse_captured=`*(state: var GameState, captured: bool) =
+proc `mouse_captured=`*(state: GameState, captured: bool) =
   state.requested_target_flags.set_flag(MouseCaptured, captured)
   state.apply_target_flags()
 
-proc `command_mode=`*(state: var GameState, command_mode: bool) =
+proc `command_mode=`*(state: GameState, command_mode: bool) =
   state.requested_target_flags.set_flag(CommandMode, command_mode)
   state.apply_target_flags()
 
-proc `target_block=`*(state: var GameState, target_block: bool) =
+proc `target_block=`*(state: GameState, target_block: bool) =
   if target_block:
     state.requested_target_flags.incl(TargetBlock)
     state.requested_target_flags.excl(Reticle)
@@ -51,7 +51,7 @@ proc `target_block=`*(state: var GameState, target_block: bool) =
     state.requested_target_flags.excl(TargetBlock)
   state.apply_target_flags()
 
-proc `reticle=`*(state: var GameState, reticle: bool) =
+proc `reticle=`*(state: GameState, reticle: bool) =
   if reticle:
     state.requested_target_flags.incl(Reticle)
     state.requested_target_flags.excl(TargetBlock)
@@ -59,7 +59,7 @@ proc `reticle=`*(state: var GameState, reticle: bool) =
     state.requested_target_flags.excl(Reticle)
   state.apply_target_flags()
 
-proc `editing=`*(state: var GameState, editing: bool) =
+proc `editing=`*(state: GameState, editing: bool) =
   state.requested_target_flags.set_flag(Editing, editing)
   state.apply_target_flags()
 

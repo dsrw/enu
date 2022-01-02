@@ -69,11 +69,14 @@ proc remove(self: Build, state: GameState) =
       else:
         self.parent.units -= self
 
-proc fire(self: Build, state: GameState) =
+proc fire[T](self: Build[T], state: GameState[T]) =
   if state.tool.value == Block:
     let point = (self.target_point + (self.target_normal * 0.5)).floor
     self.draw(point, (Manual, state.selected_color))
     state.draw_plane = self.to_global(self.target_point) * self.target_normal
+  elif state.tool.value == Place and state.target_block:
+    let transform = Transform.init(origin = self.to_global(self.target_point))
+    state.units += Bot.init(T, transform = transform)
 
 proc init*(_: type Build, T: type, state: GameState[T], root = false, transform = Transform.init, color = default_color): Build[T] =
   let self = Build[T](
@@ -95,13 +98,18 @@ proc init*(_: type Build, T: type, state: GameState[T], root = false, transform 
         elif Removed in change.changes:
           let (root, _) = self.find_root
           root.flag_tree(false, Highlight)
-      elif change.item == TargetMoved and state.tool.value == Block:
+      if change.item == TargetMoved and state.tool.value == Block:
         let plane = self.to_global(self.target_point) * self.target_normal
         if Touched in change.changes and plane == state.draw_plane:
           if Secondary in state.input_flags:
             self.remove(state)
           elif Primary in state.input_flags:
             self.fire(state)
+      if change.item in {TargetMoved, Hover} and state.tool.value == Place:
+        if self.target_normal == UP:
+          state.target_block = true
+        else:
+          state.reticle = true
 
   state.input_flags.track proc(changes: auto) =
     for change in changes:

@@ -23,7 +23,7 @@ proc fire[T](self: Ground[T], state: GameState[T], append = false) =
       state.units += add_to
 
   elif state.tool.value == Place:
-    var t = Transform.init(origin = point)
+    var t = Transform.init(origin = self.target_point)
     state.units += Bot.init(T, transform = t)
 
 proc init*(_: type Ground, T: type, node: T, state: GameState[T]): Ground[T] =
