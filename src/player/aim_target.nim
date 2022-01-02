@@ -17,12 +17,13 @@ gdobj AimTarget of Sprite3D:
         elif TargetBlock == change.obj and Removed in change.changes:
           self.visible = false
 
-      if changes.any_it(it.obj in {TargetBlock, Reticle, Retarget}):
-        if self.target_model != nil:
-          self.target_model.flags -= Hover
-          self.target_model.target_point = vec3()
-          self.target_model.target_normal = vec3()
-          self.target_model = nil
+    state.tool.track proc(changes: auto) =
+      # tool changed. Retarget.
+      if self.target_model != nil:
+        self.target_model.flags -= Hover
+        self.target_model.target_point = vec3()
+        self.target_model.target_normal = vec3()
+        self.target_model = nil
 
   proc update*(ray: RayCast) =
     ray.force_raycast_update()
@@ -37,7 +38,7 @@ gdobj AimTarget of Sprite3D:
         self.target_model.flags -= Hover
       self.target_model = unit
       if unit != nil:
-        state.target_block = state.tool != Code
+        state.target_block = state.tool.value != Code
         unit.flags += Hover
       else:
         state.target_block = false

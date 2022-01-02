@@ -2,8 +2,6 @@ import std / [importutils, tables]
 import model_citizen
 import types, colors
 
-let EventFlags = {Retarget}
-
 proc init*(_: type GameState, T: type, action_count = 0, action_index = 0): GameState[T] =
   GameState[T](
     target_flags: Zen.init(set[TargetFlags]),
@@ -11,7 +9,7 @@ proc init*(_: type GameState, T: type, action_count = 0, action_index = 0): Game
     units: Zen.init(seq[Unit[T]]),
     action_count: action_count,
     action_index: action_index,
-    tool: Block
+    tool: %Block
   )
 
 proc set_flag(flags: var set[TargetFlags], flag: TargetFlags, add: bool) =
@@ -25,7 +23,7 @@ proc apply_target_flags(state: var GameState) =
 
   var flags: set[TargetFlags]
 
-  for flag in {CommandMode, TargetBlock, Editing, MouseCaptured, Retarget}:
+  for flag in {CommandMode, TargetBlock, Editing, MouseCaptured}:
     if flag in requested: flags.incl(flag)
 
   if Editing in requested:
@@ -36,7 +34,6 @@ proc apply_target_flags(state: var GameState) =
     flags.incl(Reticle)
 
   state.target_flags.value = flags
-  state.requested_target_flags = requested - EventFlags
 
 proc `mouse_captured=`*(state: var GameState, captured: bool) =
   state.requested_target_flags.set_flag(MouseCaptured, captured)
@@ -71,9 +68,6 @@ proc command_mode*(state: GameState): bool = CommandMode in state.target_flags
 proc target_block*(state: GameState): bool = TargetBlock in state.target_flags
 proc reticle*(state: GameState): bool = Reticle in state.target_flags
 proc editing*(state: GameState): bool = Editing in state.target_flags
-proc retarget*(state: var GameState) =
-  state.requested_target_flags.incl(Retarget)
-  state.apply_target_flags()
 
 proc selected_color*(self: GameState): Color =
   action_colors[Colors(self.action_index)]

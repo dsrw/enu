@@ -1,5 +1,5 @@
 import godotapi / [area, control]
-import godot
+import pkg / [godot, model_citizen]
 import ".." / [core, globals, game, world/bot_node]
 import player
 
@@ -17,7 +17,7 @@ gdobj SelectionArea of Area:
     #   self.collision_layer = 0
 
   method on_target_in*() =
-    if state.tool == Code:
+    if state.tool.value == Code:
       discard
       # TODO
       #self.bot.highlight()
@@ -30,13 +30,13 @@ gdobj SelectionArea of Area:
     state.reticle = true
 
   method on_target_fire*() =
-    if state.tool == Code:
+    if state.tool.value == Code:
       discard
       # TODO
       #self.bot.select()
 
   method on_target_remove*() =
-    if state.tool != Code:
+    if state.tool.value != Code:
       self.bot.destroy()
       state.target_block = true
       save_scene()

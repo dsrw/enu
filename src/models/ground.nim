@@ -12,7 +12,7 @@ proc surrounding(point: Vector3): seq[Vector3] =
 proc fire[T](self: Ground[T], state: GameState[T], append = false) =
   var add_to {.global.}: Build[T]
   let point = (self.target_point - vec3(0.5, 0, 0.5)).trunc
-  if state.tool == Block:
+  if state.tool.value == Block:
     if not append:
       add_to = state.units.find_first(point.surrounding)
     if add_to:
@@ -22,7 +22,7 @@ proc fire[T](self: Ground[T], state: GameState[T], append = false) =
       add_to = Build.init(T, state, position = point, root = true, color = state.selected_color)
       state.units += add_to
 
-  elif state.tool == Place:
+  elif state.tool.value == Place:
     var t = Transform.init(origin = point)
     state.units += Bot.init(T, transform = t)
 

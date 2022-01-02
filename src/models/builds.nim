@@ -59,7 +59,7 @@ proc flag_tree[T](root: Unit[T], add: bool, flag: ModelFlags) =
     unit.flag_tree(add, flag)
 
 proc remove(self: Build, state: GameState) =
-  if state.tool == Block:
+  if state.tool.value == Block:
     let point = self.target_point - self.target_normal - (self.target_normal.inverse_normalized * 0.5)
     self.draw(point, (Manual, action_colors[eraser]))
     state.draw_plane = self.to_global(self.target_point) * self.target_normal
@@ -70,7 +70,7 @@ proc remove(self: Build, state: GameState) =
         self.parent.units -= self
 
 proc fire(self: Build, state: GameState) =
-  if state.tool == Block:
+  if state.tool.value == Block:
     self.draw(self.target_point, (Manual, state.selected_color))
     state.draw_plane = self.to_global(self.target_point) * self.target_normal
 
@@ -88,13 +88,13 @@ proc init*(_: type Build, T: type, state: GameState[T], root = false, transform 
   self.flags.track proc(changes: auto) =
     for change in changes:
       if change.obj == Hover:
-        if Added in change.changes and state.tool == Code:
+        if Added in change.changes and state.tool.value == Code:
           let (root, _) = self.find_root
           root.flag_tree(true, Highlight)
         elif Removed in change.changes:
           let (root, _) = self.find_root
           root.flag_tree(false, Highlight)
-      elif change.obj == TargetMoved and state.tool == Block:
+      elif change.obj == TargetMoved and state.tool.value == Block:
         let plane = self.to_global(self.target_point) * self.target_normal
         if Touched in change.changes and plane == state.draw_plane:
           if Secondary in state.input_flags:

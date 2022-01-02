@@ -10,7 +10,7 @@ import engine/engine
 
 type
   TargetFlags* = enum
-    Reticle, TargetBlock, MouseCaptured, CommandMode, Editing, Retarget
+    Reticle, TargetBlock, MouseCaptured, CommandMode, Editing
 
   ModelFlags* = enum
     Highlight, Hover, TargetMoved
@@ -30,7 +30,7 @@ type
     open_engine*: Engine
     action_index*: int
     action_count*: int
-    tool*: Tools
+    tool*: ZenValue[Tools]
     nodes*: tuple[
       game: T,
       data: T,

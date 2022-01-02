@@ -228,26 +228,23 @@ gdobj Game of Node:
     if restore and state.action_index == 0:
       self.block_mode(self.last_index)
     else:
-      state.tool = Code
+      state.tool.value = Code
       state.reticle = true
-      state.retarget()
       state.action_index = 0
       if update_actionbar:
         self.trigger("update_actionbar", 0)
 
   proc block_mode*(index: int, update_actionbar = true) =
     self.last_index = index
-    state.tool = Block
+    state.tool.value = Block
     state.reticle = false
-    state.retarget()
     state.action_index = index
     if update_actionbar:
       self.trigger("update_actionbar", index)
 
   proc obj_mode*(index: int, update_actionbar = true) =
-    state.tool = Place
+    state.tool.value = Place
     state.reticle = false
-    state.retarget()
     state.action_index = index
     if update_actionbar:
       self.trigger("update_actionbar", index)
