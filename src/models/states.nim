@@ -111,8 +111,8 @@ when is_main_module:
     added = {}
     removed = {}
     for change in changes:
-      if Added in change.changes: added.incl change.obj
-      if Removed in change.changes: removed.incl change.obj
+      if Added in change.changes: added.incl change.item
+      if Removed in change.changes: removed.incl change.item
 
   state.command_mode = true
   check:

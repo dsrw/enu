@@ -63,7 +63,7 @@ gdobj BuildNode of VoxelTerrain:
   proc track_changes() =
     self.unit.flags.track proc(changes: auto) =
       for change in changes:
-        if change.obj == Highlight:
+        if change.item == Highlight:
           if Added in change.changes:
             self.select
           elif Removed in change.changes:
@@ -75,11 +75,11 @@ gdobj BuildNode of VoxelTerrain:
           if change of Change[Pair[Vector3, VoxelInfo]]:
             let change = Change[Pair[Vector3, VoxelInfo]](change)
             if Added in change.changes:
-              if root_change.obj.key in self.active_blocks:
-                self.draw(change.obj.key, change.obj.value)
+              if root_change.item.key in self.active_blocks:
+                self.draw(change.item.key, change.item.value)
               else:
-                if not self.bounds.contains(change.obj.key):
-                  self.bounds = self.bounds.expand(change.obj.key)
+                if not self.bounds.contains(change.item.key):
+                  self.bounds = self.bounds.expand(change.item.key)
 
   # TODO
   # # method on_tree_exiting() =

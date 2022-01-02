@@ -77,7 +77,7 @@ gdobj Editor of TextEdit:
 
     state.target_flags.track proc(changes: auto) =
       for change in changes:
-        if CommandMode == change.obj and Added in change.changes:
+        if CommandMode == change.item and Added in change.changes:
           if self.dirty:
             reload_scripts()
           self.mouse_filter = MOUSE_FILTER_IGNORE
@@ -86,14 +86,14 @@ gdobj Editor of TextEdit:
           var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
           stylebox.bg_color = Color(r: 0, g: 0, b: 0, a: 0.4)
 
-        elif CommandMode == change.obj and Removed in change.changes:
+        elif CommandMode == change.item and Removed in change.changes:
           self.mouse_filter = MOUSE_FILTER_STOP
           self.shortcut_keys_enabled = true
           self.readonly = false
           var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
           stylebox.bg_color = self.og_bg_color
 
-        elif Editing == change.obj and Added in change.changes:
+        elif Editing == change.item and Added in change.changes:
           self.visible = true
           self.text = read_file(state.open_file)
           self.file_name = state.open_file
@@ -105,7 +105,7 @@ gdobj Editor of TextEdit:
           state.open_engine.line_changed = proc(current: TLineInfo, previous: TLineInfo) =
             self.executing_line = int current.line - 1
 
-        elif Editing == change.obj and Removed in change.changes:
+        elif Editing == change.item and Removed in change.changes:
           if self.dirty:
             reload_scripts()
           self.release_focus()

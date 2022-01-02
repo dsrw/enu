@@ -12,9 +12,9 @@ gdobj AimTarget of Sprite3D:
 
     state.target_flags.track proc(changes: auto) =
       for change in changes:
-        if TargetBlock == change.obj and Added in change.changes:
+        if TargetBlock == change.item and Added in change.changes:
           self.visible = true
-        elif TargetBlock == change.obj and Removed in change.changes:
+        elif TargetBlock == change.item and Removed in change.changes:
           self.visible = false
 
     state.tool.track proc(changes: auto) =

@@ -87,14 +87,14 @@ proc init*(_: type Build, T: type, state: GameState[T], root = false, transform 
 
   self.flags.track proc(changes: auto) =
     for change in changes:
-      if change.obj == Hover:
+      if change.item == Hover:
         if Added in change.changes and state.tool.value == Code:
           let (root, _) = self.find_root
           root.flag_tree(true, Highlight)
         elif Removed in change.changes:
           let (root, _) = self.find_root
           root.flag_tree(false, Highlight)
-      elif change.obj == TargetMoved and state.tool.value == Block:
+      elif change.item == TargetMoved and state.tool.value == Block:
         let plane = self.to_global(self.target_point) * self.target_normal
         if Touched in change.changes and plane == state.draw_plane:
           if Secondary in state.input_flags:
@@ -106,11 +106,11 @@ proc init*(_: type Build, T: type, state: GameState[T], root = false, transform 
     for change in changes:
       if Hover in self.flags:
         if Added in change.changes:
-          if change.obj == Primary:
+          if change.item == Primary:
             self.fire(state)
-          elif change.obj == Secondary:
+          elif change.item == Secondary:
             self.remove(state)
-      if Removed in change.changes and change.obj in {Primary, Secondary}:
+      if Removed in change.changes and change.item in {Primary, Secondary}:
         state.draw_plane = vec3()
 
   result = self

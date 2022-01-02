@@ -186,18 +186,18 @@ gdobj Game of Node:
 
     state.target_flags.track proc(changes: auto) =
       for change in changes:
-        if change.obj == MouseCaptured and Added in change.changes:
+        if change.item == MouseCaptured and Added in change.changes:
           let center = self.get_viewport().get_visible_rect().size * 0.5
           self.saved_mouse_position = self.get_viewport().get_mouse_position()
           warp_mouse_position(center)
           set_mouse_mode MOUSE_MODE_CAPTURED
-        elif change.obj == MouseCaptured and Removed in change.changes:
+        elif change.item == MouseCaptured and Removed in change.changes:
           set_mouse_mode MOUSE_MODE_VISIBLE
           warp_mouse_position(self.saved_mouse_position)
 
-        if change.obj == Reticle and Added in change.changes:
+        if change.item == Reticle and Added in change.changes:
           self.reticle.visible = true
-        elif change.obj == Reticle and Removed in change.changes:
+        elif change.item == Reticle and Removed in change.changes:
           self.reticle.visible = false
 
     state.mouse_captured = true
