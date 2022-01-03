@@ -69,12 +69,11 @@ proc init*(_: type GameState, T: type, action_count = 0, action_index = 0): Game
     tool: %Block
   )
 
-  self.open_unit.track proc(changes: auto) =
-    for change in changes:
-      if Added in change.changes:
-        let editing = not change.item.is_nil
-        self.requested_target_flags.set_flag(Editing, editing)
-        self.apply_target_flags()
+  self.open_unit.changes:
+    if added():
+      let editing = not change.item.is_nil
+      self.requested_target_flags.set_flag(Editing, editing)
+      self.apply_target_flags()
 
   result = self
 

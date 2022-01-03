@@ -89,10 +89,9 @@ gdobj Player of KinematicBody:
     self.position_start = self.camera_rig.translation
     state.nodes.player = self
     self.load_script()
-    state.target_flags.track proc(changes: auto) =
-      for change in changes:
-        if MouseCaptured == change.item and Removed in change.changes:
-          self.skip_next_mouse_move = true
+    state.target_flags.changes:
+      if MouseCaptured.removed:
+        self.skip_next_mouse_move = true
 
   proc current_raycast*: RayCast =
     if state.mouse_captured:

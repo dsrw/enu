@@ -10,12 +10,11 @@ gdobj AimTarget of Sprite3D:
     self.set_as_top_level(true)
     self.bind_signals "collider_exiting"
 
-    state.target_flags.track proc(changes: auto) =
-      for change in changes:
-        if TargetBlock == change.item and Added in change.changes:
-          self.visible = true
-        elif TargetBlock == change.item and Removed in change.changes:
-          self.visible = false
+    state.target_flags.changes:
+      if TargetBlock.added:
+        self.visible = true
+      elif TargetBlock.removed:
+        self.visible = false
 
     state.tool.track proc(changes: auto) =
       # tool changed. Retarget.

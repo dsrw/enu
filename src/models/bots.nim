@@ -13,10 +13,24 @@ proc init*(_: type Bot, T: type, state: GameState, transform = Transform.init): 
     flags: ZenSet[ModelFlags].init
   )
 
-  state.input_flags.track proc(changes: auto) =
-    for change in changes:
-      if Added in change.changes and change.item == Primary and
-         state.tool.value == Code and Hover in self.flags:
+  self.flags.changes:
+    if Hover.added:
+      state.reticle = true
+      if state.tool.value != Block:
+        self.flags += Highlight
+    elif Hover.removed:
+      self.flags -= Highlight
+      if state.tool.value != Code:
+        state.reticle = false
+
+  state.input_flags.changes:
+    if Hover in self.flags:
+      if Primary.added and state.tool.value == Code:
         state.open_unit.value = self
+      if Secondary.added and state.tool.value == Place:
+        if self.parent.is_nil:
+          state.units -= self
+        else:
+          self.parent.units -= self
 
   result = self

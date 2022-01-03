@@ -49,16 +49,13 @@ proc find_nested_changes(parent: Change[Unit]) =
         change.item.remove_from_scene(change.item.parent.node)
 
 proc watch*(f: NodeFactory, state: GameState) =
-  state.units.track proc(changes: auto) =
-    assert not state.nodes.game.is_nil
-    assert not state.nodes.data.is_nil
-    for change in changes:
-      if Added in change.changes:
-        change.item.add_to_scene(state.nodes.data)
-      elif Modified in change.changes:
-        find_nested_changes(change)
-      elif Removed in change.changes:
-        change.item.remove_from_scene(state.nodes.data)
+  state.units.changes:
+    if added():
+      change.item.add_to_scene(state.nodes.data)
+    elif modified():
+      find_nested_changes(change)
+    elif removed():
+      change.item.remove_from_scene(state.nodes.data)
 
 proc init*(_: type NodeFactory, state: GameState): NodeFactory =
   result = NodeFactory(state: state)

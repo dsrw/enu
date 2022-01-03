@@ -6,7 +6,6 @@ import core, globals, game, engine/engine
 
 gdobj Editor of TextEdit:
   var
-    ff = false
     comment_color* {.gdExport.} = init_color(0.5, 0.5, 0.5)
     mouse_was_captured = false
     og_bg_color: Color
@@ -76,45 +75,44 @@ gdobj Editor of TextEdit:
     var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
     self.og_bg_color = stylebox.bg_color
 
-    state.target_flags.track proc(changes: auto) =
-      for change in changes:
-        if CommandMode == change.item and Added in change.changes:
-          if self.dirty:
-            reload_scripts()
-          self.mouse_filter = MOUSE_FILTER_IGNORE
-          self.shortcut_keys_enabled = false
-          self.readonly = true
-          var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
-          stylebox.bg_color = Color(r: 0, g: 0, b: 0, a: 0.4)
+    state.target_flags.changes:
+      if CommandMode.added:
+        if self.dirty:
+          reload_scripts()
+        self.mouse_filter = MOUSE_FILTER_IGNORE
+        self.shortcut_keys_enabled = false
+        self.readonly = true
+        var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
+        stylebox.bg_color = Color(r: 0, g: 0, b: 0, a: 0.4)
 
-        elif CommandMode == change.item and Removed in change.changes:
-          self.mouse_filter = MOUSE_FILTER_STOP
-          self.shortcut_keys_enabled = true
-          self.readonly = false
-          var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
-          stylebox.bg_color = self.og_bg_color
+      elif CommandMode.removed:
+        self.mouse_filter = MOUSE_FILTER_STOP
+        self.shortcut_keys_enabled = true
+        self.readonly = false
+        var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
+        stylebox.bg_color = self.og_bg_color
 
-        elif Editing == change.item and Added in change.changes:
-          self.visible = true
-          # TODO
-          # self.text = read_file(state.open_file)
-          # self.file_name = state.open_file
-          self.grab_focus()
-          self.clear_errors()
-          self.highlight_errors()
-          # TODO
-          # self.executing_line = int state.open_engine.current_line.line - 1
-          # state.open_engine.line_changed = proc(current: TLineInfo, previous: TLineInfo) =
-          #   self.executing_line = int current.line - 1
+      elif Editing.added:
+        self.visible = true
+        # TODO
+        # self.text = read_file(state.open_file)
+        # self.file_name = state.open_file
+        self.grab_focus()
+        self.clear_errors()
+        self.highlight_errors()
+        # TODO
+        # self.executing_line = int state.open_engine.current_line.line - 1
+        # state.open_engine.line_changed = proc(current: TLineInfo, previous: TLineInfo) =
+        #   self.executing_line = int current.line - 1
 
-        elif Editing == change.item and Removed in change.changes:
-          if self.dirty:
-            reload_scripts()
-          self.release_focus()
-          self.visible = false
-          # TODO
-          # state.open_engine.line_changed = nil
-          # state.open_engine = nil
+      elif Editing.removed:
+        if self.dirty:
+          reload_scripts()
+        self.release_focus()
+        self.visible = false
+        # TODO
+        # state.open_engine.line_changed = nil
+        # state.open_engine = nil
 
     self.configure_highlighting()
 

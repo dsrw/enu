@@ -61,13 +61,11 @@ gdobj BuildNode of VoxelTerrain:
     self.set_energy(default_energy)
 
   proc track_changes() =
-    self.unit.flags.track proc(changes: auto) =
-      for change in changes:
-        if change.item == Highlight:
-          if Added in change.changes:
-            self.select
-          elif Removed in change.changes:
-            self.deselect
+    self.unit.flags.changes:
+      if Highlight.added:
+        self.select
+      elif Highlight.removed:
+        self.deselect
 
     self.unit.voxels.track proc(changes: auto) =
       for root_change in changes:

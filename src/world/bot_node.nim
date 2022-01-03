@@ -32,13 +32,11 @@ gdobj BotNode of KinematicBody:
     self.set_default_material()
 
   proc track_changes() =
-    self.unit.flags.track proc(changes: auto) =
-      for change in changes:
-        if change.item == Hover:
-          if Added in change.changes and state.tool.value == Code:
-            self.highlight()
-          elif Removed in change.changes:
-            self.set_default_material()
+    self.unit.flags.changes:
+      if Highlight.added:
+        self.highlight()
+      elif Highlight.removed:
+        self.set_default_material()
 
   proc setup*(unit: Bot[Node]) =
     self.unit = unit

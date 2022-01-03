@@ -91,42 +91,38 @@ proc init*(_: type Build, T: type, state: GameState[T], root = false, transform 
     flags: ZenSet[ModelFlags].init
   )
 
-  self.flags.track proc(changes: auto) =
-    for change in changes:
-      if change.item == Hover:
-        if Added in change.changes and state.tool.value == Code:
-          let (root, _) = self.find_root
-          root.flag_tree(true, Highlight)
-        elif Removed in change.changes:
-          let (root, _) = self.find_root
-          root.flag_tree(false, Highlight)
-      if change.item == TargetMoved:
-        let plane = self.to_global(self.target_point) * self.target_normal
-        if Touched in change.changes and plane == state.draw_plane:
-          if Secondary in state.input_flags:
-            self.remove(state)
-          elif Primary in state.input_flags:
-            self.fire(state)
+  self.flags.changes:
+    if Hover.added and state.tool.value == Code:
+      let (root, _) = self.find_root
+      root.flag_tree(true, Highlight)
+    elif Hover.removed:
+      let (root, _) = self.find_root
+      root.flag_tree(false, Highlight)
+    if TargetMoved.touched:
+      let plane = self.to_global(self.target_point) * self.target_normal
+      if plane == state.draw_plane:
+        if Secondary in state.input_flags:
+          self.remove(state)
+        elif Primary in state.input_flags:
+          self.fire(state)
       # if change.item == TargetMoved and state.tool.value == Place:
       #   if Touched in change.changes and Primary in state.input_flags:
       #     s
 
-      if change.item in {TargetMoved, Hover} and state.tool.value == Place:
-        if self.target_normal == UP:
-          state.target_block = true
-        else:
-          state.reticle = true
+    if change.item in {TargetMoved, Hover} and state.tool.value == Place:
+      if self.target_normal == UP:
+        state.target_block = true
+      else:
+        state.reticle = true
 
-  state.input_flags.track proc(changes: auto) =
-    for change in changes:
-      if Hover in self.flags:
-        if Added in change.changes:
-          if change.item == Primary:
-            self.fire(state)
-          elif change.item == Secondary:
-            self.remove(state)
-      if Removed in change.changes and change.item in {Primary, Secondary}:
-        state.draw_plane = vec3()
+  state.input_flags.changes:
+    if Hover in self.flags:
+      if Primary.added:
+        self.fire(state)
+      elif Secondary.added:
+        self.remove(state)
+    if Primary.removed or Secondary.removed:
+      state.draw_plane = vec3()
 
   result = self
 

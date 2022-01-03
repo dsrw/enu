@@ -29,18 +29,15 @@ proc fire[T](self: Ground[T], state: GameState[T], append = false) =
 proc init*(_: type Ground, T: type, node: T, state: GameState[T]): Ground[T] =
   let self = Ground[T](flags: ZenSet[ModelFlags].init, node: node)
 
-  state.input_flags.track proc(changes: auto) =
-    for change in changes:
-      if Added in change.changes and Hover in self.flags:
-        if change.item == Primary:
-          self.fire(state, append = false)
-      if Removed in change.changes and change.item in {Primary, Secondary}:
-        state.draw_plane = vec3()
+  state.input_flags.changes:
+    if Primary.added and Hover in self.flags:
+      self.fire(state, append = false)
+    if Primary.removed or Secondary.removed:
+      state.draw_plane = vec3()
 
-  self.flags.track proc(changes: auto) =
+  self.flags.changes:
     if Primary in state.input_flags and state.draw_plane == vec3():
-      for change in changes:
-        if change.item == TargetMoved:
-          self.fire(state, append = true)
+      if change.item == TargetMoved:
+        self.fire(state, append = true)
 
   result = self
