@@ -1,16 +1,6 @@
-import std / [importutils, tables]
+import std / [tables]
 import model_citizen
 import types, colors
-
-proc init*(_: type GameState, T: type, action_count = 0, action_index = 0): GameState[T] =
-  GameState[T](
-    target_flags: Zen.init(set[TargetFlags]),
-    input_flags: Zen.init(set[InputFlags]),
-    units: Zen.init(seq[Unit[T]]),
-    action_count: action_count,
-    action_index: action_index,
-    tool: %Block
-  )
 
 proc set_flag(flags: var set[TargetFlags], flag: TargetFlags, add: bool) =
   if add:
@@ -59,10 +49,6 @@ proc `reticle=`*(state: GameState, reticle: bool) =
     state.requested_target_flags.excl(Reticle)
   state.apply_target_flags()
 
-proc `editing=`*(state: GameState, editing: bool) =
-  state.requested_target_flags.set_flag(Editing, editing)
-  state.apply_target_flags()
-
 proc mouse_captured*(state: GameState): bool = MouseCaptured in state.target_flags
 proc command_mode*(state: GameState): bool = CommandMode in state.target_flags
 proc target_block*(state: GameState): bool = TargetBlock in state.target_flags
@@ -71,6 +57,26 @@ proc editing*(state: GameState): bool = Editing in state.target_flags
 
 proc selected_color*(self: GameState): Color =
   action_colors[Colors(self.action_index)]
+
+proc init*(_: type GameState, T: type, action_count = 0, action_index = 0): GameState[T] =
+  let self = GameState[T](
+    target_flags: Zen.init(set[TargetFlags]),
+    input_flags: Zen.init(set[InputFlags]),
+    units: Zen.init(seq[Unit[T]]),
+    action_count: action_count,
+    action_index: action_index,
+    open_unit: ZenValue[Unit[T]].init,
+    tool: %Block
+  )
+
+  self.open_unit.track proc(changes: auto) =
+    for change in changes:
+      if Added in change.changes:
+        let editing = not change.item.is_nil
+        self.requested_target_flags.set_flag(Editing, editing)
+        self.apply_target_flags()
+
+  result = self
 
 when is_main_module:
   import std / [unittest, sequtils]

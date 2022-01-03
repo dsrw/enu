@@ -75,7 +75,9 @@ proc fire[T](self: Build[T], state: GameState[T]) =
     self.draw(point, (Manual, state.selected_color))
   elif state.tool.value == Place and state.target_block:
     let transform = Transform.init(origin = self.to_global(self.target_point))
-    state.units += Bot.init(T, transform = transform)
+    state.units += Bot.init(T, state, transform = transform)
+  elif state.tool.value == Code:
+    state.open_unit.value = self
   state.draw_plane = self.to_global(self.target_point) * self.target_normal
 
 proc init*(_: type Build, T: type, state: GameState[T], root = false, transform = Transform.init, color = default_color): Build[T] =

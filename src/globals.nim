@@ -1,8 +1,7 @@
-import godot,
-       godotapi / [node, scene_tree, voxel_buffer],
+import godotapi / [node, scene_tree, voxel_buffer],
        std / [strformat, strutils, sequtils, tables, sets]
 import engine/engine, core, models / [states, types]
-
+import pkg / [godot, model_citizen]
 export strformat.`&`, states, types
 
 type

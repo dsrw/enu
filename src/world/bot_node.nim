@@ -1,6 +1,7 @@
 import godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
                    input_event, animation_player, resource_loader, packed_scene]
-import godot except print
+import pkg/godot except print
+import pkg/model_citizen
 import std / [math, tables, with, times, sugar, os, monotimes]
 import globals, core, print
 import engine / [contexts, engine], models / [types, bots]
@@ -18,18 +19,31 @@ gdobj BotNode of KinematicBody:
   proc update_material*(value: Material) =
     self.mesh.set_surface_material(0, value)
 
-  proc setup*(unit: Bot[Node]) =
-    self.unit = unit
-    self.transform = unit.transform
-
   proc set_default_material() =
     self.update_material(self.material)
+
+  proc highlight() =
+    self.update_material(self.highlight_material)
 
   method ready() =
     self.skin = self.get_node("Mannequiny").as(Spatial)
     self.mesh = self.skin.get_node("root/Skeleton/body001").as(MeshInstance)
     self.animation_player = self.skin.get_node("AnimationPlayer").as(AnimationPlayer)
     self.set_default_material()
+
+  proc track_changes() =
+    self.unit.flags.track proc(changes: auto) =
+      for change in changes:
+        if change.item == Hover:
+          if Added in change.changes and state.tool.value == Code:
+            self.highlight()
+          elif Removed in change.changes:
+            self.set_default_material()
+
+  proc setup*(unit: Bot[Node]) =
+    self.unit = unit
+    self.transform = unit.transform
+    self.track_changes
 
   #proc bind_model(unit: Bot) =
 

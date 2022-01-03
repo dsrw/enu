@@ -25,9 +25,8 @@ type
     target_flags*: ZenSet[TargetFlags]
     input_flags*: ZenSet[InputFlags]
     requested_target_flags*: set[TargetFlags]
-    open_file*: string
     config*: Config
-    open_engine*: Engine
+    open_unit*: ZenValue[Unit[T]]
     action_index*: int
     action_count*: int
     tool*: ZenValue[Tools]

@@ -24,7 +24,7 @@ proc fire[T](self: Ground[T], state: GameState[T], append = false) =
 
   elif state.tool.value == Place:
     var t = Transform.init(origin = self.target_point)
-    state.units += Bot.init(T, transform = t)
+    state.units += Bot.init(T, state, transform = t)
 
 proc init*(_: type Ground, T: type, node: T, state: GameState[T]): Ground[T] =
   let self = Ground[T](flags: ZenSet[ModelFlags].init, node: node)

@@ -43,7 +43,7 @@ gdobj Editor of TextEdit:
     if self.visible:
       if event.is_action_pressed("ui_cancel"):
         if not (event of InputEventJoypadButton) or not state.command_mode:
-          state.editing = false
+          state.open_unit.value = nil
           self.get_tree().set_input_as_handled()
 
   proc configure_highlighting =
@@ -58,9 +58,10 @@ gdobj Editor of TextEdit:
 
   proc highlight_errors =
     self.clear_executing_line()
-    if not state.open_engine.is_nil:
-      for err in state.open_engine.errors:
-        self.set_line_as_marked(int64(err.info.line - 1), true)
+    # TODO
+    # if not state.open_engine.is_nil:
+    #   for err in state.open_engine.errors:
+    #     self.set_line_as_marked(int64(err.info.line - 1), true)
 
   proc `executing_line=`*(line: int) =
     if self.get_line_count >= line:
@@ -95,23 +96,25 @@ gdobj Editor of TextEdit:
 
         elif Editing == change.item and Added in change.changes:
           self.visible = true
-          self.text = read_file(state.open_file)
-          self.file_name = state.open_file
+          # TODO
+          # self.text = read_file(state.open_file)
+          # self.file_name = state.open_file
           self.grab_focus()
           self.clear_errors()
           self.highlight_errors()
-
-          self.executing_line = int state.open_engine.current_line.line - 1
-          state.open_engine.line_changed = proc(current: TLineInfo, previous: TLineInfo) =
-            self.executing_line = int current.line - 1
+          # TODO
+          # self.executing_line = int state.open_engine.current_line.line - 1
+          # state.open_engine.line_changed = proc(current: TLineInfo, previous: TLineInfo) =
+          #   self.executing_line = int current.line - 1
 
         elif Editing == change.item and Removed in change.changes:
           if self.dirty:
             reload_scripts()
           self.release_focus()
           self.visible = false
-          state.open_engine.line_changed = nil
-          state.open_engine = nil
+          # TODO
+          # state.open_engine.line_changed = nil
+          # state.open_engine = nil
 
     self.configure_highlighting()
 
@@ -119,7 +122,8 @@ gdobj Editor of TextEdit:
     if self.file_name != "":
       self.dirty = false
       self.clear_errors()
-      write_file(state.open_file, self.text)
+      # TODO
+      # write_file(state.open_file, self.text)
 
   method on_script_error* =
     self.highlight_errors()
