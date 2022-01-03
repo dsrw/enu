@@ -22,7 +22,7 @@ proc fire[T](self: Ground[T], state: GameState[T], append = false) =
       add_to = Build.init(T, state, position = point, root = true, color = state.selected_color)
       state.units += add_to
 
-  elif state.tool.value == Place:
+  elif state.tool.value == Place and state.bot_at(self.target_point).is_nil:
     var t = Transform.init(origin = self.target_point)
     state.units += Bot.init(T, state, transform = t)
 

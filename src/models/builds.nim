@@ -70,11 +70,12 @@ proc remove(self: Build, state: GameState) =
         self.parent.units -= self
 
 proc fire[T](self: Build[T], state: GameState[T]) =
+  let global_point = self.to_global(self.target_point)
   if state.tool.value == Block:
     let point = (self.target_point + (self.target_normal * 0.5)).floor
     self.draw(point, (Manual, state.selected_color))
-  elif state.tool.value == Place and state.target_block:
-    let transform = Transform.init(origin = self.to_global(self.target_point))
+  elif state.tool.value == Place and state.target_block and state.bot_at(global_point).is_nil:
+    let transform = Transform.init(origin = global_point)
     state.units += Bot.init(T, state, transform = transform)
   elif state.tool.value == Code:
     state.open_unit.value = self
