@@ -42,6 +42,10 @@ gdobj BotNode of KinematicBody:
 
   proc setup*(unit: Bot[Node]) =
     self.unit = unit
+    self.unit.to_global = proc(local: Vector3): Vector3 =
+      self.to_global(local)
+    self.unit.to_local = proc(global: Vector3): Vector3 =
+      self.to_local(global)
     self.transform = unit.transform
     self.track_changes
 
