@@ -1,6 +1,6 @@
 import std / [sugar]
 import pkg / [model_citizen, print]
-import types, builds, bots, core
+import types, states, builds, bots, core
 
 proc surrounding(point: Vector3): seq[Vector3] =
   collect(new_seq):
@@ -9,8 +9,8 @@ proc surrounding(point: Vector3): seq[Vector3] =
         for z in 0..2:
           point + vec3(x - 1, y - 1, z - 1)
 
-proc fire[T](self: Ground[T], state: GameState[T], append = false) =
-  var add_to {.global.}: Build[T]
+proc fire(self: Ground, state: GameState, append = false) =
+  var add_to {.global.}: Build
   let point = (self.target_point - vec3(0.5, 0, 0.5)).trunc
   if state.tool.value == Block:
     if not append:
@@ -19,15 +19,15 @@ proc fire[T](self: Ground[T], state: GameState[T], append = false) =
       let local = point.local_to(add_to)
       add_to.draw(local, (Manual, state.selected_color))
     else:
-      add_to = Build.init(T, state, position = point, root = true, color = state.selected_color)
+      add_to = Build.init(state, position = point, root = true, color = state.selected_color)
       state.units += add_to
 
   elif state.tool.value == Place and state.bot_at(self.target_point).is_nil:
     var t = Transform.init(origin = self.target_point)
-    state.units += Bot.init(T, state, transform = t)
+    state.units += Bot.init(state, transform = t)
 
-proc init*(_: type Ground, T: type, node: T, state: GameState[T]): Ground[T] =
-  let self = Ground[T](flags: ZenSet[ModelFlags].init, node: node)
+proc init*(_: type Ground, T: type, node: T, state: GameState): Ground =
+  let self = Ground(flags: ZenSet[ModelFlags].init, node: node)
 
   state.input_flags.changes:
     if Primary.added and Hover in self.flags:

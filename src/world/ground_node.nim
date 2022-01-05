@@ -4,7 +4,7 @@ import pkg/print
 import globals, models
 
 gdobj GroundNode of MeshInstance:
-  var model*: Ground[Node]
+  var model*: Ground
 
   method ready() =
     self.model = Ground.init(Node, self, state)

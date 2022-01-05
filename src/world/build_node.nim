@@ -11,7 +11,7 @@ const
 
 gdobj BuildNode of VoxelTerrain:
   var
-    unit*: Build[Node]
+    unit*: Build
     active_blocks: HashSet[Vector3]
 
   proc init*() =
@@ -84,7 +84,7 @@ gdobj BuildNode of VoxelTerrain:
   # #   game_node.trigger("collider_exiting", self)
   #
 
-  proc setup*(unit: Build[Node]) =
+  proc setup*(unit: Build) =
     self.unit = unit
     self.unit.to_global = proc(local: Vector3): Vector3 =
       self.to_global(local)

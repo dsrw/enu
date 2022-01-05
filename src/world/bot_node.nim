@@ -9,7 +9,7 @@ export contexts
 
 gdobj BotNode of KinematicBody:
   var
-    unit*: Bot[Node]
+    unit*: Bot
     material* {.gdExport.}, highlight_material* {.gdExport.},
       selected_material* {.gdExport.}: Material
     skin: Spatial
@@ -38,7 +38,7 @@ gdobj BotNode of KinematicBody:
       elif Highlight.removed:
         self.set_default_material()
 
-  proc setup*(unit: Bot[Node]) =
+  proc setup*(unit: Bot) =
     self.unit = unit
     self.unit.to_global = proc(local: Vector3): Vector3 =
       self.to_global(local)

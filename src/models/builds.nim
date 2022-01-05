@@ -1,16 +1,17 @@
 import std / [hashes, tables, sets, options, sequtils]
 import pkg / [model_citizen, print]
 import types, colors, core
+import states, bots
 const BufferSize = vec3(16, 16, 16)
 
 const default_color = action_colors[blue]
 
-proc find_root[T](self: Build[T]): tuple[build: Build[T], offset: Vector3] =
+proc find_root(self: Build): tuple[build: Build, offset: Vector3] =
   result.build = self
   var parent = self.parent
   while parent != nil and not result.build.root:
-    if parent of Build[T]:
-      result.build = Build[T](parent)
+    if parent of Build:
+      result.build = Build(parent)
       result.offset += result.build.transform.origin
     parent = parent.parent
 
@@ -27,10 +28,10 @@ proc find_voxel*(self: Build, position: Vector3): Option[VoxelInfo] =
   else:
     none(VoxelInfo)
 
-proc find_first*[T](units: ZenSeq[Unit[T]], positions: open_array[Vector3]): Build[T] =
+proc find_first*(units: ZenSeq[Unit], positions: open_array[Vector3]): Build =
   for unit in units:
-    if unit of Build[T]:
-      let unit = Build[T](unit)
+    if unit of Build:
+      let unit = Build(unit)
       let offset = vec3().global_from(unit)
       for position in positions:
         if position - offset in unit:
@@ -50,7 +51,7 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
     target.voxels[position.buffer] = ZenTable[Vector3, VoxelInfo].init
   target.voxels[position.buffer][position] = voxel
 
-proc flag_tree[T](root: Unit[T], add: bool, flag: ModelFlags) =
+proc flag_tree(root: Unit, add: bool, flag: ModelFlags) =
   if add:
     root.flags += flag
   else:
@@ -69,24 +70,24 @@ proc remove(self: Build, state: GameState) =
       else:
         self.parent.units -= self
 
-proc fire[T](self: Build[T], state: GameState[T]) =
+proc fire(self: Build, state: GameState) =
   let global_point = self.to_global(self.target_point)
   if state.tool.value == Block:
     let point = (self.target_point + (self.target_normal * 0.5)).floor
     self.draw(point, (Manual, state.selected_color))
   elif state.tool.value == Place and state.target_block and state.bot_at(global_point).is_nil:
     let transform = Transform.init(origin = global_point)
-    state.units += Bot.init(T, state, transform = transform)
+    state.units += Bot.init(state, transform = transform)
   elif state.tool.value == Code:
     state.open_unit.value = self
   state.draw_plane = self.to_global(self.target_point) * self.target_normal
 
-proc init*(_: type Build, T: type, state: GameState[T], root = false, transform = Transform.init, color = default_color): Build[T] =
-  let self = Build[T](
+proc init*(_: type Build, state: GameState, root = false, transform = Transform.init, color = default_color): Build =
+  let self = Build(
     root: root,
     voxels: result.voxels.type.init,
     transform: transform,
-    units: ZenSeq[Unit[T]].init,
+    units: ZenSeq[Unit].init,
     color: color,
     start_color: color,
     flags: ZenSet[ModelFlags].init
@@ -127,9 +128,9 @@ proc init*(_: type Build, T: type, state: GameState[T], root = false, transform 
 
   result = self
 
-proc init*(_: type Build, T: type, state: GameState[T], root = false, color = default_color, position: Vector3): Build[T] =
+proc init*(_: type Build, state: GameState, root = false, color = default_color, position: Vector3): Build =
   let transform = Transform.init(origin = position)
-  result = Build.init(T, state = state, root = root, transform = transform, color = color)
+  result = Build.init(state = state, root = root, transform = transform, color = color)
 
 when is_main_module:
   import unittest, states

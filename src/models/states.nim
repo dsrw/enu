@@ -58,14 +58,14 @@ proc editing*(state: GameState): bool = Editing in state.target_flags
 proc selected_color*(self: GameState): Color =
   action_colors[Colors(self.action_index)]
 
-proc init*(_: type GameState, T: type, action_count = 0, action_index = 0): GameState[T] =
-  let self = GameState[T](
+proc init*(_: type GameState, action_count = 0, action_index = 0): GameState =
+  let self = GameState(
     target_flags: Zen.init(set[TargetFlags]),
     input_flags: Zen.init(set[InputFlags]),
-    units: Zen.init(seq[Unit[T]]),
+    units: Zen.init(seq[Unit]),
     action_count: action_count,
     action_index: action_index,
-    open_unit: ZenValue[Unit[T]].init,
+    open_unit: ZenValue[Unit].init,
     tool: %Block
   )
 
@@ -80,7 +80,7 @@ proc init*(_: type GameState, T: type, action_count = 0, action_index = 0): Game
 when is_main_module:
   import std / [unittest, sequtils]
   type Node = ref object
-  var state = GameState.init(Node)
+  var state = GameState.init
 
   state.reticle = true
   check:

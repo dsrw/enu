@@ -19,7 +19,7 @@ var
   config*: Config
   game_ready* = false
   gravity* = -240.0
-  state* = GameState.init(Node, action_count = 6, action_index = 1)
+  state* = GameState.init(action_count = 6, action_index = 1)
   gid = 0
 
 proc gen_id*(): string =

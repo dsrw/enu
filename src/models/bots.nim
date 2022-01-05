@@ -6,14 +6,14 @@ include "default_robot.nim.nimf"
 #   result = default_robot(config.script_dir & "/" & file, imports,
 #                          self.unit.script_ctx.is_clone)
 
-proc bot_at*[T](state: GameState[T], position: Vector3): Bot[T] =
+proc bot_at*(state: GameState, position: Vector3): Bot =
   for unit in state.units:
-    if unit of Bot[T] and unit.transform.origin == position:
-      return Bot[T](unit)
+    if unit of Bot and unit.transform.origin == position:
+      return Bot(unit)
 
-proc init*(_: type Bot, T: type, state: GameState, transform = Transform.init): Bot[T] =
-  let self = Bot[T](
-    units: Zen.init(seq[Unit[T]]),
+proc init*(_: type Bot, state: GameState, transform = Transform.init): Bot =
+  let self = Bot(
+    units: Zen.init(seq[Unit]),
     transform: transform,
     flags: ZenSet[ModelFlags].init
   )

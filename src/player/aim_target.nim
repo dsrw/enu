@@ -4,7 +4,7 @@ import std / [strutils, math, wrapnils]
 import globals, core, world/nodes, models
 
 gdobj AimTarget of Sprite3D:
-  var target_model: Model[Node]
+  var target_model: Model
 
   method ready*() {.gdExport.} =
     self.set_as_top_level(true)

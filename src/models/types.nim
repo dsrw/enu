@@ -1,4 +1,5 @@
 import std / [tables, monotimes]
+import godotapi/node
 import pkg/model_citizen
 import pkg/core/godotcoretypes except Color
 import pkg / core / [vector3, transforms, basis]
@@ -21,37 +22,37 @@ type
   Tools* = enum
     Code, Block, Place
 
-  GameState*[T] = ref object
+  GameState* = ref object
     target_flags*: ZenSet[TargetFlags]
     input_flags*: ZenSet[InputFlags]
     requested_target_flags*: set[TargetFlags]
     config*: Config
-    open_unit*: ZenValue[Unit[T]]
+    open_unit*: ZenValue[Unit]
     action_index*: int
     action_count*: int
     tool*: ZenValue[Tools]
     nodes*: tuple[
-      game: T,
-      data: T,
-      player: T
+      game: Node,
+      data: Node,
+      player: Node
     ]
-    units*: ZenSeq[Unit[T]]
-    ground*: Ground[T]
+    units*: ZenSeq[Unit]
+    ground*: Ground
     draw_plane*: Vector3
 
-  Model*[T] = ref object of RootObj
+  Model* = ref object of RootObj
     target_point*: Vector3
     target_normal*: Vector3
     flags*: ZenSet[ModelFlags]
     to_local*: proc(global: Vector3): Vector3
     to_global*: proc(local: Vector3): Vector3
-    node*: T
+    node*: Node
 
-  Ground*[T] = ref object of Model[T]
+  Ground* = ref object of Model
 
-  Unit*[T] = ref object of Model[T]
-    parent*: Unit[T]
-    units*: ZenSeq[Unit[T]]
+  Unit* = ref object of Model
+    parent*: Unit
+    units*: ZenSeq[Unit]
     local*: bool
     start_transform*: Transform
     transform*: Transform
@@ -60,7 +61,7 @@ type
     script_ctx*: ScriptCtx
     disabled*: bool
 
-  Bot*[T] = ref object of Unit[T]
+  Bot* = ref object of Unit
 
   VoxelKind* = enum
     Hole, Manual, Computed
@@ -71,7 +72,7 @@ type
 
   VoxelBlock* = ZenTable[Vector3, VoxelInfo]
 
-  Build*[T] = ref object of Unit[T]
+  Build* = ref object of Unit
     voxels*: ZenTable[Vector3, VoxelBlock]
     draw_position*: Vector3
     start_color*: Color
@@ -105,14 +106,14 @@ type
     scene*: string
     lib_dir*: string
 
-proc local_to*[T](self: Vector3, unit: Unit[T]): Vector3 =
+proc local_to*(self: Vector3, unit: Unit): Vector3 =
   result = self
   var unit = unit
   while unit:
     result -= unit.transform.origin
     unit = unit.parent
 
-proc global_from*[T](self: Vector3, unit: Unit[T]): Vector3 =
+proc global_from*(self: Vector3, unit: Unit): Vector3 =
   result = -self.local_to(unit)
 
 proc init*(_: type Transform, origin = vec3()): Transform =

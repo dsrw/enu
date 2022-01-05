@@ -6,10 +6,6 @@ import godotapi/node
 import print
 
 type
-  Unit = types.Unit[Node]
-  Bot = types.Bot[Node]
-  Build = types.Build[Node]
-  GameState = types.GameState[Node]
   NodeFactory* = object
     state: GameState
 
