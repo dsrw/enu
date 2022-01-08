@@ -10,7 +10,7 @@ method code_template*(self: Bot, imports: string): string =
 method on_begin_move*(self: Bot, direction: Vector3, steps: float): Callback =
   var duration = 0.0
   let
-    moving = self.transform.basis.z
+    moving = -self.transform.basis.z
     finish_time = 1.0 / self.speed * steps
 
   var velocity = state.gravity * UP
