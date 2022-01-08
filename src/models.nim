@@ -1,13 +1,7 @@
-import models / [builds, bots, ground, types]
+import std / os
 import pkg / [model_citizen, print]
 import godotapi/node
-export builds, bots, ground, types, model_citizen
+import core, models / [types, states, units, builds, bots, ground, colors, scripts],
+       engine / engine
 
-proc init*(_: type Model, node: Node): Model =
-  result = Model(flags: ZenSet[ModelFlags].init, node: node)
-
-proc code*(self: Unit): string =
-  "echo \"hello world\"\n"
-
-proc `code=`*(self: Unit, code: string) =
-  echo "code: ", code
+export model_citizen, types, states, units, builds, bots, ground, colors, scripts

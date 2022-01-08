@@ -4,6 +4,7 @@ import ".." / [core, globals, game, world/bot_node]
 import player
 
 const signals = ["target_in", "target_out", "target_fire", "target_remove"]
+let state = GameState.active
 
 gdobj SelectionArea of Area:
   var

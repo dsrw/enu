@@ -3,6 +3,8 @@ import godot, model_citizen
 import std / [strutils, math, wrapnils]
 import globals, core, world/nodes, models
 
+let state = GameState.active
+
 gdobj AimTarget of Sprite3D:
   var target_model: Model
 

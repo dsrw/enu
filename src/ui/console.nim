@@ -4,13 +4,15 @@ import godot, model_citizen
 import std / strutils
 import globals, core
 
+let state = GameState.active
+
 gdobj Console of RichTextLabel:
   var
     log_text = ""
     default_mouse_filter: int64
 
   proc init*() =
-    logger = proc(level, msg: string) =
+    state.logger = proc(level, msg: string) =
       if level == "err":
         self.visible = true
       echo msg
@@ -24,7 +26,7 @@ gdobj Console of RichTextLabel:
   method ready*() =
     trace:
       self.bind_signals "clear_console", "toggle_console"
-    state.target_flags.changes:
+    GameState.active.target_flags.changes:
       if MouseCaptured.added:
         self.mouse_filter = MOUSE_FILTER_IGNORE
       elif MouseCaptured.removed:

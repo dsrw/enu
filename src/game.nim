@@ -4,7 +4,7 @@ import godotapi / [input, input_event, gd_os, node, scene_tree, viewport,
                    gd_os, project_settings, input_map, input_event, input_event_action]
 import godot, model_citizen
 import std / [monotimes, times, os, jsonutils, json, math]
-import core, globals, world/node_factories
+import core, globals, controllers/unit_controllers
 
 const
   version = static_exec("git describe --tags HEAD")
@@ -16,6 +16,9 @@ type
     world: Option[string]
     show_stats: Option[bool]
     mega_pixels: Option[float]
+
+let state = GameState.active
+let config = state.config
 
 var
   timer = 0.0
@@ -30,7 +33,7 @@ gdobj Game of Node:
     saved_mouse_position: Vector2
     scale_factor* = 0.0
     rescale_at = get_mono_time()
-    node_factory: NodeFactory
+    unit_controller: UnitController
 
   method process*(delta: float) =
     if config.show_stats:
@@ -81,7 +84,7 @@ gdobj Game of Node:
 
   proc init* =
     state.nodes.game = self
-    self.node_factory = NodeFactory.init(state)
+    self.unit_controller = UnitController.init
     let
       screen_scale = get_screen_scale(-1)
       work_dir = get_user_data_dir()
@@ -95,8 +98,9 @@ gdobj Game of Node:
       initial_user_config.from_json(read_file(config_file).parse_json, opt)
 
     var uc = initial_user_config
-    config = Config()
-    with config:
+    assert not state.is_nil
+    assert not state.config.is_nil
+    with state.config:
       font_size = uc.font_size ||= (14 * screen_scale).int
       dock_icon_size = uc.dock_icon_size ||= 50 * screen_scale
       world = uc.world ||= "default"
@@ -106,7 +110,7 @@ gdobj Game of Node:
       script_dir = join_path(config.world_dir, "scripts")
       lib_dir = join_path(get_executable_path().parent_dir(), "..", "..", "..", "vmlib")
 
-    create_dir(config.script_dir)
+    create_dir(state.config.script_dir)
     if uc != initial_user_config:
       config_file.write_file(uc.to_json.pretty)
 
@@ -181,7 +185,7 @@ gdobj Game of Node:
       discard
       # TODO
 
-    globals.pause = proc() =
+    globals.pause_scripts = proc() =
       trigger("pause")
 
     state.target_flags.changes:
@@ -260,7 +264,7 @@ gdobj Game of Node:
       globals.save_and_reload()
       self.get_tree().set_input_as_handled()
     elif event.is_action_pressed("pause"):
-      globals.pause()
+      globals.pause_scripts()
     elif event.is_action_pressed("clear_console"):
       trigger("clear_console")
     elif event.is_action_pressed("toggle_console"):

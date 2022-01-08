@@ -4,10 +4,10 @@ import pkg/model_citizen
 import pkg/core/godotcoretypes except Color
 import pkg / core / [vector3, transforms, basis]
 import models/colors
+import engine/engine
+import core
 
 export Vector3, Transform, vector3, transforms, basis
-
-import engine/engine
 
 type
   TargetFlags* = enum
@@ -31,14 +31,17 @@ type
     action_index*: int
     action_count*: int
     tool*: ZenValue[Tools]
+    gravity*: float
     nodes*: tuple[
       game: Node,
       data: Node,
       player: Node
     ]
+    logger*: proc(level, msg: string)
     units*: ZenSeq[Unit]
     ground*: Ground
     draw_plane*: Vector3
+    active_ctx*: ScriptCtx
 
   Model* = ref object of RootObj
     target_point*: Vector3
@@ -51,17 +54,20 @@ type
   Ground* = ref object of Model
 
   Unit* = ref object of Model
+    id*: string
     parent*: Unit
     units*: ZenSeq[Unit]
     local*: bool
     start_transform*: Transform
-    transform*: Transform
+    transform*: ZenValue[Transform]
     scale*: float
     speed*: float
+    code*: ZenValue[string]
     script_ctx*: ScriptCtx
     disabled*: bool
 
   Bot* = ref object of Unit
+    velocity*: ZenValue[Vector3]
 
   VoxelKind* = enum
     Hole, Manual, Computed
@@ -78,6 +84,7 @@ type
     start_color*: Color
     color*: Color
     voxels_per_frame*: float
+    voxels_remaining_this_frame*: float
     drawing*: bool
     moving*: bool
     root*: bool
@@ -88,14 +95,13 @@ type
     script*: string
     engine*: Engine
     timer*: MonoTime
-    prefix*: string
     paused*: bool
     load_vars*: proc()
     reload_script*: proc()
     is_clone*: bool
     speed*: float
 
-  Config* = object
+  Config* = ref object
     font_size*: int
     dock_icon_size*: float
     world*: string
@@ -110,7 +116,7 @@ proc local_to*(self: Vector3, unit: Unit): Vector3 =
   result = self
   var unit = unit
   while unit:
-    result -= unit.transform.origin
+    result -= unit.transform.value.origin
     unit = unit.parent
 
 proc global_from*(self: Vector3, unit: Unit): Vector3 =
@@ -119,5 +125,21 @@ proc global_from*(self: Vector3, unit: Unit): Vector3 =
 proc init*(_: type Transform, origin = vec3()): Transform =
   result = init_transform()
   result.origin = origin
+
+proc origin*(self: ZenValue[Transform]): Vector3 =
+  self.value.origin
+
+proc `origin=`*(self: ZenValue[Transform], value: Vector3) =
+  var transform = self.value
+  transform.origin = value
+  self.value = transform
+
+proc basis*(self: ZenValue[Transform]): Basis =
+  self.value.basis
+
+proc `basis=`*(self: ZenValue[Transform], value: Basis) =
+  var transform = self.value
+  transform.basis = value
+  self.value = transform
 
 proc init*(_: type Basis): Basis = init_basis()

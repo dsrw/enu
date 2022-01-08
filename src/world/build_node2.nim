@@ -414,15 +414,6 @@ gdobj BuildNode of VoxelTerrain:
     let loc = loc - self.translation
     self.draw(loc.x, loc.y, loc.z, index, keep = true)
 
-  proc update_running_state(running: bool) =
-    self.engine.running = running
-    if not running:
-      self.holes = self.kept_holes
-      self.kept_holes.clear()
-      self.save_blocks()
-      self.load_vars()
-      debug(self.script & " done.")
-
   proc includes_any_location*(locations: seq[Vector3]): bool =
     let holes = to_seq(self.holes.keys)
     for loc in locations:
@@ -439,26 +430,7 @@ gdobj BuildNode of VoxelTerrain:
     self.overwrite = false
     self.move_mode = false
 
-  proc on_load_vars() =
-    var old_speed = self.speed
-    let
-      e = self.engine
-      scale_factor = self.engine.get_float("scale", e.module_name).round(3)
-    self.move_mode = self.engine.get_bool("move_mode", e.module_name)
-    self.speed = self.engine.get_float("speed", e.module_name)
-    self.index = self.engine.get_int("color", e.module_name)
-    self.drawing = self.engine.get_bool("drawing", e.module_name)
-    self.overwrite = self.engine.get_bool("overwrite", e.module_name)
-    self.blocks_per_frame = if self.speed == 0:
-      float.high
-    else:
-      self.speed
-    if self.speed != old_speed:
-      self.blocks_remaining_this_frame = 0
-    if scale_factor != self.scale.x.round(3):
-      self.scale = vec3(scale_factor, scale_factor, scale_factor)
 
-    self.set_vars()
 
   method physics_process(delta: float64) =
     let previous = self.rotation()

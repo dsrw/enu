@@ -9,6 +9,8 @@ import core, globals, game, engine/engine, engine/contexts
 import aim_target
 
 let
+  state = GameState.active
+  config = state.config
   angle_x_min = -PI / 2.25
   angle_x_max = PI / 2.25
   max_speed = 50.0
@@ -70,10 +72,10 @@ gdobj Player of KinematicBody:
       else:
         float_time
       let floating = self.jump_down and self.jump_time and self.jump_time.get + float_time > now()
-      var gravity = if floating:
-        gravity / 4
+      let gravity = if floating:
+        state.gravity / 4
       else:
-        gravity
+        state.gravity
       result.y = velocity_current.y + gravity * delta
 
   method ready*() =

@@ -27,10 +27,11 @@ bin           = @["enu" & lib_ext]
 requires "nim >= 1.6.0",
          "https://github.com/pragmagic/godot-nim#982ab52",
          "https://github.com/dsrw/Nim#baaa50d",
-         "https://github.com/dsrw/model_citizen 0.5.2",
+         "https://github.com/dsrw/model_citizen 0.6.1",
          "cligen 1.5.19",
          "print#f78c855",
-         "chroma"
+         "chroma",
+         "nanoid"
 
 proc gen: string =
   if generator_path == "":

@@ -136,3 +136,14 @@ proc wrap*[T](value, min, max: T): float =
     min
   else:
     value - (range * floor((value - min) / range))
+
+# ids
+
+import pkg/nanoid
+
+proc generate_id*(): string = generate(
+    alphabet = "abcdefghijklmnopqrstuvwxyz0123456789",
+    size = 13
+  )
+
+import pkg / model_citizen

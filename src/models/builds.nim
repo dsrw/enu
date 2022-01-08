@@ -1,10 +1,11 @@
 import std / [hashes, tables, sets, options, sequtils]
 import pkg / [model_citizen, print]
-import types, colors, core
-import states, bots
+import core, models / [types, states, bots, colors, units]
 const BufferSize = vec3(16, 16, 16)
 
 const default_color = action_colors[blue]
+
+let state = GameState.active
 
 proc find_root(self: Build): tuple[build: Build, offset: Vector3] =
   result.build = self
@@ -59,7 +60,7 @@ proc flag_tree(root: Unit, add: bool, flag: ModelFlags) =
   for unit in root.units:
     unit.flag_tree(add, flag)
 
-proc remove(self: Build, state: GameState) =
+proc remove(self: Build) =
   if state.tool.value == Block:
     let point = self.target_point - self.target_normal - (self.target_normal.inverse_normalized * 0.5)
     self.draw(point, (Manual, action_colors[eraser]))
@@ -70,7 +71,7 @@ proc remove(self: Build, state: GameState) =
       else:
         self.parent.units -= self
 
-proc fire(self: Build, state: GameState) =
+proc fire(self: Build) =
   let global_point = self.to_global(self.target_point)
   if state.tool.value == Block:
     let point = (self.target_point + (self.target_normal * 0.5)).floor
@@ -82,15 +83,17 @@ proc fire(self: Build, state: GameState) =
     state.open_unit.value = self
   state.draw_plane = self.to_global(self.target_point) * self.target_normal
 
-proc init*(_: type Build, state: GameState, root = false, transform = Transform.init, color = default_color): Build =
+proc init*(_: type Build, root = false, transform = Transform.init, color = default_color): Build =
   let self = Build(
+    id: "build_" & generate_id(),
     root: root,
     voxels: result.voxels.type.init,
-    transform: transform,
+    transform: Zen.init(transform),
     units: ZenSeq[Unit].init,
     color: color,
     start_color: color,
-    flags: ZenSet[ModelFlags].init
+    flags: ZenSet[ModelFlags].init,
+    code: ZenValue[string].init
   )
 
   self.flags.changes:
@@ -104,9 +107,9 @@ proc init*(_: type Build, state: GameState, root = false, transform = Transform.
       let plane = self.to_global(self.target_point) * self.target_normal
       if plane == state.draw_plane:
         if Secondary in state.input_flags:
-          self.remove(state)
+          self.remove
         elif Primary in state.input_flags:
-          self.fire(state)
+          self.fire
       # if change.item == TargetMoved and state.tool.value == Place:
       #   if Touched in change.changes and Primary in state.input_flags:
       #     s
@@ -120,30 +123,29 @@ proc init*(_: type Build, state: GameState, root = false, transform = Transform.
   state.input_flags.changes:
     if Hover in self.flags:
       if Primary.added:
-        self.fire(state)
+        self.fire
       elif Secondary.added:
-        self.remove(state)
+        self.remove
     if Primary.removed or Secondary.removed:
       state.draw_plane = vec3()
 
   result = self
 
-proc init*(_: type Build, state: GameState, root = false, color = default_color, position: Vector3): Build =
+proc init*(_: type Build, root = false, color = default_color, position: Vector3): Build =
   let transform = Transform.init(origin = position)
-  result = Build.init(state = state, root = root, transform = transform, color = color)
+  result = Build.init(root = root, transform = transform, color = color)
 
 when is_main_module:
   import unittest, states
   type Node = ref object of RootObj
-  let state = GameState.init(Node, action_count = 6, action_index = 1)
 
-  var b = Build.init(Node, state, root = true)
+  var b = Build.init(root = true)
 
   b.draw vec3(1, 1, 1), (Computed, Color())
   check vec3(1, 1, 1) in b.voxels[vec3(0, 0, 0)]
   b.draw vec3(17, 17, 17), (Computed, Color())
   check vec3(17, 17, 17) in b.voxels[vec3(1, 1, 1)]
-  var c = Build.init(Node, state, transform = Transform(origin: vec3(5, 5, 5)))
+  var c = Build.init(transform = Transform(origin: vec3(5, 5, 5)))
   c.parent = b
 
   c.draw vec3(14, 14, 14), (Manual, Color())

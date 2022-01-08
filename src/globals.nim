@@ -13,31 +13,14 @@ var
   reload_scripts*: proc()
   save_and_reload*: proc()
   save_scene*: proc(immediate = false)
-  pause*: proc()
-  logger*: proc(level, msg: string)
+  pause_scripts*: proc()
   echo_console*: proc(msg: string)
-  config*: Config
   game_ready* = false
-  gravity* = -240.0
-  state* = GameState.init(action_count = 6, action_index = 1)
   gid = 0
-
-proc gen_id*(): string =
-  result = $gid
-  gid.inc
-
-proc debug*(args: varargs[string, `$`]) =
-  logger("debug", args.join)
-
-proc info*(args: varargs[string, `$`]) =
-  logger("info", args.join)
-
-proc err*(args: varargs[string, `$`]) =
-  logger "err", args.join
 
 proc bind_signals*(receiver, sender: Node, signals: varargs[string]) =
   let send_node = if sender == nil:
-    state.nodes.game
+    GameState.active.nodes.game
   else:
     sender
 
@@ -56,7 +39,7 @@ proc trigger*(node: Object, signal: string, args: varargs[Variant, `new_variant`
   node.emit_signal(signal, args)
 
 proc trigger*(signal: string, args: varargs[Variant]) =
-  trigger(state.nodes.game, signal, args)
+  trigger(GameState.active.nodes.game, signal, args)
 
 proc destroy*(node: Node) =
   node.get_parent.remove_child(node)

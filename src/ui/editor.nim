@@ -2,7 +2,10 @@ import godotapi / [text_edit, scene_tree, node, input_event, global_constants,
                          input_event_key, style_box_flat]
 import godot, compiler/lineinfos, model_citizen
 import std / [strutils, tables]
-import core, globals, engine/engine, models
+import core, globals, engine/engine
+import models except Color
+
+let state = GameState.active
 
 gdobj Editor of TextEdit:
   var
@@ -95,7 +98,7 @@ gdobj Editor of TextEdit:
       elif Editing.added:
         self.visible = true
         # TODO
-        self.text = state.open_unit.value.code
+        self.text = state.open_unit.value.code.value
         self.grab_focus()
         self.clear_errors()
         self.highlight_errors()
@@ -116,10 +119,11 @@ gdobj Editor of TextEdit:
     self.configure_highlighting()
 
   method on_save* =
-    if self.dirty:
+    if self.dirty and state.open_unit.value:
       self.dirty = false
       self.clear_errors()
-      state.open_unit.value.code = self.text
+      state.open_unit.value.code.value = self.text
+      echo "wrote code"
 
   method on_script_error* =
     self.highlight_errors()

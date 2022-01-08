@@ -1,85 +1,105 @@
-import std / [monotimes, os, hashes, sets, strutils]
-import core, globals, engine/engine, types
-import godot
+import std / [monotimes, os, hashes, sets, strutils, math, sugar]
+import pkg / [godot]
 import godotapi / [node]
+import core, engine/engine, models
 
 export engine
 
-using self: auto
-
-const ADVANCE_STEP = 0.5.seconds
+let state = GameState.active
+let config = state.config
 
 var
   module_names: HashSet[string]
-  current_active_node: Node
-  ctxs: Table[Engine, ScriptCtx]
+  current_active_unit: Unit
   failed: seq[tuple[ctx: ScriptCtx, ex: ref VMQuit]]
   starting = true
   modules_to_load: HashSet[ScriptCtx]
-
-template ctx: untyped = self.unit.script_ctx
 
 proc destroy*(ctx: ScriptCtx) =
   if ctx.engine in ctxs:
     ctxs.del(ctx.engine)
 
-proc init*(t: typedesc[ScriptCtx], prefix: string): ScriptCtx =
+proc init*(_: type ScriptCtx): ScriptCtx =
   let e = Engine.init()
-  result = ScriptCtx(engine: e, timer: MonoTime.high, prefix: prefix)
+  result = ScriptCtx(engine: e, timer: MonoTime.high)
   ctxs[e] = result
   modules_to_load.incl result
 
-proc active_ctx*(): ScriptCtx = ctxs[active_engine()]
-proc active_node*(): Node = current_active_node
+proc active_unit*(): Unit = current_active_unit
 
-proc is_script_loadable*(self): bool =
+proc is_script_loadable*(self: Unit): bool =
+  let ctx = self.script_ctx
   ctx.script != "none" and ctx.script.file_exists
 
-proc engine*(self): Engine = ctx.engine
-proc script*(self): string = ctx.script
-proc paused*(self): bool = ctx.paused
-proc `paused=`*(self; paused: bool) = ctx.paused = paused
-proc speed*(self): float = ctx.speed
-proc `speed=`*(self; speed: float) = ctx.speed = speed
+proc update_running_state(self: Unit, running: bool) =
+  self.script_ctx.engine.running = running
+  if not running:
+    # TODO
+    # self.holes = self.kept_holes
+    # self.kept_holes.clear()
+    # self.save_blocks()
+    # self.load_vars()
+    state.debug(self.script_ctx.script & " done.")
 
-proc set_script*(self) =
-  let path = ctx.prefix & self.name & ".nim"
-  ctx.script = join_path(config.script_dir, path)
-
-proc start_advance_timer*(ctx: ScriptCtx) =
-  ctx.timer = get_mono_time() + ADVANCE_STEP
-
-proc advance*(self; delta: float64) =
+proc advance*(self: Unit, delta: float64) =
   let now = get_mono_time()
-  current_active_node = self
-  let c = ctx
+  current_active_unit = self
+  let c = self.script_ctx
   let e = c.engine
 
-  when compiles(self.blocks_per_frame):
-    self.blocks_remaining_this_frame += self.blocks_per_frame
+  if self of Build:
+    let self = Build(self)
+    self.voxels_remaining_this_frame += self.voxels_per_frame
   var resume_script = true
   while resume_script:
     resume_script = false
     if e.callback == nil or (not e.callback(delta)):
-      ctx.timer = MonoTime.high
+      c.timer = MonoTime.high
       discard e.call_proc("set_action_running", e.module_name, false)
-      self.update_running_state ctx.engine.resume()
-      when compiles(self.blocks_per_frame):
-        if self.blocks_per_frame > 0 and e.running and self.blocks_remaining_this_frame >= 1:
+      self.update_running_state e.resume()
+      if self of Build:
+        let self = Build(self)
+        if self.voxels_per_frame > 0 and e.running and self.voxels_remaining_this_frame >= 1:
           resume_script = true
-    elif now >= ctx.timer:
-      ctx.timer = now + ADVANCE_STEP
+    elif now >= c.timer:
+      c.timer = now + ADVANCE_STEP
       e.saved_callback = e.callback
       e.callback = nil
       discard e.resume()
 
-proc load_vars*(self) =
-  let active_name = if active_node().is_nil: "nil" else: active_node().name
-  let e = ctx.engine
-  when compiles(self.on_load_vars):
-    self.on_load_vars()
+proc set_vars(self: Build) =
+  let engine = self.script_ctx.engine
+  let module_name = engine.module_name
 
-proc begin_move(self; direction: Vector3, steps: float): bool =
+  engine.call_proc("set_vars", module_name = module_name, action_index(self.color).int,
+                   self.drawing, self.speed, self.scale, self.moving)
+
+proc load_vars(self: Unit) =
+  let old_speed = self.speed
+  let ctx = self.script_ctx
+  self.speed = ctx.engine.get_float("speed", ctx.engine.module_name)
+
+  if self of Build:
+    let self = Build(self)
+    var old_speed = self.speed
+    let
+      e = ctx.engine
+      scale_factor = ctx.engine.get_float("scale", e.module_name).round(3)
+    self.moving = ctx.engine.get_bool("move_mode", e.module_name)
+    self.color = action_colors[Colors(ctx.engine.get_int("color", e.module_name))]
+    self.drawing = ctx.engine.get_bool("drawing", e.module_name)
+    self.voxels_per_frame = if self.speed == 0:
+      float.high
+    else:
+      self.speed
+    if self.speed != old_speed:
+      self.voxels_remaining_this_frame = 0
+    if scale_factor != self.scale.round(3):
+      self.scale = scale_factor
+
+    self.set_vars()
+
+proc begin_move(self: Unit, direction: Vector3, steps: float): bool =
   self.load_vars()
   var steps = steps
   var direction = direction
@@ -89,7 +109,7 @@ proc begin_move(self; direction: Vector3, steps: float): bool =
   active_engine().callback = self.on_begin_move(direction, steps)
   result = not active_engine().callback.is_nil
 
-proc begin_turn(self; direction: Vector3, degrees: float): bool =
+proc begin_turn(self: Unit, direction: Vector3, degrees: float): bool =
   self.load_vars()
   var degrees = degrees
   var direction = direction
@@ -104,8 +124,9 @@ proc error*(e: Engine, ex: ref VMQuit) =
   when defined(enu_simulate):
     raise ex
   else:
-    err ex.msg
-    trigger("script_error")
+    state.err ex.msg
+    # TODO
+    # trigger("script_error")
 
 proc retry_failed_scripts =
   # We don't know what order scripts will load in.
@@ -126,19 +147,19 @@ proc retry_failed_scripts =
         f.ctx.engine.error(f.ex)
       failed = @[]
 
-proc clone(self): bool =
-  let node = active_node()
+proc create_new(self: Unit): bool =
+  let unit = active_unit()
   # TODO: Fix this
-  let target = node.get_node("OwnedNodes")
   let ae = active_engine()
-  let new_node = self.on_clone(target, active_ctx())
-  let new_engine = new_node.unit.script_ctx.engine
+  let clone = self.clone(unit, active_ctx())
+  let new_engine = clone.script_ctx.engine
   ae.callback = proc(delta: float): bool =
     not new_engine.initialized
   set_active(ae)
   result = true
 
-proc load_script*(self; script = "", retry_failed = true) =
+proc load_script*(self: Unit, script = "", retry_failed = true) =
+  let ctx = self.script_ctx
   modules_to_load.excl ctx
   defer:
     if modules_to_load.card == 0 and retry_failed:
@@ -164,10 +185,10 @@ proc load_script*(self; script = "", retry_failed = true) =
         "import " & others.to_seq.join(", ")
       else:
         ""
-      let code = self.code_template(module_name & ".nim", imports)
+      let code = self.code_template(imports)
 
       let initialized = ctx.engine.initialized
-      let suffex = if ctx.is_clone: "_clone" & self.name else: ""
+      let suffex = if ctx.is_clone: "_clone" & self.id else: ""
       ctx.load_vars = proc() = self.load_vars()
       ctx.engine.load(config.script_dir, ctx.script, code, config.lib_dir, suffex)
       if not initialized:
@@ -179,13 +200,13 @@ proc load_script*(self; script = "", retry_failed = true) =
 
           expose "begin_move", a => self.begin_move(get_vec3(a, 0), get_float(a, 1))
           expose "begin_turn", a => self.begin_turn(get_vec3(a, 0), get_float(a, 1))
-          expose "echo_console", a => echo_console(get_string(a, 0))
-          expose "create_new", a => self.clone()
+          # TODO
+          # expose "echo_console", a => echo_console(get_string(a, 0))
+          expose "create_new", a => self.create_new()
           expose "sleep", proc(a: VmArgs): bool =
             let seconds = get_float(a, 0)
             var duration = 0.0
-            when compiles(self.on_sleep):
-              self.on_sleep(seconds)
+            self.on_sleep(seconds)
             active_engine().callback = proc(delta: float): bool =
               duration += delta
               return duration < seconds
@@ -196,12 +217,12 @@ proc load_script*(self; script = "", retry_failed = true) =
             e.pause()
             e.running = false
             result = false
-        self.on_script_loaded(ctx.engine)
+        self.on_script_loaded()
     if not ctx.paused:
-      current_active_node = self
+      current_active_unit = self
       self.update_running_state ctx.engine.run()
   except VMQuit as e:
     if starting:
       failed.add (ctx, e)
     else:
-      self.engine.error(e)
+      self.script_ctx.engine.error(e)

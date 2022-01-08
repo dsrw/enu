@@ -1,6 +1,6 @@
-import std / [tables]
-import model_citizen
-import types, colors
+import std / [tables, strutils]
+import pkg / model_citizen
+import models / [types, colors]
 
 proc set_flag(flags: var set[TargetFlags], flag: TargetFlags, add: bool) =
   if add:
@@ -58,6 +58,15 @@ proc editing*(state: GameState): bool = Editing in state.target_flags
 proc selected_color*(self: GameState): Color =
   action_colors[Colors(self.action_index)]
 
+proc debug*(self: GameState, args: varargs[string, `$`]) =
+  self.logger("debug", args.join)
+
+proc info*(self: GameState, args: varargs[string, `$`]) =
+  self.logger("info", args.join)
+
+proc err*(self: GameState, args: varargs[string, `$`]) =
+  self.logger "err", args.join
+
 proc init*(_: type GameState, action_count = 0, action_index = 0): GameState =
   let self = GameState(
     target_flags: Zen.init(set[TargetFlags]),
@@ -66,7 +75,9 @@ proc init*(_: type GameState, action_count = 0, action_index = 0): GameState =
     action_count: action_count,
     action_index: action_index,
     open_unit: ZenValue[Unit].init,
-    tool: %Block
+    config: Config(),
+    tool: %Block,
+    gravity: -240.0
   )
 
   self.open_unit.changes:
@@ -76,6 +87,10 @@ proc init*(_: type GameState, action_count = 0, action_index = 0): GameState =
       self.apply_target_flags()
 
   result = self
+
+proc active*(_: type GameState): GameState =
+  let instance {.global.} = GameState.init(action_count = 6, action_index = 1)
+  result = instance
 
 when is_main_module:
   import std / [unittest, sequtils]
@@ -109,8 +124,8 @@ when is_main_module:
     not state.target_block
     not state.command_mode
 
-  var added: set[TargetFlag]
-  var removed: set[TargetFlag]
+  var added: set[TargetFlags]
+  var removed: set[TargetFlags]
 
   state.target_flags.track proc(changes, _: auto) =
     added = {}
@@ -136,7 +151,7 @@ when is_main_module:
   state.mouse_captured = true
   check state.mouse_captured
 
-  state.editing = true
+  state.open_unit.value = Unit()
   check not state.mouse_captured
 
   state.command_mode = true
@@ -145,7 +160,7 @@ when is_main_module:
   state.mouse_captured = false
   check state.mouse_captured
 
-  state.editing = false
+  state.open_unit.value = nil
   check state.mouse_captured
 
   state.command_mode = false

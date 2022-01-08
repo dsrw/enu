@@ -2,6 +2,8 @@ import godotapi / [button, style_box_flat]
 import godot
 import ".." / [core, globals]
 
+let config = GameState.active.config
+
 gdobj ActionButton of Button:
   method ready*() =
     trace:

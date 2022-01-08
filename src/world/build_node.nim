@@ -90,7 +90,7 @@ gdobj BuildNode of VoxelTerrain:
       self.to_global(local)
     self.unit.to_local = proc(global: Vector3): Vector3 =
       self.to_local(global)
-    self.transform = unit.transform
+    self.transform = unit.transform.value
     self.unit.draw(vec3(), (Manual, unit.start_color))
 
     self.track_changes
