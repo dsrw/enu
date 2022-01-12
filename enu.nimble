@@ -8,7 +8,7 @@ var
   generated_dir   = "generated/godotapi"
   api_json        = "api.json"
   generator       = "tools/build_helpers"
-  godot_bin       = this_dir() & &"/vendor/godot/bin/godot.{target}.opt.tools.arm64{exe_ext}"
+  godot_bin       = this_dir() & &"/vendor/godot/bin/godot.{target}.opt.tools.64{exe_ext}"
   godot_build_url = "https://docs.godotengine.org/en/stable/development/compiling/index.html"
   gcc_dlls        = ["libgcc_s_seh-1.dll", "libwinpthread-1.dll"]
   nim_dlls        = ["pcre64.dll"]
@@ -48,7 +48,7 @@ task build_godot, "Build godot":
   if scons == "":
     quit &"*** scons not found on path, and is required to build Godot. See {godot_build_url} ***"
   with_dir "vendor/godot":
-    exec &"{scons} custom_modules=../modules platform={target} arch=arm64 {godot_opts} -j{cores}"
+    exec &"{scons} custom_modules=../modules platform={target} arch=64 {godot_opts} -j{cores}"
 
 task build_headless, "build headless godot":
   target = "server use_static_cpp=no"
@@ -57,7 +57,7 @@ task build_headless, "build headless godot":
 task test, "run godot tests":
   exec "nimble c tests/godot/tnode_factories"
   cd "tests/godot/app"
-  exec this_dir() / "vendor/godot/bin/godot_server.osx.opt.tools.arm64 --quiet --script tests/tests.gdns"
+  exec this_dir() / "vendor/godot/bin/godot_server.osx.opt.tools.64 --quiet --script tests/tests.gdns"
 
 proc find_and_copy_dlls(dep_path, dest: string, dlls: varargs[string]) =
   for dep in dlls:
