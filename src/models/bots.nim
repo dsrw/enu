@@ -1,4 +1,5 @@
-import pkg/model_citizen
+import std / math
+import pkg / model_citizen
 import core, models / [types, states, scripts, units]
 include "default_robot.nim.nimf"
 
@@ -24,8 +25,26 @@ method on_begin_move*(self: Bot, direction: Vector3, steps: float): Callback =
       return true
   active_ctx().start_advance_timer()
 
-method on_begin_turn*(self: Bot, direction: Vector3, degrees: float): Callback =
-  quit "override me"
+method on_begin_turn*(self: Bot, axis: Vector3, degrees: float): Callback =
+  let degrees = degrees * -axis.x
+  var duration = 0.0
+  # TODO: Why can't this be a one liner?
+  var final_transform = self.transform.value
+  final_transform.basis.rotate(UP, deg_to_rad(degrees))
+  result = proc(delta: float): bool =
+    duration += delta
+    print self.transform.value
+    echo "transform ^^^"
+    var tra = self.transform.value
+    tra = tra.rotated(UP, deg_to_rad(degrees * delta * self.speed))
+    self.transform.value = tra
+    if duration <= 1.0 / self.speed:
+      true
+    else:
+      self.transform.value = final_transform
+      false
+  active_ctx().start_advance_timer()
+
 
 method clone*(self: Bot, clone_to: Unit, ctx: ScriptCtx): Unit =
   quit "override me"
