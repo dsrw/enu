@@ -122,6 +122,23 @@ proc round*(v: Vector3): Vector3 {.inline.} =
 proc is_axis_aligned*(v: Vector3): bool {.inline.} =
   v in [UP, DOWN, LEFT, RIGHT, FORWARD, BACK]
 
+# Basis
+
+proc `x=`*(self: var Basis, value: Vector3) {.inline.} =
+  self.elements[0].x = value.x
+  self.elements[1].x = value.y
+  self.elements[2].x = value.z
+
+proc `y=`*(self: var Basis, value: Vector3) {.inline.} =
+  self.elements[0].y = value.x
+  self.elements[1].y = value.y
+  self.elements[2].y = value.z
+
+proc `z=`*(self: var Basis, value: Vector3) {.inline.} =
+  self.elements[0].z = value.x
+  self.elements[1].z = value.y
+  self.elements[2].z = value.z
+
 # math
 const CMP_EPSILON = 0.00001
 proc roughly_zero[T](s: T): bool =
