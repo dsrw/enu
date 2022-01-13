@@ -31,7 +31,7 @@ requires "nim >= 1.6.0",
          "cligen 1.5.19",
          "print#f78c855",
          "chroma",
-         "nanoid"
+         "https://github.com/dsrw/nanoid.nim 0.2.1"
 
 proc gen: string =
   if generator_path == "":

@@ -1,6 +1,6 @@
 import std / math
 import pkg / model_citizen
-import core, models / [types, states, scripts, units]
+import core, models / [types, states, scripts, units], engine / engine
 include "default_robot.nim.nimf"
 
 let state = GameState.active
@@ -46,7 +46,18 @@ method on_sleep*(self: Bot, seconds: float) =
   discard
 
 method on_script_loaded*(self: Bot) =
-  discard
+  let e = self.script_ctx.engine
+  e.expose "play", proc(a: VmArgs): bool =
+    self.animation.value = get_string(a, 0)
+    return false
+  e.expose "get_position", proc(a: VmArgs): bool =
+    let n = self.to_global(self.transform.origin).to_node
+    a.set_result(n)
+    return false
+  e.expose "get_rotation", proc(a: VmArgs): bool =
+    let r = self.transform.basis.get_euler
+    a.set_result(vec3(r.x.rad_to_deg, r.y.rad_to_deg, r.z.rad_to_deg).to_node)
+    return false
 
 proc bot_at*(state: GameState, position: Vector3): Bot =
   for unit in state.units:
@@ -61,7 +72,8 @@ proc init*(_: type Bot, state: GameState, transform = Transform.init): Bot =
     start_transform: transform,
     flags: ZenSet[ModelFlags].init,
     code: ZenValue[string].init,
-    velocity: ZenValue[Vector3].init
+    velocity: ZenValue[Vector3].init,
+    animation: ZenValue[string].init
   )
 
   self.flags.changes:

@@ -68,6 +68,7 @@ type
 
   Bot* = ref object of Unit
     velocity*: ZenValue[Vector3]
+    animation*: ZenValue[string]
 
   VoxelKind* = enum
     Hole, Manual, Computed

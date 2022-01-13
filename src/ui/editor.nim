@@ -45,6 +45,7 @@ gdobj Editor of TextEdit:
     if self.visible:
       if event.is_action_pressed("ui_cancel"):
         if not (event of InputEventJoypadButton) or not state.command_mode:
+          self.on_save()
           state.open_unit.value = nil
           self.get_tree().set_input_as_handled()
 
@@ -123,7 +124,6 @@ gdobj Editor of TextEdit:
       self.dirty = false
       self.clear_errors()
       state.open_unit.value.code.value = self.text
-      echo "wrote code"
 
   method on_script_error* =
     self.highlight_errors()

@@ -49,6 +49,12 @@ gdobj BotNode of KinematicBody:
         self.unit.velocity.pause velocity_zid:
           self.unit.velocity.value = self.move_and_slide(change.item, UP)
 
+    self.unit.animation.changes:
+      if "".added:
+        self.animation_player.stop(true)
+      elif added():
+        self.animation_player.play(change.item)
+
   proc setup*(unit: Bot) =
     self.unit = unit
     self.unit.to_global = proc(local: Vector3): Vector3 =
