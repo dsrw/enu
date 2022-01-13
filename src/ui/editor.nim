@@ -1,7 +1,7 @@
-import godotapi / [text_edit, scene_tree, node, input_event, global_constants,
-                         input_event_key, style_box_flat]
-import godot, compiler/lineinfos, model_citizen
 import std / [strutils, tables]
+import pkg / [godot, model_citizen, compiler/lineinfos]
+import godotapi / [text_edit, scene_tree, node, input_event, global_constants,
+                   input_event_key, style_box_flat]
 import core, globals, engine/engine
 import models except Color
 
