@@ -16,6 +16,5 @@
       <excludeFolder url="file://$MODULE_DIR$/.vscode" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Python 3.9 (enu) interpreter library" level="application" />
   </component>
 </module>
