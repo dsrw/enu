@@ -51,7 +51,7 @@ proc advance*(self: Unit, delta: float64) =
     let self = Build(self)
     self.voxels_remaining_this_frame += self.voxels_per_frame
   var resume_script = true
-  while resume_script:
+  while resume_script and not state.paused:
     resume_script = false
     if e.callback == nil or (not e.callback(delta)):
       c.timer = MonoTime.high
@@ -173,9 +173,7 @@ proc load_script*(self: Unit, script = "", retry_failed = true) =
   try:
     if not self.is_script_loadable:
       return
-    if ctx.is_clone:
-      ctx.paused = false
-    if not ctx.paused:
+    if not state.paused:
       let module_name = ctx.script.split_file.name
       var others = module_names
       if not ctx.is_clone:
@@ -218,7 +216,7 @@ proc load_script*(self: Unit, script = "", retry_failed = true) =
             e.running = false
             result = false
         self.on_script_loaded()
-    if not ctx.paused:
+    if not state.paused:
       current_active_unit = self
       self.update_running_state ctx.engine.run()
   except VMQuit as e:

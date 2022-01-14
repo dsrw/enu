@@ -6,7 +6,8 @@ import models, world / [bot_node, build_node], engine / contexts
 
 type
   UnitController* = object
-    state: GameState
+
+let state = GameState.active
 
 proc change_code(self: Unit, code: string) =
   if code.strip != "":
@@ -15,6 +16,7 @@ proc change_code(self: Unit, code: string) =
       self.script_ctx = ScriptCtx.init
     self.script_ctx.script = self.file_name
     self.transform.value = self.start_transform
+    state.paused = false
     self.load_script()
 
 proc remove_from_scene(unit: Unit, parent_node: Node) =
@@ -59,5 +61,5 @@ proc watch*(f: UnitController, state: GameState) =
       change.item.remove_from_scene(state.nodes.data)
 
 proc init*(_: type UnitController): UnitController =
-  result = UnitController(state: GameState.active)
-  result.watch GameState.active
+  result = UnitController()
+  result.watch state

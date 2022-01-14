@@ -13,7 +13,6 @@ var
   reload_scripts*: proc()
   save_and_reload*: proc()
   save_scene*: proc(immediate = false)
-  pause_scripts*: proc()
   echo_console*: proc(msg: string)
   game_ready* = false
   gid = 0

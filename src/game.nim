@@ -185,9 +185,6 @@ gdobj Game of Node:
       discard
       # TODO
 
-    globals.pause_scripts = proc() =
-      trigger("pause")
-
     state.target_flags.changes:
       if MouseCaptured.added:
         let center = self.get_viewport().get_visible_rect().size * 0.5
@@ -264,7 +261,7 @@ gdobj Game of Node:
       globals.save_and_reload()
       self.get_tree().set_input_as_handled()
     elif event.is_action_pressed("pause"):
-      globals.pause_scripts()
+      state.paused = not state.paused
     elif event.is_action_pressed("clear_console"):
       trigger("clear_console")
     elif event.is_action_pressed("toggle_console"):

@@ -42,6 +42,7 @@ type
     ground*: Ground
     draw_plane*: Vector3
     active_ctx*: ScriptCtx
+    paused*: bool
 
   Model* = ref object of RootObj
     target_point*: Vector3
@@ -96,7 +97,6 @@ type
     script*: string
     engine*: Engine
     timer*: MonoTime
-    paused*: bool
     load_vars*: proc()
     reload_script*: proc()
     is_clone*: bool
