@@ -6,8 +6,8 @@ import pkg / [print, model_citizen]
 import models / [types, builds, colors], globals
 
 const
-  highlight_energy = 1.0
-  default_energy = 0.1
+  highlight_energy = 5.0
+  default_energy = 0.0
 
 gdobj BuildNode of VoxelTerrain:
   var
