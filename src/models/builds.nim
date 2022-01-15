@@ -1,11 +1,19 @@
-import std / [hashes, tables, sets, options, sequtils]
+import std / [hashes, tables, sets, options, sequtils, math]
 import pkg / [model_citizen, print]
-import core, models / [types, states, bots, colors, units]
+import core, models / [types, states, bots, colors, units, scripts], engine / engine
 const BufferSize = vec3(16, 16, 16)
 
-const default_color = action_colors[blue]
+include "default_builder.nim.nimf"
+
+const
+  default_color = action_colors[blue]
+  highlight_energy = 5.0
+  default_energy = 0.0
 
 let state = GameState.active
+
+method code_template*(self: Build, imports: string): string =
+  result = default_builder(self.file_name, imports, self.script_ctx.is_clone)
 
 proc find_root(self: Build): tuple[build: Build, offset: Vector3] =
   result.build = self
@@ -52,13 +60,15 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
     target.voxels[position.buffer] = ZenTable[Vector3, VoxelInfo].init
   target.voxels[position.buffer][position] = voxel
 
-proc flag_tree(root: Unit, add: bool, flag: ModelFlags) =
-  if add:
-    root.flags += flag
-  else:
-    root.flags -= flag
+proc drop_block(self: Build) =
+  if self.drawing:
+    var p = self.draw_transform.origin.snapped(vec3(1, 1, 1))
+    self.draw(p, (Computed, self.color))
+
+proc walk_tree(root: Unit, callback: proc(unit: Unit)) =
+  callback(root)
   for unit in root.units:
-    unit.flag_tree(add, flag)
+    unit.walk_tree(callback)
 
 proc remove(self: Build) =
   if state.tool.value == Block:
@@ -83,26 +93,137 @@ proc fire(self: Build) =
     state.open_unit.value = self
   state.draw_plane = self.to_global(self.target_point) * self.target_normal
 
+method on_begin_move*(self: Build, direction: Vector3, steps: float): Callback =
+  if self.moving:
+    discard
+    # let steps = steps.float
+    # var duration = 0.0
+    # let
+    #   moving = self.transform.basis.xform(direction)
+    #   finish = self.translation + moving * steps
+    #   finish_time = 1.0 / self.speed * steps
+    #
+    # result = proc(delta: float): bool =
+    #   duration += delta
+    #   if duration >= finish_time:
+    #     self.translation = finish
+    #     return false
+    #   else:
+    #     self.translation = self.translation + (moving * self.speed * delta)
+    #     return true
+  else:
+    var count = 0
+    result = proc(delta: float): bool =
+      var remaining = self.voxels_remaining_this_frame
+      var per_frame = self.voxels_per_frame
+      while count.float < steps and self.voxels_remaining_this_frame >= 1:
+        remaining = self.voxels_remaining_this_frame
+        per_frame = self.voxels_per_frame
+        self.draw_transform = self.draw_transform.translated(direction)
+        inc count
+        self.voxels_remaining_this_frame -= 1
+        self.drop_block()
+      result = count.float < steps
+  active_ctx().start_advance_timer()
+
+method on_begin_turn*(self: Build, axis: Vector3, degrees: float): Callback =
+  let map = {LEFT: UP, RIGHT: DOWN, UP: RIGHT, DOWN: LEFT}.to_table
+  let axis = map[axis]
+  if self.moving:
+    discard
+    # var duration = 0.0
+    # let axis = self.transform.basis.xform(axis)
+    # var final_transform = self.transform
+    # final_transform.basis = final_transform.basis.rotated(axis, deg_to_rad(degrees))
+    #                                              .orthonormalized()
+    # result = proc(delta: float): bool =
+    #   duration += delta
+    #   self.rotate(axis, deg_to_rad(degrees * delta * self.speed))
+    #   if duration <= 1.0 / self.speed:
+    #     true
+    #   else:
+    #     self.transform = final_transform
+    #     false
+    # active_ctx().start_advance_timer()
+  else:
+    let axis = self.draw_transform.basis.xform(axis)
+    self.draw_transform.basis = self.draw_transform.basis.rotated(axis, deg_to_rad(degrees))
+    self.draw_transform = self.draw_transform.orthonormalized()
+
+proc set_vars*(self: Build) =
+  let engine = self.script_ctx.engine
+  let module_name = engine.module_name
+
+  engine.call_proc("set_vars", module_name = module_name, action_index(self.color).int,
+                   self.drawing, self.speed, self.scale, self.moving, self.energy.value)
+
+method on_script_loaded*(self: Build) =
+  let e = self.script_ctx.engine
+  self.voxels_remaining_this_frame = 0
+  e.expose "set_energy", proc(a: VmArgs): bool =
+    self.energy.value = get_float(a, 0)
+    false
+  # e.expose("save", a => self.save(get_string(a, 0)))
+  # e.expose("restore", a => self.restore(get_string(a, 0)))
+  # e.expose "reset", proc(a: VmArgs): bool =
+  #   self.reset(get_bool(a, 0))
+  #   false
+  # e.expose "pause", proc(a: VmArgs): bool =
+  #   self.paused = true
+  #   true
+  e.expose "load_defaults", proc(a: VmArgs): bool =
+    self.set_vars()
+    false
+  # e.expose "get_position", proc(a: VmArgs): bool =
+  #   let v = self.position.origin
+  #   a.set_result(v.to_node)
+  #   false
+  # e.expose "get_rotation", proc(a: VmArgs): bool =
+  #   proc nm(f: float): float =
+  #     if f.is_equal_approx(0):
+  #       return 0
+  #     elif f < 0:
+  #       return f + (2 * PI)
+  #     else:
+  #       return f
+  #
+  #   proc nm(v: Vector3): Vector3 =
+  #     vec3(v.x.nm, v.y.nm, v.z.nm)
+  #
+  #   let e = self.position.basis.get_euler
+  #
+  #   let n = e.nm
+  #   let v = vec3(nm(n.x).rad_to_deg, nm(n.y).rad_to_deg, nm(n.z).rad_to_deg)
+  #   let m = if v.z > 0: 1.0 else: -1.0
+  #   let v2 = vec3(0.0, (v.x - v.y) * m, 0.0)
+  #   a.set_result(v2.to_node)
+  #   return false
+
 proc init*(_: type Build, root = false, transform = Transform.init, color = default_color): Build =
   let self = Build(
     id: "build_" & generate_id(),
     root: root,
     voxels: result.voxels.type.init,
     transform: Zen.init(transform),
+    start_transform: transform,
+    draw_transform: init_transform(),
     units: ZenSeq[Unit].init,
     color: color,
     start_color: color,
     flags: ZenSet[ModelFlags].init,
-    code: ZenValue[string].init
+    code: ZenValue[string].init,
+    velocity: ZenValue[Vector3].init,
+    energy: ZenValue[float].init,
+    drawing: true
   )
 
   self.flags.changes:
     if Hover.added and state.tool.value == Code:
       let (root, _) = self.find_root
-      root.flag_tree(true, Highlight)
+      root.walk_tree proc(unit: Unit) = unit.energy.value = highlight_energy
     elif Hover.removed:
       let (root, _) = self.find_root
-      root.flag_tree(false, Highlight)
+      root.walk_tree proc(unit: Unit) = unit.energy.value = default_energy
     if TargetMoved.touched:
       let plane = self.to_global(self.target_point) * self.target_normal
       if plane == state.draw_plane:
@@ -110,9 +231,6 @@ proc init*(_: type Build, root = false, transform = Transform.init, color = defa
           self.remove
         elif Primary in state.input_flags:
           self.fire
-      # if change.item == TargetMoved and state.tool.value == Place:
-      #   if Touched in change.changes and Primary in state.input_flags:
-      #     s
 
     if change.item in {TargetMoved, Hover} and state.tool.value == Place:
       if self.target_normal == UP:

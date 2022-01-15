@@ -67,13 +67,6 @@ proc advance*(self: Unit, delta: float64) =
       e.callback = nil
       discard e.resume()
 
-proc set_vars(self: Build) =
-  let engine = self.script_ctx.engine
-  let module_name = engine.module_name
-
-  engine.call_proc("set_vars", module_name = module_name, action_index(self.color).int,
-                   self.drawing, self.speed, self.scale, self.moving)
-
 proc load_vars(self: Unit) =
   let old_speed = self.speed
   let ctx = self.script_ctx
@@ -96,6 +89,7 @@ proc load_vars(self: Unit) =
       self.voxels_remaining_this_frame = 0
     if scale_factor != self.scale.round(3):
       self.scale = scale_factor
+    self.energy.value = ctx.engine.get_float("energy", e.module_name).round(3)
 
     self.set_vars()
 

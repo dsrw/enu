@@ -14,7 +14,7 @@ type
     Reticle, TargetBlock, MouseCaptured, CommandMode, Editing
 
   ModelFlags* = enum
-    Highlight, Hover, TargetMoved
+    Hover, TargetMoved
 
   InputFlags* = enum
     Primary, Secondary
@@ -41,7 +41,6 @@ type
     units*: ZenSeq[Unit]
     ground*: Ground
     draw_plane*: Vector3
-    active_ctx*: ScriptCtx
     paused*: bool
 
   Model* = ref object of RootObj
@@ -66,9 +65,10 @@ type
     code*: ZenValue[string]
     script_ctx*: ScriptCtx
     disabled*: bool
+    velocity*: ZenValue[Vector3]
+    energy*: ZenValue[float]
 
   Bot* = ref object of Unit
-    velocity*: ZenValue[Vector3]
     animation*: ZenValue[string]
 
   VoxelKind* = enum
@@ -82,7 +82,7 @@ type
 
   Build* = ref object of Unit
     voxels*: ZenTable[Vector3, VoxelBlock]
-    draw_position*: Vector3
+    draw_transform*: Transform
     start_color*: Color
     color*: Color
     voxels_per_frame*: float

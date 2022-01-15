@@ -6,10 +6,10 @@ include loops
 var
   speed* = 1.0
   drawing* = true
-  color*: ColorIndex
+  color* = blue
   move_mode* = false
   scale* = 1.0
-  energies: Table[ColorIndex, float]
+  energy* = 0.0
 
 include base_api
 
@@ -56,27 +56,16 @@ proc prev_color*()                  = change_color -1
 proc nc*()                          = next_color()
 proc pc*()                          = prev_color()
 
-proc set_energy(color: int, energy: float) =
-  discard
-
-proc `energy=`*(color: ColorIndex, energy: float) =
-  set_energy(color.int, energy)
-  energies[color] = energy
-
-proc energy*(color: ColorIndex): var float =
-  if color notin energies:
-    energies[color] = 0.1
-  result = energies[color]
-
 # Helpers
 proc load_defaults()             = discard
 
-proc set_vars*(color_index: int, drw: bool, spd, scl: float, mv: bool) =
+proc set_vars*(color_index: int, drw: bool, spd, scl: float, mv: bool, eg: float) =
   color = ColorIndex color_index
   drawing = drw
   speed = spd
   scale = scl
   move_mode = mv
+  energy = eg
 
 proc fill_square*(length = 1) =
   for l in 0..length:

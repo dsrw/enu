@@ -3,6 +3,10 @@ import pkg / model_citizen
 import core, models / [types, states, scripts, units], engine / engine
 include "default_robot.nim.nimf"
 
+const
+  highlight_energy = 5.0
+  default_energy = 0.0
+
 let state = GameState.active
 
 method code_template*(self: Bot, imports: string): string =
@@ -73,16 +77,17 @@ proc init*(_: type Bot, state: GameState, transform = Transform.init): Bot =
     flags: ZenSet[ModelFlags].init,
     code: ZenValue[string].init,
     velocity: ZenValue[Vector3].init,
-    animation: ZenValue[string].init
+    animation: ZenValue[string].init,
+    energy: ZenValue[float].init
   )
 
   self.flags.changes:
     if Hover.added:
       state.reticle = true
       if state.tool.value != Block:
-        self.flags += Highlight
+        self.energy.value = highlight_energy
     elif Hover.removed:
-      self.flags -= Highlight
+      self.energy.value = default_energy
       if state.tool.value != Code:
         state.reticle = false
 

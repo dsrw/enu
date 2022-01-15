@@ -5,7 +5,6 @@ import pkg/model_citizen
 import std / [math, tables, with, times, sugar, os, monotimes]
 import globals, core, print
 import engine / [contexts, engine], models / [types, bots]
-export contexts
 
 gdobj BotNode of KinematicBody:
   var
@@ -33,11 +32,12 @@ gdobj BotNode of KinematicBody:
     self.set_default_material()
 
   proc track_changes() =
-    self.unit.flags.changes:
-      if Highlight.added:
-        self.highlight()
-      elif Highlight.removed:
-        self.set_default_material()
+    self.unit.energy.changes:
+      if added:
+        if change.item >= 5.0:
+          self.highlight()
+        else:
+          self.set_default_material()
 
     self.transform_zid = self.unit.transform.changes:
       if added:

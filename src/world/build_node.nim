@@ -4,6 +4,7 @@ import godotapi / [node, voxel_terrain, voxel_mesher_blocky, voxel_tool, voxel_l
 import pkg/godot except print
 import pkg / [print, model_citizen]
 import models / [types, builds, colors], globals
+import engine / contexts
 
 const
   highlight_energy = 5.0
@@ -13,6 +14,7 @@ gdobj BuildNode of VoxelTerrain:
   var
     unit*: Build
     active_blocks: HashSet[Vector3]
+    transform_zid: ZID
 
   proc init*() =
     self.bind_signals self, "block_loaded", "block_unloaded"
@@ -54,18 +56,14 @@ gdobj BuildNode of VoxelTerrain:
       if not m.is_nil:
         m.set_shader_param("emission_energy", energy.to_variant)
 
-  proc select =
-    self.set_energy(highlight_energy)
-
-  proc deselect =
-    self.set_energy(default_energy)
-
   proc track_changes() =
-    self.unit.flags.changes:
-      if Highlight.added:
-        self.select
-      elif Highlight.removed:
-        self.deselect
+    self.unit.energy.changes:
+      if added:
+        self.set_energy(change.item)
+
+    self.transform_zid = self.unit.transform.changes:
+      if added:
+        self.transform = change.item
 
     self.unit.voxels.track proc(changes: auto) =
       for root_change in changes:
@@ -83,6 +81,14 @@ gdobj BuildNode of VoxelTerrain:
   # # method on_tree_exiting() =
   # #   game_node.trigger("collider_exiting", self)
   #
+
+  method process(delta: float) =
+    if self.unit:
+      if self.unit.script_ctx and self.unit.script_ctx.engine.running:
+        self.unit.advance(delta)
+
+      self.unit.transform.pause self.transform_zid:
+        self.unit.transform.value = self.transform
 
   proc setup*(unit: Build) =
     self.unit = unit
