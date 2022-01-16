@@ -97,22 +97,21 @@ proc fire(self: Build) =
 
 method on_begin_move*(self: Build, direction: Vector3, steps: float): Callback =
   if self.moving:
-    discard
-    # let steps = steps.float
-    # var duration = 0.0
-    # let
-    #   moving = self.transform.basis.xform(direction)
-    #   finish = self.translation + moving * steps
-    #   finish_time = 1.0 / self.speed * steps
-    #
-    # result = proc(delta: float): bool =
-    #   duration += delta
-    #   if duration >= finish_time:
-    #     self.translation = finish
-    #     return false
-    #   else:
-    #     self.translation = self.translation + (moving * self.speed * delta)
-    #     return true
+    let steps = steps.float
+    var duration = 0.0
+    let
+      moving = self.transform.basis.xform(direction)
+      finish = self.transform.origin + moving * steps
+      finish_time = 1.0 / self.speed * steps
+
+    result = proc(delta: float): bool =
+      duration += delta
+      if duration >= finish_time:
+        self.transform.origin = finish
+        return false
+      else:
+        self.transform.origin = self.transform.origin + (moving * self.speed * delta)
+        return true
   else:
     var count = 0
     result = proc(delta: float): bool =
@@ -132,21 +131,20 @@ method on_begin_turn*(self: Build, axis: Vector3, degrees: float): Callback =
   let map = {LEFT: UP, RIGHT: DOWN, UP: RIGHT, DOWN: LEFT}.to_table
   let axis = map[axis]
   if self.moving:
-    discard
-    # var duration = 0.0
-    # let axis = self.transform.basis.xform(axis)
-    # var final_transform = self.transform
-    # final_transform.basis = final_transform.basis.rotated(axis, deg_to_rad(degrees))
-    #                                              .orthonormalized()
-    # result = proc(delta: float): bool =
-    #   duration += delta
-    #   self.rotate(axis, deg_to_rad(degrees * delta * self.speed))
-    #   if duration <= 1.0 / self.speed:
-    #     true
-    #   else:
-    #     self.transform = final_transform
-    #     false
-    # active_ctx().start_advance_timer()
+    var duration = 0.0
+    let axis = self.transform.basis.xform(axis)
+    var final_transform = self.transform.value
+    final_transform.basis = final_transform.basis.rotated(axis, deg_to_rad(degrees))
+                                                 .orthonormalized()
+    result = proc(delta: float): bool =
+      duration += delta
+      self.transform.basis = self.transform.basis.rotated(axis, deg_to_rad(degrees * delta * self.speed))
+      if duration <= 1.0 / self.speed:
+        true
+      else:
+        self.transform.value = final_transform
+        false
+    active_ctx().start_advance_timer()
   else:
     let axis = self.draw_transform.basis.xform(axis)
     self.draw_transform.basis = self.draw_transform.basis.rotated(axis, deg_to_rad(degrees))
