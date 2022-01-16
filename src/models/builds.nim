@@ -152,6 +152,18 @@ method on_begin_turn*(self: Build, axis: Vector3, degrees: float): Callback =
     self.draw_transform.basis = self.draw_transform.basis.rotated(axis, deg_to_rad(degrees))
     self.draw_transform = self.draw_transform.orthonormalized()
 
+proc reset*(self: Build, clear = true) =
+  self.draw_transform = Transform.init
+  if clear:
+    let chunks = self.chunks.value
+    for chunk_id, chunk in chunks:
+      let voxels = chunk.value
+      for vec, info in voxels:
+        if info.kind == Computed:
+          self.chunks[chunk_id].del(vec)
+          if self.chunks[chunk_id].len == 0:
+            self.chunks.del(chunk_id)
+
 proc set_vars*(self: Build) =
   let engine = self.script_ctx.engine
   let module_name = engine.module_name
@@ -159,59 +171,76 @@ proc set_vars*(self: Build) =
   engine.call_proc("set_vars", module_name = module_name, action_index(self.color).int,
                    self.drawing, self.speed, self.scale, self.moving, self.energy.value)
 
+method load_vars*(self: Build) =
+  let old_speed = self.speed
+  let ctx = self.script_ctx
+  self.speed = ctx.engine.get_float("speed", ctx.engine.module_name)
+
+  let
+    e = ctx.engine
+    scale_factor = ctx.engine.get_float("scale", e.module_name).round(3)
+  self.moving = ctx.engine.get_bool("move_mode", e.module_name)
+  self.color = action_colors[Colors(ctx.engine.get_int("color", e.module_name))]
+  self.drawing = ctx.engine.get_bool("drawing", e.module_name)
+  self.voxels_per_frame = if self.speed == 0:
+    float.high
+  else:
+    self.speed
+  if self.speed != old_speed:
+    self.voxels_remaining_this_frame = 0
+  if scale_factor != self.scale.round(3):
+    self.scale = scale_factor
+  self.energy.value = ctx.engine.get_float("energy", e.module_name).round(3)
+
+  self.set_vars()
+
 method on_script_loaded*(self: Build) =
+  var save_points: Table[string, tuple[transform: Transform, color: Color, drawing: bool]]
   let e = self.script_ctx.engine
   self.voxels_remaining_this_frame = 0
   e.expose "set_energy", proc(a: VmArgs): bool =
     self.energy.value = get_float(a, 0)
     false
-  # e.expose("save", a => self.save(get_string(a, 0)))
-  # e.expose("restore", a => self.restore(get_string(a, 0)))
-  # e.expose "reset", proc(a: VmArgs): bool =
-  #   self.reset(get_bool(a, 0))
-  #   false
-  # e.expose "pause", proc(a: VmArgs): bool =
-  #   self.paused = true
-  #   true
+  e.expose "save", proc(a: VmArgs): bool =
+    self.load_vars()
+    let name = get_string(a, 0)
+    save_points[name] = (self.transform.value, self.color, self.drawing)
+    false
+  e.expose "restore", proc(a: VmArgs): bool =
+    let name = get_string(a, 0)
+    (self.transform.value, self.color, self.drawing) = save_points[name]
+    self.set_vars()
+    false
+  e.expose "reset", proc(a: VmArgs): bool =
+    self.reset(get_bool(a, 0))
+    false
   e.expose "load_defaults", proc(a: VmArgs): bool =
     self.set_vars()
     false
-  # e.expose "get_position", proc(a: VmArgs): bool =
-  #   let v = self.position.origin
-  #   a.set_result(v.to_node)
-  #   false
-  # e.expose "get_rotation", proc(a: VmArgs): bool =
-  #   proc nm(f: float): float =
-  #     if f.is_equal_approx(0):
-  #       return 0
-  #     elif f < 0:
-  #       return f + (2 * PI)
-  #     else:
-  #       return f
-  #
-  #   proc nm(v: Vector3): Vector3 =
-  #     vec3(v.x.nm, v.y.nm, v.z.nm)
-  #
-  #   let e = self.position.basis.get_euler
-  #
-  #   let n = e.nm
-  #   let v = vec3(nm(n.x).rad_to_deg, nm(n.y).rad_to_deg, nm(n.z).rad_to_deg)
-  #   let m = if v.z > 0: 1.0 else: -1.0
-  #   let v2 = vec3(0.0, (v.x - v.y) * m, 0.0)
-  #   a.set_result(v2.to_node)
-  #   return false
+  e.expose "get_position", proc(a: VmArgs): bool =
+    let v = self.transform.origin
+    a.set_result(v.to_node)
+    false
+  e.expose "get_rotation", proc(a: VmArgs): bool =
+    proc nm(f: float): float =
+      if f.is_equal_approx(0):
+        return 0
+      elif f < 0:
+        return f + (2 * PI)
+      else:
+        return f
 
-proc reset*(self: Build) =
-  self.draw_transform = Transform.init
-  let chunks = self.chunks.value
-  for chunk_id, chunk in chunks:
-    let voxels = chunk.value
-    for vec, info in voxels:
-      if info.kind == Computed:
-        self.chunks[chunk_id].del(vec)
-        if self.chunks[chunk_id].len == 0:
-          self.chunks.del(chunk_id)
+    proc nm(v: Vector3): Vector3 =
+      vec3(v.x.nm, v.y.nm, v.z.nm)
 
+    let e = self.transform.basis.get_euler
+
+    let n = e.nm
+    let v = vec3(nm(n.x).rad_to_deg, nm(n.y).rad_to_deg, nm(n.z).rad_to_deg)
+    let m = if v.z > 0: 1.0 else: -1.0
+    let v2 = vec3(0.0, (v.x - v.y) * m, 0.0)
+    a.set_result(v2.to_node)
+    return false
 
 proc init*(_: type Build, root = false, transform = Transform.init, color = default_color): Build =
   let self = Build(

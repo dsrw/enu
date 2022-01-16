@@ -23,3 +23,6 @@ method code_template*(self: Unit, imports: string): string {.base.} =
 
 method on_script_loaded*(self: Unit) {.base.} =
   quit "override me"
+
+method load_vars*(self: Unit) {.base.} =
+  quit "override me"

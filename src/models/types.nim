@@ -2,12 +2,12 @@ import std / [tables, monotimes]
 import godotapi/node
 import pkg/model_citizen
 import pkg/core/godotcoretypes except Color
-import pkg / core / [vector3, transforms, basis, aabb]
+import pkg / core / [vector3, transforms, basis, aabb, godotbase]
 import models/colors
 import engine/engine
 import core
 
-export Vector3, Transform, vector3, transforms, basis, AABB, aabb
+export Vector3, Transform, vector3, transforms, basis, AABB, aabb, godotbase
 
 type
   TargetFlags* = enum

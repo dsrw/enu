@@ -43,6 +43,11 @@ method on_begin_turn*(self: Bot, axis: Vector3, degrees: float): Callback =
       false
   active_ctx().start_advance_timer()
 
+method load_vars*(self: Bot) =
+  let old_speed = self.speed
+  let ctx = self.script_ctx
+  self.speed = ctx.engine.get_float("speed", ctx.engine.module_name)
+
 method clone*(self: Bot, clone_to: Unit, ctx: ScriptCtx): Unit =
   quit "override me"
 

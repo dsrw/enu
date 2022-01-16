@@ -67,32 +67,6 @@ proc advance*(self: Unit, delta: float64) =
       e.callback = nil
       discard e.resume()
 
-proc load_vars(self: Unit) =
-  let old_speed = self.speed
-  let ctx = self.script_ctx
-  self.speed = ctx.engine.get_float("speed", ctx.engine.module_name)
-
-  if self of Build:
-    let self = Build(self)
-    var old_speed = self.speed
-    let
-      e = ctx.engine
-      scale_factor = ctx.engine.get_float("scale", e.module_name).round(3)
-    self.moving = ctx.engine.get_bool("move_mode", e.module_name)
-    self.color = action_colors[Colors(ctx.engine.get_int("color", e.module_name))]
-    self.drawing = ctx.engine.get_bool("drawing", e.module_name)
-    self.voxels_per_frame = if self.speed == 0:
-      float.high
-    else:
-      self.speed
-    if self.speed != old_speed:
-      self.voxels_remaining_this_frame = 0
-    if scale_factor != self.scale.round(3):
-      self.scale = scale_factor
-    self.energy.value = ctx.engine.get_float("energy", e.module_name).round(3)
-
-    self.set_vars()
-
 proc begin_move(self: Unit, direction: Vector3, steps: float): bool =
   self.load_vars()
   var steps = steps
