@@ -74,7 +74,7 @@ gdobj Editor of TextEdit:
     self.dirty = true
 
   method ready* =
-    self.bind_signals "save", "script_error", "command_mode_enabled", "command_mode_disabled"
+    self.bind_signals "save", "script_error"
     self.bind_signals(self, "text_changed")
     var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
     self.og_bg_color = stylebox.bg_color

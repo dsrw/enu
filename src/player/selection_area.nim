@@ -2,7 +2,6 @@ import pkg / [godot, model_citizen]
 import godotapi / [area, control]
 import core, globals, world/bot_node
 
-const signals = ["target_in", "target_out", "target_fire", "target_remove"]
 let state = GameState.active
 
 gdobj SelectionArea of Area:
@@ -11,7 +10,6 @@ gdobj SelectionArea of Area:
 
   method ready*() =
     self.bot = self.get_node("..") as BotNode
-    bind_signals(self, self, signals)
     # TODO
     # if self.bot.unit.script_ctx.is_clone:
     #   self.collision_layer = 0
