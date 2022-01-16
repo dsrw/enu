@@ -2,12 +2,12 @@ import std / [tables, monotimes]
 import godotapi/node
 import pkg/model_citizen
 import pkg/core/godotcoretypes except Color
-import pkg / core / [vector3, transforms, basis]
+import pkg / core / [vector3, transforms, basis, aabb]
 import models/colors
 import engine/engine
 import core
 
-export Vector3, Transform, vector3, transforms, basis
+export Vector3, Transform, vector3, transforms, basis, AABB, aabb
 
 type
   TargetFlags* = enum
@@ -91,6 +91,7 @@ type
     moving*: bool
     root*: bool
     save_points*: Table[string, tuple[position: Transform, index: int, drawing: bool]]
+    bounds*: ZenValue[AABB]
 
   Callback* = proc(delta: float): bool
   ScriptCtx* = ref object

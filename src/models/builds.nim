@@ -58,6 +58,8 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
   let position = (position - offset).floor
   if position.buffer notin target.chunks:
     target.chunks[position.buffer] = Chunk.init
+  if position notin target.bounds.value:
+    target.bounds.value = target.bounds.value.expand(position).grow(1)
   target.chunks[position.buffer][position] = voxel
 
 proc drop_block(self: Build) =
@@ -215,7 +217,7 @@ proc init*(_: type Build, root = false, transform = Transform.init, color = defa
   let self = Build(
     id: "build_" & generate_id(),
     root: root,
-    chunks: ZenTable[Vector3, Chunk].init,
+    chunks: ZenTable[Vector3, Chunk].init(track_children = false),
     transform: Zen.init(transform),
     start_transform: transform,
     draw_transform: Transform.init,
@@ -226,7 +228,8 @@ proc init*(_: type Build, root = false, transform = Transform.init, color = defa
     code: ZenValue[string].init,
     velocity: ZenValue[Vector3].init,
     energy: ZenValue[float].init,
-    drawing: true
+    drawing: true,
+    bounds: Zen.init(init_aabb(vec3(), vec3(-1, -1, -1)))
   )
 
   self.flags.changes:
