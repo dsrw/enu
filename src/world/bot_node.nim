@@ -1,8 +1,8 @@
-import godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
-                   input_event, animation_player, resource_loader, packed_scene]
+import std / [tables, sugar]
 import pkg/godot except print
 import pkg/model_citizen
-import std / [math, tables, with, times, sugar, os, monotimes]
+import godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
+                   input_event, animation_player, resource_loader, packed_scene]
 import globals, core, print
 import engine / [contexts, engine], models / [types, bots]
 

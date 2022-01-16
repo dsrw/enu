@@ -162,5 +162,3 @@ proc generate_id*(): string = generate(
     alphabet = "abcdefghijklmnopqrstuvwxyz0123456789",
     size = 13
   )
-
-import pkg / model_citizen

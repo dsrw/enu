@@ -1,7 +1,6 @@
-import godotapi / [area, control]
 import pkg / [godot, model_citizen]
-import ".." / [core, globals, game, world/bot_node]
-import player
+import godotapi / [area, control]
+import core, globals, world/bot_node
 
 const signals = ["target_in", "target_out", "target_fire", "target_remove"]
 let state = GameState.active

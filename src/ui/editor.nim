@@ -1,8 +1,8 @@
 import std / [strutils, tables]
-import pkg / [godot, model_citizen, compiler/lineinfos]
+import pkg / [godot, model_citizen]
 import godotapi / [text_edit, scene_tree, node, input_event, global_constants,
                    input_event_key, style_box_flat]
-import core, globals, engine/engine
+import core, globals
 import models except Color
 
 let state = GameState.active

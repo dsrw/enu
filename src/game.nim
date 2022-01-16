@@ -1,9 +1,9 @@
+import std / [monotimes, times, os, jsonutils, json, math]
+import pkg / [godot, model_citizen]
 import godotapi / [input, input_event, gd_os, node, scene_tree, viewport,
-                   packed_scene, resource_saver, sprite, control, viewport,
+                   packed_scene, sprite, control, viewport,
                    performance, label, theme, dynamic_font, resource_loader, main_loop,
                    gd_os, project_settings, input_map, input_event, input_event_action]
-import godot, model_citizen
-import std / [monotimes, times, os, jsonutils, json, math]
 import core, globals, controllers/unit_controllers
 
 const

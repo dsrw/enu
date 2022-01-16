@@ -1,8 +1,6 @@
-import compiler / [vm, vmdef, options, lineinfos, ast]
-import types, eval
-import std / [os, strformat, with, parseutils, hashes]
-import core
-import godot
+import std / [os, strformat, with]
+import pkg / godot, pkg / compiler / [vm, vmdef, options, lineinfos, ast]
+import core, types, eval
 export Interpreter
 
 export VmArgs, get_float, get_int, get_string, get_bool, set_result, to_int

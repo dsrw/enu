@@ -1,4 +1,3 @@
-import std / os
 import pkg / model_citizen
 import godotapi / node
 import core, models / [types, states], engine / engine

@@ -1,6 +1,6 @@
+import std / [strutils, wrapnils]
+import pkg / [godot, model_citizen]
 import godotapi / [sprite_3d, ray_cast, spatial]
-import godot, model_citizen
-import std / [strutils, math, wrapnils]
 import globals, core, world/nodes, models
 
 let state = GameState.active
