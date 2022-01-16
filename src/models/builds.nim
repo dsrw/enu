@@ -7,7 +7,7 @@ include "default_builder.nim.nimf"
 
 const
   default_color = action_colors[blue]
-  highlight_energy = 5.0
+  highlight_energy = 1.0
   default_energy = 0.0
 
 let state = GameState.active
@@ -28,12 +28,12 @@ proc buffer(position: Vector3): Vector3 = (position / BufferSize).floor
 
 proc contains*(self: Build, position: Vector3): bool =
   let buf = position.buffer
-  result = buf in self.voxels and position in self.voxels[buf]
+  result = buf in self.chunks and position in self.chunks[buf]
 
 proc find_voxel*(self: Build, position: Vector3): Option[VoxelInfo] =
   let buf = position.buffer
   result = if buf in self:
-    some(self.voxels[buf][position])
+    some(self.chunks[buf][position])
   else:
     none(VoxelInfo)
 
@@ -56,9 +56,9 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
     (target, offset) = self.find_root
 
   let position = (position - offset).floor
-  if position.buffer notin target.voxels:
-    target.voxels[position.buffer] = ZenTable[Vector3, VoxelInfo].init
-  target.voxels[position.buffer][position] = voxel
+  if position.buffer notin target.chunks:
+    target.chunks[position.buffer] = Chunk.init
+  target.chunks[position.buffer][position] = voxel
 
 proc drop_block(self: Build) =
   if self.drawing:
@@ -75,7 +75,7 @@ proc remove(self: Build) =
     let point = self.target_point - self.target_normal - (self.target_normal.inverse_normalized * 0.5)
     self.draw(point, (Manual, action_colors[eraser]))
     state.draw_plane = self.to_global(self.target_point) * self.target_normal
-    if not self.voxels.any_it(it.value.any_it(it.value.color != action_colors[eraser])):
+    if not self.chunks.any_it(it.value.any_it(it.value.color != action_colors[eraser])):
       if self.parent.is_nil:
         state.units -= self
       else:
@@ -199,14 +199,26 @@ method on_script_loaded*(self: Build) =
   #   a.set_result(v2.to_node)
   #   return false
 
+proc reset*(self: Build) =
+  self.draw_transform = Transform.init
+  let chunks = self.chunks.value
+  for chunk_id, chunk in chunks:
+    let voxels = chunk.value
+    for vec, info in voxels:
+      if info.kind == Computed:
+        self.chunks[chunk_id].del(vec)
+        if self.chunks[chunk_id].len == 0:
+          self.chunks.del(chunk_id)
+
+
 proc init*(_: type Build, root = false, transform = Transform.init, color = default_color): Build =
   let self = Build(
     id: "build_" & generate_id(),
     root: root,
-    voxels: result.voxels.type.init,
+    chunks: ZenTable[Vector3, Chunk].init,
     transform: Zen.init(transform),
     start_transform: transform,
-    draw_transform: init_transform(),
+    draw_transform: Transform.init,
     units: ZenSeq[Unit].init,
     color: color,
     start_color: color,

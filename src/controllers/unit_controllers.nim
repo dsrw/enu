@@ -17,6 +17,8 @@ proc change_code(self: Unit, code: string) =
     self.script_ctx.script = self.file_name
     self.transform.value = self.start_transform
     state.paused = false
+    if self of Build:
+      Build(self).reset()
     self.load_script()
 
 proc remove_from_scene(unit: Unit, parent_node: Node) =

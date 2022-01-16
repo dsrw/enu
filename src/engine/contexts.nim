@@ -196,9 +196,9 @@ proc load_script*(self: Unit, script = "", retry_failed = true) =
           # expose "echo_console", a => echo_console(get_string(a, 0))
           expose "create_new", a => self.create_new()
           expose "sleep", proc(a: VmArgs): bool =
+            self.load_vars()
             let seconds = get_float(a, 0)
             var duration = 0.0
-            self.on_sleep(seconds)
             active_engine().callback = proc(delta: float): bool =
               duration += delta
               return duration < seconds

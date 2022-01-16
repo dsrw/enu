@@ -78,10 +78,10 @@ type
     kind: VoxelKind
     color: Color
 
-  VoxelBlock* = ZenTable[Vector3, VoxelInfo]
+  Chunk* = ZenTable[Vector3, VoxelInfo]
 
   Build* = ref object of Unit
-    voxels*: ZenTable[Vector3, VoxelBlock]
+    chunks*: ZenTable[Vector3, Chunk]
     draw_transform*: Transform
     start_color*: Color
     color*: Color

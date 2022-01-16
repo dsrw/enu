@@ -21,8 +21,5 @@ method clone*(self: Unit, clone_to: Unit, ctx: ScriptCtx): Unit {.base.} =
 method code_template*(self: Unit, imports: string): string {.base.} =
   quit "override me"
 
-method on_sleep*(self: Unit, seconds: float) {.base.} =
-  quit "override me"
-
 method on_script_loaded*(self: Unit) {.base.} =
   quit "override me"

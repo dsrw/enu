@@ -46,9 +46,6 @@ method on_begin_turn*(self: Bot, axis: Vector3, degrees: float): Callback =
 method clone*(self: Bot, clone_to: Unit, ctx: ScriptCtx): Unit =
   quit "override me"
 
-method on_sleep*(self: Bot, seconds: float) =
-  discard
-
 method on_script_loaded*(self: Bot) =
   let e = self.script_ctx.engine
   e.expose "play", proc(a: VmArgs): bool =

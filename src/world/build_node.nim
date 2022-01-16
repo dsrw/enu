@@ -37,14 +37,14 @@ gdobj BuildNode of VoxelTerrain:
   proc draw(location: Vector3, info: VoxelInfo) =
     self.get_voxel_tool.set_voxel(location, info.color.action_index.ord)
 
-  proc draw_block(voxels: VoxelBlock) =
+  proc draw_block(voxels: Chunk) =
     for loc, info in voxels:
       self.draw(loc, info)
 
   method on_block_loaded(location: Vector3) =
     self.active_blocks.incl(location)
-    if location in self.unit.voxels:
-      self.draw_block(self.unit.voxels[location])
+    if location in self.unit.chunks:
+      self.draw_block(self.unit.chunks[location])
 
   method on_block_unloaded(location: Vector3) =
     self.active_blocks.excl(location)
@@ -65,7 +65,7 @@ gdobj BuildNode of VoxelTerrain:
       if added:
         self.transform = change.item
 
-    self.unit.voxels.track proc(changes: auto) =
+    self.unit.chunks.track proc(changes: auto) =
       for root_change in changes:
         for change in root_change.triggered_by:
           if change of Change[Pair[Vector3, VoxelInfo]]:
@@ -76,6 +76,9 @@ gdobj BuildNode of VoxelTerrain:
               else:
                 if not self.bounds.contains(change.item.key):
                   self.bounds = self.bounds.expand(change.item.key)
+            elif Removed in change.changes:
+              if root_change.item.key in self.active_blocks:
+                self.draw(change.item.key, (Computed, action_colors[eraser]))
 
   # TODO
   # # method on_tree_exiting() =

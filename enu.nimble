@@ -27,7 +27,7 @@ bin           = @["enu" & lib_ext]
 requires "nim 1.6.0", # godot transform issue in 1.6.2
          "https://github.com/pragmagic/godot-nim#982ab52",
          "https://github.com/dsrw/Nim#baaa50d",
-         "https://github.com/dsrw/model_citizen 0.6.1",
+         "https://github.com/dsrw/model_citizen 0.6.3",
          "cligen 1.5.19",
          "print#f78c855",
          "chroma",
@@ -89,7 +89,6 @@ task start, "Run Enu":
 
 task build_and_start, "Build and start":
   exec "nimble build"
-  #build_task()
   start_task()
 
 task gen, "Generate build_helpers":
