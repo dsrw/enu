@@ -258,7 +258,8 @@ proc init*(_: type Build, root = false, transform = Transform.init, color = defa
     velocity: ZenValue[Vector3].init,
     energy: ZenValue[float].init,
     drawing: true,
-    bounds: Zen.init(init_aabb(vec3(), vec3(-1, -1, -1)))
+    bounds: Zen.init(init_aabb(vec3(), vec3(-1, -1, -1))),
+    speed: 1.0
   )
 
   self.flags.changes:
