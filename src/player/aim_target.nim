@@ -71,8 +71,7 @@ gdobj AimTarget of Sprite3D:
       self.scale = collider.scale
 
       let align_normal = self.transform.origin + global_normal
-      let axis = if local_normal.abs != UP: UP else: FORWARD
-      self.look_at(align_normal, axis)
+      self.look_at(align_normal, self.transform.basis.x)
 
       if unit:
         if (unit.target_point, unit.target_normal) != (local_point, local_normal):
