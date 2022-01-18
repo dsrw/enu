@@ -18,7 +18,7 @@ proc to_json_hook(self: Color): JsonNode =
   % ("#" & self.to_hex)
 
 proc to_json_hook(self: VoxelInfo): JsonNode =
-  %* [[self.kind.ord, self.color.to_json]]
+  %* [self.kind.ord, self.color.to_json]
 
 proc to_json_hook(self: Vector3): JsonNode =
   %[self.x, self.y, self.z]
