@@ -51,10 +51,11 @@ gdobj BuildNode of VoxelTerrain:
 
   proc track_chunk(chunk_id: Vector3) =
     if chunk_id in self.unit.chunks:
+      self.draw_block(self.unit.chunks[chunk_id])
       self.active_chunks[chunk_id] = self.unit.chunks[chunk_id].changes:
         if added:
           self.draw(change.item.key, change.item.value)
-        elif removed:
+        elif removed and not modified:
           self.draw(change.item.key, (Computed, action_colors[eraser]))
       self.draw_block(self.unit.chunks[chunk_id])
     else:
