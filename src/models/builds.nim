@@ -13,7 +13,7 @@ const
 let state = GameState.active
 
 method code_template*(self: Build, imports: string): string =
-  result = default_builder(self.file_name, imports, self.script_ctx.is_clone)
+  result = default_builder(self.script_file, imports, self.script_ctx.is_clone)
 
 proc find_root(self: Build): tuple[build: Build, offset: Vector3] =
   result.build = self

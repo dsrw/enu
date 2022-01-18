@@ -4,10 +4,7 @@ import godotapi / [input, input_event, gd_os, node, scene_tree, viewport,
                    packed_scene, sprite, control, viewport,
                    performance, label, theme, dynamic_font, resource_loader, main_loop,
                    gd_os, project_settings, input_map, input_event, input_event_action]
-import core, globals, controllers/unit_controllers
-
-const
-  version = static_exec("git describe --tags HEAD")
+import core, globals, controllers/unit_controllers, models / serializers
 
 type
   UserConfig = object
@@ -66,7 +63,7 @@ gdobj Game of Node:
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
       self.get_tree().quit()
     if what == main_loop.NOTIFICATION_WM_ABOUT:
-      alert(&"Enu {version}\n\n© 2021 Scott Wadden", "Enu")
+      alert(&"Enu {enu_version}\n\n© 2022 Scott Wadden", "Enu")
 
   proc add_platform_input_actions =
     let suffix = "." & host_os
@@ -107,12 +104,14 @@ gdobj Game of Node:
       show_stats = uc.show_stats ||= false
       mega_pixels = uc.mega_pixels ||= 2.0
       world_dir = join_path(work_dir, config.world)
+      data_dir = join_path(config.world_dir, "data")
       script_dir = join_path(config.world_dir, "scripts")
       lib_dir = join_path(get_executable_path().parent_dir(), "..", "..", "..", "vmlib")
 
+    create_dir(state.config.data_dir)
     create_dir(state.config.script_dir)
     if uc != initial_user_config:
-      config_file.write_file(uc.to_json.pretty)
+      write_file(config_file, uc.to_json.pretty)
 
     self.add_platform_input_actions()
 
@@ -126,32 +125,13 @@ gdobj Game of Node:
 
     print config
 
-  proc load_world() =
-    discard
-    # TODO
-    # data_node = self.find_node("data")
-    # assert not data_node.is_nil
-    #
-    # if file_exists(config.scene):
-    #   let
-    #     pos = data_node.get_position_in_parent()
-    #     parent = data_node.getParent()
-    #     packed_scene = load(config.scene) as PackedScene
-    #
-    #   parent.remove_child(data_node)
-    #   data_node = packed_scene.instance()
-    #   parent.add_child(data_node)
-    #   parent.move_child(data_node, pos)
-    #   data_node.owner = parent
-    #   echo &"loaded {config.scene}"
-
   method ready* =
     state.nodes.data = state.nodes.game.find_node("Level").get_node("data")
     assert not state.nodes.data.is_nil
     self.scaled_viewport = self.get_node("ViewportContainer/Viewport") as Viewport
     self.bind_signals(self.get_viewport(), "size_changed")
     assert not self.scaled_viewport.is_nil
-    self.load_world()
+    load_world()
     self.get_tree().set_auto_accept_quit(false)
     let (theme_holder, theme) = if hostOS == "macosx":
       ( self.find_node("ThemeHolder").as(Container),
@@ -182,8 +162,7 @@ gdobj Game of Node:
       globals.save_scene()
 
     globals.save_scene = proc(immediate: bool) =
-      discard
-      # TODO
+      save_world()
 
     state.target_flags.changes:
       if MouseCaptured.added:

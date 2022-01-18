@@ -10,7 +10,7 @@ const
 let state = GameState.active
 
 method code_template*(self: Bot, imports: string): string =
-  result = default_robot(self.file_name, imports, self.script_ctx.is_clone)
+  result = default_robot(self.script_file, imports, self.script_ctx.is_clone)
 
 method on_begin_move*(self: Bot, direction: Vector3, steps: float): Callback =
   var duration = 0.0

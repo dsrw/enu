@@ -34,11 +34,6 @@ proc is_script_loadable*(self: Unit): bool =
 proc update_running_state(self: Unit, running: bool) =
   self.script_ctx.engine.running = running
   if not running:
-    # TODO
-    # self.holes = self.kept_holes
-    # self.kept_holes.clear()
-    # self.save_blocks()
-    # self.load_vars()
     state.debug(self.script_ctx.script & " done.")
 
 proc advance*(self: Unit, delta: float64) =

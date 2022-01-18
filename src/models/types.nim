@@ -7,7 +7,8 @@ import models/colors
 import engine/engine
 import core
 
-export Vector3, Transform, vector3, transforms, basis, AABB, aabb, godotbase
+export Vector3, Transform, vector3, transforms, basis, AABB, aabb
+export godotbase except print
 
 type
   TargetFlags* = enum
@@ -110,6 +111,7 @@ type
     show_stats*: bool
     mega_pixels*: float
     world_dir*: string
+    data_dir*: string
     script_dir*: string
     scene*: string
     lib_dir*: string

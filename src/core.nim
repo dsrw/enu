@@ -1,3 +1,5 @@
+const enu_version* = static_exec("git describe --tags HEAD")
+
 ### Sugar ###
 from sugar import dup
 import std/with, strformat, strutils, sequtils, sets, tables, times, std/monotimes, print

@@ -1,4 +1,4 @@
-import std / strutils
+import std / [strutils, os]
 import pkg / [model_citizen, print]
 import pkg/godot except print
 import godotapi/node
@@ -11,10 +11,10 @@ let state = GameState.active
 
 proc change_code(self: Unit, code: string) =
   if code.strip != "":
-    self.file_name.write_file(code)
+    write_file(self.script_file, code)
     if self.script_ctx.is_nil:
       self.script_ctx = ScriptCtx.init
-    self.script_ctx.script = self.file_name
+    self.script_ctx.script = self.script_file
     self.transform.value = self.start_transform
     state.paused = false
     if self of Build:
