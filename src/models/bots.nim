@@ -47,6 +47,10 @@ method load_vars*(self: Bot) =
   let old_speed = self.speed
   let ctx = self.script_ctx
   self.speed = ctx.engine.get_float("speed", ctx.engine.module_name)
+  let scale = ctx.engine.get_float("scale", ctx.engine.module_name)
+  if scale != self.scale:
+    self.transform.basis = self.transform.basis.scaled(vec3(scale, scale, scale))
+    self.scale = scale
 
 method clone*(self: Bot, clone_to: Unit, ctx: ScriptCtx): Unit =
   quit "override me"

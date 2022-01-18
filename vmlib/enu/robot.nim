@@ -7,6 +7,7 @@ let skip_3d = true
 
 var
   speed* = 1.0
+  scale* = 1.0
   color*: ColorIndex
 
 include base_api
