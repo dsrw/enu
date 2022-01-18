@@ -92,23 +92,6 @@ gdobj BuildNode of VoxelTerrain:
         elif removed:
           self.active_chunks[id] = empty_zid
 
-    # self.unit.chunks.track proc(changes: auto) =
-    #   for root_change in changes:
-    #     for change in root_change.triggered_by:
-    #       if change of Change[Pair[Vector3, VoxelInfo]]:
-    #         let change = Change[Pair[Vector3, VoxelInfo]](change)
-    #         if Added in change.changes:
-    #           if root_change.item.key in self.active_blocks:
-    #             self.draw(change.item.key, change.item.value)
-    #         elif Removed in change.changes:
-    #           if root_change.item.key in self.active_blocks:
-    #             self.draw(change.item.key, (Computed, action_colors[eraser]))
-
-  # TODO
-  # # method on_tree_exiting() =
-  # #   game_node.trigger("collider_exiting", self)
-  #
-
   method process(delta: float) =
     if self.unit:
       if self.unit.script_ctx and self.unit.script_ctx.engine.running:
