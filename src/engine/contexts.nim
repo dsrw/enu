@@ -116,6 +116,9 @@ proc create_new(self: Unit): bool =
   # TODO: Fix this
   let ae = active_engine()
   let clone = self.clone(unit, active_ctx())
+  clone.script_ctx = ScriptCtx.init
+  clone.script_ctx.is_clone = true
+  clone.script_ctx.script = self.script_file
   let new_engine = clone.script_ctx.engine
   ae.callback = proc(delta: float): bool =
     not new_engine.initialized

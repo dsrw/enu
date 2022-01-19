@@ -13,7 +13,10 @@ proc data_dir*(self: Unit): string =
     self.parent.data_dir / self.id
 
 proc script_file*(self: Unit): string =
-  GameState.active.config.script_dir / self.id & ".nim"
+  if self.clone_of != nil:
+    self.clone_of.script_file
+  else:
+    GameState.active.config.script_dir / self.id & ".nim"
 
 proc data_file*(self: Unit): string =
   self.data_dir / self.id & ".json"

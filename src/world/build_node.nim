@@ -16,6 +16,7 @@ gdobj BuildNode of VoxelTerrain:
     unit*: Build
     active_chunks: Table[Vector3, ZID]
     transform_zid: ZID
+    clone_ready = false
 
   proc init*() =
     self.bind_signals self, "block_loaded", "block_unloaded"
@@ -100,6 +101,10 @@ gdobj BuildNode of VoxelTerrain:
 
       self.unit.transform.pause self.transform_zid:
         self.unit.transform.value = self.transform
+
+      if not self.unit.clone_of.is_nil and not self.clone_ready:
+        self.unit.load_script()
+        self.clone_ready = true
 
   proc setup*(unit: Build) =
     self.unit = unit

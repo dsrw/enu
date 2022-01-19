@@ -68,7 +68,7 @@ type
     disabled*: bool
     velocity*: ZenValue[Vector3]
     energy*: ZenValue[float]
-    is_clone*: bool
+    clone_of*: Unit
 
   Bot* = ref object of Unit
     animation*: ZenValue[string]

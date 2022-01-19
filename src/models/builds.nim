@@ -92,7 +92,8 @@ proc fire(self: Build) =
     let transform = Transform.init(origin = global_point)
     state.units += Bot.init(transform = transform)
   elif state.tool.value == Code:
-    state.open_unit.value = self
+    let (root, _) = self.find_root
+    state.open_unit.value = root
   state.draw_plane = self.to_global(self.target_point) * self.target_normal
 
 method on_begin_move*(self: Build, direction: Vector3, steps: float): Callback =
@@ -248,7 +249,7 @@ method on_script_loaded*(self: Build) =
     a.set_result(v2.to_node)
     return false
 
-proc init*(_: type Build, root = false, transform = Transform.init, color = default_color, is_clone = false): Build =
+proc init*(_: type Build, root = false, transform = Transform.init, color = default_color, clone_of: Unit = nil): Build =
   let self = Build(
     id: "build_" & generate_id(),
     root: root,
@@ -266,7 +267,7 @@ proc init*(_: type Build, root = false, transform = Transform.init, color = defa
     drawing: true,
     bounds: Zen.init(init_aabb(vec3(), vec3(-1, -1, -1))),
     speed: 1.0,
-    is_clone: is_clone
+    clone_of: clone_of
   )
 
   self.flags.changes:
@@ -304,6 +305,21 @@ proc init*(_: type Build, root = false, transform = Transform.init, color = defa
 proc init*(_: type Build, root = false, color = default_color, position: Vector3): Build =
   let transform = Transform.init(origin = position)
   result = Build.init(root = root, transform = transform, color = color)
+
+method clone*(self: Build, clone_to: Unit, ctx: ScriptCtx): Unit =
+  var transform = clone_to.transform.value
+  if clone_to of Build:
+    transform = Build(clone_to).draw_transform
+  let clone = Build.init(transform = transform, root = false, clone_of = self)
+  clone.parent = self
+  for chunk_id, chunk in self.chunks:
+    let target_chunk = Chunk.init
+    for location, info in chunk:
+      if info.kind != Computed:
+        target_chunk[location] = info
+    if target_chunk.len > 0:
+      clone.chunks[chunk_id] = target_chunk
+  result = clone
 
 when is_main_module:
   import unittest, states
