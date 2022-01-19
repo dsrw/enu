@@ -74,7 +74,10 @@ proc bot_at*(state: GameState, position: Vector3): Bot =
     if unit of Bot and unit.transform.origin == position:
       return Bot(unit)
 
-proc init*(_: type Bot, state: GameState, transform = Transform.init): Bot =
+method reset*(self: Bot) =
+  self.animation.value = ""
+
+proc init*(_: type Bot, transform = Transform.init): Bot =
   let self = Bot(
     id: "bot_" & generate_id(),
     units: Zen.init(seq[Unit]),

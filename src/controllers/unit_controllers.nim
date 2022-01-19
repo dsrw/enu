@@ -10,18 +10,22 @@ type
 let state = GameState.active
 
 proc change_code(self: Unit, code: string) =
-  if code.strip != "":
+  self.transform.value = self.start_transform
+  state.paused = false
+  self.reset()
+
+  if code.strip == "" and file_exists(self.script_file):
+    remove_file self.script_file
+  elif code.strip != "":
     write_file(self.script_file, code)
     if self.script_ctx.is_nil:
       self.script_ctx = ScriptCtx.init
     self.script_ctx.script = self.script_file
-    self.transform.value = self.start_transform
-    state.paused = false
-    if self of Build:
-      Build(self).reset()
     self.load_script()
 
 proc remove_from_scene(unit: Unit, parent_node: Node) =
+  remove_file unit.script_file
+  remove_dir unit.data_dir
   unit.parent = nil
   parent_node.remove_child(unit.node)
 

@@ -1,5 +1,5 @@
 import std / [tables]
-import pkg/godot except print
+import pkg/godot except print, Color
 import pkg / [print, model_citizen]
 import godotapi / [node, voxel_terrain, voxel_mesher_blocky, voxel_tool, voxel_library, shader_material,
                    resource_loader, packed_scene]
@@ -35,12 +35,12 @@ gdobj BuildNode of VoxelTerrain:
   method ready() =
     self.clone_materials()
 
-  proc draw(location: Vector3, info: VoxelInfo) =
-    self.get_voxel_tool.set_voxel(location, info.color.action_index.ord)
+  proc draw(location: Vector3, color: Color) =
+    self.get_voxel_tool.set_voxel(location, color.action_index.ord)
 
   proc draw_block(voxels: Chunk) =
     for loc, info in voxels:
-      self.draw(loc, info)
+      self.draw(loc, info.color)
 
   proc set_energy(energy: float) =
     let library = self.mesher.as(VoxelMesherBlocky).library
@@ -53,10 +53,11 @@ gdobj BuildNode of VoxelTerrain:
     if chunk_id in self.unit.chunks:
       self.draw_block(self.unit.chunks[chunk_id])
       self.active_chunks[chunk_id] = self.unit.chunks[chunk_id].changes:
-        if added:
-          self.draw(change.item.key, change.item.value)
-        elif removed and not modified:
-          self.draw(change.item.key, (Computed, action_colors[eraser]))
+        # `and not modified` isn't required, but the block will be replaced on the next iteration anyway.
+        if removed and not modified:
+          self.draw(change.item.key, action_colors[eraser])
+        elif added:
+          self.draw(change.item.key, change.item.value.color)
       self.draw_block(self.unit.chunks[chunk_id])
     else:
       self.active_chunks[chunk_id] = empty_zid

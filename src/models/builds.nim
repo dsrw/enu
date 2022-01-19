@@ -90,7 +90,7 @@ proc fire(self: Build) =
     self.draw(point, (Manual, state.selected_color))
   elif state.tool.value == Place and state.target_block and state.bot_at(global_point).is_nil:
     let transform = Transform.init(origin = global_point)
-    state.units += Bot.init(state, transform = transform)
+    state.units += Bot.init(transform = transform)
   elif state.tool.value == Code:
     state.open_unit.value = self
   state.draw_plane = self.to_global(self.target_point) * self.target_normal
@@ -150,17 +150,20 @@ method on_begin_turn*(self: Build, axis: Vector3, degrees: float): Callback =
     self.draw_transform.basis = self.draw_transform.basis.rotated(axis, deg_to_rad(degrees))
     self.draw_transform = self.draw_transform.orthonormalized()
 
-proc reset*(self: Build, clear = true) =
+proc reset_state(self: Build) =
   self.draw_transform = Transform.init
-  if clear:
-    let chunks = self.chunks.value
-    for chunk_id, chunk in chunks:
-      let voxels = chunk.value
-      for vec, info in voxels:
-        if info.kind == Computed:
-          self.chunks[chunk_id].del(vec)
-          if self.chunks[chunk_id].len == 0:
-            self.chunks.del(chunk_id)
+  self.moving = false
+
+method reset*(self: Build) =
+  self.reset_state()
+  let chunks = self.chunks.value
+  for chunk_id, chunk in chunks:
+    let voxels = chunk.value
+    for vec, info in voxels:
+      if info.kind == Computed:
+        self.chunks[chunk_id].del(vec)
+        if self.chunks[chunk_id].len == 0:
+          self.chunks.del(chunk_id)
 
 proc set_vars*(self: Build) =
   let engine = self.script_ctx.engine
@@ -211,7 +214,11 @@ method on_script_loaded*(self: Build) =
     self.set_vars()
     false
   e.expose "reset", proc(a: VmArgs): bool =
-    self.reset(get_bool(a, 0))
+    let clear = get_bool(a, 0)
+    if clear:
+      self.reset()
+    else:
+      self.reset_state()
     false
   e.expose "load_defaults", proc(a: VmArgs): bool =
     self.set_vars()
@@ -241,7 +248,7 @@ method on_script_loaded*(self: Build) =
     a.set_result(v2.to_node)
     return false
 
-proc init*(_: type Build, root = false, transform = Transform.init, color = default_color): Build =
+proc init*(_: type Build, root = false, transform = Transform.init, color = default_color, is_clone = false): Build =
   let self = Build(
     id: "build_" & generate_id(),
     root: root,
@@ -258,7 +265,8 @@ proc init*(_: type Build, root = false, transform = Transform.init, color = defa
     energy: ZenValue[float].init,
     drawing: true,
     bounds: Zen.init(init_aabb(vec3(), vec3(-1, -1, -1))),
-    speed: 1.0
+    speed: 1.0,
+    is_clone: is_clone
   )
 
   self.flags.changes:

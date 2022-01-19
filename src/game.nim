@@ -61,6 +61,7 @@ gdobj Game of Node:
 
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
+      save_scene()
       self.get_tree().quit()
     if what == main_loop.NOTIFICATION_WM_ABOUT:
       alert(&"Enu {enu_version}\n\n© 2022 Scott Wadden", "Enu")

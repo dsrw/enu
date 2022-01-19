@@ -120,6 +120,7 @@ proc create_new(self: Unit): bool =
   ae.callback = proc(delta: float): bool =
     not new_engine.initialized
   set_active(ae)
+  unit.units.add(clone)
   result = true
 
 proc load_script*(self: Unit, script = "", retry_failed = true) =

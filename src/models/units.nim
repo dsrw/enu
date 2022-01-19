@@ -35,3 +35,6 @@ method on_script_loaded*(self: Unit) {.base.} =
 
 method load_vars*(self: Unit) {.base.} =
   quit "override me"
+
+method reset*(self: Unit) {.base.} =
+  quit "override me"

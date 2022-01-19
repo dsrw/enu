@@ -29,12 +29,11 @@ bin           = @["enu" & lib_ext]
 requires "nim 1.6.0", # godot transform issue in 1.6.2
          "https://github.com/pragmagic/godot-nim#982ab52",
          "https://github.com/dsrw/Nim#baaa50d",
-         "https://github.com/dsrw/model_citizen 0.6.4",
+         "https://github.com/dsrw/model_citizen 0.6.5",
          "cligen 1.5.19",
          "print#f78c855",
          "chroma",
-         "https://github.com/dsrw/nanoid.nim 0.2.1",
-         "jsony"
+         "https://github.com/dsrw/nanoid.nim 0.2.1"
 
 proc gen: string =
   if generator_path == "":
