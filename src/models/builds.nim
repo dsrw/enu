@@ -5,10 +5,7 @@ const BufferSize = vec3(16, 16, 16)
 
 include "default_builder.nim.nimf"
 
-const
-  default_color = action_colors[blue]
-  highlight_energy = 1.0
-  default_energy = 0.0
+const default_color = action_colors[blue]
 
 let state = GameState.active
 
@@ -165,6 +162,8 @@ method reset*(self: Build) =
         self.chunks[chunk_id].del(vec)
         if self.chunks[chunk_id].len == 0:
           self.chunks.del(chunk_id)
+  for unit in self.units:
+    unit.reset()
 
 proc set_vars*(self: Build) =
   let engine = self.script_ctx.engine
@@ -273,10 +272,10 @@ proc init*(_: type Build, root = false, transform = Transform.init, color = defa
   self.flags.changes:
     if Hover.added and state.tool.value == Code:
       let (root, _) = self.find_root
-      root.walk_tree proc(unit: Unit) = unit.energy.value = highlight_energy
+      root.walk_tree proc(unit: Unit) = unit.flags += Highlight
     elif Hover.removed:
       let (root, _) = self.find_root
-      root.walk_tree proc(unit: Unit) = unit.energy.value = default_energy
+      root.walk_tree proc(unit: Unit) = unit.flags -= Highlight
     if TargetMoved.touched:
       let plane = self.to_global(self.target_point) * self.target_normal
       if plane == state.draw_plane:

@@ -7,7 +7,7 @@ import models / [types, builds, colors], globals
 import engine / contexts
 
 const
-  highlight_energy = 5.0
+  highlight_energy = 1.0
   default_energy = 0.0
   empty_zid: ZID = 0
 
@@ -93,6 +93,12 @@ gdobj BuildNode of VoxelTerrain:
           self.track_chunk(change.item.key)
         elif removed:
           self.active_chunks[id] = empty_zid
+
+    self.unit.flags.changes:
+      if Highlight.added:
+        self.set_energy highlight_energy
+      elif Highlight.removed:
+        self.set_energy default_energy
 
   method process(delta: float) =
     if self.unit:

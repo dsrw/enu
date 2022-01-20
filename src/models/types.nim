@@ -15,7 +15,7 @@ type
     Reticle, TargetBlock, MouseCaptured, CommandMode, Editing
 
   ModelFlags* = enum
-    Hover, TargetMoved
+    Hover, TargetMoved, Highlight
 
   InputFlags* = enum
     Primary, Secondary
