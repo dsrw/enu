@@ -49,7 +49,9 @@ method load_vars*(self: Bot) =
   self.speed = ctx.engine.get_float("speed", ctx.engine.module_name)
   let scale = ctx.engine.get_float("scale", ctx.engine.module_name)
   if scale != self.scale:
-    self.transform.basis = self.transform.basis.scaled(vec3(scale, scale, scale))
+    var basis = self.transform.basis
+    basis.set_scale(vec3(scale, scale, scale))
+    self.transform.basis = basis
     self.scale = scale
 
 method clone*(self: Bot, clone_to: Unit, ctx: ScriptCtx): Unit =

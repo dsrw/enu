@@ -191,7 +191,9 @@ method load_vars*(self: Build) =
     self.voxels_remaining_this_frame = 0
   if scale_factor != self.scale.round(3):
     self.scale = scale_factor
-    self.transform.basis = self.transform.basis.scaled(vec3(scale_factor, scale_factor, scale_factor))
+    var basis = self.transform.basis
+    basis.set_scale(vec3(scale_factor, scale_factor, scale_factor))
+    self.transform.basis = basis
   self.energy.value = ctx.engine.get_float("energy", e.module_name).round(3)
 
   self.set_vars()
