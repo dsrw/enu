@@ -24,6 +24,13 @@ proc change_code(self: Unit, code: string) =
     self.load_script()
 
 proc remove_from_scene(unit: Unit, parent_node: Node) =
+  proc untrack_all(self: auto) =
+    for name, field in self[].field_pairs:
+      when field is Zen:
+        field.untrack_all
+  if unit of Build: Build(unit).untrack_all
+  elif unit of Bot: Bot(unit).untrack_all
+
   unit.script_ctx.engine.callback = nil
   if not unit.clone_of:
     remove_file unit.script_file
