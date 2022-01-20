@@ -15,6 +15,8 @@ var
   starting = true
   modules_to_load: HashSet[ScriptCtx]
 
+proc create_new(self: Unit): bool
+
 proc destroy*(ctx: ScriptCtx) =
   if ctx.engine in ctxs:
     ctxs.del(ctx.engine)
@@ -111,21 +113,6 @@ proc retry_failed_scripts =
         f.ctx.engine.error(f.ex)
       failed = @[]
 
-proc create_new(self: Unit): bool =
-  let unit = active_unit()
-  # TODO: Fix this
-  let ae = active_engine()
-  let clone = self.clone(unit, active_ctx())
-  clone.script_ctx = ScriptCtx.init
-  clone.script_ctx.is_clone = true
-  clone.script_ctx.script = self.script_file
-  let new_engine = clone.script_ctx.engine
-  ae.callback = proc(delta: float): bool =
-    not new_engine.initialized
-  set_active(ae)
-  unit.units.add(clone)
-  result = true
-
 proc load_script*(self: Unit, script = "", retry_failed = true) =
   let ctx = self.script_ctx
   modules_to_load.excl ctx
@@ -192,3 +179,24 @@ proc load_script*(self: Unit, script = "", retry_failed = true) =
       failed.add (ctx, e)
     else:
       self.script_ctx.engine.error(e)
+
+proc create_new(self: Unit): bool =
+  let unit = active_unit()
+
+  let ae = active_engine()
+  let clone = self.clone(unit, active_ctx())
+  clone.script_ctx = ScriptCtx.init
+  clone.script_ctx.is_clone = true
+  clone.script_ctx.script = self.script_file
+  let new_engine = clone.script_ctx.engine
+  new_engine.callback = proc(delta: float): bool =
+    new_engine.callback = nil
+    new_engine.running = false
+    clone.load_script()
+    false
+  new_engine.running = true
+  ae.callback = proc(delta: float): bool =
+    not new_engine.initialized
+  set_active(ae)
+  unit.units.add(clone)
+  result = true
