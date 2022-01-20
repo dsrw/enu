@@ -24,10 +24,16 @@ proc change_code(self: Unit, code: string) =
     self.load_script()
 
 proc remove_from_scene(unit: Unit, parent_node: Node) =
-  remove_file unit.script_file
-  remove_dir unit.data_dir
+  unit.script_ctx.engine.callback = nil
+  if not unit.clone_of:
+    remove_file unit.script_file
+    remove_dir unit.data_dir
+  for child in unit.units:
+    child.remove_from_scene(unit.node)
   unit.parent = nil
+  unit.node.owner = nil
   parent_node.remove_child(unit.node)
+  unit.node.queue_free()
 
 proc add_to_scene(unit: Unit, parent_node: Node) =
   proc add(unit: auto, T: type) =

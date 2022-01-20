@@ -80,13 +80,14 @@ proc ready(self: Unit) =
 
 proc save(units: ZenSeq[Unit]) =
   for unit in units:
-    let data = if unit of Build:
-      Build(unit).to_json.pretty
-    else:
-      Bot(unit).to_json.pretty
-    create_dir unit.data_dir
-    write_file unit.data_file, data
-    unit.units.save
+    if not unit.clone_of:
+      let data = if unit of Build:
+        Build(unit).to_json.pretty
+      else:
+        Bot(unit).to_json.pretty
+      create_dir unit.data_dir
+      write_file unit.data_file, data
+      unit.units.save
 
 proc save_world*() =
   let world = %*{

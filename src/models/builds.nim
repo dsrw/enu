@@ -162,8 +162,7 @@ method reset*(self: Build) =
         self.chunks[chunk_id].del(vec)
         if self.chunks[chunk_id].len == 0:
           self.chunks.del(chunk_id)
-  for unit in self.units:
-    unit.reset()
+  self.units.clear()
 
 proc set_vars*(self: Build) =
   let engine = self.script_ctx.engine
