@@ -66,10 +66,15 @@ proc init_interpreter(script_dir, vmlib: string) =
     register_enter_hook proc(c, pc, tos, instr: auto) =
       let e = active_engine()
       let info = c.debug[pc]
-      if info.file_index.int == 0 and e.previous_line != info:
-        if e.line_changed != nil:
-          e.line_changed(info, e.previous_line)
-        (e.previous_line, e.current_line) = (e.current_line, info)
+
+      if e.previous_line != info:
+        let config = interpreter.config
+        if info.file_index.int >= 0 and info.file_index.int < config.m.file_infos.len:
+          let file_name = config.m.file_infos[info.file_index.int].full_path.string
+          if file_name == e.file_name:
+            if e.line_changed != nil:
+              e.line_changed(info, e.previous_line)
+            (e.previous_line, e.current_line) = (e.current_line, info)
 
       if e.pause_requested:
         e.pause_requested = false

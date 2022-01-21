@@ -1,8 +1,9 @@
 import std / [strutils, tables]
 import pkg / [godot, model_citizen]
+import pkg / compiler / [lineinfos]
 import godotapi / [text_edit, scene_tree, node, input_event, global_constants,
                    input_event_key, style_box_flat]
-import core, globals
+import core, globals, engine / engine
 import models except Color
 
 let state = GameState.active
@@ -13,6 +14,23 @@ gdobj Editor of TextEdit:
     mouse_was_captured = false
     og_bg_color: Color
     dirty = false
+    open_engine: Engine
+
+  proc set_open_engine() =
+    # TODO: yuck
+    var current = self.open_engine
+    if not state.open_unit.value.is_nil and state.open_unit.value.script_ctx:
+      current = state.open_unit.value.script_ctx.engine
+    if self.open_engine != current:
+      if self.open_engine:
+        self.open_engine.line_changed = nil
+
+    if not state.open_unit.value.is_nil and not state.open_unit.value.script_ctx.is_nil:
+      self.open_engine = state.open_unit.value.script_ctx.engine
+      if self.open_engine:
+        self.executing_line = int self.open_engine.current_line.line - 1
+        self.open_engine.line_changed = proc(current: TLineInfo, previous: TLineInfo) =
+          self.executing_line = int current.line - 1
 
   proc indent_new_line() =
     let column = int self.cursor_get_column - 1
@@ -61,10 +79,10 @@ gdobj Editor of TextEdit:
 
   proc highlight_errors =
     self.clear_executing_line()
-    # TODO
-    # if not state.open_engine.is_nil:
-    #   for err in state.open_engine.errors:
-    #     self.set_line_as_marked(int64(err.info.line - 1), true)
+    self.set_open_engine()
+    if not self.open_engine.is_nil:
+      for err in self.open_engine.errors:
+        self.set_line_as_marked(int64(err.info.line - 1), true)
 
   proc `executing_line=`*(line: int) =
     if self.get_line_count >= line:
@@ -98,24 +116,20 @@ gdobj Editor of TextEdit:
 
       elif Editing.added:
         self.visible = true
-        # TODO
+        self.set_open_engine()
         self.text = state.open_unit.value.code.value
         self.grab_focus()
         self.clear_errors()
         self.highlight_errors()
-        # TODO
-        # self.executing_line = int state.open_engine.current_line.line - 1
-        # state.open_engine.line_changed = proc(current: TLineInfo, previous: TLineInfo) =
-        #   self.executing_line = int current.line - 1
 
       elif Editing.removed:
         if self.dirty:
           reload_scripts()
         self.release_focus()
         self.visible = false
-        # TODO
-        # state.open_engine.line_changed = nil
-        # state.open_engine = nil
+        if self.open_engine:
+          self.open_engine.line_changed = nil
+          self.open_engine = nil
 
     self.configure_highlighting()
 

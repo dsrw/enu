@@ -49,6 +49,8 @@ proc load_module*(i: Interpreter, module_name, code: string) =
   let s = ll_stream_open(code)
   process_module(i.graph, module, i.idgen, s)
 
+proc config*(i: Interpreter): ConfigRef = i.graph.config
+
 when callVMExecHooks:
   proc registerExitHook*(i: Interpreter, hook: proc (c: PCtx, pc: int, tos: PStackFrame)) =
     (PCtx i.graph.vm).exitHook = hook

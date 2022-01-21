@@ -1,7 +1,7 @@
 import std / [monotimes, os, hashes, sets, strutils, sugar]
 import pkg / [godot]
 import godotapi / [node]
-import core, engine/engine, models
+import core, engine/engine, models, globals
 
 export engine
 
@@ -91,8 +91,7 @@ proc error*(e: Engine, ex: ref VMQuit) =
     raise ex
   else:
     state.err ex.msg
-    # TODO
-    # trigger("script_error")
+    trigger("script_error")
 
 proc retry_failed_scripts =
   # We don't know what order scripts will load in.
