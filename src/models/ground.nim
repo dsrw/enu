@@ -4,13 +4,6 @@ import core, types, states, bots, builds
 
 let state = GameState.active
 
-proc surrounding(point: Vector3): seq[Vector3] =
-  collect(new_seq):
-    for x in 0..2:
-      for y in 0..2:
-        for z in 0..2:
-          point + vec3(x - 1, y - 1, z - 1)
-
 proc fire(self: Ground, append = false) =
   var add_to {.global.}: Build
   let point = (self.target_point - vec3(0.5, 0, 0.5)).trunc

@@ -108,6 +108,8 @@ gdobj BuildNode of VoxelTerrain:
         self.unit.transform.value = self.transform
 
   proc setup*(unit: Build) =
+    let was_skipping_join = dont_join
+    dont_join = true
     self.unit = unit
     self.unit.to_global = proc(local: Vector3): Vector3 =
       self.to_global(local)
@@ -116,6 +118,7 @@ gdobj BuildNode of VoxelTerrain:
     self.transform = unit.transform.value
     self.track_changes
     self.unit.draw(vec3(), (Manual, unit.start_color))
+    dont_join = was_skipping_join
 
 let build_scene = load("res://components/BuildNode.tscn") as PackedScene
 proc init*(_: type BuildNode): BuildNode =

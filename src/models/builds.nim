@@ -1,4 +1,4 @@
-import std / [hashes, tables, sets, options, sequtils, math]
+import std / [hashes, tables, sets, options, sequtils, math, wrapnils]
 import pkg / [model_citizen, print]
 import core, models / [types, states, bots, colors, units, scripts], engine / engine
 const BufferSize = vec3(16, 16, 16)
@@ -8,6 +8,11 @@ include "default_builder.nim.nimf"
 const default_color = action_colors[blue]
 
 let state = GameState.active
+var current_build*: Build
+var previous_build*: Build
+var dont_join* = false
+
+proc draw*(self: Build, position: Vector3, voxel: VoxelInfo)
 
 method code_template*(self: Build, imports: string): string =
   result = default_builder(self.script_file, imports, self.script_ctx.is_clone)
@@ -36,6 +41,47 @@ proc find_first*(units: ZenSeq[Unit], positions: open_array[Vector3]): Build =
       let first = unit.units.find_first(positions)
       if first:
         return first
+
+proc add_build(self, source: Build) =
+  dont_join = true
+  for chunk_id, chunk in source.chunks:
+    for position, info in chunk:
+      var position = source.to_global(position)
+      position = self.to_local(position)
+      self.draw(position, info)
+
+  if source.parent.is_nil:
+    state.units -= source
+  else:
+    source.parent.units -= source
+  dont_join = false
+
+proc maybe_join_previous_build(self: Build, position: Vector3, voxel: VoxelInfo) =
+  if self != current_build:
+    previous_build = current_build
+    current_build = self
+
+  if previous_build and previous_build != self:
+    var partner = previous_build
+    let root = previous_build.find_root
+    if root.unit of Build:
+      partner = Build(root.unit)
+
+    if partner != self:
+      for position in self.to_global(position).surrounding:
+        if partner.to_local(position) in partner:
+          var source, dest: Build
+          if partner.code.value.strip == "":
+            source = partner
+            dest = self
+          elif self.code.value.strip == "":
+            source = self
+            dest = partner
+
+          if source and dest:
+            dest.add_build(source)
+            current_build = dest
+            return
 
 proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
   var target = self
@@ -83,6 +129,9 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
   if position == vec3(0, 0, 0):
     self.start_color = voxel.color
 
+  if not dont_join and voxel.kind == Manual:
+    self.maybe_join_previous_build(position, voxel)
+
 proc drop_block(self: Build) =
   if self.drawing:
     var p = self.draw_transform.origin.snapped(vec3(1, 1, 1))
@@ -101,6 +150,7 @@ proc remove(self: Build) =
 
 proc fire(self: Build) =
   let global_point = self.to_global(self.target_point)
+  state.draw_plane = self.to_global(self.target_point) * self.target_normal
   if state.tool.value == Block:
     let point = (self.target_point + (self.target_normal * 0.5)).floor
     self.draw(point, (Manual, state.selected_color))
@@ -110,7 +160,6 @@ proc fire(self: Build) =
   elif state.tool.value == Code:
     let (root, _) = self.find_root
     state.open_unit.value = root
-  state.draw_plane = self.to_global(self.target_point) * self.target_normal
 
 method on_begin_move*(self: Build, direction: Vector3, steps: float): Callback =
   if self.moving:

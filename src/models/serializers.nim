@@ -129,4 +129,6 @@ proc load_units(parent: Unit) =
     load_units(unit)
 
 proc load_world*() =
+  dont_join = true
   load_units(nil)
+  dont_join = false

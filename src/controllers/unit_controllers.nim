@@ -24,6 +24,8 @@ proc change_code(self: Unit, code: string) =
     self.load_script()
 
 proc remove_from_scene(unit: Unit) =
+  if unit == previous_build: previous_build = nil
+  if unit == current_build: current_build = nil
   let parent_node = unit.node.get_node("..")
   proc untrack_all(self: auto) =
     for name, field in self[].field_pairs:
