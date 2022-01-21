@@ -14,11 +14,10 @@ type
     show_stats: Option[bool]
     mega_pixels: Option[float]
 
+const auto_save_interval = 30.seconds
 let state = GameState.active
 let config = state.config
 
-var
-  timer = 0.0
 gdobj Game of Node:
   var
     reticle: Control
@@ -30,13 +29,13 @@ gdobj Game of Node:
     saved_mouse_position: Vector2
     scale_factor* = 0.0
     rescale_at = get_mono_time()
+    save_at = get_mono_time() + auto_save_interval
     unit_controller: UnitController
 
   method process*(delta: float) =
+    let time = get_mono_time()
     if config.show_stats:
-      let
-        fps = get_monitor(TIME_FPS)
-        time = get_mono_time()
+      let fps = get_monitor(TIME_FPS)
       var
         total: times.Duration
         highest: tuple[name: string, duration: times.Duration]
@@ -48,9 +47,12 @@ gdobj Game of Node:
       let vram = get_monitor(RENDER_VIDEO_MEM_USED)
       self.stats.text = &"FPS: {fps}\nUser: {total}\n{highest.name}: {highest.duration}\nscale_factor: {self.scale_factor}\nvram: {vram}"
 
-    if get_mono_time() > self.rescale_at:
+    if time > self.rescale_at:
       self.rescale_at = MonoTime.high
       self.rescale()
+    if time > self.save_at:
+      self.save_at = time + auto_save_interval
+      save_world()
 
     durations.clear()
 
