@@ -89,7 +89,7 @@ proc init*(_: type GameState, action_count = 0, action_index = 0): GameState =
   result = self
 
 proc active*(_: type GameState): GameState =
-  let instance {.global.} = GameState.init(action_count = 6, action_index = 1)
+  let instance {.global.} = GameState.init(action_count = 7, action_index = 1)
   result = instance
 
 when is_main_module:
