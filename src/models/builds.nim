@@ -80,6 +80,9 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
   else:
     target.chunks[buffer][position] = voxel
 
+  if position == vec3(0, 0, 0):
+    self.start_color = voxel.color
+
 proc drop_block(self: Build) =
   if self.drawing:
     var p = self.draw_transform.origin.snapped(vec3(1, 1, 1))

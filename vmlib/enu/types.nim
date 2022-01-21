@@ -34,7 +34,8 @@ type
     red = 2,
     green = 3,
     black = 4,
-    white = 5
+    white = 5,
+    brown = 6
 
   Energy* = range[0.0..100.0]
 
