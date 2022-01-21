@@ -12,15 +12,6 @@ let state = GameState.active
 method code_template*(self: Build, imports: string): string =
   result = default_builder(self.script_file, imports, self.script_ctx.is_clone)
 
-proc find_root(self: Build): tuple[build: Build, offset: Vector3] =
-  result.build = self
-  var parent = self.parent
-  while parent != nil and not result.build.root:
-    if parent of Build:
-      result.build = Build(parent)
-      result.offset += result.build.transform.origin
-    parent = parent.parent
-
 proc buffer(position: Vector3): Vector3 = (position / BufferSize).floor
 
 proc contains*(self: Build, position: Vector3): bool =
@@ -50,7 +41,10 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
   var target = self
   var offset: Vector3
   if voxel.kind in {Manual, Hole}:
-    (target, offset) = self.find_root
+    let root = self.find_root
+    if root.unit of Build:
+      target = Build(root.unit)
+      offset = root.offset
 
   let position = (position - offset).floor
   if position.buffer notin target.chunks:
@@ -63,11 +57,6 @@ proc drop_block(self: Build) =
   if self.drawing:
     var p = self.draw_transform.origin.snapped(vec3(1, 1, 1))
     self.draw(p, (Computed, self.color))
-
-proc walk_tree(root: Unit, callback: proc(unit: Unit)) =
-  callback(root)
-  for unit in root.units:
-    unit.walk_tree(callback)
 
 proc remove(self: Build) =
   if state.tool.value == Block:
@@ -249,10 +238,10 @@ method on_script_loaded*(self: Build) =
     a.set_result(v2.to_node)
     return false
 
-proc init*(_: type Build, root = false, transform = Transform.init, color = default_color, clone_of: Unit = nil): Build =
+proc init*(_: type Build, transform = Transform.init, color = default_color,
+                          clone_of: Unit = nil, global = true): Build =
   let self = Build(
     id: "build_" & generate_id(),
-    root: root,
     chunks: ZenTable[Vector3, Chunk].init(track_children = false),
     transform: Zen.init(transform),
     start_transform: transform,
@@ -269,6 +258,7 @@ proc init*(_: type Build, root = false, transform = Transform.init, color = defa
     speed: 1.0,
     clone_of: clone_of
   )
+  if global: self.flags += Global
 
   self.flags.changes:
     if Hover.added and state.tool.value == Code:
@@ -302,16 +292,12 @@ proc init*(_: type Build, root = false, transform = Transform.init, color = defa
 
   result = self
 
-proc init*(_: type Build, root = false, color = default_color, position: Vector3): Build =
-  let transform = Transform.init(origin = position)
-  result = Build.init(root = root, transform = transform, color = color)
-
 method clone*(self: Build, clone_to: Unit, ctx: ScriptCtx): Unit =
   var transform = clone_to.transform.value
   if clone_to of Build:
     transform = Build(clone_to).draw_transform
-  let clone = Build.init(transform = transform, root = false, clone_of = self)
-  clone.parent = self
+  let clone = Build.init(transform = transform, clone_of = self, global = false)
+  clone.parent = clone_to
   for chunk_id, chunk in self.chunks:
     let target_chunk = Chunk.init
     for location, info in chunk:

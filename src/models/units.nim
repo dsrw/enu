@@ -6,6 +6,22 @@ import core, models / [types, states], engine / engine
 proc init*(_: type Model, node: Node): Model =
   result = Model(flags: ZenSet[ModelFlags].init, node: node)
 
+proc find_root*(self: Unit): tuple[unit: Unit, offset: Vector3] =
+  result.unit = self
+  var parent = self.parent
+  var found_global = Global in self.flags
+  while parent != nil:
+    result.unit = parent
+    if not found_global:
+      result.offset += parent.transform.origin
+      found_global = Global in parent.flags
+    parent = parent.parent
+
+proc walk_tree*(root: Unit, callback: proc(unit: Unit)) =
+  callback(root)
+  for unit in root.units:
+    unit.walk_tree(callback)
+
 proc data_dir*(self: Unit): string =
   if self.parent.is_nil:
     GameState.active.config.data_dir / self.id

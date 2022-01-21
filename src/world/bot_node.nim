@@ -34,10 +34,16 @@ gdobj BotNode of KinematicBody:
   proc track_changes() =
     self.unit.energy.changes:
       if added:
-        if change.item >= 5.0:
+        if change.item >= 1.0:
           self.highlight()
         else:
           self.set_default_material()
+
+    self.unit.flags.changes:
+      if Highlight.added:
+        self.highlight()
+      elif Highlight.removed:
+        self.set_default_material()
 
     self.transform_zid = self.unit.transform.changes:
       if added:

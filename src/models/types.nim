@@ -15,7 +15,7 @@ type
     Reticle, TargetBlock, MouseCaptured, CommandMode, Editing
 
   ModelFlags* = enum
-    Hover, TargetMoved, Highlight
+    Hover, TargetMoved, Highlight, Global
 
   InputFlags* = enum
     Primary, Secondary
@@ -91,7 +91,6 @@ type
     voxels_remaining_this_frame*: float
     drawing*: bool
     moving*: bool
-    root*: bool
     save_points*: Table[string, tuple[position: Transform, index: int, drawing: bool]]
     bounds*: ZenValue[AABB]
 

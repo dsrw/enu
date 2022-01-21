@@ -3,10 +3,6 @@ import pkg / model_citizen
 import core, models / [types, states, scripts, units], engine / engine
 include "default_robot.nim.nimf"
 
-const
-  highlight_energy = 5.0
-  default_energy = 0.0
-
 let state = GameState.active
 
 method code_template*(self: Bot, imports: string): string =
@@ -54,9 +50,6 @@ method load_vars*(self: Bot) =
     self.transform.basis = basis
     self.scale = scale
 
-method clone*(self: Bot, clone_to: Unit, ctx: ScriptCtx): Unit =
-  quit "override me"
-
 method on_script_loaded*(self: Bot) =
   let e = self.script_ctx.engine
   e.expose "play", proc(a: VmArgs): bool =
@@ -78,8 +71,9 @@ proc bot_at*(state: GameState, position: Vector3): Bot =
 
 method reset*(self: Bot) =
   self.animation.value = ""
+  self.units.clear()
 
-proc init*(_: type Bot, transform = Transform.init): Bot =
+proc init*(_: type Bot, transform = Transform.init, clone_of: Bot = nil, global = true): Bot =
   let self = Bot(
     id: "bot_" & generate_id(),
     units: Zen.init(seq[Unit]),
@@ -89,23 +83,29 @@ proc init*(_: type Bot, transform = Transform.init): Bot =
     code: ZenValue[string].init,
     velocity: ZenValue[Vector3].init,
     animation: ZenValue[string].init,
-    energy: ZenValue[float].init
+    energy: ZenValue[float].init,
+    speed: 1.0,
+    clone_of: clone_of
   )
+  if global: self.flags += Global
 
   self.flags.changes:
     if Hover.added:
       state.reticle = true
       if state.tool.value != Block:
-        self.energy.value = highlight_energy
+        let (root, _) = self.find_root
+        root.walk_tree proc(unit: Unit) = unit.flags += Highlight
     elif Hover.removed:
-      self.energy.value = default_energy
+      let (root, _) = self.find_root
+      root.walk_tree proc(unit: Unit) = unit.flags -= Highlight
       if state.tool.value != Code:
         state.reticle = false
 
   state.input_flags.changes:
     if Hover in self.flags:
       if Primary.added and state.tool.value == Code:
-        state.open_unit.value = self
+        let (root, _) = self.find_root
+        state.open_unit.value = root
       if Secondary.added and state.tool.value == Place:
         if self.parent.is_nil:
           state.units -= self
@@ -113,3 +113,8 @@ proc init*(_: type Bot, transform = Transform.init): Bot =
           self.parent.units -= self
 
   result = self
+
+method clone*(self: Bot, clone_to: Unit, ctx: ScriptCtx): Unit =
+  var transform = clone_to.transform.value
+  result = Bot.init(transform = transform, clone_of = self)
+  result.parent = clone_to
