@@ -40,18 +40,45 @@ proc find_first*(units: ZenSeq[Unit], positions: open_array[Vector3]): Build =
 proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
   var target = self
   var offset: Vector3
-  if voxel.kind in {Manual, Hole}:
-    let root = self.find_root
-    if root.unit of Build:
-      target = Build(root.unit)
+  let root = self.find_root
+  var replaced = false
+  if root.unit != self and root.unit of Build:
+    let root_build = Build(root.unit)
+    if voxel.kind in {Manual, Hole}:
+      target = root_build
       offset = root.offset
+      let buffer = position.buffer
+      if buffer in self.chunks and position in self.chunks[buffer]:
+        self.chunks[buffer].del(position)
+        if self.chunks[buffer].len == 0:
+          self.chunks.del(buffer)
+        replaced = true
+    else:
+      let offset = root.offset
+      let position = (position - offset).floor
+      let buffer = position.buffer
+      if buffer in root_build.chunks and position in root_build.chunks[buffer]:
+        let info = root_build.chunks[buffer][position]
+        if info.kind == Manual and info.color == voxel.color:
+          root_build.chunks[buffer].del(position)
+          if root_build.chunks[buffer].len == 0:
+            root_build.chunks.del(buffer)
+        else:
+          return
 
   let position = (position - offset).floor
-  if position.buffer notin target.chunks:
-    target.chunks[position.buffer] = Chunk.init
+  let buffer = position.buffer
+  if not replaced and buffer in target.chunks and position in target.chunks[buffer]:
+    replaced = true
+  else:
+    if buffer notin target.chunks:
+      target.chunks[buffer] = Chunk.init
   if position notin target.bounds.value:
     target.bounds.value = target.bounds.value.expand(position).grow(1)
-  target.chunks[position.buffer][position] = voxel
+  if voxel.kind == Hole and not replaced:
+    target.chunks[buffer].del(position)
+  else:
+    target.chunks[buffer][position] = voxel
 
 proc drop_block(self: Build) =
   if self.drawing:
@@ -61,7 +88,7 @@ proc drop_block(self: Build) =
 proc remove(self: Build) =
   if state.tool.value == Block:
     let point = self.target_point - self.target_normal - (self.target_normal.inverse_normalized * 0.5)
-    self.draw(point, (Manual, action_colors[eraser]))
+    self.draw(point, (Hole, action_colors[eraser]))
     state.draw_plane = self.to_global(self.target_point) * self.target_normal
     if not self.chunks.any_it(it.value.any_it(it.value.color != action_colors[eraser])):
       if self.parent.is_nil:

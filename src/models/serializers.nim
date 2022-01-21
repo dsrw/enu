@@ -5,10 +5,17 @@ import core, models
 let state = GameState.active
 
 proc to_json_hook(self: Color): JsonNode =
-  %self.to_html_hex
+  if self == action_colors[eraser]:
+    %""
+  else:
+    %self.to_html_hex
 
 proc from_json_hook(self: var Color, json: JsonNode) =
-  self = json.get_str.parse_html_hex
+  let hex = json.get_str
+  self = if hex == "":
+    action_colors[eraser]
+  else:
+    hex.parse_html_hex
 
 proc to_json_hook(self: VoxelInfo): JsonNode =
   %* [self.kind.ord, self.color.to_json]

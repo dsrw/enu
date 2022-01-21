@@ -8,14 +8,16 @@ proc init*(_: type Model, node: Node): Model =
 
 proc find_root*(self: Unit): tuple[unit: Unit, offset: Vector3] =
   result.unit = self
+  result.offset -= self.transform.origin
   var parent = self.parent
   var found_global = Global in self.flags
   while parent != nil:
     result.unit = parent
-    if not found_global:
-      result.offset += parent.transform.origin
-      found_global = Global in parent.flags
-    parent = parent.parent
+    if Global in parent.flags:
+      parent = nil
+    else:
+      result.offset -= parent.transform.origin
+      parent = parent.parent
 
 proc walk_tree*(root: Unit, callback: proc(unit: Unit)) =
   callback(root)
