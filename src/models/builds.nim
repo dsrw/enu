@@ -321,9 +321,11 @@ proc init*(_: type Build, transform = Transform.init, color = default_color,
 
 method clone*(self: Build, clone_to: Unit, ctx: ScriptCtx): Unit =
   var transform = clone_to.transform.value
+  var global = true
   if clone_to of Build:
     transform = Build(clone_to).draw_transform
-  let clone = Build.init(transform = transform, clone_of = self, global = false)
+    global = false
+  let clone = Build.init(transform = transform, clone_of = self, global = global, color = self.start_color )
   clone.parent = clone_to
   for chunk_id, chunk in self.chunks:
     let target_chunk = Chunk.init
