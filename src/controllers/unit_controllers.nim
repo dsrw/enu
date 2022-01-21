@@ -31,8 +31,8 @@ proc remove_from_scene(unit: Unit) =
         field.untrack_all
   if unit of Build: Build(unit).untrack_all
   elif unit of Bot: Bot(unit).untrack_all
-
-  unit.script_ctx.engine.callback = nil
+  if not unit.script_ctx.is_nil and not unit.script_ctx.engine.is_nil:
+    unit.script_ctx.engine.callback = nil
   if not unit.clone_of:
     remove_file unit.script_file
     remove_dir unit.data_dir
