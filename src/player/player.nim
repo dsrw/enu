@@ -155,11 +155,6 @@ gdobj Player of KinematicBody:
         let collision = self.get_slide_collision(i)
         let collider = collision.collider
 
-        # TODO maybe?:
-        # if collider of Terrain:
-        #   let collider = collider as Terrain
-        #   self.camera_rig.rotation = self.camera_rig.rotation + collider.rotational_change
-
       if state.command_mode and self.command_timer > 0:
         self.command_timer -= delta
         if self.command_timer <= 0:

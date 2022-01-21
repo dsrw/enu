@@ -152,8 +152,7 @@ proc load_script*(self: Unit, script = "", retry_failed = true) =
 
           expose "begin_move", a => self.begin_move(get_vec3(a, 0), get_float(a, 1))
           expose "begin_turn", a => self.begin_turn(get_vec3(a, 0), get_float(a, 1))
-          # TODO
-          # expose "echo_console", a => echo_console(get_string(a, 0))
+          expose "echo_console", a => echo_console(get_string(a, 0))
           expose "create_new", a => self.create_new()
           expose "sleep", proc(a: VmArgs): bool =
             self.load_vars()
