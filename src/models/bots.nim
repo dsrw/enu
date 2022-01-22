@@ -55,14 +55,6 @@ method on_script_loaded*(self: Bot) =
   e.expose "play", proc(a: VmArgs): bool =
     self.animation.value = get_string(a, 0)
     return false
-  e.expose "get_position", proc(a: VmArgs): bool =
-    let n = self.to_global(self.transform.origin).to_node
-    a.set_result(n)
-    return false
-  e.expose "get_rotation", proc(a: VmArgs): bool =
-    let r = self.transform.basis.get_euler
-    a.set_result(vec3(r.x.rad_to_deg, r.y.rad_to_deg, r.z.rad_to_deg).to_node)
-    return false
 
 proc bot_at*(state: GameState, position: Vector3): Bot =
   for unit in state.units:

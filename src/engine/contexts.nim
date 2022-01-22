@@ -1,4 +1,4 @@
-import std / [monotimes, os, hashes, sets, strutils, sugar]
+import std / [monotimes, os, hashes, sets, strutils, sugar, math]
 import pkg / [godot]
 import godotapi / [node]
 import core, engine/engine, models, globals
@@ -168,6 +168,18 @@ proc load_script*(self: Unit, script = "") =
           expose "get_owned", proc(a: VmArgs): bool =
             a.set_result((Global notin self.flags).to_node)
             false
+          expose "get_position", proc(a: VmArgs): bool =
+            let n = self.to_global(self.transform.origin).to_node
+            a.set_result(n)
+            return false
+          expose "set_position", proc(a: VmArgs): bool =
+            let v = a.get_vec3(0)
+            self.transform.origin = v
+            false
+          expose "get_rotation", proc(a: VmArgs): bool =
+            let r = self.transform.basis.get_euler
+            a.set_result(vec3(r.x.rad_to_deg, r.y.rad_to_deg, r.z.rad_to_deg).to_node)
+            return false
         self.on_script_loaded()
     if not state.paused:
       current_active_unit = self
@@ -194,10 +206,16 @@ proc create_new(self: Unit): bool =
     new_engine.callback = nil
     new_engine.running = false
     clone.load_script()
+    echo "a"
     false
   new_engine.running = true
+  var skip_count = 3
   ae.callback = proc(delta: float): bool =
-    not new_engine.initialized
+    echo "b"
+    if not new_engine.initialized:
+      skip_count -= 1
+      echo skip_count
+      result = skip_count == 0
   set_active(ae)
   unit.units.add(clone)
   result = true

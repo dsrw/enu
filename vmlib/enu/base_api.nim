@@ -7,6 +7,7 @@ proc create_new() = discard
 proc stash() = discard
 proc add_stashed() = discard
 proc get_position(): Vector3 = discard
+proc set_position(position: Vector3) = discard
 proc get_rotation(): Vector3 = discard
 
 var target: ScriptNode = me

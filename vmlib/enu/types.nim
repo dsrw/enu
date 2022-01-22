@@ -21,6 +21,7 @@ type
     create_new*: proc()
     set_color*: proc(col: ColorIndex)
     get_position*: proc(): Vector3
+    set_position*: proc(position: Vector3)
     get_rotation*: proc(): Vector3
     set_owned*: proc(owned: bool)
     get_owned*: proc(): bool
@@ -331,6 +332,12 @@ proc `owned=`*(self: ScriptNode, owned: bool) =
 proc owned*(self: ScriptNode): bool =
   self.ctrl.get_owned()
 
+proc position*(self: ScriptNode): Vector3 =
+  self.ctrl.get_position()
+
+proc `position=`*(self: ScriptNode, position: Vector3) =
+  self.ctrl.set_position(position)
+
 template up*(target: ScriptNode, steps = 1.0) =
   target.ctrl.begin_move(UP, steps, me)
 
@@ -352,6 +359,9 @@ proc near*(actor, target: ScriptNode, less_than = 5.0): bool =
 
 proc get_position*(actor: ScriptNode): Vector3 =
   actor.ctrl.get_position()
+
+proc set_position*(actor: ScriptNode, position: Vector3) =
+  actor.ctrl.set_position(position)
 
 proc get_rotation*(actor: ScriptNode): Vector3 =
   actor.ctrl.get_rotation()

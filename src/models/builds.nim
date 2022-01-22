@@ -292,30 +292,6 @@ method on_script_loaded*(self: Build) =
   e.expose "load_defaults", proc(a: VmArgs): bool =
     self.set_vars()
     false
-  e.expose "get_position", proc(a: VmArgs): bool =
-    let v = self.transform.origin
-    a.set_result(v.to_node)
-    false
-  e.expose "get_rotation", proc(a: VmArgs): bool =
-    proc nm(f: float): float =
-      if f.is_equal_approx(0):
-        return 0
-      elif f < 0:
-        return f + (2 * PI)
-      else:
-        return f
-
-    proc nm(v: Vector3): Vector3 =
-      vec3(v.x.nm, v.y.nm, v.z.nm)
-
-    let e = self.transform.basis.get_euler
-
-    let n = e.nm
-    let v = vec3(nm(n.x).rad_to_deg, nm(n.y).rad_to_deg, nm(n.z).rad_to_deg)
-    let m = if v.z > 0: 1.0 else: -1.0
-    let v2 = vec3(0.0, (v.x - v.y) * m, 0.0)
-    a.set_result(v2.to_node)
-    return false
 
 proc init*(_: type Build, transform = Transform.init, color = default_color,
                           clone_of: Unit = nil, global = true): Build =

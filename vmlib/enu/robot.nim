@@ -37,6 +37,9 @@ me.ctrl.stash = proc() =
 me.ctrl.get_position = proc(): Vector3 =
   get_position()
 
+me.ctrl.set_position = proc(position: Vector3) =
+  set_position(position)
+
 me.ctrl.get_rotation = proc(): Vector3 =
   get_rotation()
 
@@ -59,3 +62,6 @@ proc walk*() =
 proc run*() =
   speed = 5.0
   play("run")
+
+proc move*[T: ScriptNode](new_target: T) =
+  target = new_target

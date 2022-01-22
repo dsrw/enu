@@ -38,6 +38,9 @@ me.ctrl.create_new = proc() =
 me.ctrl.get_position = proc(): Vector3 =
   get_position()
 
+me.ctrl.set_position = proc(position: Vector3) =
+  set_position(position)
+
 me.ctrl.get_rotation = proc(): Vector3 =
   get_rotation()
 
@@ -79,7 +82,7 @@ proc fill_square*(length = 1) =
       forward(length - l)
       right()
 
-proc move*(new_target: ScriptNode) =
+proc move*[T: ScriptNode](new_target: T) =
   target = new_target
   move_mode = true
 
