@@ -21,6 +21,7 @@ proc change_code(self: Unit, code: string) =
     if self.script_ctx.is_nil:
       self.script_ctx = ScriptCtx.init
     self.script_ctx.script = self.script_file
+    self.script_ctx.retry_failures = retry_failures
     self.load_script()
 
 proc remove_from_scene(unit: Unit) =

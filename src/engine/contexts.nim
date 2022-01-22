@@ -11,8 +11,8 @@ let config = state.config
 var
   module_names: HashSet[string]
   current_active_unit: Unit
-  failed: seq[tuple[ctx: ScriptCtx, ex: ref VMQuit]]
-  retry_failures* = true
+  failed: seq[tuple[unit: Unit, ex: ref VMQuit]]
+  retry_failures* = false
 
 proc create_new(self: Unit): bool
 
@@ -31,11 +31,37 @@ proc is_script_loadable*(self: Unit): bool =
   let ctx = self.script_ctx
   ctx.script != "none" and ctx.script.file_exists
 
+proc error*(ctx: ScriptCtx, ex: ref VMQuit) =
+  ctx.engine.running = false
+  when defined(enu_simulate):
+    raise ex
+  else:
+    state.err "Exception executing " & ctx.script
+    state.err ex.msg
+    trigger("script_error")
+
+proc retry_failed_scripts* =
+  var prev_failed = failed
+  failed = @[]
+  for f in prev_failed:
+    echo "retrying: ", f.unit.script_ctx.script
+    f.unit.script_ctx.reload_script()
+  if failed.len > 0 and prev_failed.len == failed.len:
+    for f in failed:
+      f.unit.script_ctx.retry_failures = false
+      f.unit.script_ctx.error(f.ex)
+
 proc update_running_state(self: Unit, running: bool) =
   self.script_ctx.engine.running = running
   if not running:
     self.load_vars()
     state.debug(self.script_ctx.script & " done.")
+    # on startup a script's dependencies might not be loaded yet,
+    # so each time a script completes we try reloading the failures.
+    # `retry_failures` will always be false after startup.
+    if self.script_ctx.retry_failures:
+      self.script_ctx.retry_failures = false
+      retry_failed_scripts()
 
 proc advance*(self: Unit, delta: float64) =
   let now = get_mono_time()
@@ -47,21 +73,24 @@ proc advance*(self: Unit, delta: float64) =
     let self = Build(self)
     self.voxels_remaining_this_frame += self.voxels_per_frame
   var resume_script = true
-  while resume_script and not state.paused:
-    resume_script = false
-    if e.callback == nil or (not e.callback(delta)):
-      c.timer = MonoTime.high
-      discard e.call_proc("set_action_running", e.module_name, false)
-      self.update_running_state e.resume()
-      if self of Build:
-        let self = Build(self)
-        if self.voxels_per_frame > 0 and e.running and self.voxels_remaining_this_frame >= 1:
-          resume_script = true
-    elif now >= c.timer:
-      c.timer = now + ADVANCE_STEP
-      e.saved_callback = e.callback
-      e.callback = nil
-      discard e.resume()
+  try:
+    while resume_script and not state.paused:
+      resume_script = false
+      if e.callback == nil or (not e.callback(delta)):
+        c.timer = MonoTime.high
+        discard e.call_proc("set_action_running", e.module_name, false)
+        self.update_running_state e.resume()
+        if self of Build:
+          let self = Build(self)
+          if self.voxels_per_frame > 0 and e.running and self.voxels_remaining_this_frame >= 1:
+            resume_script = true
+      elif now >= c.timer:
+        c.timer = now + ADVANCE_STEP
+        e.saved_callback = e.callback
+        e.callback = nil
+        discard e.resume()
+  except VMQuit as e:
+    self.script_ctx.error(e)
 
 proc begin_move(self: Unit, direction: Vector3, steps: float): bool =
   self.load_vars()
@@ -82,29 +111,6 @@ proc begin_turn(self: Unit, direction: Vector3, degrees: float): bool =
     direction = direction * -1
   active_engine().callback = self.on_begin_turn(direction, degrees)
   result = not active_engine().callback.is_nil
-
-proc error*(e: Engine, ex: ref VMQuit) =
-  e.running = false
-  when defined(enu_simulate):
-    raise ex
-  else:
-    state.err ex.msg
-    trigger("script_error")
-
-proc report_failures* =
-  for f in failed:
-    f.ctx.engine.error(f.ex)
-
-proc retry_failed_scripts =
-  # We don't know what order scripts will load in.
-  # Once all scripts have been loaded, retry the
-  # failures. Keep retrying until the list of failures
-  # stops changing, then print any remaining errors.
-
-  let prev_failed = failed
-  failed = @[]
-  for f in prev_failed:
-    f.ctx.reload_script()
 
 proc load_script*(self: Unit, script = "") =
   let ctx = self.script_ctx
@@ -184,18 +190,16 @@ proc load_script*(self: Unit, script = "") =
     if not state.paused:
       current_active_unit = self
       self.update_running_state ctx.engine.run()
-    if retry_failures:
-      retry_failed_scripts()
 
   except VMQuit as e:
-    if retry_failures:
-      failed.add (ctx, e)
+    if self.script_ctx.retry_failures:
+      self.script_ctx.engine.running = false
+      failed.add (self, e)
     else:
-      self.script_ctx.engine.error(e)
+      self.script_ctx.error(e)
 
 proc create_new(self: Unit): bool =
   let unit = active_unit()
-
   let ae = active_engine()
   let clone = self.clone(unit, active_ctx())
   clone.script_ctx = ScriptCtx.init
@@ -206,16 +210,10 @@ proc create_new(self: Unit): bool =
     new_engine.callback = nil
     new_engine.running = false
     clone.load_script()
-    echo "a"
     false
   new_engine.running = true
-  var skip_count = 3
   ae.callback = proc(delta: float): bool =
-    echo "b"
-    if not new_engine.initialized:
-      skip_count -= 1
-      echo skip_count
-      result = skip_count == 0
+    not new_engine.initialized
   set_active(ae)
   unit.units.add(clone)
   result = true

@@ -103,6 +103,7 @@ type
     reload_script*: proc()
     is_clone*: bool
     speed*: float
+    retry_failures*: bool
 
   Config* = ref object
     font_size*: int
