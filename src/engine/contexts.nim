@@ -12,8 +12,7 @@ var
   module_names: HashSet[string]
   current_active_unit: Unit
   failed: seq[tuple[ctx: ScriptCtx, ex: ref VMQuit]]
-  starting = true
-  modules_to_load: HashSet[ScriptCtx]
+  retry_failures* = true
 
 proc create_new(self: Unit): bool
 
@@ -25,7 +24,6 @@ proc init*(_: type ScriptCtx): ScriptCtx =
   let e = Engine.init()
   result = ScriptCtx(engine: e, timer: MonoTime.high)
   ctxs[e] = result
-  modules_to_load.incl result
 
 proc active_unit*(): Unit = current_active_unit
 
@@ -93,36 +91,28 @@ proc error*(e: Engine, ex: ref VMQuit) =
     state.err ex.msg
     trigger("script_error")
 
+proc report_failures* =
+  for f in failed:
+    f.ctx.engine.error(f.ex)
+
 proc retry_failed_scripts =
   # We don't know what order scripts will load in.
   # Once all scripts have been loaded, retry the
   # failures. Keep retrying until the list of failures
   # stops changing, then print any remaining errors.
-  starting = false
-  var cycling = true
-  while cycling:
-    let prev_failed = failed
-    failed = @[]
-    for f in prev_failed:
-      f.ctx.reload_script()
-    if prev_failed == failed:
-      cycling = false
 
-      for f in failed:
-        f.ctx.engine.error(f.ex)
-      failed = @[]
+  let prev_failed = failed
+  failed = @[]
+  for f in prev_failed:
+    f.ctx.reload_script()
 
-proc load_script*(self: Unit, script = "", retry_failed = true) =
+proc load_script*(self: Unit, script = "") =
   let ctx = self.script_ctx
-  modules_to_load.excl ctx
-  defer:
-    if modules_to_load.card == 0 and retry_failed:
-      retry_failed_scripts()
 
   if script != "":
     ctx.script = script
   ctx.reload_script = proc() =
-    self.load_script(retry_failed = false)
+    self.load_script()
   ctx.engine.callback = nil
   try:
     if not self.is_script_loadable:
@@ -168,12 +158,25 @@ proc load_script*(self: Unit, script = "", retry_failed = true) =
             e.pause()
             e.running = false
             result = false
+          expose "set_owned", proc(a: VmArgs): bool =
+            let owned = a.get_bool(0)
+            if owned:
+              self.flags -= Global
+            else:
+              self.flags += Global
+            false
+          expose "get_owned", proc(a: VmArgs): bool =
+            a.set_result((Global notin self.flags).to_node)
+            false
         self.on_script_loaded()
     if not state.paused:
       current_active_unit = self
       self.update_running_state ctx.engine.run()
+    if retry_failures:
+      retry_failed_scripts()
+
   except VMQuit as e:
-    if starting:
+    if retry_failures:
       failed.add (ctx, e)
     else:
       self.script_ctx.engine.error(e)

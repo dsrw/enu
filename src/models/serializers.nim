@@ -1,6 +1,6 @@
 import std / [json, jsonutils, sugar, tables, os, strutils]
 import pkg / print
-import core, models
+import core, models, engine / contexts
 
 let state = GameState.active
 
@@ -130,5 +130,8 @@ proc load_units(parent: Unit) =
 
 proc load_world*() =
   dont_join = true
+  retry_failures = true
   load_units(nil)
+  retry_failures = false
+  report_failures()
   dont_join = false

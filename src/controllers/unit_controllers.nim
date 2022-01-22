@@ -1,7 +1,7 @@
 import std / [strutils, os]
 import pkg / [model_citizen, print]
 import pkg/godot except print
-import godotapi/node
+import godotapi / [node, spatial]
 import models, world / [bot_node, build_node], engine / contexts
 
 type
@@ -63,6 +63,18 @@ proc add_to_scene(unit: Unit) =
   parent_node.add_child(unit.node)
   unit.node.owner = parent_node
 
+proc set_global(unit: Unit, global: bool) =
+  var parent_node = unit.node.get_node("..")
+  parent_node.remove_child(unit.node)
+  if global:
+    state.nodes.data.add_child(unit.node)
+    unit.node.owner = state.nodes.data
+    unit.transform.origin = unit.transform.origin + unit.start_transform.origin
+  else:
+    unit.parent.node.add_child(unit.node)
+    unit.node.owner = unit.parent.node
+    unit.transform.origin = unit.transform.origin - unit.start_transform.origin
+
 proc find_nested_changes(parent: Change[Unit]) =
   for change in parent.triggered_by:
     if change of Change[Unit]:
@@ -77,11 +89,13 @@ proc find_nested_changes(parent: Change[Unit]) =
     if Added in change.changes and change of Change[string] and parent.field_name == "code":
       let change = Change[string](change)
       parent.item.change_code(change.item)
-    if Added in change.changes and change of Change[ModelFlags]:
+    if change of Change[ModelFlags]:
       let change = Change[ModelFlags](change)
       if change.item == Global:
-        parent.item.remove_from_scene()
-        parent.item.add_to_scene()
+        if Added in change.changes:
+          parent.item.set_global(true)
+        elif Removed in change.changes:
+          parent.item.set_global(false)
 
 proc watch*(f: UnitController, state: GameState) =
   state.units.changes:

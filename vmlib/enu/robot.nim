@@ -21,6 +21,12 @@ me.ctrl.begin_turn = proc(axis: Vector3, degrees: float, self: ScriptNode) =
 me.ctrl.advance_state_machine = proc(): bool = advance_state_machine()
 me.ctrl.yield_script = proc() = yield_script()
 
+me.ctrl.set_owned = proc(new_owned: bool) =
+  set_owned(new_owned)
+
+me.ctrl.get_owned = proc(): bool =
+  get_owned()
+
 me.ctrl.set = proc(name: string, new_speed:float) =
   speed = new_speed
 me.ctrl.get = proc(name: string): float = speed

@@ -22,6 +22,8 @@ type
     set_color*: proc(col: ColorIndex)
     get_position*: proc(): Vector3
     get_rotation*: proc(): Vector3
+    set_owned*: proc(owned: bool)
+    get_owned*: proc(): bool
     stash*: proc()
     add_stashed*: proc()
 
@@ -322,6 +324,12 @@ proc `speed=`*(self: ScriptNode, speed: float) =
 
 proc speed*(self: ScriptNode): float =
   self.ctrl.get("speed")
+
+proc `owned=`*(self: ScriptNode, owned: bool) =
+  self.ctrl.set_owned(owned)
+
+proc owned*(self: ScriptNode): bool =
+  self.ctrl.get_owned()
 
 template up*(target: ScriptNode, steps = 1.0) =
   target.ctrl.begin_move(UP, steps, me)

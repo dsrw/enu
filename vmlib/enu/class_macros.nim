@@ -28,7 +28,7 @@ proc params_to_vars(nodes: seq[NimNode], throw_errors: bool): NimNode =
   for node in nodes:
     let node = node.copy_nim_tree
     let prop = node[0]
-    if prop.str_val notin ["speed", "color"]:
+    if prop.str_val notin ["speed", "color", "own"]:
       if node.kind == nnkExprEqExpr:
         vars.add nnkIdentDefs.new_tree(node[0], empty, node[1])
       elif node.kind == nnkExprColonExpr:
@@ -88,6 +88,12 @@ proc build_ctors(name_str: string, type_name, cradle_name: NimNode, params: seq[
   ctor_body.add quote do:
     if `color` != eraser:
       result.ctrl.set_color(`color`)
+
+  var own = "own".ident
+  if "own" notin var_names:
+    params &= new_ident_defs(own, new_empty_node(), ident("owned_default"))
+  ctor_body.add quote do:
+    result.ctrl.set_owned(`own`)
 
   # add baked in constructor params for speed, color, etc.
   # probably shouldn't be here.
