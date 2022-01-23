@@ -75,6 +75,12 @@ proc build_ctors(name_str: string, type_name, cradle_name: NimNode, params: seq[
   let instance_def = new_ident_defs("instance".ident, type_name)
   var params = @[type_name] & instance_def & vars[0][0..^1]
 
+  var own = "own".ident
+  if "own" notin var_names:
+    params &= new_ident_defs(own, new_empty_node(), ident("owned_default"))
+  ctor_body.add quote do:
+    result.ctrl.set_owned(`own`)
+
   var speed = "speed".ident
   if "speed" notin var_names:
     params &= new_ident_defs(speed, new_empty_node(), new_float_lit_node(-1.0))
@@ -88,12 +94,6 @@ proc build_ctors(name_str: string, type_name, cradle_name: NimNode, params: seq[
   ctor_body.add quote do:
     if `color` != eraser:
       result.ctrl.set_color(`color`)
-
-  var own = "own".ident
-  if "own" notin var_names:
-    params &= new_ident_defs(own, new_empty_node(), ident("owned_default"))
-  ctor_body.add quote do:
-    result.ctrl.set_owned(`own`)
 
   # add baked in constructor params for speed, color, etc.
   # probably shouldn't be here.

@@ -1,6 +1,8 @@
 import helpers, strutils, strformat
 import macros, math, hashes
 
+var owned_default* = false
+
 type
   Vector3* = object
     x*, y*, z*: float
