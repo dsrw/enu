@@ -39,8 +39,8 @@ proc u(steps = 1.0): Direction {.discardable.} = up(steps)
 proc down(steps = 1.0): Direction {.discardable.} = target.ctrl.begin_move(DOWN, steps, me)
 proc d(steps = 1.0): Direction {.discardable.} = down(steps)
 
-proc set_owned(owned: bool) = discard
-proc get_owned(): bool = discard
+proc set_global(global: bool) = discard
+proc get_global(): bool = discard
 
 proc turn(direction: proc(steps = 1.0): Direction, degrees = 90.0) =
   var axis = if direction == r: RIGHT

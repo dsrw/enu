@@ -22,11 +22,11 @@ me.ctrl.begin_turn = proc(axis: Vector3, degrees: float, self: ScriptNode) =
 me.ctrl.advance_state_machine = proc(): bool = advance_state_machine()
 me.ctrl.yield_script = proc() = yield_script()
 
-me.ctrl.set_owned = proc(new_owned: bool) =
-  set_owned(new_owned)
+me.ctrl.set_global = proc(global: bool) =
+  set_global(global)
 
-me.ctrl.get_owned = proc(): bool =
-  get_owned()
+me.ctrl.get_global = proc(): bool =
+  get_global()
 
 me.ctrl.set = proc(name: string, new_speed:float) =
   speed = new_speed
@@ -83,6 +83,10 @@ proc fill_square*(length = 1) =
       right()
 
 proc move*[T: ScriptNode](new_target: T) =
+  target = new_target
+  move_mode = true
+
+proc m*[T: ScriptNode](new_target: T) =
   target = new_target
   move_mode = true
 

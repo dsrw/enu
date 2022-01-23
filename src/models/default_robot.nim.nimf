@@ -2,7 +2,7 @@
 #proc default_robot(file_name, imports: string, is_clone: bool): string =
 import types, class_macros, players
 const is_clone = ${is_clone}
-owned_default = false
+global_default = true
 ${imports}
 template name(n: untyped) = class_name(n, ScriptNode, false)
 const enu_root = true

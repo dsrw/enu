@@ -1,7 +1,7 @@
 import helpers, strutils, strformat
 import macros, math, hashes
 
-var owned_default* = false
+var global_default* = false
 
 type
   Vector3* = object
@@ -25,8 +25,8 @@ type
     get_position*: proc(): Vector3
     set_position*: proc(position: Vector3)
     get_rotation*: proc(): Vector3
-    set_owned*: proc(owned: bool)
-    get_owned*: proc(): bool
+    set_global*: proc(global: bool)
+    get_global*: proc(): bool
     stash*: proc()
     add_stashed*: proc()
 
@@ -328,11 +328,11 @@ proc `speed=`*(self: ScriptNode, speed: float) =
 proc speed*(self: ScriptNode): float =
   self.ctrl.get("speed")
 
-proc `owned=`*(self: ScriptNode, owned: bool) =
-  self.ctrl.set_owned(owned)
+proc `global=`*(self: ScriptNode, global: bool) =
+  self.ctrl.set_global(global)
 
-proc owned*(self: ScriptNode): bool =
-  self.ctrl.get_owned()
+proc global*(self: ScriptNode): bool =
+  self.ctrl.get_global()
 
 proc position*(self: ScriptNode): Vector3 =
   self.ctrl.get_position()

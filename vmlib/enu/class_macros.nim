@@ -28,7 +28,7 @@ proc params_to_vars(nodes: seq[NimNode], throw_errors: bool): NimNode =
   for node in nodes:
     let node = node.copy_nim_tree
     let prop = node[0]
-    if prop.str_val notin ["speed", "color", "own"]:
+    if prop.str_val notin ["global", "speed", "color"]:
       if node.kind == nnkExprEqExpr:
         vars.add nnkIdentDefs.new_tree(node[0], empty, node[1])
       elif node.kind == nnkExprColonExpr:
@@ -75,11 +75,12 @@ proc build_ctors(name_str: string, type_name, cradle_name: NimNode, params: seq[
   let instance_def = new_ident_defs("instance".ident, type_name)
   var params = @[type_name] & instance_def & vars[0][0..^1]
 
-  var own = "own".ident
-  if "own" notin var_names:
-    params &= new_ident_defs(own, new_empty_node(), ident("owned_default"))
+  var global = "global".ident
+  if "global" notin var_names:
+    params &= new_ident_defs(global, new_empty_node(), ident("global_default"))
   ctor_body.add quote do:
-    result.ctrl.set_owned(`own`)
+    if `global` != global_default:
+      result.ctrl.set_global(`global`)
 
   var speed = "speed".ident
   if "speed" notin var_names:
@@ -210,9 +211,6 @@ macro class_name*(name, base_class, throw_errors: untyped): untyped =
       when not enu_root:
         `vars`
         `accessors`
-        when is_clone:
-          # TODO: make this better
-          sleep(0.1)
   except:
     if throw_errors:
       raise

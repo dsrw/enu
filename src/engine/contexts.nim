@@ -164,15 +164,15 @@ proc load_script*(self: Unit, script = "") =
             e.pause()
             e.running = false
             result = false
-          expose "set_owned", proc(a: VmArgs): bool =
-            let owned = a.get_bool(0)
-            if owned:
-              self.flags -= Global
-            else:
+          expose "set_global", proc(a: VmArgs): bool =
+            let global = a.get_bool(0)
+            if global:
               self.flags += Global
+            else:
+              self.flags -= Global
             false
-          expose "get_owned", proc(a: VmArgs): bool =
-            a.set_result((Global notin self.flags).to_node)
+          expose "get_global", proc(a: VmArgs): bool =
+            a.set_result((Global in self.flags).to_node)
             false
           expose "get_position", proc(a: VmArgs): bool =
             let n = self.to_global(self.transform.origin).to_node
