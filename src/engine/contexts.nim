@@ -196,15 +196,8 @@ proc create_new(self: Unit): bool =
   clone.script_ctx.is_clone = true
   clone.script_ctx.script = self.script_file
   let new_engine = clone.script_ctx.engine
-  # new_engine.callback = proc(delta: float): bool =
-  #   new_engine.callback = nil
-  #   new_engine.running = false
-  #   unit.units.add(clone)
-  #   clone.load_script()
-  #   false
-  # new_engine.running = true
-  ae.callback = proc(delta: float): bool =
-    not new_engine.initialized
-  set_active(ae)
   unit.units.add(clone)
-  result = true
+  clone.load_script()
+  set_active(ae)
+
+  result = false

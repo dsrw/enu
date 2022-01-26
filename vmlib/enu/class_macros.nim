@@ -213,9 +213,6 @@ macro load_enu_script*(file_name, include_name: string, is_clone: bool): untyped
     result.add build_class(name_node, is_clone)
     result.add include_file
     inner.add build_vars_and_accessors(name_node)
-    if is_clone:
-      inner.add quote do:
-        sleep(0.1)
 
   else:
     result.add quote do:
@@ -224,6 +221,3 @@ macro load_enu_script*(file_name, include_name: string, is_clone: bool): untyped
 
   inner.add ast
   result.add new_block_stmt(inner)
-
-  echo "processed script: "
-  echo result.repr

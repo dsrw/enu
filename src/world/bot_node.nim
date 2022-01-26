@@ -75,9 +75,6 @@ gdobj BotNode of KinematicBody:
       if self.unit.script_ctx:
         if self.unit.script_ctx.engine.running:
           self.unit.advance(delta)
-        elif self.unit.script_ctx.is_clone and not self.unit.script_ctx.engine.initialized:
-          if self.unit.script_file.file_exists:
-            self.unit.code.value = self.unit.script_file.read_file
 
       self.unit.transform.pause self.transform_zid:
         self.unit.transform.value = self.transform
