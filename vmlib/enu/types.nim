@@ -21,7 +21,8 @@ type
     set*: proc(var_name: string, value: float)
     get*: proc(var_name: string): float
     create_new*: proc()
-    set_color*: proc(col: ColorIndex)
+    set_color*: proc(value: ColorIndex)
+    get_color*: proc(): ColorIndex
     get_position*: proc(): Vector3
     set_position*: proc(position: Vector3)
     get_rotation*: proc(): Vector3
@@ -327,6 +328,12 @@ proc `speed=`*(self: ScriptNode, speed: float) =
 
 proc speed*(self: ScriptNode): float =
   self.ctrl.get("speed")
+
+proc `color=`*(self: ScriptNode, color: ColorIndex) =
+  self.ctrl.set_color(color)
+
+proc color*(self: ScriptNode): ColorIndex =
+  self.ctrl.get_color()
 
 proc `global=`*(self: ScriptNode, global: bool) =
   self.ctrl.set_global(global)

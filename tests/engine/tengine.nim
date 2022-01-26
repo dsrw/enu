@@ -1,7 +1,7 @@
 import engine/engine
 import core
 import std/os
-
+import engine/contexts
 let
   vmlib = "vmlib"
   e1 = Engine()

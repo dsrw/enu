@@ -2,15 +2,9 @@
 #proc default_robot(file_name, imports: string, is_clone: bool): string =
 import types, class_macros, players
 const is_clone = ${is_clone}
-global_default = true
+let global_default = true
 ${imports}
-template name(n: untyped) = class_name(n, ScriptNode, false)
-const enu_root = true
-preprocess "${file_name}", "ScriptNode"
-include robot
-block:
-  const enu_root = false
-  template name(n: untyped) = class_name(n, ScriptNode, true)
-  include "${file_name}"
+
+load_enu_script "${file_name}", "robot", ${is_clone}
 
 quit()

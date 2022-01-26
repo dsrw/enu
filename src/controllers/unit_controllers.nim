@@ -1,8 +1,8 @@
-import std / [strutils, os]
+import std / [strutils, os, tables]
 import pkg / [model_citizen, print]
 import pkg/godot except print
 import godotapi / [node, spatial]
-import models, world / [bot_node, build_node], engine / contexts
+import models, models / scripts, world / [bot_node, build_node], engine / contexts
 
 type
   UnitController* = object
@@ -16,12 +16,13 @@ proc change_code(self: Unit, code: string) =
 
   if code.strip == "" and file_exists(self.script_file):
     remove_file self.script_file
+    remove_module self.script_file
   elif code.strip != "":
     write_file(self.script_file, code)
     if self.script_ctx.is_nil:
       self.script_ctx = ScriptCtx.init
+      unit_ctxs[self.script_ctx.engine] = self
     self.script_ctx.script = self.script_file
-    self.script_ctx.retry_failures = retry_failures
     self.load_script()
 
 proc remove_from_scene(unit: Unit) =
@@ -38,6 +39,7 @@ proc remove_from_scene(unit: Unit) =
     unit.script_ctx.engine.callback = nil
   if not unit.clone_of:
     remove_file unit.script_file
+    remove_module unit.script_file
     remove_dir unit.data_dir
   for child in unit.units:
     child.remove_from_scene()

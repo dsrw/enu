@@ -10,10 +10,10 @@ let config = state.config
 
 var
   module_names: HashSet[string]
-  current_active_unit: Unit
   failed: seq[tuple[unit: Unit, ex: ref VMQuit]]
   retry_failures* = false
 
+proc load_script*(self: Unit, script = "")
 proc create_new(self: Unit): bool
 
 proc destroy*(ctx: ScriptCtx) =
@@ -24,8 +24,6 @@ proc init*(_: type ScriptCtx): ScriptCtx =
   let e = Engine.init()
   result = ScriptCtx(engine: e, timer: MonoTime.high)
   ctxs[e] = result
-
-proc active_unit*(): Unit = current_active_unit
 
 proc is_script_loadable*(self: Unit): bool =
   let ctx = self.script_ctx
@@ -45,10 +43,9 @@ proc retry_failed_scripts* =
   failed = @[]
   for f in prev_failed:
     echo "retrying: ", f.unit.script_ctx.script
-    f.unit.script_ctx.reload_script()
+    f.unit.load_script()
   if failed.len > 0 and prev_failed.len == failed.len:
     for f in failed:
-      f.unit.script_ctx.retry_failures = false
       f.unit.script_ctx.error(f.ex)
 
 proc update_running_state(self: Unit, running: bool) =
@@ -56,16 +53,12 @@ proc update_running_state(self: Unit, running: bool) =
   if not running:
     self.load_vars()
     state.debug(self.script_ctx.script & " done.")
-    # on startup a script's dependencies might not be loaded yet,
-    # so each time a script completes we try reloading the failures.
-    # `retry_failures` will always be false after startup.
-    if self.script_ctx.retry_failures:
-      self.script_ctx.retry_failures = false
-      retry_failed_scripts()
+
+proc remove_module*(file_name: string) =
+  module_names.excl file_name.split_file.name
 
 proc advance*(self: Unit, delta: float64) =
   let now = get_mono_time()
-  current_active_unit = self
   let c = self.script_ctx
   let e = c.engine
 
@@ -117,8 +110,6 @@ proc load_script*(self: Unit, script = "") =
 
   if script != "":
     ctx.script = script
-  ctx.reload_script = proc() =
-    self.load_script()
   ctx.engine.callback = nil
   try:
     if not self.is_script_loadable:
@@ -188,11 +179,10 @@ proc load_script*(self: Unit, script = "") =
             return false
         self.on_script_loaded()
     if not state.paused:
-      current_active_unit = self
       self.update_running_state ctx.engine.run()
 
   except VMQuit as e:
-    if self.script_ctx.retry_failures:
+    if retry_failures:
       self.script_ctx.engine.running = false
       failed.add (self, e)
     else:
@@ -206,12 +196,13 @@ proc create_new(self: Unit): bool =
   clone.script_ctx.is_clone = true
   clone.script_ctx.script = self.script_file
   let new_engine = clone.script_ctx.engine
-  new_engine.callback = proc(delta: float): bool =
-    new_engine.callback = nil
-    new_engine.running = false
-    clone.load_script()
-    false
-  new_engine.running = true
+  # new_engine.callback = proc(delta: float): bool =
+  #   new_engine.callback = nil
+  #   new_engine.running = false
+  #   unit.units.add(clone)
+  #   clone.load_script()
+  #   false
+  # new_engine.running = true
   ae.callback = proc(delta: float): bool =
     not new_engine.initialized
   set_active(ae)

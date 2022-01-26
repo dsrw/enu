@@ -1,9 +1,9 @@
-import std / [tables]
+import std / [tables, os]
 import pkg/godot except print, Color
 import pkg / [print, model_citizen]
 import godotapi / [node, voxel_terrain, voxel_mesher_blocky, voxel_tool, voxel_library, shader_material,
                    resource_loader, packed_scene]
-import models / [types, builds, colors], globals
+import models / [types, builds, colors, units], globals
 import engine / contexts
 
 const
@@ -101,8 +101,12 @@ gdobj BuildNode of VoxelTerrain:
 
   method process(delta: float) =
     if self.unit:
-      if self.unit.script_ctx and self.unit.script_ctx.engine.running:
-        self.unit.advance(delta)
+      if self.unit.script_ctx:
+        if self.unit.script_ctx.engine.running:
+          self.unit.advance(delta)
+        elif self.unit.script_ctx.is_clone and not self.unit.script_ctx.engine.initialized:
+          if self.unit.script_file.file_exists:
+            self.unit.code.value = self.unit.script_file.read_file
 
       self.unit.transform.pause self.transform_zid:
         self.unit.transform.value = self.transform

@@ -28,6 +28,12 @@ me.ctrl.set_global = proc(global: bool) =
 me.ctrl.get_global = proc(): bool =
   get_global()
 
+me.ctrl.set_color = proc(value: ColorIndex) =
+  color = value
+
+me.ctrl.get_color = proc(): ColorIndex =
+  color
+
 me.ctrl.set = proc(name: string, new_speed:float) =
   speed = new_speed
 me.ctrl.get = proc(name: string): float = speed

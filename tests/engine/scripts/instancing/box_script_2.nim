@@ -4,7 +4,7 @@ def box(length=10, height=20):
   height.times:
     4.times:
       forward length
-      turn_right()
+      turn right
 
 box()
-echo "BYE FROM ", self.name
+echo "BYE FROM ", me.name

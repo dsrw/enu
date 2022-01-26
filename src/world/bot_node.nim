@@ -1,10 +1,10 @@
-import std / [tables, sugar]
+import std / [tables, sugar, os]
 import pkg/godot except print
 import pkg/model_citizen
 import godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
                    input_event, animation_player, resource_loader, packed_scene]
 import globals, core, print
-import engine / [contexts, engine], models / [types, bots]
+import engine / [contexts, engine], models / [types, bots, units]
 
 gdobj BotNode of KinematicBody:
   var
@@ -72,8 +72,12 @@ gdobj BotNode of KinematicBody:
 
   method process(delta: float) =
     if self.unit:
-      if self.unit.script_ctx and self.unit.script_ctx.engine.running:
-        self.unit.advance(delta)
+      if self.unit.script_ctx:
+        if self.unit.script_ctx.engine.running:
+          self.unit.advance(delta)
+        elif self.unit.script_ctx.is_clone and not self.unit.script_ctx.engine.initialized:
+          if self.unit.script_file.file_exists:
+            self.unit.code.value = self.unit.script_file.read_file
 
       self.unit.transform.pause self.transform_zid:
         self.unit.transform.value = self.transform

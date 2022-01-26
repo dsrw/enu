@@ -1,12 +1,12 @@
 import engine/engine, core
 import std / [sugar, os]
-include "world/default_robot.nim.nimf"
+include "models/default_robot.nim.nimf"
 
 proc run_script(name: string) =
   let
     script_dir = nim_filename().parent_dir & "/scripts/instancing"
     script_path = script_dir & "/" & name
-    code = default_robot(script_path, "" )
+    code = default_robot(script_path, "", false)
     e = Engine()
 
   e.load(script_dir, script_path, code, "vmlib")

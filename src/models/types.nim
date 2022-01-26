@@ -100,10 +100,8 @@ type
     engine*: Engine
     timer*: MonoTime
     load_vars*: proc()
-    reload_script*: proc()
     is_clone*: bool
     speed*: float
-    retry_failures*: bool
 
   Config* = ref object
     font_size*: int

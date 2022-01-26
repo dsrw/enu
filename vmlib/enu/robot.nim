@@ -52,6 +52,9 @@ me.ctrl.add_stashed = proc() =
 me.ctrl.create_new = proc() =
   create_new()
 
+me.ctrl.get_color = proc(): ColorIndex = color
+me.ctrl.set_color = proc(value: ColorIndex) = color = value
+
 proc play*(animation_name: string)  = discard
 proc set_speed*(spd: float)         = speed = spd
 

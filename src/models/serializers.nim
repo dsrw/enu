@@ -132,5 +132,6 @@ proc load_world*() =
   dont_join = true
   retry_failures = true
   load_units(nil)
+  retry_failed_scripts()
   retry_failures = false
   dont_join = false

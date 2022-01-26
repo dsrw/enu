@@ -1,26 +1,7 @@
-import macros, strformat, strutils, sugar, types, sequtils
+import std / [macros, strformat, strutils, sugar, sequtils, genasts]
+import types
 
-macro preprocess*(file, class_name: untyped): untyped =
-  try:
-    let
-      file = file.str_val
-      class_name = class_name.str_val
-      ast = parse_stmt file.static_read
-      ident_name = "name"
-
-    # only checking top level for now. Make this more robust.
-    for node in ast:
-      if node.kind in [nnkCommand, nnkCall]:
-        if node.len == 2 and node[1].kind in [nnkIdent, nnkCall] and node[0].eq_ident(ident_name):
-          return node
-    return parse_stmt(&"let me = {class_name}(ctrl: Controller())")
-  except:
-    # we don't have line info here, so we shouldn't
-    # report errors. The same code will be parsed again
-    # with line numbers later
-    discard
-
-proc params_to_vars(nodes: seq[NimNode], throw_errors: bool): NimNode =
+proc params_to_vars(nodes: seq[NimNode]): NimNode =
   result = new_stmt_list()
   let empty = new_empty_node()
   var vars = nnkVarSection.new_nim_node
@@ -33,7 +14,7 @@ proc params_to_vars(nodes: seq[NimNode], throw_errors: bool): NimNode =
         vars.add nnkIdentDefs.new_tree(node[0], empty, node[1])
       elif node.kind == nnkExprColonExpr:
         vars.add nnkIdentDefs.new_tree(node[0], node[1], empty)
-      elif throw_errors:
+      else:
         error("expected `my_param = 1`, `my_param: int` kind: " & $node.kind, node)
 
     else:
@@ -42,7 +23,7 @@ proc params_to_vars(nodes: seq[NimNode], throw_errors: bool): NimNode =
   result.add vars
   result.add assign
 
-proc var_types(vars: NimNode, throw_errors: bool): seq[tuple[name, typ: string]] =
+proc var_types(vars: NimNode): seq[tuple[name, typ: string]] =
   for sect in vars:
     if sect.kind == nnkVarSection:
       for node in sect:
@@ -52,19 +33,18 @@ proc var_types(vars: NimNode, throw_errors: bool): seq[tuple[name, typ: string]]
         elif t.kind == nnkEmpty:
           node[1].str_val
         else:
-          if throw_errors:
-            error("Don't know how to create getter/setter for " & t.repr, t)
+          error("Don't know how to create getter/setter for " & t.repr, t)
           return
         result.add (node[0].str_val, typ)
 
-proc build_ctors(name_str: string, type_name, cradle_name: NimNode, params: seq[NimNode], throw_errors: bool): NimNode =
+proc build_ctors(name_str: string, type_name, cradle_name: NimNode, params: seq[NimNode]): NimNode =
   var ctor_body = quote do:
     instance.ctrl.create_new()
     result = `cradle_name`
 
   # TODO: ident normalization
-  let vars = params_to_vars(params, throw_errors)
-  let var_names = var_types(vars, throw_errors).map_it it.name
+  let vars = params_to_vars(params)
+  let var_names = var_types(vars).map_it it.name
   for name in var_names:
     let setter = ident("set_" & name)
     let named_var = ident(name)
@@ -79,22 +59,19 @@ proc build_ctors(name_str: string, type_name, cradle_name: NimNode, params: seq[
   if "global" notin var_names:
     params &= new_ident_defs(global, new_empty_node(), ident("global_default"))
   ctor_body.add quote do:
-    if `global` != global_default:
-      result.ctrl.set_global(`global`)
+    result.ctrl.set_global(`global`)
 
   var speed = "speed".ident
   if "speed" notin var_names:
     params &= new_ident_defs(speed, new_empty_node(), new_float_lit_node(-1.0))
   ctor_body.add quote do:
-    if `speed` != -1.0:
-      result.ctrl.set("speed", `speed`)
+    result.ctrl.set("speed", `speed`)
 
   var color = "color".ident
   if "color" notin var_names:
     params &= new_ident_defs(color, new_empty_node(), bind_sym"eraser")
   ctor_body.add quote do:
-    if `color` != eraser:
-      result.ctrl.set_color(`color`)
+    result.ctrl.set_color(`color`)
 
   # add baked in constructor params for speed, color, etc.
   # probably shouldn't be here.
@@ -105,9 +82,9 @@ proc build_ctors(name_str: string, type_name, cradle_name: NimNode, params: seq[
     body = ctor_body
   )
 
-proc build_accessors(vars: NimNode, throw_errors: bool): NimNode =
+proc build_accessors(vars: NimNode): NimNode =
   result = new_stmt_list()
-  for (name, typ) in var_types(vars, throw_errors):
+  for (name, typ) in var_types(vars):
     let var_name = name.ident
     let typ = typ.ident
     let setter_name = ("set_" & name).ident
@@ -117,14 +94,10 @@ proc build_accessors(vars: NimNode, throw_errors: bool): NimNode =
         `var_name`
       me.user_ctrl.`setter_name` = proc(val: `typ`) =
         `var_name` = val
-  let col = "col".ident
-  result.add quote do:
-    me.ctrl.set_color = proc(`col`: ColorIndex) =
-      color = `col`
 
-proc build_public_interface(vars, type_name: NimNode, throw_errors: bool): NimNode =
+proc build_public_interface(vars, type_name: NimNode): NimNode =
   result = new_stmt_list()
-  for (name, typ) in var_types(vars, throw_errors):
+  for (name, typ) in var_types(vars):
     let
       getter_name = name.ident
       setter_name = ident(name & "=")
@@ -138,7 +111,7 @@ proc build_public_interface(vars, type_name: NimNode, throw_errors: bool): NimNo
       proc `setter_name`*(self: `type_name`, val: `typ`) =
         self.user_ctrl.`setter_accessor`(val)
 
-proc build_controller(name_str: string, type_name, vars: NimNode, throw_errors: bool): NimNode =
+proc build_controller(name_str: string, type_name, vars: NimNode): NimNode =
   result = quote do:
     type
       `type_name`* = ref object
@@ -150,7 +123,7 @@ proc build_controller(name_str: string, type_name, vars: NimNode, throw_errors: 
   fields.del(0)
   fields.del(0)
 
-  for (name, typ) in var_types(vars, throw_errors):
+  for (name, typ) in var_types(vars):
     var getter = getter.copy_nim_tree
     var setter = setter.copy_nim_tree
 
@@ -163,54 +136,94 @@ proc build_controller(name_str: string, type_name, vars: NimNode, throw_errors: 
     fields.add getter
     fields.add setter
 
-template section_marker*(section: string) {.pragma.}
+proc extract_class_info(name_node: NimNode): tuple[name: string, params: seq[NimNode]] =
+  result = if name_node.kind == nnkIdent:
+      (name_node.str_val, @[])
+    elif name_node.kind in [nnkCall, nnkCommand]:
+      name_node[0].expect_kind nnkIdent
+      (name_node[0].str_val, name_node[1..^1])
+    else:
+      error("expected `name my_name` or `name my_name(my_param1 = 1, my_param2 = 2, ...)`", name_node)
+      return
 
-macro class_name*(name, base_class, throw_errors: untyped): untyped =
-  let throw_errors = throw_errors.bool_val
-  try:
-    let (name_str, params) =
-      if name.kind == nnkIdent:
-        (name.str_val, @[])
-      elif name.kind == nnkCall:
-        name[0].expect_kind nnkIdent
-        (name[0].str_val, name[1..^1])
-      else:
-        if throw_errors:
-          error("expected `name my_name` or `name my_name(my_param1 = 1, my_param2 = 2, ...)`", name)
-        return
+proc build_class(name_node: NimNode, is_clone: bool): NimNode =
+  let base_class = ident"ScriptNode"
+  let (name, params) = extract_class_info(name_node)
 
-    let
-      type_name = (name_str & "Type").to_upper_ascii.nim_ident_normalize.ident
-      var_name = name_str.ident
-      cradle_name = (name_str & "_cradle").to_lower_ascii.nim_ident_normalize.ident
-      clone_name = name_str & "_clone"
-      vars = params_to_vars(params, throw_errors)
-      ctors = build_ctors(name_str, type_name, cradle_name, params, throw_errors)
-      controller_type = (name_str & "Controller").to_upper_ascii.nim_ident_normalize.ident
-      controller = build_controller(name_str, controller_type, vars, throw_errors)
-      accessors = build_accessors(vars, throw_errors)
-      iface = build_public_interface(vars, type_name, throw_errors)
-      vars_code = vars.repr
-      accessors_code = accessors.repr
+  let
+    type_name = (name & "Type").to_upper_ascii.nim_ident_normalize.ident
+    var_name = name.ident
+    cradle_name = (name & "_cradle").to_lower_ascii.nim_ident_normalize.ident
+    clone_name = name & "_clone"
+    vars = params_to_vars(params)
+    ctors = build_ctors(name, type_name, cradle_name, params)
+    controller_type = (name & "Controller").to_upper_ascii.nim_ident_normalize.ident
+    controller = build_controller(name, controller_type, vars)
+    iface = build_public_interface(vars, type_name)
 
-    result = quote do:
-      when is_clone and enu_root:
-        let me {.inject.} = `type_name`(name: `clone_name`, ctrl: Controller(), user_ctrl: `controller_type`())
-        `cradle_name` = me
-      when not is_clone and enu_root:
-        `controller`
-        type
-          `type_name`* = ref object of `base_class`
-            create_new*: proc()
-            user_ctrl*: `controller_type`
-        `iface`
-        let me {.inject.} = `type_name`(name: `name_str`, user_ctrl: `controller_type`(), ctrl: Controller())
-        let `var_name`* {.inject.} = me
-        var `cradle_name`*: `type_name`
-        `ctors`
-      when not enu_root:
-        `vars`
-        `accessors`
-  except:
-    if throw_errors:
-      raise
+  result = new_stmt_list()
+  if is_clone:
+    result.add quote do:
+      let me {.inject.} = `type_name`(name: `clone_name`, ctrl: Controller(), user_ctrl: `controller_type`())
+      `cradle_name` = me
+  else:
+    let name_str = name
+    result.add quote do:
+      `controller`
+      type
+        `type_name`* = ref object of `base_class`
+          create_new*: proc()
+          user_ctrl*: `controller_type`
+      `iface`
+      let me {.inject.} = `type_name`(name: `name_str`, user_ctrl: `controller_type`(), ctrl: Controller())
+      let `var_name`* {.inject.} = me
+      var `cradle_name`*: `type_name`
+      `ctors`
+
+proc build_vars_and_accessors(name_node: NimNode): NimNode =
+  let
+    (name, params) = extract_class_info(name_node)
+    vars = params_to_vars(params)
+    accessors = build_accessors(vars)
+
+  result = gen_ast(vars, accessors):
+    vars
+    accessors
+
+proc pop_name_node(ast: NimNode): NimNode =
+  let ident_name = "name"
+  for i, node in ast:
+    if node.kind in [nnkCommand, nnkCall]:
+      if node.len == 2 and node[1].kind in [nnkIdent, nnkCall] and node[0].eq_ident(ident_name):
+        result = node[1]
+        ast.del(i)
+        break
+
+macro load_enu_script*(file_name, include_name: string, is_clone: bool): untyped =
+  let
+    file_name = file_name.str_val
+    is_clone: bool = is_clone.bool_val
+  let ast = parse_stmt(file_name.static_read, file_name)
+  let name_node = pop_name_node(ast)
+  let include_file = quote do:
+    include `include_name`
+  result = new_stmt_list()
+  var inner = new_stmt_list()
+  if name_node.kind != nnkNilLit:
+    result.add build_class(name_node, is_clone)
+    result.add include_file
+    inner.add build_vars_and_accessors(name_node)
+    if is_clone:
+      inner.add quote do:
+        sleep(0.1)
+
+  else:
+    result.add quote do:
+      let me {.inject.} = ScriptNode(ctrl: Controller())
+    result.add include_file
+
+  inner.add ast
+  result.add new_block_stmt(inner)
+
+  echo "processed script: "
+  echo result.repr
