@@ -26,9 +26,9 @@ bin_dir       = "app/_dlls"
 src_dir       = "src"
 bin           = @["enu" & lib_ext]
 
-requires "nim >= 1.6.0", # godot transform issue in 1.6.2
+requires "nim 1.6.0", # godot transform issue in 1.6.2
          "https://github.com/pragmagic/godot-nim#982ab52",
-         "https://github.com/dsrw/Nim#0cfef707e3eed99b32f909e3aa5e41a05af734d8",
+         "https://github.com/dsrw/Nim#d0e5ddb90f7b2e55f01a55881fe86313db9c2263",
          "https://github.com/dsrw/model_citizen 0.6.5",
          "cligen 1.5.19",
          "print#f78c855",
