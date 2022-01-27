@@ -23,6 +23,7 @@ proc change_code(self: Unit, code: string) =
       self.script_ctx = ScriptCtx.init
       unit_ctxs[self.script_ctx.engine] = self
     self.script_ctx.script = self.script_file
+    self.script_ctx.retry_on_nil = true
     self.load_script()
 
 proc remove_from_scene(unit: Unit) =
