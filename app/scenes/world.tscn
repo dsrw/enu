@@ -19,7 +19,7 @@ data = PoolVector3Array( 500, 0, 500, -500, 0, 500, 500, 0, -500, -500, 0, 500, 
 environment = ExtResource( 2 )
 
 [node name="DirectionalLight" type="DirectionalLight" parent="WorldEnvironment"]
-transform = Transform( 0.703741, 0.70968, -0.0332158, -0.669706, 0.678255, 0.30243, 0.237158, -0.190588, 0.952593, 7.97419, 19.1694, 0.816371 )
+transform = Transform( -0.720719, -0.691799, -0.0444846, -0.669706, 0.678255, 0.302431, -0.179049, 0.247759, -0.952133, 7.77656, 18.6011, 2.38791 )
 light_energy = 2.5
 light_specular = 0.8
 shadow_enabled = true

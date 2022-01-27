@@ -28,3 +28,4 @@ dist_config.json
 /.last_test
 nimble.develop
 nimble.paths
+/t.nim
