@@ -158,7 +158,7 @@ proc fire(self: Build) =
     let transform = Transform.init(origin = global_point)
     state.units += Bot.init(transform = transform)
   elif state.tool.value == Code:
-    let (root, _) = self.find_root
+    let (root, _) = self.find_root(true)
     state.open_unit.value = root
 
 method on_begin_move*(self: Build, direction: Vector3, steps: float, moving: bool): Callback =
@@ -317,10 +317,10 @@ proc init*(_: type Build, transform = Transform.init, color = default_color,
 
   self.flags.changes:
     if Hover.added and state.tool.value == Code:
-      let (root, _) = self.find_root
+      let (root, _) = self.find_root(true)
       root.walk_tree proc(unit: Unit) = unit.flags += Highlight
     elif Hover.removed:
-      let (root, _) = self.find_root
+      let (root, _) = self.find_root(true)
       root.walk_tree proc(unit: Unit) = unit.flags -= Highlight
     if TargetMoved.touched:
       let plane = self.to_global(self.target_point) * self.target_normal

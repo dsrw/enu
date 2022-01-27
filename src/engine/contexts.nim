@@ -29,14 +29,33 @@ proc is_script_loadable*(self: Unit): bool =
   let ctx = self.script_ctx
   ctx.script != "none" and ctx.script.file_exists
 
-proc error*(ctx: ScriptCtx, ex: ref VMQuit) =
+proc error*(self: Unit, ex: ref VMQuit) =
+  var ctx = self.script_ctx
   ctx.engine.running = false
   when defined(enu_simulate):
     raise ex
   else:
-    state.err "Exception executing " & ctx.script
-    state.err ex.msg
-    trigger("script_error")
+    let (root, _) = self.find_root(true)
+    ctx = root.script_ctx
+    if ctx.retry_on_nil and ("attempt to access a nil address" in ex.msg):
+      echo "RETRYING!!!!!!!!!!!"
+      ctx.retry_on_nil = false
+      root.reset()
+      ctx.engine.running = true
+      var waiting = true
+      ctx.engine.callback = proc(delta: float): bool =
+        if waiting:
+          waiting = false
+          true
+        else:
+          echo "RELOADING ON RETRY!!!!"
+          ctx.engine.callback = nil
+          root.load_script()
+          false
+    else:
+      state.err "Exception executing " & self.script_ctx.script
+      state.err ex.msg
+      trigger("script_error")
 
 proc retry_failed_scripts* =
   var prev_failed = failed
@@ -46,7 +65,7 @@ proc retry_failed_scripts* =
     f.unit.load_script()
   if failed.len > 0 and prev_failed.len == failed.len:
     for f in failed:
-      f.unit.script_ctx.error(f.ex)
+      f.unit.error(f.ex)
 
 proc update_running_state(self: Unit, running: bool) =
   self.script_ctx.engine.running = running
@@ -83,7 +102,7 @@ proc advance*(self: Unit, delta: float64) =
         e.callback = nil
         discard e.resume()
   except VMQuit as e:
-    self.script_ctx.error(e)
+    self.error(e)
 
 proc begin_move(self: Unit, direction: Vector3, steps: float, moving: bool): bool =
   echo "begin move"
@@ -187,7 +206,7 @@ proc load_script*(self: Unit, script = "") =
       self.script_ctx.engine.running = false
       failed.add (self, e)
     else:
-      self.script_ctx.error(e)
+      self.error(e)
 
 proc create_new(self: Unit): bool =
   let unit = active_unit()
@@ -200,11 +219,12 @@ proc create_new(self: Unit): bool =
   unit_ctxs[new_engine] = clone
 
   ae.callback = proc(delta: float): bool =
-    if not new_engine.initialized:
-      clone.code.value = clone.script_file.read_file
-      true
-    else:
-      false
+    not new_engine.initialized
+    # if not new_engine.initialized:
+    #   clone.code.value = clone.script_file.read_file
+    #   true
+    # else:
+    #   false
 
   set_active(ae)
   unit.units.add(clone)

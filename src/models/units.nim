@@ -6,15 +6,17 @@ import core, models / [types, states], engine / engine
 proc init*(_: type Model, node: Node): Model =
   result = Model(flags: ZenSet[ModelFlags].init, node: node)
 
-proc find_root*(self: Unit): tuple[unit: Unit, offset: Vector3] =
+proc find_root*(self: Unit, all_clones = false): tuple[unit: Unit, offset: Vector3] =
   result.unit = self
   result.offset -= self.transform.origin
   var parent = self.parent
-  var found_global = Global in self.flags
+
   while parent != nil:
     result.unit = parent
-    if Global in parent.flags:
+
+    if (all_clones and not parent.script_ctx.is_clone) or (not all_clones and Global in parent.flags):
       parent = nil
+
     else:
       result.offset -= parent.transform.origin
       parent = parent.parent

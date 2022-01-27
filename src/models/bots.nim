@@ -87,10 +87,10 @@ proc init*(_: type Bot, transform = Transform.init, clone_of: Bot = nil, global 
     if Hover.added:
       state.reticle = true
       if state.tool.value != Block:
-        let (root, _) = self.find_root
+        let (root, _) = self.find_root(true)
         root.walk_tree proc(unit: Unit) = unit.flags += Highlight
     elif Hover.removed:
-      let (root, _) = self.find_root
+      let (root, _) = self.find_root(true)
       root.walk_tree proc(unit: Unit) = unit.flags -= Highlight
       if state.tool.value != Code:
         state.reticle = false
@@ -98,7 +98,7 @@ proc init*(_: type Bot, transform = Transform.init, clone_of: Bot = nil, global 
   state.input_flags.changes:
     if Hover in self.flags:
       if Primary.added and state.tool.value == Code:
-        let (root, _) = self.find_root
+        let (root, _) = self.find_root(true)
         state.open_unit.value = root
       if Secondary.added and state.tool.value == Place:
         if self.parent.is_nil:

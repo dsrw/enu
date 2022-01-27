@@ -101,6 +101,7 @@ type
     load_vars*: proc()
     is_clone*: bool
     speed*: float
+    retry_on_nil*: bool
 
   Config* = ref object
     font_size*: int
