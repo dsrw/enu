@@ -9,14 +9,15 @@ var
   speed* = 1.0
   scale* = 1.0
   color*: ColorIndex
+  move_mode = true
 
 include base_api
 
-me.ctrl.begin_move = proc(direction: Vector3, steps: float, self: ScriptNode) =
-  self.wait begin_move(direction, steps)
+me.ctrl.begin_move = proc(direction: Vector3, steps: float, self: ScriptNode, moving: bool) =
+  self.wait begin_move(direction, steps, true)
 
-me.ctrl.begin_turn = proc(axis: Vector3, degrees: float, self: ScriptNode) =
-  self.wait begin_turn(axis, degrees)
+me.ctrl.begin_turn = proc(axis: Vector3, degrees: float, self: ScriptNode, moving: bool) =
+  self.wait begin_turn(axis, degrees, true)
 
 me.ctrl.advance_state_machine = proc(): bool = advance_state_machine()
 me.ctrl.yield_script = proc() = yield_script()

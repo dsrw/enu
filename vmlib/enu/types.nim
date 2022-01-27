@@ -15,8 +15,8 @@ type
     action_running*: bool
     advance_state_machine*: proc(): bool
     yield_script*: proc()
-    begin_move*: proc(direction: Vector3, steps: float, self: ScriptNode)
-    begin_turn*: proc(axis: Vector3, degrees: float, self: ScriptNode)
+    begin_move*: proc(direction: Vector3, steps: float, self: ScriptNode, moving: bool)
+    begin_turn*: proc(axis: Vector3, degrees: float, self: ScriptNode, moving: bool)
     look_at*: proc(target: ScriptNode)
     set*: proc(var_name: string, value: float)
     get*: proc(var_name: string): float

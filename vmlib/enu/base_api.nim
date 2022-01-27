@@ -25,18 +25,18 @@ proc near(node: ScriptNode, less_than = 5.0): bool =
 proc echo_console(msg: string) = discard
 proc echo(msg: varargs[string, `$`]) = echo_console msg.join
 
-proc begin_move(direction: Vector3, steps: float) = discard
-proc begin_turn(axis: Vector3, steps: float) = discard
+proc begin_move(direction: Vector3, steps: float, moving: bool) = discard
+proc begin_turn(axis: Vector3, steps: float, moving: bool) = discard
 
-proc forward(steps = 1.0) = target.ctrl.begin_move(FORWARD, steps, me)
-proc back(steps = 1.0) = target.ctrl.begin_move(BACK, steps, me)
-proc left(steps = 1.0): Direction {.discardable.} = target.ctrl.begin_move(LEFT, steps, me)
-proc right(steps = 1.0): Direction {.discardable.} = target.ctrl.begin_move(RIGHT, steps, me)
+proc forward(steps = 1.0) = target.ctrl.begin_move(FORWARD, steps, me, move_mode)
+proc back(steps = 1.0) = target.ctrl.begin_move(BACK, steps, me, move_mode)
+proc left(steps = 1.0): Direction {.discardable.} = target.ctrl.begin_move(LEFT, steps, me, move_mode)
+proc right(steps = 1.0): Direction {.discardable.} = target.ctrl.begin_move(RIGHT, steps, me, move_mode)
 proc l(steps = 1.0): Direction {.discardable.} = left(steps)
 proc r(steps = 1.0): Direction {.discardable.} = right(steps)
-proc up(steps = 1.0): Direction {.discardable.} = target.ctrl.begin_move(UP, steps, me)
+proc up(steps = 1.0): Direction {.discardable.} = target.ctrl.begin_move(UP, steps, me, move_mode)
 proc u(steps = 1.0): Direction {.discardable.} = up(steps)
-proc down(steps = 1.0): Direction {.discardable.} = target.ctrl.begin_move(DOWN, steps, me)
+proc down(steps = 1.0): Direction {.discardable.} = target.ctrl.begin_move(DOWN, steps, me, move_mode)
 proc d(steps = 1.0): Direction {.discardable.} = down(steps)
 
 proc set_global(global: bool) = discard
@@ -57,7 +57,7 @@ proc turn(direction: proc(steps = 1.0): Direction, degrees = 90.0) =
     else: Vector3()
 
   assert axis != Vector3(), "Invalid direction"
-  target.ctrl.begin_turn(axis, degrees, me)
+  target.ctrl.begin_turn(axis, degrees, me, move_mode)
 
 proc t(direction: proc(steps = 1.0): Direction, degrees = 90.0) =
   turn(direction, degrees)

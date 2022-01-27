@@ -71,7 +71,6 @@ gdobj BuildNode of VoxelTerrain:
       self.unit.chunks[chunk_id].untrack(zid)
     self.active_chunks.del(chunk_id)
 
-
   proc track_changes() =
     self.unit.energy.changes:
       if added:

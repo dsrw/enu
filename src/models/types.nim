@@ -90,7 +90,6 @@ type
     voxels_per_frame*: float
     voxels_remaining_this_frame*: float
     drawing*: bool
-    moving*: bool
     save_points*: Table[string, tuple[position: Transform, index: int, drawing: bool]]
     bounds*: ZenValue[AABB]
 

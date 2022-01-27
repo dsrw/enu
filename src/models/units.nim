@@ -39,10 +39,10 @@ proc script_file*(self: Unit): string =
 proc data_file*(self: Unit): string =
   self.data_dir / self.id & ".json"
 
-method on_begin_move*(self: Unit, direction: Vector3, steps: float): Callback {.base.} =
+method on_begin_move*(self: Unit, direction: Vector3, steps: float, moving: bool): Callback {.base.} =
   quit "override me"
 
-method on_begin_turn*(self: Unit, direction: Vector3, degrees: float): Callback {.base.} =
+method on_begin_turn*(self: Unit, direction: Vector3, degrees: float, moving: bool): Callback {.base.} =
   quit "override me"
 
 method clone*(self: Unit, clone_to: Unit, ctx: ScriptCtx): Unit {.base.} =

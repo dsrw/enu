@@ -13,11 +13,11 @@ var
 
 include base_api
 
-me.ctrl.begin_move = proc(direction: Vector3, steps: float, self: ScriptNode) =
-  self.wait begin_move(direction, steps)
+me.ctrl.begin_move = proc(direction: Vector3, steps: float, self: ScriptNode, moving: bool) =
+  self.wait begin_move(direction, steps, moving)
 
-me.ctrl.begin_turn = proc(axis: Vector3, degrees: float, self: ScriptNode) =
-  self.wait begin_turn(axis, degrees)
+me.ctrl.begin_turn = proc(axis: Vector3, degrees: float, self: ScriptNode, moving: bool) =
+  self.wait begin_turn(axis, degrees, moving)
 
 me.ctrl.advance_state_machine = proc(): bool = advance_state_machine()
 me.ctrl.yield_script = proc() = yield_script()
@@ -74,12 +74,11 @@ proc pc*()                          = prev_color()
 # Helpers
 proc load_defaults()             = discard
 
-proc set_vars*(color_index: int, drw: bool, spd, scl: float, mv: bool, eg: float) =
+proc set_vars*(color_index: int, drw: bool, spd, scl: float, eg: float) =
   color = ColorIndex color_index
   drawing = drw
   speed = spd
   scale = scl
-  move_mode = mv
   energy = eg
 
 proc fill_square*(length = 1) =

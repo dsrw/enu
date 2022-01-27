@@ -161,8 +161,8 @@ proc fire(self: Build) =
     let (root, _) = self.find_root
     state.open_unit.value = root
 
-method on_begin_move*(self: Build, direction: Vector3, steps: float): Callback =
-  if self.moving:
+method on_begin_move*(self: Build, direction: Vector3, steps: float, moving: bool): Callback =
+  if moving:
     let steps = steps.float
     var duration = 0.0
     let
@@ -173,7 +173,8 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float): Callback =
     result = proc(delta: float): bool =
       duration += delta
       if duration >= finish_time:
-        self.transform.origin = finish
+        # TODO?
+        #self.transform.origin = finish
         return false
       else:
         self.transform.origin = self.transform.origin + (moving * self.speed * delta)
@@ -193,10 +194,10 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float): Callback =
       result = count.float < steps
   active_ctx().start_advance_timer()
 
-method on_begin_turn*(self: Build, axis: Vector3, degrees: float): Callback =
+method on_begin_turn*(self: Build, axis: Vector3, degrees: float, moving: bool): Callback =
   let map = {LEFT: UP, RIGHT: DOWN, UP: RIGHT, DOWN: LEFT}.to_table
   let axis = map[axis]
-  if self.moving:
+  if moving:
     var duration = 0.0
     let axis = self.transform.basis.xform(axis)
     var final_transform = self.transform.value
@@ -208,7 +209,8 @@ method on_begin_turn*(self: Build, axis: Vector3, degrees: float): Callback =
       if duration <= 1.0 / self.speed:
         true
       else:
-        self.transform.value = final_transform
+        # TODO?
+        #self.transform.value = final_transform
         false
     active_ctx().start_advance_timer()
   else:
@@ -218,7 +220,6 @@ method on_begin_turn*(self: Build, axis: Vector3, degrees: float): Callback =
 
 proc reset_state(self: Build) =
   self.draw_transform = Transform.init
-  self.moving = false
 
 method reset*(self: Build) =
   self.reset_state()
@@ -237,7 +238,7 @@ proc set_vars*(self: Build) =
   let module_name = engine.module_name
 
   engine.call_proc("set_vars", module_name = module_name, action_index(self.color).int,
-                   self.drawing, self.speed, self.scale, self.moving, self.energy.value)
+                   self.drawing, self.speed, self.scale, self.energy.value)
 
 method load_vars*(self: Build) =
   let old_speed = self.speed
@@ -247,7 +248,6 @@ method load_vars*(self: Build) =
   let
     e = ctx.engine
     scale_factor = ctx.engine.get_float("scale", e.module_name).round(3)
-  self.moving = ctx.engine.get_bool("move_mode", e.module_name)
   self.color = action_colors[Colors(ctx.engine.get_int("color", e.module_name))]
   self.drawing = ctx.engine.get_bool("drawing", e.module_name)
   self.voxels_per_frame = if self.speed == 0:
