@@ -63,7 +63,7 @@ proc build_ctors(name_str: string, type_name, cradle_name: NimNode, params: seq[
 
   var speed = "speed".ident
   if "speed" notin var_names:
-    params &= new_ident_defs(speed, new_empty_node(), new_float_lit_node(-1.0))
+    params &= new_ident_defs(speed, new_empty_node(), new_float_lit_node(1.0))
   ctor_body.add quote do:
     result.ctrl.set("speed", `speed`)
 
