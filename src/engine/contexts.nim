@@ -85,24 +85,25 @@ proc advance*(self: Unit, delta: float64) =
   except VMQuit as e:
     self.script_ctx.error(e)
 
-proc begin_move(self: Unit, direction: Vector3, steps: float): bool =
+proc begin_move(self: Unit, direction: Vector3, steps: float, moving: bool): bool =
+  echo "begin move"
   self.load_vars()
   var steps = steps
   var direction = direction
   if steps < 0:
     steps = steps * -1
     direction = direction * -1
-  active_engine().callback = self.on_begin_move(direction, steps)
+  active_engine().callback = self.on_begin_move(direction, steps, moving)
   result = not active_engine().callback.is_nil
 
-proc begin_turn(self: Unit, direction: Vector3, degrees: float): bool =
+proc begin_turn(self: Unit, direction: Vector3, degrees: float, moving: bool): bool =
   self.load_vars()
   var degrees = degrees
   var direction = direction
   if degrees < 0:
     degrees = degrees * -1
     direction = direction * -1
-  active_engine().callback = self.on_begin_turn(direction, degrees)
+  active_engine().callback = self.on_begin_turn(direction, degrees, moving)
   result = not active_engine().callback.is_nil
 
 proc load_script*(self: Unit, script = "") =
@@ -137,8 +138,8 @@ proc load_script*(self: Unit, script = "") =
             active_engine().saved_callback = nil
             true
 
-          expose "begin_move", a => self.begin_move(get_vec3(a, 0), get_float(a, 1))
-          expose "begin_turn", a => self.begin_turn(get_vec3(a, 0), get_float(a, 1))
+          expose "begin_move", a => self.begin_move(get_vec3(a, 0), get_float(a, 1), get_bool(a, 2))
+          expose "begin_turn", a => self.begin_turn(get_vec3(a, 0), get_float(a, 1), get_bool(a, 2))
           expose "echo_console", a => echo_console(get_string(a, 0))
           expose "create_new", a => self.create_new()
           expose "sleep", proc(a: VmArgs): bool =
@@ -196,8 +197,15 @@ proc create_new(self: Unit): bool =
   clone.script_ctx.is_clone = true
   clone.script_ctx.script = self.script_file
   let new_engine = clone.script_ctx.engine
-  unit.units.add(clone)
-  clone.load_script()
-  set_active(ae)
+  unit_ctxs[new_engine] = clone
 
-  result = false
+  ae.callback = proc(delta: float): bool =
+    if not new_engine.initialized:
+      clone.code.value = clone.script_file.read_file
+      true
+    else:
+      false
+
+  set_active(ae)
+  unit.units.add(clone)
+  result = true
