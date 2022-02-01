@@ -77,7 +77,12 @@ proc init*(_: type GameState, action_count = 0, action_index = 0): GameState =
     open_unit: ZenValue[Unit].init,
     config: Config(),
     tool: %Block,
-    gravity: -240.0
+    gravity: -240.0,
+    console: ConsoleModel(
+      log: Zen.init(seq[string]),
+      visible: ZenValue[bool].init(false),
+      show_errors: ZenValue[bool].init(false)
+    )
   )
 
   self.open_unit.changes:
