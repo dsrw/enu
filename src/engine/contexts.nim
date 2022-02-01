@@ -1,5 +1,6 @@
 import std / [monotimes, os, hashes, sets, strutils, sugar, math]
-import pkg / [godot]
+import pkg / godot except print
+import pkg / print
 import godotapi / [node]
 import core, engine/engine, models, globals
 
@@ -104,25 +105,24 @@ proc advance*(self: Unit, delta: float64) =
   except VMQuit as e:
     self.error(e)
 
-proc begin_move(self: Unit, direction: Vector3, steps: float, moving: bool): bool =
-  echo "begin move"
+proc begin_move(self: Unit, direction: Vector3, steps: float, move_mode: int): bool =
   self.load_vars()
   var steps = steps
   var direction = direction
   if steps < 0:
     steps = steps * -1
     direction = direction * -1
-  active_engine().callback = self.on_begin_move(direction, steps, moving)
+  active_engine().callback = self.on_begin_move(direction, steps, move_mode)
   result = not active_engine().callback.is_nil
 
-proc begin_turn(self: Unit, direction: Vector3, degrees: float, moving: bool): bool =
+proc begin_turn(self: Unit, direction: Vector3, degrees: float, move_mode: int): bool =
   self.load_vars()
   var degrees = degrees
   var direction = direction
   if degrees < 0:
     degrees = degrees * -1
     direction = direction * -1
-  active_engine().callback = self.on_begin_turn(direction, degrees, moving)
+  active_engine().callback = self.on_begin_turn(direction, degrees, move_mode)
   result = not active_engine().callback.is_nil
 
 proc load_script*(self: Unit, script = "") =
@@ -157,10 +157,20 @@ proc load_script*(self: Unit, script = "") =
             active_engine().saved_callback = nil
             true
 
-          expose "begin_move", a => self.begin_move(get_vec3(a, 0), get_float(a, 1), get_bool(a, 2))
-          expose "begin_turn", a => self.begin_turn(get_vec3(a, 0), get_float(a, 1), get_bool(a, 2))
-          expose "echo_console", a => echo_console(get_string(a, 0))
+          expose "begin_move", a => self.begin_move(get_vec3(a, 0), get_float(a, 1), get_int(a, 2).int)
+          expose "begin_turn", a => self.begin_turn(get_vec3(a, 0), get_float(a, 1), get_int(a, 2).int)
+          expose "echo_console", proc(a: VmArgs): bool =
+            let msg = a.get_string(0)
+            echo msg
+            state.console.log += msg
           expose "create_new", a => self.create_new()
+          expose "collision", proc(a: VmArgs): bool =
+            for collision in self.collisions:
+              if collision.model == state.player:
+                a.set_result(collision.normal.snapped(vec3(1, 1, 1)).to_node)
+                return false
+            a.set_result(vec3().to_node)
+            false
           expose "sleep", proc(a: VmArgs): bool =
             self.load_vars()
             let seconds = get_float(a, 0)
@@ -194,8 +204,25 @@ proc load_script*(self: Unit, script = "") =
             self.transform.origin = v
             false
           expose "get_rotation", proc(a: VmArgs): bool =
-            let r = self.transform.basis.get_euler
-            a.set_result(vec3(r.x.rad_to_deg, r.y.rad_to_deg, r.z.rad_to_deg).to_node)
+            # TODO: fix this
+            proc nm(f: float): float =
+              if f.is_equal_approx(0):
+                return 0
+              elif f < 0:
+                return f + (2 * PI)
+              else:
+                return f
+
+            proc nm(v: Vector3): Vector3 =
+              vec3(v.x.nm, v.y.nm, v.z.nm)
+
+            let e = self.transform.basis.get_euler
+
+            let n = e.nm
+            let v = vec3(nm(n.x).rad_to_deg, nm(n.y).rad_to_deg, nm(n.z).rad_to_deg)
+            let m = if v.z > 0: 1.0 else: -1.0
+            let v2 = vec3(0.0, (v.x - v.y) * m, 0.0)
+            a.set_result(v2.to_node)
             return false
         self.on_script_loaded()
     if not state.paused:
