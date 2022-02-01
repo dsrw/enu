@@ -36,3 +36,7 @@ template cycle*[T](args: varargs[T]): T =
 
 proc contains*(max, chance: int): bool =
   rand(1..max) <= chance
+
+template o*(body) =
+  while true:
+    body

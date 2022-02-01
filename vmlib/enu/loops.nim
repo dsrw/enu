@@ -5,9 +5,14 @@ var
 
 proc yield_script = discard
 
+var load_values: proc()
+
 proc advance_state_machine(): bool =
   result = if not context.is_nil:
-    context.advance()
+    let val = context.advance()
+    if load_values != nil:
+      load_values()
+    val
   else:
     true
 
@@ -20,6 +25,8 @@ template wait(node: ScriptNode, body: untyped) =
     body
     while node.ctrl.action_running and node.ctrl.advance_state_machine():
       node.ctrl.yield_script()
+    if load_values != nil:
+      load_values()
   else:
     # only for tests
     var counter = 0

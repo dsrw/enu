@@ -63,7 +63,7 @@ gdobj Game of Node:
 
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
-      save_scene()
+      save_world()
       self.get_tree().quit()
     if what == main_loop.NOTIFICATION_WM_ABOUT:
       alert(&"Enu {enu_version}\n\n© 2022 Scott Wadden", "Enu")
@@ -155,18 +155,6 @@ gdobj Game of Node:
     self.stats = self.find_node("stats").as(Label)
     self.stats.visible = config.show_stats
 
-    globals.reload_scripts = proc() =
-      trigger("save")
-      trigger("reload")
-
-    globals.save_and_reload = proc() =
-      trigger("save")
-      trigger("reload_all")
-      globals.save_scene()
-
-    globals.save_scene = proc(immediate: bool) =
-      save_world()
-
     state.target_flags.changes:
       if MouseCaptured.added:
         let center = self.get_viewport().get_visible_rect().size * 0.5
@@ -183,8 +171,6 @@ gdobj Game of Node:
         self.reticle.visible = false
 
     state.mouse_captured = true
-    game_ready = true
-    trigger("game_ready")
 
   proc update_action_index*(change: int) =
     state.action_index += change
@@ -240,17 +226,19 @@ gdobj Game of Node:
     elif event.is_action_released("command_mode"):
       state.command_mode = false
     elif event.is_action_pressed("save_and_reload"):
-      globals.save_and_reload()
+      echo "reload all"
+      save_world()
+      UnitController.reload_all()
       self.get_tree().set_input_as_handled()
     elif event.is_action_pressed("pause"):
       state.paused = not state.paused
     elif event.is_action_pressed("clear_console"):
-      trigger("clear_console")
+      state.console.log.clear()
     elif event.is_action_pressed("toggle_console"):
-      trigger("toggle_console")
+      state.console.visible.value = not state.console.visible.value
     elif event.is_action_pressed("quit"):
       if host_os != "macosx":
-        save_scene(true)
+        save_world()
     elif not state.editing:
       if event.is_action_pressed("toggle_mouse_captured"):
         state.mouse_captured = not state.mouse_captured

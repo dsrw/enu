@@ -1,17 +1,25 @@
 import types
 
-type
-  PlayerType* = ref object of ScriptNode
-
 let player* = PlayerType(ctrl: Controller())
-let self = player
+let me = player
 
 proc quit*(exit_code = 0) = discard
 proc get_position(): Vector3 = discard
 proc get_rotation(): Vector3 = discard
+proc set_velocity(v: Vector3) = discard
+proc get_velocity(): Vector3 = discard
 
-self.ctrl.get_position = proc(): Vector3 =
+me.ctrl.get_position = proc(): Vector3 =
   get_position()
 
-self.ctrl.get_rotation = proc(): Vector3 =
+me.ctrl.get_rotation = proc(): Vector3 =
   get_rotation()
+
+me.ctrl.get_velocity = proc(): Vector3 =
+  get_velocity()
+
+me.ctrl.set_velocity = proc(v: Vector3) =
+  set_velocity(v)
+
+proc bounce*(me: PlayerType, power = 1.0) =
+  me.velocity = me.velocity + UP * power * 30

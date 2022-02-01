@@ -9,11 +9,12 @@ type
 
 let state = GameState.active
 
-proc change_code(self: Unit, code: string) =
+proc change_code(self: Unit, code: string, retry = true) =
   self.transform.value = self.start_transform
-  state.paused = false
+  if not retry_failures:
+    state.paused = false
   self.reset()
-
+  state.console.show_errors.value = false
   if code.strip == "" and file_exists(self.script_file):
     remove_file self.script_file
     remove_module self.script_file
@@ -23,10 +24,12 @@ proc change_code(self: Unit, code: string) =
       self.script_ctx = ScriptCtx.init
       unit_ctxs[self.script_ctx.engine] = self
     self.script_ctx.script = self.script_file
-    self.script_ctx.retry_on_nil = true
+    if retry:
+      self.script_ctx.retry_on_nil = true
     self.load_script()
 
 proc remove_from_scene(unit: Unit) =
+  unit.reset()
   if unit == previous_build: previous_build = nil
   if unit == current_build: current_build = nil
   let parent_node = unit.node.get_node("..")
@@ -37,6 +40,9 @@ proc remove_from_scene(unit: Unit) =
   if unit of Build: Build(unit).untrack_all
   elif unit of Bot: Bot(unit).untrack_all
   if not unit.script_ctx.is_nil and not unit.script_ctx.engine.is_nil:
+    let e = unit.script_ctx.engine
+    unit_ctxs[e] = nil
+    ctxs[e] = nil
     unit.script_ctx.engine.callback = nil
   if not unit.clone_of:
     remove_file unit.script_file
@@ -47,7 +53,12 @@ proc remove_from_scene(unit: Unit) =
   unit.parent = nil
   unit.node.owner = nil
   parent_node.remove_child(unit.node)
+  if unit.node of BuildNode:
+    BuildNode(unit.node).unit = nil
+  elif unit.node of BotNode:
+    BotNode(unit.node).unit = nil
   unit.node.queue_free()
+  unit.node = nil
 
 proc add_to_scene(unit: Unit) =
   proc add(unit: auto, T: type) =
@@ -93,6 +104,9 @@ proc find_nested_changes(parent: Change[Unit]) =
     if Added in change.changes and change of Change[string] and parent.field_name == "code":
       let change = Change[string](change)
       parent.item.change_code(change.item)
+    if Touched in change.changes and change of Change[string] and parent.field_name == "code":
+      let change = Change[string](change)
+      parent.item.change_code(change.item, false)
     if change of Change[ModelFlags]:
       let change = Change[ModelFlags](change)
       if change.item == Global:
@@ -109,6 +123,14 @@ proc watch*(f: UnitController, state: GameState) =
       find_nested_changes(change)
     elif removed():
       change.item.remove_from_scene()
+
+proc reload_all*(_: type UnitController) =
+  ctxs.clear()
+  unit_ctxs.clear()
+  reset_interpreter()
+  walk_tree state.units.value, proc(unit: Unit) =
+    unit.script_ctx = nil
+    unit.code.touch unit.code.value
 
 proc init*(_: type UnitController): UnitController =
   result = UnitController()
