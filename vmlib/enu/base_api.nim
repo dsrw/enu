@@ -22,6 +22,9 @@ proc distance(node: ScriptNode): float =
 proc near(node: ScriptNode, less_than = 5.0): bool =
   result = node.distance < less_than
 
+proc far(node: ScriptNode, greater_than = 100.0): bool =
+  result = node.distance > greater_than
+
 proc echo_console(msg: string) = discard
 proc echo(msg: varargs[string, `$`]) = echo_console msg.join
 
