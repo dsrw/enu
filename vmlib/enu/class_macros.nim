@@ -29,7 +29,12 @@ proc var_types(vars: NimNode): seq[tuple[name, typ: string]] =
       for node in sect:
         let t = node[2]
         let typ = if t.kind in nnkLiterals:
-          ($t.kind)[3..^4].to_lower_ascii
+          if t.kind in nnkStrLit..nnkTripleStrLit:
+            "string"
+          else:
+            ($t.kind)[3..^4].to_lower_ascii
+        elif t == ident"true" or t == ident"false":
+          "bool"
         elif t.kind == nnkEmpty:
           node[1].str_val
         else:
@@ -126,6 +131,8 @@ proc build_controller(name_str: string, type_name, vars: NimNode): NimNode =
   for (name, typ) in var_types(vars):
     var getter = getter.copy_nim_tree
     var setter = setter.copy_nim_tree
+
+    echo "NAME: ", name, " ", typ.ident
 
     getter[0][1] = ident("get_" & name)
     getter[1][0][0] = typ.ident

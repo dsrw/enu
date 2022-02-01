@@ -4,6 +4,8 @@
 --tlsEmulation:off
 --threadAnalysis:off
 --define:nimPreviewHashRef
+#--define:nimLeakDetector
+--define:enuHacks
 
 if project_name() == "enu":
   --app:lib
