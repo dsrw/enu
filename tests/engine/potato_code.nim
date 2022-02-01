@@ -1,4 +1,4 @@
-name potato(length = 5, width = 2, color = red, label: string)
+name potato(length = 5, width = 2, color = red, label = "hi", friendly = true)
 
 assert length == 5
 assert me.length == 5

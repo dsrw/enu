@@ -1,21 +1,28 @@
-import engine/engine, core
 import std / [sugar, os]
-include "models/default_robot.nim.nimf"
+import engine / [engine, contexts], core, models
 
-proc run_script(name: string) =
-  let
-    script_dir = nim_filename().parent_dir & "/scripts/instancing"
-    script_path = script_dir & "/" & name
-    code = default_robot(script_path, "", false)
-    e = Engine()
+var state = GameState.active
 
-  e.load(script_dir, script_path, code, "vmlib")
-  e.expose("yield_script", a => true)
-  e.expose("echo_console", a => echo(get_string(a, 0)))
+state.logger = proc(level, msg: string) =
+  echo level, ": ", msg
 
-  assert e.run()
-  while e.resume:
-    discard e.call_proc("set_action_running", e.module_name, false)
+state.config.script_dir = current_source_path().parent_dir / "scripts" / "instancing"
+state.config.lib_dir = current_source_path().parent_dir / ".." / ".." / "vmlib"
 
-run_script("box_script_1.nim")
-run_script("box_script_2.nim")
+proc create(id: string): Bot =
+  result = Bot.init()
+  result.id = id
+
+  result.script_ctx = ScriptCtx.init
+  unit_ctxs[result.script_ctx.engine] = result
+  result.script_ctx.script = result.script_file
+  result.load_script()
+
+let bot1 = create("bot_script_1")
+let bot2 = create("bot_script_2")
+
+bot2.units[0].load_script
+
+bot2.advance(0.1)
+bot2.units[1].load_script
+bot2.advance(0.1)

@@ -7,3 +7,4 @@ assert p of PotatoType
 assert p.length == 5
 assert p != potato
 assert p.label == "orange"
+assert p.friendly
