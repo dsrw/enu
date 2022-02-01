@@ -180,7 +180,7 @@ macro `->`*(from_state: untyped, to_state: untyped, body: untyped = nil) =
 
   if body.kind == nnkNilLit:
     body = new_stmt_list()
-  if from_state.kind == nnkPar:
+  if from_state.kind == nnkTupleConstr:
     for node in from_state:
       if node.kind == nnkIdent:
         includes.add(node.register)
