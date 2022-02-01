@@ -7,17 +7,24 @@ var
   speed* = 1.0
   drawing* = true
   color* = blue
-  move_mode* = false
+  move_mode* = 0
   scale* = 1.0
   energy* = 0.0
+  height* = 0.0
+  position* = vec3(0, 0, 0)
+  initial_position* = vec3(0, 0, 0)
 
 include base_api
 
-me.ctrl.begin_move = proc(direction: Vector3, steps: float, self: ScriptNode, moving: bool) =
-  self.wait begin_move(direction, steps, moving)
+load_values = proc() =
+  position = me.position
+  height = position.y
 
-me.ctrl.begin_turn = proc(axis: Vector3, degrees: float, self: ScriptNode, moving: bool) =
-  self.wait begin_turn(axis, degrees, moving)
+me.ctrl.begin_move = proc(direction: Vector3, steps: float, self: ScriptNode, move_mode: int) =
+  self.wait begin_move(direction, steps, move_mode)
+
+me.ctrl.begin_turn = proc(axis: Vector3, degrees: float, self: ScriptNode, move_mode: int) =
+  self.wait begin_turn(axis, degrees, move_mode)
 
 me.ctrl.advance_state_machine = proc(): bool = advance_state_machine()
 me.ctrl.yield_script = proc() = yield_script()
@@ -81,6 +88,11 @@ proc set_vars*(color_index: int, drw: bool, spd, scl: float, eg: float) =
   scale = scl
   energy = eg
 
+proc home*(ctx: Context = nil) =
+  forward position.z - initial_position.z
+  left position.x - initial_position.x
+  down position.y - initial_position.y
+
 proc fill_square*(length = 1) =
   for l in 0..length:
     for i in 0..3:
@@ -89,17 +101,18 @@ proc fill_square*(length = 1) =
 
 proc move*[T: ScriptNode](new_target: T) =
   target = new_target
-  move_mode = true
+  move_mode = 2
 
 proc m*[T: ScriptNode](new_target: T) =
   target = new_target
-  move_mode = true
+  move_mode = 2
 
 proc build*(new_target: ScriptNode) =
   target = new_target
-  move_mode = false
+  move_mode = 1
 
 proc print*(args: varargs[string, `$`]) =
   echo_console args.join
 
 load_defaults()
+initial_position = me.position

@@ -1,4 +1,4 @@
-import std / [hashes, tables, sets, options, sequtils, math, wrapnils]
+import std / [hashes, tables, sets, options, sequtils, math, wrapnils, monotimes, sugar]
 import pkg / [model_citizen, print]
 import core, models / [types, states, bots, colors, units, scripts], engine / engine
 const BufferSize = vec3(16, 16, 16)
@@ -161,8 +161,27 @@ proc fire(self: Build) =
     let (root, _) = self.find_root(true)
     state.open_unit.value = root
 
-method on_begin_move*(self: Build, direction: Vector3, steps: float, moving: bool): Callback =
-  if moving:
+proc is_moving(self: Build, move_mode: int): bool =
+  result = if move_mode == 1:
+    false
+  elif move_mode == 2:
+    true
+  else:
+    var computed, manual = 0
+    for _, chunk in self.chunks:
+      for _, info in chunk:
+        if info.kind == Computed:
+          computed += 1
+        elif info.kind == Manual:
+          manual += 1
+        if computed > 1:
+          return false
+    manual > 1
+
+method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: int): Callback =
+  let move = self.is_moving(move_mode)
+  if move:
+    self.voxels_per_frame = 0
     let steps = steps.float
     var duration = 0.0
     let
@@ -173,8 +192,7 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, moving: boo
     result = proc(delta: float): bool =
       duration += delta
       if duration >= finish_time:
-        # TODO?
-        #self.transform.origin = finish
+        self.transform.origin = finish
         return false
       else:
         self.transform.origin = self.transform.origin + (moving * self.speed * delta)
@@ -194,10 +212,12 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, moving: boo
       result = count.float < steps
   active_ctx().start_advance_timer()
 
-method on_begin_turn*(self: Build, axis: Vector3, degrees: float, moving: bool): Callback =
+method on_begin_turn*(self: Build, axis: Vector3, degrees: float, move_mode: int): Callback =
   let map = {LEFT: UP, RIGHT: DOWN, UP: RIGHT, DOWN: LEFT}.to_table
   let axis = map[axis]
-  if moving:
+  let move = self.is_moving(move_mode)
+  if move:
+    self.voxels_per_frame = 0
     var duration = 0.0
     let axis = self.transform.basis.xform(axis)
     var final_transform = self.transform.value
@@ -210,7 +230,7 @@ method on_begin_turn*(self: Build, axis: Vector3, degrees: float, moving: bool):
         true
       else:
         # TODO?
-        #self.transform.value = final_transform
+        self.transform.value = final_transform
         false
     active_ctx().start_advance_timer()
   else:

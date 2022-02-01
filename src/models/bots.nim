@@ -1,4 +1,4 @@
-import std / math
+import std / [math, sugar, monotimes]
 import pkg / model_citizen
 import core, models / [types, states, scripts, units], engine / engine
 include "default_robot.nim.nimf"
@@ -8,8 +8,8 @@ let state = GameState.active
 method code_template*(self: Bot, imports: string): string =
   result = default_robot(self.script_file, imports, self.script_ctx.is_clone)
 
-method on_begin_move*(self: Bot, direction: Vector3, steps: float, moving: bool): Callback =
-  # moving param is ignored
+method on_begin_move*(self: Bot, direction: Vector3, steps: float, moving_mode: int): Callback =
+  # move_mode param is ignored
   var duration = 0.0
   let
     moving = -self.transform.basis.z
@@ -26,8 +26,8 @@ method on_begin_move*(self: Bot, direction: Vector3, steps: float, moving: bool)
       return true
   active_ctx().start_advance_timer()
 
-method on_begin_turn*(self: Bot, axis: Vector3, degrees: float, moving: bool): Callback =
-  # moving param is ignored
+method on_begin_turn*(self: Bot, axis: Vector3, degrees: float, move_mode: int): Callback =
+  # move mode param is ignored
   let degrees = degrees * -axis.x
   var duration = 0.0
   var final_basis = self.transform.basis.rotated(UP, deg_to_rad(degrees))
