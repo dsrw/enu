@@ -294,7 +294,7 @@ method on_script_loaded*(self: Build) =
     false
 
 proc init*(_: type Build, transform = Transform.init, color = default_color,
-                          clone_of: Unit = nil, global = true): Build =
+                          clone_of: Unit = nil, global = true, bot_collisions = true): Build =
   let self = Build(
     id: "build_" & generate_id(),
     chunks: ZenTable[Vector3, Chunk].init(track_children = false),
@@ -311,7 +311,8 @@ proc init*(_: type Build, transform = Transform.init, color = default_color,
     drawing: true,
     bounds: Zen.init(init_aabb(vec3(), vec3(-1, -1, -1))),
     speed: 1.0,
-    clone_of: clone_of
+    clone_of: clone_of,
+    bot_collisions: bot_collisions
   )
   if global: self.flags += Global
 
@@ -347,13 +348,30 @@ proc init*(_: type Build, transform = Transform.init, color = default_color,
 
   result = self
 
+method on_collision*(self: Build, partner: Model, normal: Vector3) =
+  self.collisions.add (partner, normal)
+  if self.script_ctx:
+    self.script_ctx.timer = get_mono_time()
+
+method off_collision*(self: Build, partner: Model) =
+  self.collisions = collect:
+    for collision in self.collisions:
+      if collision.model != partner:
+        collision
+
+  if self.script_ctx:
+    self.script_ctx.timer = get_mono_time()
+
 method clone*(self: Build, clone_to: Unit, ctx: ScriptCtx): Unit =
   var transform = clone_to.transform.value
   var global = true
   if clone_to of Build:
     transform = Build(clone_to).draw_transform
     global = false
-  let clone = Build.init(transform = transform, clone_of = self, global = global, color = self.start_color )
+
+  let bot_collisions = not (clone_to of Bot)
+  let clone = Build.init(transform = transform, clone_of = self, global = global,
+                         color = self.start_color, bot_collisions = bot_collisions)
   clone.parent = clone_to
   for chunk_id, chunk in self.chunks:
     let target_chunk = Chunk.init

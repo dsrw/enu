@@ -61,3 +61,9 @@ method load_vars*(self: Unit) {.base.} =
 
 method reset*(self: Unit) {.base.} =
   quit "override me"
+
+method on_collision*(self: Model, partner: Model, normal: Vector3) {.base.} =
+  discard
+
+method off_collision*(self: Model, partner: Model) {.base.} =
+  discard
