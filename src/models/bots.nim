@@ -112,3 +112,12 @@ method clone*(self: Bot, clone_to: Unit, ctx: ScriptCtx): Unit =
   var transform = clone_to.transform.value
   result = Bot.init(transform = transform, clone_of = self)
   result.parent = clone_to
+
+method on_collision*(self: Unit, partner: Model, normal: Vector3) =
+  self.collisions.add (partner, normal)
+
+method off_collision*(self: Unit, partner: Model) =
+  self.collisions = collect:
+    for collision in self.collisions:
+      if collision.model != partner:
+        collision

@@ -1,12 +1,26 @@
+import std / [math, sugar]
+import pkg / godot except print
+import pkg / model_citizen
 import godotapi / [kinematic_body, spatial, input, input_event,
-                         input_event_mouse_motion, input_event_joypad_motion,
-                         ray_cast, scene_tree, input_event_pan_gesture, viewport, camera, global_constants,
-                         collision_shape, kinematic_collision]
-import godot except print
-import model_citizen
-import math
-import core, globals, game, engine/engine, engine/contexts
-import aim_target
+                   input_event_mouse_motion, input_event_joypad_motion,
+                   ray_cast, scene_tree, input_event_pan_gesture, viewport, camera, global_constants,
+                   collision_shape, kinematic_collision]
+import core, globals, game, engine/engine, engine/contexts, models / [units, player_model], world / nodes
+import aim_target, models
+
+proc handle_collisions(self: PlayerModel, collisions: seq[KinematicCollision]) {.inline.} =
+  var colliders: HashSet[Model]
+  for collision in collisions:
+    let collider = collision.collider
+    let normal = collision.normal
+    let model = collider.model
+    if model notin self.colliders and model notin colliders:
+      model.on_collision(self, normal)
+    colliders.incl model
+  for model in self.colliders - colliders:
+    model.off_collision(self)
+  self.colliders = colliders
+
 
 let
   state = GameState.active
@@ -41,6 +55,7 @@ gdobj Player of KinematicBody:
     index = 0
     collision_shape: CollisionShape
     command_timer = 0.0
+    model*: PlayerModel
 
   proc get_look_direction(): Vector2 =
     vec2(get_action_strength("look_right") - get_action_strength("look_left"),
@@ -79,6 +94,8 @@ gdobj Player of KinematicBody:
       result.y = velocity_current.y + gravity * delta
 
   method ready*() =
+    self.model = PlayerModel.init(Node, self)
+    state.player = self.model
     self.camera_rig = self.get_node("CameraRig") as Spatial
     self.collision_shape = self.get_node("CollisionShape") as CollisionShape
     self.camera = self.camera_rig.get_node("Camera") as Camera
@@ -132,7 +149,7 @@ gdobj Player of KinematicBody:
           self.aim_target.update(self.aim_ray)
 
   proc load_script() =
-    let ctx = ScriptCtx(engine: Engine.init())
+    let ctx = ScriptCtx.init
     ctx.script = config.lib_dir & "/enu/players.nim"
     let code = read_file ctx.script
     ctx.engine.load(config.script_dir, ctx.script, code, config.lib_dir, "")
@@ -185,6 +202,12 @@ gdobj Player of KinematicBody:
 
       self.velocity = self.move_and_slide(velocity, UP)
 
+      let collisions = collect:
+        for i in 0..(self.get_slide_count - 1):
+          self.get_slide_collision(i)
+
+      handle_collisions(self.model, collisions)
+
       if process_input:
         # climb 1m blocks automatically
         if move_direction.length > 0.5:
@@ -236,7 +259,7 @@ gdobj Player of KinematicBody:
       if toggle:
         self.jump_time = nil_time
         self.flying = not self.flying
-        for i in [0, 1]:
+        for i in [0, 1, 2]:
           self.set_collision_mask_bit(i, not self.flying)
       elif self.is_on_floor():
         self.velocity += vec3(0, jump_impulse, 0)

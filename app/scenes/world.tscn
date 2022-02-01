@@ -42,6 +42,6 @@ shape = SubResource( 2 )
 [node name="Player" parent="." instance=ExtResource( 6 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0 )
 collision_layer = 2147483648
-collision_mask = 524291
+collision_mask = 524295
 
 [node name="data" type="Spatial" parent="."]

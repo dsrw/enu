@@ -121,6 +121,10 @@ gdobj BuildNode of VoxelTerrain:
     self.track_changes
     self.unit.draw(vec3(), (Manual, unit.start_color))
     dont_join = was_skipping_join
+    if not unit.bot_collisions:
+      var layer = 0
+      layer.set_bits(2)
+      self.collision_layer = layer
 
 let build_scene = load("res://components/BuildNode.tscn") as PackedScene
 proc init*(_: type BuildNode): BuildNode =
