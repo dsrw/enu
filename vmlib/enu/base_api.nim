@@ -28,24 +28,24 @@ proc far(node: ScriptNode, greater_than = 100.0): bool =
 proc echo_console(msg: string) = discard
 proc echo(msg: varargs[string, `$`]) = echo_console msg.join
 
-proc begin_move(direction: Vector3, steps: float, moving: bool) = discard
-proc begin_turn(axis: Vector3, steps: float, moving: bool) = discard
+proc begin_move(direction: Vector3, steps: float, moving: int) = discard
+proc begin_turn(axis: Vector3, steps: float, moving: int) = discard
 
-proc forward(steps = 1.0) = target.ctrl.begin_move(FORWARD, steps, me, move_mode)
-proc back(steps = 1.0) = target.ctrl.begin_move(BACK, steps, me, move_mode)
-proc left(steps = 1.0): Direction {.discardable.} = target.ctrl.begin_move(LEFT, steps, me, move_mode)
-proc right(steps = 1.0): Direction {.discardable.} = target.ctrl.begin_move(RIGHT, steps, me, move_mode)
-proc l(steps = 1.0): Direction {.discardable.} = left(steps)
-proc r(steps = 1.0): Direction {.discardable.} = right(steps)
-proc up(steps = 1.0): Direction {.discardable.} = target.ctrl.begin_move(UP, steps, me, move_mode)
-proc u(steps = 1.0): Direction {.discardable.} = up(steps)
-proc down(steps = 1.0): Direction {.discardable.} = target.ctrl.begin_move(DOWN, steps, me, move_mode)
-proc d(steps = 1.0): Direction {.discardable.} = down(steps)
+proc forward(steps = 1.0, ctx: Context = nil) = target.ctrl.begin_move(FORWARD, steps, me, move_mode)
+proc back(steps = 1.0, ctx: Context = nil) = target.ctrl.begin_move(BACK, steps, me, move_mode)
+proc left(steps = 1.0, ctx: Context = nil): Direction {.discardable.} = target.ctrl.begin_move(LEFT, steps, me, move_mode)
+proc right(steps = 1.0, ctx: Context = nil): Direction {.discardable.} = target.ctrl.begin_move(RIGHT, steps, me, move_mode)
+proc l(steps = 1.0, ctx: Context = nil): Direction {.discardable.} = left(steps)
+proc r(steps = 1.0, ctx: Context = nil): Direction {.discardable.} = right(steps)
+proc up(steps = 1.0, ctx: Context = nil): Direction {.discardable.} = target.ctrl.begin_move(UP, steps, me, move_mode)
+proc u(steps = 1.0, ctx: Context = nil): Direction {.discardable.} = up(steps)
+proc down(steps = 1.0, ctx: Context = nil): Direction {.discardable.} = target.ctrl.begin_move(DOWN, steps, me, move_mode)
+proc d(steps = 1.0, ctx: Context = nil): Direction {.discardable.} = down(steps)
 
 proc set_global(global: bool) = discard
 proc get_global(): bool = discard
 
-proc turn(direction: proc(steps = 1.0): Direction, degrees = 90.0) =
+proc turn(direction: proc(steps = 1.0, ctx: Context = nil): Direction, degrees = 90.0) =
   var axis = if direction == r: RIGHT
              elif direction == right: RIGHT
              elif direction == l: LEFT
@@ -62,11 +62,19 @@ proc turn(direction: proc(steps = 1.0): Direction, degrees = 90.0) =
   assert axis != Vector3(), "Invalid direction"
   target.ctrl.begin_turn(axis, degrees, me, move_mode)
 
-proc t(direction: proc(steps = 1.0): Direction, degrees = 90.0) =
+proc turn(degrees: float, ctx: Context = nil) =
+  let degrees = floor_mod(degrees, 360)
+  if degrees <= 180:
+    turn right, degrees
+  else:
+    let d = 180 - (degrees - 180)
+    turn left, 180 - (degrees - 180)
+
+proc t(direction: proc(steps = 1.0, ctx: Context = nil): Direction, degrees = 90.0) =
   turn(direction, degrees)
 
-proc f(steps = 1.0) = forward(steps)
-proc b(steps = 1.0) = back(steps)
+proc f(steps = 1.0, ctx: Context = nil) = forward(steps)
+proc b(steps = 1.0, ctx: Context = nil) = back(steps)
 
 proc look_at(node: ScriptNode) =
   let
