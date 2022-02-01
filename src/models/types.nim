@@ -2,10 +2,9 @@ import std / [tables, monotimes]
 import godotapi/node
 import pkg/model_citizen
 import pkg/core/godotcoretypes except Color
-import pkg / core / [vector3, transforms, basis, aabb, godotbase]
-import models/colors
-import engine/engine
-import core
+import pkg / core / [vector3, basis, aabb, godotbase]
+
+import core, models/colors, engine/engine, utils/transforms
 
 export Vector3, Transform, vector3, transforms, basis, AABB, aabb
 export godotbase except print
@@ -23,6 +22,11 @@ type
   Tools* = enum
     Code, Block, Place
 
+  ConsoleModel* = ref object
+    log*: ZenSeq[string]
+    visible*: ZenValue[bool]
+    show_errors*: ZenValue[bool]
+
   GameState* = ref object
     target_flags*: ZenSet[TargetFlags]
     input_flags*: ZenSet[InputFlags]
@@ -38,21 +42,29 @@ type
       data: Node,
       player: Node
     ]
+    player*: PlayerModel
     logger*: proc(level, msg: string)
     units*: ZenSeq[Unit]
     ground*: Ground
     draw_plane*: Vector3
+    console*: ConsoleModel
     paused*: bool
 
   Model* = ref object of RootObj
+
     target_point*: Vector3
     target_normal*: Vector3
     flags*: ZenSet[ModelFlags]
     to_local*: proc(global: Vector3): Vector3
     to_global*: proc(local: Vector3): Vector3
+    get_global_transform*: proc(): Transform
+    get_global_rotation*: proc(): Vector3
     node*: Node
 
   Ground* = ref object of Model
+
+  PlayerModel* = ref object of Model
+    colliders*: HashSet[Model]
 
   Unit* = ref object of Model
     id*: string
@@ -69,6 +81,7 @@ type
     velocity*: ZenValue[Vector3]
     energy*: ZenValue[float]
     clone_of*: Unit
+    collisions*: seq[tuple[model: Model, normal: Vector3]]
 
   Bot* = ref object of Unit
     animation*: ZenValue[string]
@@ -92,6 +105,7 @@ type
     drawing*: bool
     save_points*: Table[string, tuple[position: Transform, index: int, drawing: bool]]
     bounds*: ZenValue[AABB]
+    bot_collisions*: bool
 
   Callback* = proc(delta: float): bool
   ScriptCtx* = ref object
@@ -128,6 +142,9 @@ proc global_from*(self: Vector3, unit: Unit): Vector3 =
 proc init*(_: type Transform, origin = vec3()): Transform =
   result = init_transform()
   result.origin = origin
+
+proc `+=`*(self: ZenValue[string], str: string) =
+  self.value = self.value & str
 
 proc origin*(self: ZenValue[Transform]): Vector3 =
   self.value.origin

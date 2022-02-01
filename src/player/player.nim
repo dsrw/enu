@@ -29,7 +29,7 @@ let
   angle_x_max = PI / 2.25
   max_speed = 50.0
   move_speed = 500.0
-  jump_impulse = 50.0
+  jump_impulse = 25.0
   climb_stair_impulse = 25.0
   fly_toggle = 0.3.seconds
   float_time = 0.3.seconds
@@ -164,6 +164,11 @@ gdobj Player of KinematicBody:
     ctx.engine.expose "get_rotation", proc(a: VmArgs): bool =
       a.set_result(self.rotation_degrees.to_node)
       return false
+    ctx.engine.expose "set_velocity", proc(a: VmArgs): bool =
+      let v = a.get_vec3(0)
+      self.velocity = v
+    ctx.engine.expose "get_velocity", proc(a: VmArgs): bool =
+      a.set_result(self.velocity.to_node)
     discard ctx.engine.run()
 
   method physics_process*(delta: float) =

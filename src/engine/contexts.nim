@@ -39,24 +39,12 @@ proc error*(self: Unit, ex: ref VMQuit) =
     let (root, _) = self.find_root(true)
     ctx = root.script_ctx
     if ctx.retry_on_nil and ("attempt to access a nil address" in ex.msg):
-      echo "RETRYING!!!!!!!!!!!"
-      ctx.retry_on_nil = false
-      root.reset()
-      ctx.engine.running = true
-      var waiting = true
-      ctx.engine.callback = proc(delta: float): bool =
-        if waiting:
-          waiting = false
-          true
-        else:
-          echo "RELOADING ON RETRY!!!!"
-          ctx.engine.callback = nil
-          root.load_script()
-          false
+      root.code.touch root.code.value
+
     else:
       state.err "Exception executing " & self.script_ctx.script
       state.err ex.msg
-      trigger("script_error")
+      state.console.show_errors.value = true
 
 proc retry_failed_scripts* =
   var prev_failed = failed
@@ -65,7 +53,8 @@ proc retry_failed_scripts* =
     echo "retrying: ", f.unit.script_ctx.script
     f.unit.load_script()
   if failed.len > 0 and prev_failed.len == failed.len:
-    for f in failed:
+    prev_failed = failed
+    for f in prev_failed:
       f.unit.error(f.ex)
 
 proc update_running_state(self: Unit, running: bool) =
@@ -89,6 +78,7 @@ proc advance*(self: Unit, delta: float64) =
   try:
     while resume_script and not state.paused:
       resume_script = false
+
       if e.callback == nil or (not e.callback(delta)):
         c.timer = MonoTime.high
         discard e.call_proc("set_action_running", e.module_name, false)
@@ -196,7 +186,7 @@ proc load_script*(self: Unit, script = "") =
             a.set_result((Global in self.flags).to_node)
             false
           expose "get_position", proc(a: VmArgs): bool =
-            let n = self.to_global(self.transform.origin).to_node
+            let n = self.to_global(vec3(0, 0, 0)).to_node
             a.set_result(n)
             return false
           expose "set_position", proc(a: VmArgs): bool =
@@ -246,12 +236,11 @@ proc create_new(self: Unit): bool =
   unit_ctxs[new_engine] = clone
 
   ae.callback = proc(delta: float): bool =
-    not new_engine.initialized
-    # if not new_engine.initialized:
-    #   clone.code.value = clone.script_file.read_file
-    #   true
-    # else:
-    #   false
+    if not new_engine.initialized:
+      clone.code.value = clone.script_file.read_file
+      true
+    else:
+      false
 
   set_active(ae)
   unit.units.add(clone)

@@ -58,7 +58,7 @@ proc init_interpreter(script_dir, vmlib: string) =
         else:
           "???"
         let msg = &"{file_name}({int info.line},{int info.col}): {msg}"
-        echo "error: ", msg
+        echo "error: ", msg, " from ", e.file_name
         e.errors.add (msg, info)
         e.exit_code = some(99)
         raise (ref VMQuit)(info: info, msg: msg)
@@ -87,6 +87,9 @@ proc pause*(e: Engine) =
   e.pause_requested = true
 
 proc load*(e: Engine, script_dir, file_name, code, vmlib: string, module_suffix = "") =
+  e.ctx = nil
+  e.pc = 0
+  e.tos = nil
   e.code = code
   if module_suffix == "":
     e.module_name = file_name.split_file.name
@@ -189,7 +192,15 @@ proc get_string*(e: Engine, var_name: string, module_name = ""): string =
 proc call_int*(e: Engine, proc_name: string): int =
   e.call_proc(proc_name).get_int.to_int
 
+proc reset_interpreter*() =
+  interpreter = nil
+  current = nil
+
 proc resume*(e: Engine): bool =
+  assert not e.ctx.is_nil
+  assert e.pc > 0
+  assert not e.tos.is_nil
+
   set_active e
   result = try:
     discard exec_from_ctx(e.ctx, e.pc, e.tos)
