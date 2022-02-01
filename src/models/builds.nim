@@ -36,8 +36,11 @@ proc find_first*(units: ZenSeq[Unit], positions: open_array[Vector3]): Build =
       let unit = Build(unit)
       let offset = vec3().global_from(unit)
       for position in positions:
-        if position - offset in unit:
-          return unit
+        var loc = position - offset
+        if loc in unit:
+          var info = unit.chunks[loc.buffer][loc]
+          if info.kind != Hole and info.color != action_colors[eraser]:
+            return unit
       let first = unit.units.find_first(positions)
       if first:
         return first
