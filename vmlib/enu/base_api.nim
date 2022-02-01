@@ -2,7 +2,7 @@ import random, types
 
 # API
 proc quit*(exit_code = 0) = discard
-proc sleep*(seconds: float)         = discard
+proc sleep*(seconds = 1.0, ctx: Context = nil) = discard
 proc create_new() = discard
 proc stash() = discard
 proc add_stashed() = discard
