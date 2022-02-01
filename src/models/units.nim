@@ -1,4 +1,4 @@
-import std / os
+import std / [os, sugar]
 import pkg / model_citizen
 import godotapi / node
 import core, models / [types, states], engine / engine
@@ -21,10 +21,13 @@ proc find_root*(self: Unit, all_clones = false): tuple[unit: Unit, offset: Vecto
       result.offset -= parent.transform.origin
       parent = parent.parent
 
+proc walk_tree*(units: seq[Unit], callback: proc(unit: Unit)) =
+  for unit in units:
+    callback(unit)
+    walk_tree(unit.units.value, callback)
+
 proc walk_tree*(root: Unit, callback: proc(unit: Unit)) =
-  callback(root)
-  for unit in root.units:
-    unit.walk_tree(callback)
+  walk_tree(@[root], callback)
 
 proc data_dir*(self: Unit): string =
   if self.parent.is_nil:
@@ -41,10 +44,10 @@ proc script_file*(self: Unit): string =
 proc data_file*(self: Unit): string =
   self.data_dir / self.id & ".json"
 
-method on_begin_move*(self: Unit, direction: Vector3, steps: float, moving: bool): Callback {.base.} =
+method on_begin_move*(self: Unit, direction: Vector3, steps: float, move_mode: int): Callback {.base.} =
   quit "override me"
 
-method on_begin_turn*(self: Unit, direction: Vector3, degrees: float, moving: bool): Callback {.base.} =
+method on_begin_turn*(self: Unit, direction: Vector3, degrees: float, move_mode: int): Callback {.base.} =
   quit "override me"
 
 method clone*(self: Unit, clone_to: Unit, ctx: ScriptCtx): Unit {.base.} =

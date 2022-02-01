@@ -8,38 +8,35 @@ let state = GameState.active
 
 gdobj Console of RichTextLabel:
   var
-    log_text = ""
     default_mouse_filter: int64
 
   proc init*() =
     state.logger = proc(level, msg: string) =
       if level == "err":
         self.visible = true
-      echo msg
-      self.log_text &= &"[b]{level.to_upper}[/b] {msg}\n"
-    echo_console = proc(msg: string) =
-      self.log_text &= &"{msg}\n"
-      self.visible = true
-      echo msg
+      state.console.log += &"[b]{level.to_upper}[/b] {msg}\n"
+
+    state.console.visible.changes:
+      if added: self.visible = change.item
+
+    state.console.log.changes:
+      if added:
+        echo change.item
+        discard self.append_bbcode(change.item)
+      elif removed:
+        self.clear()
+        discard self.append_bbcode(state.console.log.value.join("\n"))
+        break
+
+    state.console.show_errors.changes:
+      if added:
+        state.console.visible.value = true
+
     self.default_mouse_filter = self.mouse_filter
 
   method ready*() =
-    trace:
-      self.bind_signals "clear_console", "toggle_console"
     GameState.active.target_flags.changes:
       if MouseCaptured.added:
         self.mouse_filter = MOUSE_FILTER_IGNORE
       elif MouseCaptured.removed:
         self.mouse_filter = self.default_mouse_filter
-
-  method process*(delta: float) =
-    trace:
-      if not self.log_text.is_empty():
-        discard self.append_bbcode(self.log_text)
-        self.log_text = ""
-
-  method on_clear_console() =
-    self.clear()
-
-  method on_toggle_console() =
-    self.visible = not self.visible

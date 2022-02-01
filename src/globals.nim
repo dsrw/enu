@@ -9,14 +9,6 @@ type
   Vox* = tuple[location: Vector3, data: VoxData]
   VoxTable* = Table[Vector3, VoxData]
 
-var
-  reload_scripts*: proc()
-  save_and_reload*: proc()
-  save_scene*: proc(immediate = false)
-  echo_console*: proc(msg: string)
-  game_ready* = false
-  gid = 0
-
 proc bind_signals*(receiver, sender: Node, signals: varargs[string]) =
   let send_node = if sender == nil:
     GameState.active.nodes.game
@@ -39,8 +31,3 @@ proc trigger*(node: Object, signal: string, args: varargs[Variant, `new_variant`
 
 proc trigger*(signal: string, args: varargs[Variant]) =
   trigger(GameState.active.nodes.game, signal, args)
-
-proc destroy*(node: Node) =
-  node.get_parent.remove_child(node)
-  node.queue_free()
-  save_scene()

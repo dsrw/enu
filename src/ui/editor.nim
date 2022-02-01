@@ -52,6 +52,9 @@ gdobj Editor of TextEdit:
     if not event.is_nil and event.pressed:
       if event.scancode == KEY_ENTER:
         self.indent_new_line()
+      if event.scancode == KEY_SEMICOLON:
+        self.insert_text_at_cursor(":")
+        self.get_tree.set_input_as_handled()
       elif event.scancode == KEY_HOME:
         self.cursor_set_column(0)
         self.get_tree.set_input_as_handled()
@@ -63,7 +66,7 @@ gdobj Editor of TextEdit:
     if self.visible:
       if event.is_action_pressed("ui_cancel"):
         if not (event of InputEventJoypadButton) or not state.command_mode:
-          self.on_save()
+          state.open_unit.value.code.value = self.text
           state.open_unit.value = nil
           self.get_tree().set_input_as_handled()
 
@@ -92,15 +95,20 @@ gdobj Editor of TextEdit:
     self.dirty = true
 
   method ready* =
-    self.bind_signals "save", "script_error"
     self.bind_signals(self, "text_changed")
     var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
     self.og_bg_color = stylebox.bg_color
 
+    state.console.show_errors.changes:
+      if true.added:
+        self.highlight_errors()
+      elif false.added:
+        self.clear_errors()
+
     state.target_flags.changes:
       if CommandMode.added:
-        if self.dirty:
-          reload_scripts()
+        if Editing in state.target_flags:
+          state.open_unit.value.code.value = self.text
         self.mouse_filter = MOUSE_FILTER_IGNORE
         self.shortcut_keys_enabled = false
         self.readonly = true
@@ -123,8 +131,6 @@ gdobj Editor of TextEdit:
         self.highlight_errors()
 
       elif Editing.removed:
-        if self.dirty:
-          reload_scripts()
         self.release_focus()
         self.visible = false
         if self.open_engine:
@@ -132,12 +138,3 @@ gdobj Editor of TextEdit:
           self.open_engine = nil
 
     self.configure_highlighting()
-
-  method on_save* =
-    if self.dirty and state.open_unit.value:
-      self.dirty = false
-      self.clear_errors()
-      state.open_unit.value.code.value = self.text
-
-  method on_script_error* =
-    self.highlight_errors()
