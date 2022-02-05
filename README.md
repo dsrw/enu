@@ -1,5 +1,4 @@
-*Note: This is the development branch of Enu 0.2, and is currently unstable and undocumented. It has only been tested on macos,
-and may not build on other platforms. The stable branch is in better shape.*
+*Note: This is the development branch of Enu 0.2, which is undocumented, and unstable to the point of being unusable. A preview release will be available by the end of Feb 2022.*
 
 # Enu
 
