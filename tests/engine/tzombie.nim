@@ -1,4 +1,4 @@
-import potato_class, potato_clone, enu/types
+import potato_class, enu/types, pkg/print
 
 let p = potato.new(label = "orange", color = green)
 assert p.color == green

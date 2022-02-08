@@ -1,12 +1,12 @@
 import std / [math, sugar, monotimes]
 import pkg / model_citizen
-import core, models / [types, states, scripts, units], engine / engine
+import core, models / [types, states, units]
 include "default_robot.nim.nimf"
 
 let state = GameState.active
 
 method code_template*(self: Bot, imports: string): string =
-  result = default_robot(self.script_file, imports, self.script_ctx.is_clone)
+  result = default_robot(self.script_file, imports)
 
 method on_begin_move*(self: Bot, direction: Vector3, steps: float, moving_mode: int): Callback =
   # move_mode param is ignored
@@ -24,7 +24,8 @@ method on_begin_move*(self: Bot, direction: Vector3, steps: float, moving_mode: 
     else:
       self.velocity.touch(moving * self.speed)
       return true
-  active_ctx().start_advance_timer()
+  # TODO?
+  # active_ctx().start_advance_timer()
 
 method on_begin_turn*(self: Bot, axis: Vector3, degrees: float, move_mode: int): Callback =
   # move mode param is ignored
@@ -39,24 +40,25 @@ method on_begin_turn*(self: Bot, axis: Vector3, degrees: float, move_mode: int):
     else:
       self.transform.basis = final_basis
       false
-  active_ctx().start_advance_timer()
+  # TODO?
+  # active_ctx().start_advance_timer()
 
-method load_vars*(self: Bot) =
-  let old_speed = self.speed
-  let ctx = self.script_ctx
-  self.speed = ctx.engine.get_float("speed", ctx.engine.module_name)
-  let scale = ctx.engine.get_float("scale", ctx.engine.module_name)
-  if scale != self.scale:
-    var basis = self.transform.basis
-    basis.set_scale(vec3(scale, scale, scale))
-    self.transform.basis = basis
-    self.scale = scale
+# method load_vars*(self: Bot) =
+#   let old_speed = self.speed
+#   let ctx = self.script_ctx
+#   self.speed = ctx.engine.get_float("speed", ctx.engine.module_name)
+#   let scale = ctx.engine.get_float("scale", ctx.engine.module_name)
+#   if scale != self.scale:
+#     var basis = self.transform.basis
+#     basis.set_scale(vec3(scale, scale, scale))
+#     self.transform.basis = basis
+#     self.scale = scale
 
-method on_script_loaded*(self: Bot) =
-  let e = self.script_ctx.engine
-  e.expose "play", proc(a: VmArgs): bool =
-    self.animation.value = get_string(a, 0)
-    return false
+# method on_script_loaded*(self: Bot) =
+#   let e = self.script_ctx.engine
+#   e.expose "play", proc(a: VmArgs): bool =
+#     self.animation.value = get_string(a, 0)
+#     return false
 
 proc bot_at*(state: GameState, position: Vector3): Bot =
   for unit in state.units:
@@ -64,6 +66,7 @@ proc bot_at*(state: GameState, position: Vector3): Bot =
       return Bot(unit)
 
 method reset*(self: Bot) =
+  self.transform.value = self.start_transform
   self.animation.value = ""
   self.units.clear()
 
@@ -79,7 +82,8 @@ proc init*(_: type Bot, transform = Transform.init, clone_of: Bot = nil, global 
     animation: ZenValue[string].init,
     energy: ZenValue[float].init,
     speed: 1.0,
-    clone_of: clone_of
+    clone_of: clone_of,
+    frame_delta: ZenValue[float].init
   )
   if global: self.flags += Global
 
@@ -108,7 +112,7 @@ proc init*(_: type Bot, transform = Transform.init, clone_of: Bot = nil, global 
 
   result = self
 
-method clone*(self: Bot, clone_to: Unit, ctx: ScriptCtx): Unit =
+method clone*(self: Bot, clone_to: Unit): Unit =
   var transform = clone_to.transform.value
   result = Bot.init(transform = transform, clone_of = self)
   result.parent = clone_to

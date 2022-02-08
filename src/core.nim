@@ -113,7 +113,7 @@ proc trunc*(self: Vector3): Vector3 {.inline.} =
 proc inverse_normalized*(self: Vector3): Vector3 {.inline.} =
   (self - vec3(self.length, self.length, self.length)) * -1
 
-proc first*[T](arr: openArray[T], test: proc(x: T): bool): Option[T] =
+proc first*[T](arr: open_array[T], test: proc(x: T): bool): Option[T] =
   for item in arr:
     if test(item):
       return some(item)

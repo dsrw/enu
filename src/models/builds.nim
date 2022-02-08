@@ -1,6 +1,6 @@
 import std / [hashes, tables, sets, options, sequtils, math, wrapnils, monotimes, sugar]
 import pkg / [model_citizen, print]
-import core, models / [types, states, bots, colors, units, scripts], engine / engine
+import core, models / [types, states, bots, colors, units]
 const BufferSize = vec3(16, 16, 16)
 
 include "default_builder.nim.nimf"
@@ -213,7 +213,7 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
         self.voxels_remaining_this_frame -= 1
         self.drop_block()
       result = count.float < steps
-  active_ctx().start_advance_timer()
+  #active_ctx().start_advance_timer()
 
 method on_begin_turn*(self: Build, axis: Vector3, degrees: float, move_mode: int): Callback =
   let map = {LEFT: UP, RIGHT: DOWN, UP: RIGHT, DOWN: LEFT}.to_table
@@ -235,7 +235,7 @@ method on_begin_turn*(self: Build, axis: Vector3, degrees: float, move_mode: int
         # TODO?
         self.transform.value = final_transform
         false
-    active_ctx().start_advance_timer()
+    #active_ctx().start_advance_timer()
   else:
     let axis = self.draw_transform.basis.xform(axis)
     self.draw_transform.basis = self.draw_transform.basis.rotated(axis, deg_to_rad(degrees))
@@ -245,6 +245,7 @@ proc reset_state(self: Build) =
   self.draw_transform = Transform.init
 
 method reset*(self: Build) =
+  self.transform.value = self.start_transform
   self.reset_state()
   let chunks = self.chunks.value
   for chunk_id, chunk in chunks:
@@ -256,65 +257,65 @@ method reset*(self: Build) =
           self.chunks.del(chunk_id)
   self.units.clear()
 
-proc set_vars*(self: Build) =
-  let engine = self.script_ctx.engine
-  let module_name = engine.module_name
+# proc set_vars*(self: Build) =
+#   let engine = self.script_ctx.engine
+#   let module_name = engine.module_name
+#
+#   engine.call_proc("set_vars", module_name = module_name, action_index(self.color).int,
+#                    self.drawing, self.speed, self.scale, self.energy.value)
+#
+# method load_vars*(self: Build) =
+#   let old_speed = self.speed
+#   let ctx = self.script_ctx
+#   self.speed = ctx.engine.get_float("speed", ctx.engine.module_name)
+#
+#   let
+#     e = ctx.engine
+#     scale_factor = ctx.engine.get_float("scale", e.module_name).round(3)
+#   self.color = action_colors[Colors(ctx.engine.get_int("color", e.module_name))]
+#   self.drawing = ctx.engine.get_bool("drawing", e.module_name)
+#   self.voxels_per_frame = if self.speed == 0:
+#     float.high
+#   else:
+#     self.speed
+#   if self.speed != old_speed:
+#     self.voxels_remaining_this_frame = 0
+#   if scale_factor != self.scale.round(3):
+#     self.scale = scale_factor
+#     var basis = self.transform.basis
+#     basis.set_scale(vec3(scale_factor, scale_factor, scale_factor))
+#     self.transform.basis = basis
+#   self.energy.value = ctx.engine.get_float("energy", e.module_name).round(3)
+#
+#   self.set_vars()
 
-  engine.call_proc("set_vars", module_name = module_name, action_index(self.color).int,
-                   self.drawing, self.speed, self.scale, self.energy.value)
-
-method load_vars*(self: Build) =
-  let old_speed = self.speed
-  let ctx = self.script_ctx
-  self.speed = ctx.engine.get_float("speed", ctx.engine.module_name)
-
-  let
-    e = ctx.engine
-    scale_factor = ctx.engine.get_float("scale", e.module_name).round(3)
-  self.color = action_colors[Colors(ctx.engine.get_int("color", e.module_name))]
-  self.drawing = ctx.engine.get_bool("drawing", e.module_name)
-  self.voxels_per_frame = if self.speed == 0:
-    float.high
-  else:
-    self.speed
-  if self.speed != old_speed:
-    self.voxels_remaining_this_frame = 0
-  if scale_factor != self.scale.round(3):
-    self.scale = scale_factor
-    var basis = self.transform.basis
-    basis.set_scale(vec3(scale_factor, scale_factor, scale_factor))
-    self.transform.basis = basis
-  self.energy.value = ctx.engine.get_float("energy", e.module_name).round(3)
-
-  self.set_vars()
-
-method on_script_loaded*(self: Build) =
-  var save_points: Table[string, tuple[transform: Transform, color: Color, drawing: bool]]
-  let e = self.script_ctx.engine
-  self.voxels_remaining_this_frame = 0
-  e.expose "set_energy", proc(a: VmArgs): bool =
-    self.energy.value = get_float(a, 0)
-    false
-  e.expose "save", proc(a: VmArgs): bool =
-    self.load_vars()
-    let name = get_string(a, 0)
-    save_points[name] = (self.transform.value, self.color, self.drawing)
-    false
-  e.expose "restore", proc(a: VmArgs): bool =
-    let name = get_string(a, 0)
-    (self.transform.value, self.color, self.drawing) = save_points[name]
-    self.set_vars()
-    false
-  e.expose "reset", proc(a: VmArgs): bool =
-    let clear = get_bool(a, 0)
-    if clear:
-      self.reset()
-    else:
-      self.reset_state()
-    false
-  e.expose "load_defaults", proc(a: VmArgs): bool =
-    self.set_vars()
-    false
+# method on_script_loaded*(self: Build) =
+#   var save_points: Table[string, tuple[transform: Transform, color: Color, drawing: bool]]
+#   let e = self.script_ctx.engine
+#   self.voxels_remaining_this_frame = 0
+#   e.expose "set_energy", proc(a: VmArgs): bool =
+#     self.energy.value = get_float(a, 0)
+#     false
+#   e.expose "save", proc(a: VmArgs): bool =
+#     self.load_vars()
+#     let name = get_string(a, 0)
+#     save_points[name] = (self.transform.value, self.color, self.drawing)
+#     false
+#   e.expose "restore", proc(a: VmArgs): bool =
+#     let name = get_string(a, 0)
+#     (self.transform.value, self.color, self.drawing) = save_points[name]
+#     self.set_vars()
+#     false
+#   e.expose "reset", proc(a: VmArgs): bool =
+#     let clear = get_bool(a, 0)
+#     if clear:
+#       self.reset()
+#     else:
+#       self.reset_state()
+#     false
+#   e.expose "load_defaults", proc(a: VmArgs): bool =
+#     self.set_vars()
+#     false
 
 proc init*(_: type Build, transform = Transform.init, color = default_color,
                           clone_of: Unit = nil, global = true, bot_collisions = true): Build =
@@ -335,7 +336,8 @@ proc init*(_: type Build, transform = Transform.init, color = default_color,
     bounds: Zen.init(init_aabb(vec3(), vec3(-1, -1, -1))),
     speed: 1.0,
     clone_of: clone_of,
-    bot_collisions: bot_collisions
+    bot_collisions: bot_collisions,
+    frame_delta: ZenValue[float].init
   )
   if global: self.flags += Global
 
@@ -385,7 +387,7 @@ method off_collision*(self: Build, partner: Model) =
   if self.script_ctx:
     self.script_ctx.timer = get_mono_time()
 
-method clone*(self: Build, clone_to: Unit, ctx: ScriptCtx): Unit =
+method clone*(self: Build, clone_to: Unit): Unit =
   var transform = clone_to.transform.value
   var global = true
   if clone_to of Build:

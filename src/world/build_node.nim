@@ -4,7 +4,6 @@ import pkg / [print, model_citizen]
 import godotapi / [node, voxel_terrain, voxel_mesher_blocky, voxel_tool, voxel_library, shader_material,
                    resource_loader, packed_scene]
 import models / [types, builds, colors, units], globals
-import engine / contexts
 
 const
   highlight_energy = 1.0
@@ -100,12 +99,10 @@ gdobj BuildNode of VoxelTerrain:
 
   method process(delta: float) =
     if self.unit:
-      if self.unit.script_ctx:
-        if self.unit.script_ctx.engine.running:
-          self.unit.advance(delta)
-
       # self.unit.transform.pause self.transform_zid:
       #   self.unit.transform.value = self.transform
+
+      self.unit.frame_delta.touch delta
 
   proc setup*(unit: Build) =
     let was_skipping_join = dont_join

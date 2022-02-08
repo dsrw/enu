@@ -4,6 +4,7 @@
 --tlsEmulation:off
 --threadAnalysis:off
 --define:nimPreviewHashRef
+--experimental:dynamicBindSym
 #--define:nimLeakDetector
 --define:enuHacks
 
