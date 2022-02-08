@@ -1,4 +1,5 @@
 include compiler/nimeval
+export Interpreter, VmArgs, PCtx, PStackFrame, TLineInfo
 
 # from nimeval. Added moduleName
 proc selectUniqueSymbol*(i: Interpreter; name: string;
@@ -51,12 +52,11 @@ proc load_module*(i: Interpreter, module_name, code: string) =
 
 proc config*(i: Interpreter): ConfigRef = i.graph.config
 
-when callVMExecHooks:
-  proc registerExitHook*(i: Interpreter, hook: proc (c: PCtx, pc: int, tos: PStackFrame)) =
-    (PCtx i.graph.vm).exitHook = hook
+proc registerExitHook*(i: Interpreter, hook: proc (c: PCtx, pc: int, tos: PStackFrame)) =
+  (PCtx i.graph.vm).exitHook = hook
 
-  proc registerEnterHook*(i: Interpreter, hook: proc (c: PCtx, pc: int, tos: PStackFrame, instr: TInstr)) =
-    (PCtx i.graph.vm).enterHook = hook
+proc registerEnterHook*(i: Interpreter, hook: proc (c: PCtx, pc: int, tos: PStackFrame, instr: TInstr)) =
+  (PCtx i.graph.vm).enterHook = hook
 
-  proc registerLeaveHook*(i: Interpreter, hook: proc (c: PCtx, pc: int, tos: PStackFrame, instr: TInstr)) =
-    (PCtx i.graph.vm).leaveHook = hook
+proc registerLeaveHook*(i: Interpreter, hook: proc (c: PCtx, pc: int, tos: PStackFrame, instr: TInstr)) =
+  (PCtx i.graph.vm).leaveHook = hook

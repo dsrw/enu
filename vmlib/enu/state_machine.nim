@@ -1,15 +1,5 @@
-import macros, strformat, strutils, helpers, sequtils, tables
-
-type
-  Context* = ref object
-    stack: seq[Frame]
-  Frame = ref object
-    manager: proc(active: bool):bool
-    action: proc()
-  Halt = object of CatchableError
-  Loop = ref object
-    states: Table[string, NimNode]
-    from_states: seq[(string, NimNode)]
+import std / [macros, strformat, strutils, sequtils, tables]
+import types, helpers
 
 proc current_loop(value: Loop = nil): Loop =
   var loop {.global.}: Loop

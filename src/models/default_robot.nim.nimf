@@ -1,10 +1,12 @@
 #? stdtmpl
-#proc default_robot(file_name, imports: string, is_clone: bool): string =
-import types, class_macros, players
-const is_clone = ${is_clone}
+#proc default_robot(file_name, imports: string): string =
+import system except echo
+import types, class_macros, players, state_machine
+
 let global_default = true
 ${imports}
 
-load_enu_script "${file_name}", "robot", ${is_clone}
+{.experimental: "overloadableEnums".}
+load_enu_script "${file_name}", "robot"
 
-quit()
+me.quit()

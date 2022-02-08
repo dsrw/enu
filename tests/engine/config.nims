@@ -4,3 +4,4 @@ switch("path", "$projectDir/../../vmlib")
 switch("path", this_dir())
 --define:vmExecHooks
 --define:useRealtimeGC
+--experimental:dynamicBindSym

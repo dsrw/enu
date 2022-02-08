@@ -4,7 +4,7 @@ import pkg/model_citizen
 import godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
                    input_event, animation_player, resource_loader, packed_scene]
 import globals, core, print
-import engine / [contexts, engine], models / [types, bots, units]
+import models / [types, bots, units]
 
 gdobj BotNode of KinematicBody:
   var
@@ -77,9 +77,7 @@ gdobj BotNode of KinematicBody:
       self.unit.transform.pause self.transform_zid:
         self.unit.transform.value = self.transform
 
-      if self.unit.script_ctx:
-        if self.unit.script_ctx.engine.running:
-          self.unit.advance(delta)
+      self.unit.frame_delta.touch delta
 
 let bot_scene = load("res://components/BotNode.tscn") as PackedScene
 proc init*(_: type BotNode): BotNode =

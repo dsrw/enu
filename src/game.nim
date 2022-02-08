@@ -4,7 +4,7 @@ import godotapi / [input, input_event, gd_os, node, scene_tree, viewport,
                    packed_scene, sprite, control, viewport,
                    performance, label, theme, dynamic_font, resource_loader, main_loop,
                    gd_os, project_settings, input_map, input_event, input_event_action]
-import core, globals, controllers/unit_controllers, models / serializers
+import core, globals, controllers / [node_controllers, script_controllers], models / serializers
 
 type
   UserConfig = object
@@ -30,7 +30,8 @@ gdobj Game of Node:
     scale_factor* = 0.0
     rescale_at = get_mono_time()
     save_at = get_mono_time() + auto_save_interval
-    unit_controller: UnitController
+    node_controller: NodeController
+    script_controller: ScriptController
 
   method process*(delta: float) =
     let time = get_mono_time()
@@ -84,7 +85,6 @@ gdobj Game of Node:
 
   proc init* =
     state.nodes.game = self
-    self.unit_controller = UnitController.init
     let
       screen_scale = get_screen_scale(-1)
       work_dir = get_user_data_dir()
@@ -127,6 +127,8 @@ gdobj Game of Node:
         config.lib_dir = join_path(exe_dir.parent_dir, "lib", "vmlib")
 
     print config
+    self.node_controller = NodeController.init
+    self.script_controller = ScriptController.init
 
   method ready* =
     state.nodes.data = state.nodes.game.find_node("Level").get_node("data")
@@ -228,7 +230,7 @@ gdobj Game of Node:
     elif event.is_action_pressed("save_and_reload"):
       echo "reload all"
       save_world()
-      UnitController.reload_all()
+      self.script_controller.reload_all()
       self.get_tree().set_input_as_handled()
     elif event.is_action_pressed("pause"):
       state.paused = not state.paused

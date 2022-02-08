@@ -3,11 +3,11 @@ import godotapi/node
 import pkg/model_citizen
 import pkg/core/godotcoretypes except Color
 import pkg / core / [vector3, basis, aabb, godotbase]
-
-import core, models/colors, engine/engine, utils/transforms
+import core, models/colors, utils/transforms, libs/eval
 
 export Vector3, Transform, vector3, transforms, basis, AABB, aabb
 export godotbase except print
+export Interpreter
 
 type
   TargetFlags* = enum
@@ -51,7 +51,6 @@ type
     paused*: bool
 
   Model* = ref object of RootObj
-
     target_point*: Vector3
     target_normal*: Vector3
     flags*: ZenSet[ModelFlags]
@@ -82,6 +81,7 @@ type
     energy*: ZenValue[float]
     clone_of*: Unit
     collisions*: seq[tuple[model: Model, normal: Vector3]]
+    frame_delta*: ZenValue[float]
 
   Bot* = ref object of Unit
     animation*: ZenValue[string]
@@ -107,16 +107,6 @@ type
     bounds*: ZenValue[AABB]
     bot_collisions*: bool
 
-  Callback* = proc(delta: float): bool
-  ScriptCtx* = ref object
-    script*: string
-    engine*: Engine
-    timer*: MonoTime
-    load_vars*: proc()
-    is_clone*: bool
-    speed*: float
-    retry_on_nil*: bool
-
   Config* = ref object
     font_size*: int
     dock_icon_size*: float
@@ -129,6 +119,39 @@ type
     scene*: string
     lib_dir*: string
 
+  ScriptCtx* = ref object
+    script*: string
+    timer*: MonoTime
+    load_vars*: proc()
+    is_clone*: bool
+    ctx: PCtx
+    pc: int
+    tos: PStackFrame
+    line_changed*: proc(current, previous: TLineInfo)
+    current_line*: TLineInfo
+    previous_line: TLineInfo
+    pause_requested: bool
+    module_name*: string
+    file_name: string
+    exit_code*: Option[int]
+    errors*: seq[tuple[msg: string, info: TLineInfo]]
+    callback*: Callback
+    saved_callback*: Callback
+    action_running*: bool
+    running*: bool
+    interpreter*: Interpreter
+    code*: string
+
+  VMError* = object of CatchableError
+
+  VMQuit* = object of VMError
+    info*: TLineInfo
+
+  VMPause* = object of CatchableError
+
+  Callback* = proc(delta: float): bool
+
+# TODO: this shouldn't be here
 proc local_to*(self: Vector3, unit: Unit): Vector3 =
   result = self
   var unit = unit
