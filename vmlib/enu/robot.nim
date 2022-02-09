@@ -1,4 +1,5 @@
 import helpers, strutils, types, math
+var move_mode = 1
 import base_api
 
 include loops

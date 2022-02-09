@@ -11,6 +11,9 @@ type
     id: int
     name*: string
 
+  Directions* = enum
+    up, u, down, d, left, l, right, r, forward, f, back, b
+
   # Controller*  = object
   #   action_running*: bool
   #   advance_state_machine*: proc(): bool

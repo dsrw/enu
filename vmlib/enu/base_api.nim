@@ -12,8 +12,8 @@ proc `position=`*(self: ScriptNode, position: Vector3) = discard
 proc rotation*(self: ScriptNode): Vector3 = discard
 proc collision*(self: ScriptNode, node: ScriptNode): Vector3 = discard
 
-proc begin_move(self: ScriptNode, direction: Vector3, steps: float) = discard
-proc begin_turn(self: ScriptNode, axis: Vector3, steps: float) = discard
+proc begin_move(self: ScriptNode, direction: Vector3, steps: float, move_mode: int) = discard
+proc begin_turn(self: ScriptNode, axis: Vector3, steps: float, move_mode: int) = discard
 
 proc echo_console(msg: string) = discard
 proc echo*(msg: varargs[string, `$`]) = echo_console msg.join
@@ -37,43 +37,62 @@ proc echo*(msg: varargs[string, `$`]) = echo_console msg.join
 # proc echo(msg: varargs[string, `$`]) = echo_console msg.join
 #
 
-proc forward*(self: ScriptNode, steps = 1.0): Direction {.discardable.} = self.begin_move(FORWARD, steps)
-proc back*(self: ScriptNode, steps = 1.0): Direction {.discardable.} = self.begin_move(BACK, steps)
-proc left*(self: ScriptNode, steps = 1.0): Direction {.discardable.} = self.begin_move(LEFT, steps)
-proc right*(self: ScriptNode, steps = 1.0): Direction {.discardable.} = self.begin_move(RIGHT, steps)
-proc up*(self: ScriptNode, steps = 1.0): Direction {.discardable.} = self.begin_move(UP, steps)
-proc down*(self: ScriptNode, steps = 1.0): Direction {.discardable.} = self.begin_move(DOWN, steps)
+template forward*(self: ScriptNode, steps = 1.0) =
+  mixin begin_move
+  self.begin_move(FORWARD, steps, move_mode)
 
-proc l*(self: ScriptNode, steps = 1.0): Direction {.discardable.} = self.left(steps)
-proc r*(self: ScriptNode, steps = 1.0): Direction {.discardable.} = self.right(steps)
-proc u*(self: ScriptNode, steps = 1.0): Direction {.discardable.} = self.up(steps)
-proc d*(self: ScriptNode, steps = 1.0): Direction {.discardable.} = self.down(steps)
-proc f*(self: ScriptNode, steps = 1.0): Direction {.discardable.} = self.forward(steps)
-proc b*(self: ScriptNode, steps = 1.0): Direction {.discardable.} = self.back(steps)
+template back*(self: ScriptNode, steps = 1.0) =
+  mixin begin_move
+  self.begin_move(BACK, steps, move_mode)
+
+template left*(self: ScriptNode, steps = 1.0) =
+  mixin begin_move
+  self.begin_move(LEFT, steps, move_mode)
+
+template right*(self: ScriptNode, steps = 1.0) =
+  mixin begin_move
+  self.begin_move(RIGHT, steps, move_mode)
+
+template up*(self: ScriptNode, steps = 1.0) =
+  mixin begin_move
+  self.begin_move(UP, steps, move_mode)
+
+template down*(self: ScriptNode, steps = 1.0) =
+  mixin begin_move
+  self.begin_move(DOWN, steps, move_mode)
+
+
+template l*(self: ScriptNode, steps = 1.0) = self.left(steps)
+template r*(self: ScriptNode, steps = 1.0) = self.right(steps)
+template u*(self: ScriptNode, steps = 1.0) = self.up(steps)
+template d*(self: ScriptNode, steps = 1.0) = self.down(steps)
+template f*(self: ScriptNode, steps = 1.0) = self.forward(steps)
+template b*(self: ScriptNode, steps = 1.0) = self.back(steps)
 
 # proc set_global(global: bool) = discard
 # proc get_global(): bool = discard
 #
-proc turn*(self: ScriptNode, direction: proc(self: ScriptNode, steps = 1.0): Direction, degrees = 90.0) =
-  let dir = if direction == forward or direction == f: FORWARD
-            elif direction == back or direction == b: BACK
-            elif direction == left or direction == l: LEFT
-            elif direction == right or direction == r: RIGHT
-            elif direction == up or direction == u: UP
-            elif direction == down or direction == d: DOWN
-            else:
-              assert false, "Invalid direction"
-              return
+proc turn(self: ScriptNode, direction: Directions, degrees = 90.0, move_mode: int) =
+  let dir = case direction:
+    of Directions.forward, Directions.f: FORWARD
+    of Directions.back, Directions.b: BACK
+    of Directions.left, Directions.l: LEFT
+    of Directions.right, Directions.r: RIGHT
+    of Directions.up, Directions.u: UP
+    of Directions.down, Directions.d: DOWN
 
-  self.begin_turn(dir, degrees)
+  self.begin_turn(dir, degrees, move_mode)
 
-proc turn*(self: ScriptNode, degrees: float) =
+proc turn(self: ScriptNode, degrees: float, move_mode: int) =
   let degrees = floor_mod(degrees, 360)
   if degrees <= 180:
-    self.turn right, degrees
+    self.turn right, degrees, move_mode
   else:
     let d = 180 - (degrees - 180)
-    self.turn left, 180 - (degrees - 180)
+    self.turn left, 180 - (degrees - 180), move_mode
+
+template turn*(self: ScriptNode, direction: Directions, degrees = 90.0) =
+  turn(self, direction, degrees, move_mode)
 
 template forward*(steps = 1.0) = target.forward(steps)
 template back*(steps = 1.0) = target.back(steps)
@@ -89,11 +108,11 @@ template d*(steps = 1.0) = target.down(steps)
 template f*(steps = 1.0) = target.forward(steps)
 template b*(steps = 1.0) = target.back(steps)
 
-template turn*(direction: proc(self: ScriptNode, steps = 1.0): Direction, degrees = 90.0) =
-  target.turn(direction, degrees)
+template turn*(direction: Directions, degrees = 90.0) =
+  target.turn(direction, degrees, move_mode)
 
 template turn*(degrees: float) =
-  target.turn(degrees)
+  target.turn(degrees, move_mode)
 
 template move*[T: ScriptNode](new_target: T) =
   target = new_target

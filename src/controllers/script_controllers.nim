@@ -68,9 +68,6 @@ proc echo_console(msg: string) =
   echo msg
 
 macro bind_procs(self: ScriptController, proc_refs: varargs[typed]): untyped =
-  let implement_routine = bind_sym "implement_routine"
-  let set_result = bind_sym "set_result"
-
   result = new_stmt_list()
   result.add quote do:
     let script_controller {.inject.} = `self`
@@ -99,10 +96,11 @@ macro bind_procs(self: ScriptController, proc_refs: varargs[typed]): untyped =
 
     var call = new_call(proc_ref, args)
     if return_node.kind == nnkSym:
-      call = new_call(set_result, ident"a", new_call(bind_sym"to_node", call))
+      call = new_call(bind_sym"set_result", ident"a", new_call(bind_sym"to_node", call))
 
     result.add quote do:
-      `self`.interpreter.`implement_routine` "*", "base_api", `proc_name`, proc(a {.inject.}: VmArgs) {.gcsafe.} =
+      mixin implement_routine
+      `self`.interpreter.implement_routine "*", "base_api", `proc_name`, proc(a {.inject.}: VmArgs) {.gcsafe.} =
         `call`
 
 proc script_error(self: ScriptController, unit: Unit, e: ref VMQuit) =
@@ -124,6 +122,9 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
         if ctx.callback == nil or (not ctx.callback(delta)):
           ctx.timer = MonoTime.high
           #discard ctx.call_proc("set_action_running", e.module_name, false)
+          assert self.active_unit.is_nil
+          self.active_unit = unit
+
           ctx.running = ctx.resume()
           if unit of Build:
             let unit = Build(unit)
@@ -137,6 +138,8 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
           #discard ctx.resume()
     except VMQuit as e:
       self.script_error(unit, e)
+    finally:
+      self.active_unit = nil
 
 proc load_script(self: ScriptController, unit: Unit) =
   let ctx = unit.script_ctx
