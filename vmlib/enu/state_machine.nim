@@ -136,6 +136,18 @@ macro loop*(body: untyped, watcher: untyped = nil) =
   result.add(get_ast loop_body(body, watcher))
   result = new_block_stmt(result)
 
+macro smart_call*(call: untyped) =
+  var call_without_ctx = call.copy_nim_tree
+  call_without_ctx.del call_without_ctx.len - 1
+  result = quote do:
+    when compiles(`call`):
+      `call`
+    else:
+      `call_without_ctx`
+
+macro smart_call2*(body: untyped) =
+  result = body
+
 macro `->`*(from_state: untyped, to_state: untyped, body: untyped = nil) =
   template transition(from_includes_raw, from_excludes_raw: untyped, to_state_name: string, from_state, to_state, body: untyped) =
     when not declared(current_state) or not declared(ctx):
@@ -200,7 +212,7 @@ macro `->`*(from_state: untyped, to_state: untyped, body: untyped = nil) =
         if search_name in current_loop().states and not current_loop().states[search_name].is_nil:
           to_state = current_loop().states[search_name]
         else:
-          to_state = new_call(to_state[1], ctx_arg)
+          to_state = new_call("smart_call", new_call(to_state[1], ctx_arg))
       elif to_state[1].kind == nnkCall:
         to_state = to_state[1]
         to_state.add(ctx_arg)
@@ -210,10 +222,11 @@ macro `->`*(from_state: untyped, to_state: untyped, body: untyped = nil) =
       if to_state_name in current_loop().states and not current_loop().states[to_state_name].is_nil:
         to_state = current_loop().states[to_state_name]
       else:
-        to_state = new_call(to_state, ctx_arg) #
+        to_state = new_call("smart_call", new_call(to_state, ctx_arg)) #
     elif to_state.kind == nnkCall:
       to_state_name = $to_state[0]
       to_state.add(ctx_arg)
+      to_state = new_call("smart_call", to_state)
     else:
       error "to_state must be identifier or call", to_state
 
@@ -231,9 +244,9 @@ macro `->`*(from_state: untyped, to_state: untyped, body: untyped = nil) =
   result = get_ast transition(includes_str, excludes_str, to_state_name, from_state, to_state, body)
 
 when is_main_module:
-  def task1:
+  proc task1 =
     echo "task1"
-  def task2:
+  proc task2 =
     echo "task2"
 
   var
@@ -290,7 +303,7 @@ when is_main_module:
   def action_c(name: string):
     echo "action_c ", name
 
-  def action_d(name: string):
+  proc action_d(name: string) =
     echo "action_d ", name
 
   def action_e(name: string):
