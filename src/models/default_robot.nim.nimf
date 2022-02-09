@@ -1,7 +1,7 @@
 #? stdtmpl
 #proc default_robot(file_name, imports: string): string =
 import system except echo
-import types, class_macros, players
+import types, class_macros, players, state_machine
 
 let global_default = true
 ${imports}

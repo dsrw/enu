@@ -12,11 +12,17 @@ proc `position=`*(self: ScriptNode, position: Vector3) = discard
 proc rotation*(self: ScriptNode): Vector3 = discard
 proc collision*(self: ScriptNode, node: ScriptNode): Vector3 = discard
 
+proc action_running(self: ScriptNode): bool = discard
+proc `action_running=`(self: ScriptNode, value: bool) = discard
+
+proc yield_script(self: ScriptNode) = discard
+
 proc begin_move(self: ScriptNode, direction: Vector3, steps: float, move_mode: int) = discard
 proc begin_turn(self: ScriptNode, axis: Vector3, steps: float, move_mode: int) = discard
 
 proc echo_console(msg: string) = discard
 proc echo*(msg: varargs[string, `$`]) = echo_console msg.join
+
 #
 # var target: ScriptNode = me
 #
@@ -37,30 +43,36 @@ proc echo*(msg: varargs[string, `$`]) = echo_console msg.join
 # proc echo(msg: varargs[string, `$`]) = echo_console msg.join
 #
 
+template wait(self: ScriptNode, body: untyped) =
+  mixin action_running, `action_running=`, yield_script
+  `action_running=`(self, true)
+  body
+  while self.action_running and self.advance_state_machine():
+    self.yield_script()
+
 template forward*(self: ScriptNode, steps = 1.0) =
-  mixin begin_move
-  self.begin_move(FORWARD, steps, move_mode)
+  mixin begin_move, wait
+  me.wait self.begin_move(FORWARD, steps, move_mode)
 
 template back*(self: ScriptNode, steps = 1.0) =
-  mixin begin_move
-  self.begin_move(BACK, steps, move_mode)
+  mixin begin_move, wait
+  me.wait self.begin_move(BACK, steps, move_mode)
 
 template left*(self: ScriptNode, steps = 1.0) =
-  mixin begin_move
-  self.begin_move(LEFT, steps, move_mode)
+  mixin begin_move, wait
+  me.wait self.begin_move(LEFT, steps, move_mode)
 
 template right*(self: ScriptNode, steps = 1.0) =
-  mixin begin_move
-  self.begin_move(RIGHT, steps, move_mode)
+  mixin begin_move, wait
+  me.wait self.begin_move(RIGHT, steps, move_mode)
 
 template up*(self: ScriptNode, steps = 1.0) =
-  mixin begin_move
-  self.begin_move(UP, steps, move_mode)
+  mixin begin_move, wait
+  me.wait self.begin_move(UP, steps, move_mode)
 
 template down*(self: ScriptNode, steps = 1.0) =
-  mixin begin_move
-  self.begin_move(DOWN, steps, move_mode)
-
+  mixin begin_move, wait
+  me.wait self.begin_move(DOWN, steps, move_mode)
 
 template l*(self: ScriptNode, steps = 1.0) = self.left(steps)
 template r*(self: ScriptNode, steps = 1.0) = self.right(steps)
@@ -92,7 +104,8 @@ proc turn(self: ScriptNode, degrees: float, move_mode: int) =
     self.turn left, 180 - (degrees - 180), move_mode
 
 template turn*(self: ScriptNode, direction: Directions, degrees = 90.0) =
-  turn(self, direction, degrees, move_mode)
+  mixin wait
+  me.wait turn(self, direction, degrees, move_mode)
 
 template forward*(steps = 1.0) = target.forward(steps)
 template back*(steps = 1.0) = target.back(steps)
@@ -109,10 +122,12 @@ template f*(steps = 1.0) = target.forward(steps)
 template b*(steps = 1.0) = target.back(steps)
 
 template turn*(direction: Directions, degrees = 90.0) =
-  target.turn(direction, degrees, move_mode)
+  mixin wait
+  me.wait target.turn(direction, degrees, move_mode)
 
 template turn*(degrees: float) =
-  target.turn(degrees, move_mode)
+  mixin wait
+  me.wait target.turn(degrees, move_mode)
 
 template move*[T: ScriptNode](new_target: T) =
   target = new_target

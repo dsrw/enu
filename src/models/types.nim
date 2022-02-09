@@ -137,6 +137,7 @@ type
     errors*: seq[tuple[msg: string, info: TLineInfo]]
     callback*: Callback
     saved_callback*: Callback
+    action_running*: bool
     running*: bool
     interpreter*: Interpreter
     code*: string

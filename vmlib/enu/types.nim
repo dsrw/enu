@@ -41,6 +41,7 @@ type
     speed*: float
     global*: bool
     velocity*: Vector3
+    advance_state_machine*: proc(): bool
 
   ColorIndex* = enum
     eraser = 0,
@@ -55,7 +56,18 @@ type
 
   PlayerType* = ref object of ScriptNode
 
-  Direction* = object
+  Context* = ref object
+    stack*: seq[Frame]
+
+  Frame* = ref object
+    manager*: proc(active: bool):bool
+    action*: proc()
+
+  Halt* = object of CatchableError
+
+  Loop* = ref object
+    states*: Table[string, NimNode]
+    from_states*: seq[(string, NimNode)]
 
 proc vec3*(x, y, z: float): Vector3 {.inline.} =
   Vector3(x:x, y:y, z:z)

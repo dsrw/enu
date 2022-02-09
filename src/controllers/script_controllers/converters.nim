@@ -16,10 +16,12 @@ proc get_vector3(a: VmArgs, pos: int): Vector3 =
   result = vec3(x, y, z)
 
 # adapted from https://github.com/h0lley/embeddedNimScript/blob/6101fb37d4bd3f947db86bac96f53b35d507736a/embeddedNims/enims.nim#L31
-proc to_node(val: int): PNode = new_int_node(nkIntLit, val)
+proc to_node(val: int): PNode =
+  echo "converting int"
+  new_int_node(nkIntLit, val)
 proc to_node(val: float): PNode = new_float_node(nkFloatLit, val)
 proc to_node(val: string): PNode = new_str_node(nkStrLit, val)
-proc to_node(val: bool): PNode = val.ord.to_node
+proc to_node(val: bool): BiggestInt = BiggestInt(val)
 proc to_node(val: enum): PNode = val.ord.to_node
 
 proc to_node(list: open_array[int|float|string|bool|enum]): PNode =

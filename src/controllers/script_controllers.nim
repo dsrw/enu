@@ -25,29 +25,36 @@ proc map_unit(self: ScriptController, unit: Unit, pnode: PNode) =
   self.unit_map[pnode] = unit
   self.node_map[unit] = pnode
 
+proc unmap_unit(self: ScriptController, unit: Unit) =
+  if unit in self.node_map:
+    self.unit_map.del self.node_map[unit]
+    self.node_map.del unit
+
 proc get_unit(self: ScriptController, a: VmArgs, pos: int): Unit =
   let pnode = a.get_node(pos)
   self.unit_map[pnode]
 
-proc begin_turn(self: ScriptController, unit: Unit, direction: Vector3, degrees: float): string =
+proc begin_turn(self: ScriptController, unit: Unit, direction: Vector3, degrees: float, move_mode: int): string =
   var degrees = degrees
   var direction = direction
+  let ctx = self.active_unit.script_ctx
   if degrees < 0:
     degrees = degrees * -1
     direction = direction * -1
-  self.active_unit.script_ctx.callback = unit.on_begin_turn(direction, degrees, 1)
-  if not self.active_unit.script_ctx.callback.is_nil:
-    self.active_unit.script_ctx.pause()
+  ctx.callback = unit.on_begin_turn(direction, degrees, 1)
+  if not ctx.callback.is_nil:
+    ctx.pause()
 
-proc begin_move(self: ScriptController, unit: Unit, direction: Vector3, steps: float) =
+proc begin_move(self: ScriptController, unit: Unit, direction: Vector3, steps: float, move_mode: int) =
   var steps = steps
   var direction = direction
+  let ctx = self.active_unit.script_ctx
   if steps < 0:
     steps = steps * -1
     direction = direction * -1
-  self.active_unit.script_ctx.callback = unit.on_begin_move(direction, steps, 1)
-  if not self.active_unit.script_ctx.callback.is_nil:
-    self.active_unit.script_ctx.pause()
+  ctx.callback = unit.on_begin_move(direction, steps, 1)
+  if not ctx.callback.is_nil:
+    ctx.pause()
 
 proc register_active(self: ScriptController, pnode: PNode) =
   self.map_unit(self.active_unit, pnode)
@@ -67,6 +74,22 @@ proc new_instance(self: ScriptController, src: Unit, dest: PNode) =
 proc echo_console(msg: string) =
   echo msg
 
+proc action_running(self: Unit): bool =
+  self.script_ctx.action_running
+
+proc `action_running=`(self: Unit, value: bool) =
+  if value:
+    self.script_ctx.timer = get_mono_time() + ADVANCE_STEP
+  else:
+    self.script_ctx.timer = MonoTime.high
+  self.script_ctx.action_running = value
+
+proc yield_script(self: ScriptController, unit: Unit) =
+  let ctx = unit.script_ctx
+  ctx.callback = ctx.saved_callback
+  ctx.saved_callback = nil
+  ctx.pause()
+
 macro bind_procs(self: ScriptController, proc_refs: varargs[typed]): untyped =
   result = new_stmt_list()
   result.add quote do:
@@ -85,6 +108,8 @@ macro bind_procs(self: ScriptController, proc_refs: varargs[typed]): untyped =
         let typ = ident_def[1].str_val
         if typ == $ScriptController.type:
           ident"script_controller"
+        elif typ == "VmArgs":
+          ident"a"
         elif typ in ["Unit", "Bot", "Build"]:
           let getter = "get_" & typ
           pos.inc
@@ -121,10 +146,9 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
 
         if ctx.callback == nil or (not ctx.callback(delta)):
           ctx.timer = MonoTime.high
-          #discard ctx.call_proc("set_action_running", e.module_name, false)
+          ctx.action_running = false
           assert self.active_unit.is_nil
           self.active_unit = unit
-
           ctx.running = ctx.resume()
           if unit of Build:
             let unit = Build(unit)
@@ -132,10 +156,11 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
               resume_script = true
         elif now >= ctx.timer:
           ctx.timer = now + ADVANCE_STEP
-          #e.saved_callback = e.callback
-          #e.callback = nil
+          ctx.saved_callback = ctx.callback
+          ctx.callback = nil
           # TODO
-          #discard ctx.resume()
+          self.active_unit = unit
+          discard ctx.resume()
     except VMQuit as e:
       self.script_error(unit, e)
     finally:
@@ -273,8 +298,8 @@ proc watch_code(self: ScriptController, unit: Unit) =
 
 proc watch_units(self: ScriptController, units: ZenSeq[Unit]) =
   units.changes:
+    let unit = change.item
     if added:
-      let unit = change.item
       unit.frame_delta.changes:
         if touched:
           self.advance_unit(unit, change.item)
@@ -283,6 +308,8 @@ proc watch_units(self: ScriptController, units: ZenSeq[Unit]) =
 
       if not unit.clone_of and file_exists(unit.script_file):
         unit.code.value = read_file(unit.script_file)
+    if removed:
+      self.unmap_unit(unit)
 
 proc reload_all*(self: ScriptController) =
   # TODO?
@@ -311,6 +338,10 @@ proc init*(_: type ScriptController): ScriptController =
       raise (ref VMQuit)(info: info, msg: msg)
 
   interpreter.register_enter_hook proc(c, pc, tos, instr: auto) =
+    assert controller
+    assert controller.active_unit
+    assert controller.active_unit.script_ctx
+
     let ctx = controller.active_unit.script_ctx
     let info = c.debug[pc]
 
@@ -333,7 +364,8 @@ proc init*(_: type ScriptController): ScriptController =
   result = controller
   result.watch_units state.units
 
-  result.bind_procs begin_turn, begin_move, register_active, echo_console, new_instance
+  result.bind_procs begin_turn, begin_move, register_active, echo_console, new_instance,
+                    action_running, `action_running=`, yield_script
 
 when is_main_module:
   state.config.lib_dir = current_source_path().parent_dir / ".." / ".." / "vmlib"

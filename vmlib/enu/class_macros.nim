@@ -138,15 +138,17 @@ macro load_enu_script*(file_name, include_name: string): untyped =
   else:
     result.add quote do:
       let me {.inject.} = ScriptNode()
+      register_active(me)
 
     result.add include_file
 
   inner.add ast
   result.add quote do:
-    proc run_script*(me {.inject.}: me.type) =
-      var target {.inject.}: ScriptNode = me
-      `inner`
-    run_script(me)
+    #proc run_script*(me {.inject.}: me.type) =
+    var target {.inject.}: ScriptNode = me
+    include loops
+    `inner`
+    #run_script(me)
 
   system.echo "code: "
   system.echo result.repr

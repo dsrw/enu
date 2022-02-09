@@ -1,7 +1,7 @@
 import potato_class, enu/types, pkg/print
-import enu/base_api
+import enu/base_api, enu/state_machine
 var move_mode = 1
-
+var me = ScriptNode()
 let p = potato.new(label = "orange", color = green)
 var target = p
 forward 10
