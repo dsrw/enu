@@ -1,4 +1,4 @@
-name bot2
+#name bot2
 #var b = bot1.new(global = false)
 
 echo "from bot2"

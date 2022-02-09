@@ -125,19 +125,19 @@ macro load_enu_script*(file_name, include_name: string): untyped =
   let file_name = file_name.str_val
   let ast = parse_stmt(file_name.static_read, file_name)
   let name_node = pop_name_node(ast)
-  let (name, params) = extract_class_info(name_node)
   let include_file = quote do:
     include `include_name`
   result = new_stmt_list()
   var inner = new_stmt_list()
   if name_node.kind != nnkNilLit:
+    let (name, params) = extract_class_info(name_node)
     result.add build_class(name_node)
     result.add include_file
     inner.add params_to_assignments(ident"me", params)
 
   else:
     result.add quote do:
-      let me {.inject.} = ScriptNode(ctrl: Controller())
+      let me {.inject.} = ScriptNode()
 
     result.add include_file
 
