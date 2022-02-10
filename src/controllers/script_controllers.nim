@@ -1,8 +1,9 @@
-import std / [macros, sugar, sets, os, strutils, times, monotimes, sequtils, importutils, tables]
+import std / os except sleep
+import std / [macros, sugar, sets, strutils, times, monotimes, sequtils, importutils, tables, options, math]
 import pkg / [print, model_citizen]
 import pkg / compiler / vm except get_int
 import pkg / compiler / ast except new_node
-import pkg / compiler / [vmdef, options, lineinfos, astalgo,  renderer, msgs]
+import pkg / compiler / [vmdef, lineinfos, astalgo,  renderer, msgs]
 
 import core, models / [types, states, bots, units], libs / [interpreters, eval]
 
@@ -14,8 +15,12 @@ type ScriptController* = ref object
   active_unit: Unit
   unit_map: Table[PNode, Unit]
   node_map: Table[Unit, PNode]
+  retry_failures: bool
+  failed: seq[tuple[unit: Unit, e: ref VMQuit]]
 
-const ADVANCE_STEP* = 0.5.seconds
+const
+  advance_step* = 0.5.seconds
+  error_code = some(99)
 
 let state = GameState.active
 
@@ -33,6 +38,21 @@ proc unmap_unit(self: ScriptController, unit: Unit) =
 proc get_unit(self: ScriptController, a: VmArgs, pos: int): Unit =
   let pnode = a.get_node(pos)
   self.unit_map[pnode]
+
+proc register_active(self: ScriptController, pnode: PNode) =
+  self.map_unit(self.active_unit, pnode)
+
+proc new_instance(self: ScriptController, src: Unit, dest: PNode) =
+  var clone = src.clone(self.active_unit)
+  clone.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter,
+                               module_name: src.script_ctx.module_name)
+  self.map_unit(clone, dest)
+  self.active_unit.units.add(clone)
+  let active = self.active_unit
+  self.active_unit = clone
+  defer:
+    self.active_unit = active
+  discard clone.script_ctx.call_proc("run_script", dest)
 
 proc begin_turn(self: ScriptController, unit: Unit, direction: Vector3, degrees: float, move_mode: int): string =
   var degrees = degrees
@@ -56,20 +76,17 @@ proc begin_move(self: ScriptController, unit: Unit, direction: Vector3, steps: f
   if not ctx.callback.is_nil:
     ctx.pause()
 
-proc register_active(self: ScriptController, pnode: PNode) =
-  self.map_unit(self.active_unit, pnode)
+proc sleep(ctx: ScriptCtx, seconds: float) =
+  var duration = 0.0
+  ctx.callback = proc(delta: float): bool =
+    duration += delta
+    return duration < seconds
+  ctx.pause()
 
-proc new_instance(self: ScriptController, src: Unit, dest: PNode) =
-  var clone = src.clone(self.active_unit)
-  clone.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter,
-                               module_name: src.script_ctx.module_name)
-  self.map_unit(clone, dest)
-  self.active_unit.units.add(clone)
-  let active = self.active_unit
-  self.active_unit = clone
-  defer:
-    self.active_unit = active
-  discard clone.script_ctx.call_proc("run_script", dest)
+proc collision(unit_a: Unit, unit_b: Unit): Vector3 =
+  for collision in unit_a.collisions:
+    if collision.model == unit_b:
+      return collision.normal.snapped(vec3(1, 1, 1))
 
 proc echo_console(msg: string) =
   echo msg
@@ -79,16 +96,56 @@ proc action_running(self: Unit): bool =
 
 proc `action_running=`(self: Unit, value: bool) =
   if value:
-    self.script_ctx.timer = get_mono_time() + ADVANCE_STEP
+    self.script_ctx.timer = get_mono_time() + advance_step
   else:
     self.script_ctx.timer = MonoTime.high
   self.script_ctx.action_running = value
+
+proc global(self: Unit): bool =
+  Global in self.flags
+
+proc `global=`(self: Unit, global: bool) =
+  if global:
+    self.flags += Global
+  else:
+    self.flags -= Global
+
+proc position(self: Unit): Vector3 =
+  self.to_global(vec3(0, 0, 0))
+
+proc `position=`(self: Unit, position: Vector3) =
+  self.transform.origin = position
+
+proc rotation(self: Unit): Vector3 =
+  # TODO: fix this
+  proc nm(f: float): float =
+    if f.is_equal_approx(0):
+      return 0
+    elif f < 0:
+      return f + (2 * PI)
+    else:
+      return f
+
+  proc nm(v: Vector3): Vector3 =
+    vec3(v.x.nm, v.y.nm, v.z.nm)
+
+  let e = self.transform.basis.get_euler
+
+  let n = e.nm
+  let v = vec3(nm(n.x).rad_to_deg, nm(n.y).rad_to_deg, nm(n.z).rad_to_deg)
+  let m = if v.z > 0: 1.0 else: -1.0
+  result = vec3(0.0, (v.x - v.y) * m, 0.0)
 
 proc yield_script(self: ScriptController, unit: Unit) =
   let ctx = unit.script_ctx
   ctx.callback = ctx.saved_callback
   ctx.saved_callback = nil
   ctx.pause()
+
+proc exit(ctx: ScriptCtx, exit_code: int) =
+  ctx.exit_code = some(exit_code)
+  ctx.pause()
+  ctx.running = false
 
 macro bind_procs(self: ScriptController, proc_refs: varargs[typed]): untyped =
   result = new_stmt_list()
@@ -110,6 +167,8 @@ macro bind_procs(self: ScriptController, proc_refs: varargs[typed]): untyped =
           ident"script_controller"
         elif typ == "VmArgs":
           ident"a"
+        elif typ == "ScriptCtx":
+          quote do: script_controller.active_unit.script_ctx
         elif typ in ["Unit", "Bot", "Build"]:
           let getter = "get_" & typ
           pos.inc
@@ -155,10 +214,9 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
             if unit.voxels_per_frame > 0 and ctx.running and unit.voxels_remaining_this_frame >= 1:
               resume_script = true
         elif now >= ctx.timer:
-          ctx.timer = now + ADVANCE_STEP
+          ctx.timer = now + advance_step
           ctx.saved_callback = ctx.callback
           ctx.callback = nil
-          # TODO
           self.active_unit = unit
           discard ctx.resume()
     except VMQuit as e:
@@ -181,92 +239,16 @@ proc load_script(self: ScriptController, unit: Unit) =
         ""
       let code = unit.code_template(imports)
       ctx.load(state.config.script_dir, ctx.script, code, state.config.lib_dir)
-      # if not initialized:
-      #   with ctx.engine:
-      #     expose "yield_script", proc(a: VmArgs):bool =
-      #       active_engine().callback = active_engine().saved_callback
-      #       active_engine().saved_callback = nil
-      #       true
-      #
-      #     expose "begin_move", a => self.begin_move(get_vec3(a, 0), get_float(a, 1), get_int(a, 2).int)
-      #     expose "begin_turn", a => self.begin_turn(get_vec3(a, 0), get_float(a, 1), get_int(a, 2).int)
-      #     expose "echo_console", proc(a: VmArgs): bool =
-      #       let msg = a.get_string(0)
-      #       echo msg
-      #       state.console.log += msg
-      #     expose "create_new", a => self.create_new()
-      #     expose "collision", proc(a: VmArgs): bool =
-      #       for collision in self.collisions:
-      #         if collision.model == state.player:
-      #           a.set_result(collision.normal.snapped(vec3(1, 1, 1)).to_node)
-      #           return false
-      #       a.set_result(vec3().to_node)
-      #       false
-      #     expose "sleep", proc(a: VmArgs): bool =
-      #       self.load_vars()
-      #       let seconds = get_float(a, 0)
-      #       var duration = 0.0
-      #       active_engine().callback = proc(delta: float): bool =
-      #         duration += delta
-      #         return duration < seconds
-      #       true
-      #     expose "quit", proc(a: VmArgs): bool =
-      #       let e = active_engine()
-      #       e.exit_code = some(a.get_int(0).int)
-      #       e.pause()
-      #       e.running = false
-      #       result = false
-      #     expose "set_global", proc(a: VmArgs): bool =
-      #       let global = a.get_bool(0)
-      #       if global:
-      #         self.flags += Global
-      #       else:
-      #         self.flags -= Global
-      #       false
-      #     expose "get_global", proc(a: VmArgs): bool =
-      #       a.set_result((Global in self.flags).to_node)
-      #       false
-      #     expose "get_position", proc(a: VmArgs): bool =
-      #       let n = self.to_global(vec3(0, 0, 0)).to_node
-      #       a.set_result(n)
-      #       return false
-      #     expose "set_position", proc(a: VmArgs): bool =
-      #       let v = a.get_vec3(0)
-      #       self.transform.origin = v
-      #       false
-      #     expose "get_rotation", proc(a: VmArgs): bool =
-      #       # TODO: fix this
-      #       proc nm(f: float): float =
-      #         if f.is_equal_approx(0):
-      #           return 0
-      #         elif f < 0:
-      #           return f + (2 * PI)
-      #         else:
-      #           return f
-      #
-      #       proc nm(v: Vector3): Vector3 =
-      #         vec3(v.x.nm, v.y.nm, v.z.nm)
-      #
-      #       let e = self.transform.basis.get_euler
-      #
-      #       let n = e.nm
-      #       let v = vec3(nm(n.x).rad_to_deg, nm(n.y).rad_to_deg, nm(n.z).rad_to_deg)
-      #       let m = if v.z > 0: 1.0 else: -1.0
-      #       let v2 = vec3(0.0, (v.x - v.y) * m, 0.0)
-      #       a.set_result(v2.to_node)
-      #       return false
-      #  self.on_script_loaded()
+
     if not state.paused:
       ctx.running = ctx.run()
-      #self.update_running_state ctx.run()
 
   except VMQuit as e:
-    #if retry_failures:
     ctx.running = false
-      #failed.add (self, e)
-    #else:
-    #  discard
-      #self.error(e)
+    if self.retry_failures:
+      self.failed.add (unit, e)
+    else:
+      self.script_error(unit, e)
   finally:
     self.active_unit = nil
 
@@ -274,9 +256,6 @@ proc remove_module*(self: ScriptController, file_name: string) =
   self.module_names.excl file_name.split_file.name
 
 proc change_code(self: ScriptController, unit: Unit, code: string) =
-
-  # if not retry_failures:
-  #   state.paused = false
   unit.reset()
   state.console.show_errors.value = false
   if code.strip == "" and file_exists(unit.script_file):
@@ -286,9 +265,7 @@ proc change_code(self: ScriptController, unit: Unit, code: string) =
     write_file(unit.script_file, code)
     if unit.script_ctx.is_nil:
       unit.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter)
-      #unit_ctxs[unit.script_ctx.engine] = unit
     unit.script_ctx.script = unit.script_file
-
     self.load_script(unit)
 
 proc watch_code(self: ScriptController, unit: Unit) =
@@ -334,7 +311,7 @@ proc init*(_: type ScriptController): ScriptController =
       let msg = &"{file_name}({int info.line},{int info.col}): {msg}"
       echo "error: ", msg, " from ", ctx.file_name
       ctx.errors.add (msg, info)
-      #ctx.exit_code = some(99)
+      ctx.exit_code = error_code
       raise (ref VMQuit)(info: info, msg: msg)
 
   interpreter.register_enter_hook proc(c, pc, tos, instr: auto) =
@@ -365,7 +342,8 @@ proc init*(_: type ScriptController): ScriptController =
   result.watch_units state.units
 
   result.bind_procs begin_turn, begin_move, register_active, echo_console, new_instance,
-                    action_running, `action_running=`, yield_script
+                    action_running, `action_running=`, yield_script, collision, sleep,
+                    exit, global, `global=`, position, `position=`, rotation
 
 when is_main_module:
   state.config.lib_dir = current_source_path().parent_dir / ".." / ".." / "vmlib"

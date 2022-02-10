@@ -9,4 +9,4 @@ ${imports}
 {.experimental: "overloadableEnums".}
 load_enu_script "${file_name}", "robot"
 
-me.quit()
+exit()

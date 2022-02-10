@@ -4,8 +4,8 @@ import types, state_machine
 proc register_active*(self: ScriptNode) = discard
 proc new_instance*(src, dest: ScriptNode) = discard
 # API
-proc quit*(self: ScriptNode, exit_code = 0) = discard
-proc sleep*(self: ScriptNode, seconds = 1.0, ctx: Context = nil) = discard
+proc exit*(exit_code = 0) = discard
+proc sleep*(seconds = 1.0) = discard
 proc create_new*(self: ScriptNode) = discard
 proc position*(self: ScriptNode): Vector3 = discard
 proc `position=`*(self: ScriptNode, position: Vector3) = discard
