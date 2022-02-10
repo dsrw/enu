@@ -7,10 +7,11 @@ proc current_loop(value: Loop = nil): Loop =
     loop = value
   result = loop
 
-proc parse(sig: NimNode): (string, string) =
+proc parse(sig: NimNode): (string, string, NimNode) =
   var
     name = ""
     args: seq[string]
+    vars = new_stmt_list()
   if sig.kind == nnkIdent:
     name = $sig
   else:
@@ -21,23 +22,14 @@ proc parse(sig: NimNode): (string, string) =
         args.add &"{arg[0]}: {arg[1]}"
       of nnkExprEqExpr:
         args.add &"{arg[0]} = {arg[1].to_str_lit}"
+        vars.add new_var_stmt(arg[0], arg[0])
       of nnkIdent:
         args.add &"{arg}: auto"
       else:
         error "invalid signature", sig
     if args.len > 0:
       args.add "" # to get a trailing comma before the context arg
-  return (name, args.join(", "))
-
-macro def*(sig: untyped,  body: untyped): untyped =
-  let
-    (name, args) = sig.parse
-    code = &"""
-      proc {name}({args} ctx: Context = nil) =
-        const this_state = "{name}"
-    """
-  result = parse_stmt(code)
-  result[0].find_child(it.kind == nnkStmtList).add(body)
+  return (name, args.join(", "), vars)
 
 proc advance*(ctx: Context, frame: Frame = nil): bool =
   ## advance state machine. Returns true if statemachine is still running.
@@ -69,7 +61,7 @@ macro validate_loop() =
 
       error msg, node
 
-template loop_body(body: untyped, watcher: untyped) =
+template loop_body(body: untyped) =
   var
     main_loop = false
     current_state {.inject, used.} = "nil"
@@ -86,13 +78,9 @@ template loop_body(body: untyped, watcher: untyped) =
 
   proc manager(active: bool): bool =
     let active {.inject, used.} = active
-    watcher
-    if active and done:
-      while true:
-        body
-        return true
-    else:
-      return false
+    while true:
+      body
+      return true
   validate_loop()
   frame.manager = manager
   ctx.stack.add frame
@@ -128,13 +116,25 @@ template loop_body(body: untyped, watcher: untyped) =
       done = true
       looping = ctx.advance(frame)
 
-macro loop*(body: untyped, watcher: untyped = nil) =
+macro loop*(body: untyped) =
   discard current_loop(Loop())
   result = new_stmt_list()
   let body = if body.kind == nnkNilLit: new_stmt_list() else: body
-  let watcher = if watcher.kind == nnkNilLit: new_stmt_list() else: watcher
-  result.add(get_ast loop_body(body, watcher))
+  result.add(get_ast loop_body(body))
   result = new_block_stmt(result)
+
+macro loop*(sig: untyped,  body: untyped): untyped =
+  let
+    (name, args, vars) = sig.parse
+    code = &"""
+      proc {name}({args} ctx: Context = nil) =
+        const this_state = "{name}"
+    """
+  result = parse_stmt(code)
+  var outer = result[0].find_child(it.kind == nnkStmtList)
+  outer.add(vars)
+  outer.add(new_call("loop", body))
+  echo result.repr
 
 macro smart_call*(call: untyped) =
   var call_without_ctx = call.copy_nim_tree
@@ -145,30 +145,7 @@ macro smart_call*(call: untyped) =
     else:
       `call_without_ctx`
 
-macro smart_call2*(body: untyped) =
-  result = body
-
-macro `->`*(from_state: untyped, to_state: untyped, body: untyped = nil) =
-  template transition(from_includes_raw, from_excludes_raw: untyped, to_state_name: string, from_state, to_state, body: untyped) =
-    when not declared(current_state) or not declared(ctx):
-      {.error: "`->` must be inside a `loop` ".}
-    let
-      from_includes: seq[string] = from_includes_raw.split(",")
-      from_excludes: seq[string] = from_excludes_raw.split(",")
-    if (current_state in from_includes or
-        (current_state != "nil" and
-        (("others" in from_includes and to_state_name != current_state) or
-        "any" in from_includes))) and current_state notin from_excludes:
-      current_state = to_state_name
-      body
-      proc action() =
-        to_state
-      if to_state_name != "nil":
-        frame.action = action
-      else:
-        frame.action = nil
-      raise (ref Halt)()
-
+proc transition(from_state, to_state, body, immediate: NimNode): NimNode =
   var
     to_state_name: string
     to_state = to_state
@@ -212,7 +189,7 @@ macro `->`*(from_state: untyped, to_state: untyped, body: untyped = nil) =
         if search_name in current_loop().states and not current_loop().states[search_name].is_nil:
           to_state = current_loop().states[search_name]
         else:
-          to_state = new_call("smart_call", new_call(to_state[1], ctx_arg))
+          to_state = new_call(to_state[1], ctx_arg)
       elif to_state[1].kind == nnkCall:
         to_state = to_state[1]
         to_state.add(ctx_arg)
@@ -222,11 +199,10 @@ macro `->`*(from_state: untyped, to_state: untyped, body: untyped = nil) =
       if to_state_name in current_loop().states and not current_loop().states[to_state_name].is_nil:
         to_state = current_loop().states[to_state_name]
       else:
-        to_state = new_call("smart_call", new_call(to_state, ctx_arg)) #
+        to_state = new_call(to_state, ctx_arg) #
     elif to_state.kind == nnkCall:
       to_state_name = $to_state[0]
       to_state.add(ctx_arg)
-      to_state = new_call("smart_call", to_state)
     else:
       error "to_state must be identifier or call", to_state
 
@@ -241,7 +217,33 @@ macro `->`*(from_state: untyped, to_state: untyped, body: untyped = nil) =
   let
     includes_str = includes.join(",")
     excludes_str = excludes.join(",")
-  result = get_ast transition(includes_str, excludes_str, to_state_name, from_state, to_state, body)
+
+  result = quote do:
+    when not declared(current_state) or not declared(ctx):
+      {.error: "`->` or `-=>` must be inside a `loop` ".}
+    if `immediate` or (active and done):
+      let
+        from_includes: seq[string] = `includes_str`.split(",")
+        from_excludes: seq[string] = `excludes_str`.split(",")
+      if (current_state in from_includes or
+          (current_state != "nil" and
+          (("others" in from_includes and `to_state_name` != current_state) or
+          "any" in from_includes))) and current_state notin from_excludes:
+        current_state = `to_state_name`
+        `body`
+        proc action() =
+          smart_call(`to_state`)
+        if `to_state_name` != "nil":
+          frame.action = action
+        else:
+          frame.action = nil
+        raise (ref Halt)()
+
+macro `+->`*(from_state: untyped, to_state: untyped, body: untyped = nil) =
+  result = transition(from_state, to_state, body, ident"true")
+
+macro `->`*(from_state: untyped, to_state: untyped, body: untyped = nil) =
+  result = transition(from_state, to_state, body, ident"false")
 
 when is_main_module:
   proc task1 =
@@ -250,19 +252,15 @@ when is_main_module:
     echo "task2"
 
   var
-    count1 = 0
-    count2 = 0
+    count = 0
   loop:
-    inc count1
-    echo "count1: " & $count1 & " count2: " & $count2
+    inc count
+    echo "count: " & $count
     nil -> task1
-    if count1 > 5:
+    if count > 5:
       task1 -> task2:
         echo "finished in main"
-  do:
-    inc count2
-    echo "count1: " & $count1 & " count2: " & $count2
-    if count2 > 10:
+    if count > 10:
       echo "true true"
       task2 -> nil
     else:
@@ -273,7 +271,7 @@ when is_main_module:
   proc turn_right() =
     discard
 
-  def square(length):
+  proc square(length: int) =
     4.times:
       forward length
       turn_right()
@@ -286,59 +284,48 @@ when is_main_module:
       break
 
   counter = 0
+
   loop:
-    (nil, big_square) -> square(counter) as little_square
-    little_square -> square(2) as big_square
-  do:
-    inc counter
     if counter > 100:
       (little_square, big_square) -> nil
+    (nil, big_square) -> square(counter) as little_square:
+      inc counter
+    little_square -> square(2) as big_square
 
-  def action_a(name: string):
+  proc action_a(name: string) =
     echo "action_a ", name
 
-  def action_b(name: string):
+  proc action_b(name: string) =
     echo "action_b ", name
 
-  def action_c(name: string):
+  proc action_c(name: string) =
     echo "action_c ", name
 
   proc action_d(name: string) =
     echo "action_d ", name
 
-  def action_e(name: string):
+  proc action_e(name: string) =
     echo "action_e ", name
 
-  def loop_b:
-    var
+  loop loop_b(counter = 0, name = "loop_b"):
+    inc counter
+    nil -> action_d(name)
+    if counter == 5:
+      action_d -> action_e(name)
+    if counter == 10:
+      action_e -> action_d(name)
+    if counter == 15:
       counter = 0
-      name = "loop_b"
-    defer:
-      echo "loop b done!"
-    loop nil:
-      inc counter
-      nil -> action_d(name)
-      if counter == 5:
-        action_d -> action_e(name)
-      if counter == 10:
-        action_e -> action_d(name)
-      if counter == 15:
-        counter = 0
 
-  def loop_a:
-    var
-      counter = 0
-      name = "loop_a"
-    loop nil:
-      nil -> action_b(name)
-      inc counter
-      if counter == 2:
-        action_b -> loop_b:
-          counter = -20
-        loop_b -> action_c(name)
-      if counter == 6:
-        action_c -> nil
-    echo name, " done ", counter
+  loop loop_a(counter = 0, name = "loop_a"):
+    nil -> action_b(name)
+    inc counter
+    if counter == 2:
+      action_b +-> loop_b:
+        counter = -20
+      loop_b +-> action_c(name)
+    if counter == 6:
+      action_c +-> nil
 
   counter = 0
   loop:
@@ -349,24 +336,32 @@ when is_main_module:
 
   counter = 0
   var name = "loop_main"
-  loop nil:
-    nil -> loop_a as initial_loop:
+  loop:
+    nil +-> loop_a as initial_loop:
       echo "initial loop "
     inc counter
     if done:
-      initial_loop -> action_a(name):
+      initial_loop +-> action_a(name):
         counter = 0
     if counter == 3:
-      action_a -> action_b(name):
+      action_a +-> action_b(name):
         counter = 0
-      action_b -> action_c(name) as ac:
+      action_b +-> action_c(name) as ac:
         counter = 0
-      ac -> loop_a:
+      ac +-> loop_a:
         counter = 0
     if counter == 70:
-      loop_a -> nil:
+      loop_a +-> nil:
         echo "loop_main done ", counter
 
   loop:
-    any -> nil
+    (any, -action_a) -> nil
+    action_a -> action_b("goodbye")
     nil -> action_a("hello")
+
+  counter = 0
+  loop:
+    inc counter
+    echo counter
+    if counter == 20:
+      break
