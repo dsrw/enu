@@ -9,7 +9,7 @@ var
   counter = 0
   output = ""
 
-e1.load("scripts", "bot", read_file script_dir & "/bot.nim", vmlib)
+e1.load("scripts", "bot", read_file script_dir & "/bots.nim", vmlib)
 e1.expose("yield_script", a => true)
 
 e1.expose "script_echo", proc(a: VmArgs): bool =

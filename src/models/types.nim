@@ -69,16 +69,15 @@ type
     id*: string
     parent*: Unit
     units*: ZenSeq[Unit]
-    local*: bool
     start_transform*: Transform
     transform*: ZenValue[Transform]
-    scale*: float
+    scale*: ZenValue[float]
+    energy*: ZenValue[float]
     speed*: float
     code*: ZenValue[string]
     script_ctx*: ScriptCtx
     disabled*: bool
     velocity*: ZenValue[Vector3]
-    energy*: ZenValue[float]
     clone_of*: Unit
     collisions*: seq[tuple[model: Model, normal: Vector3]]
     frame_delta*: ZenValue[float]
@@ -103,7 +102,7 @@ type
     voxels_per_frame*: float
     voxels_remaining_this_frame*: float
     drawing*: bool
-    save_points*: Table[string, tuple[position: Transform, index: int, drawing: bool]]
+    save_points*: Table[string, tuple[position: Transform, color: Color, drawing: bool]]
     bounds*: ZenValue[AABB]
     bot_collisions*: bool
 

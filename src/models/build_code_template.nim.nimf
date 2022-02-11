@@ -1,0 +1,18 @@
+#? stdtmpl
+#proc build_code_template(file_name, imports: string, is_instance: bool): string =
+import std / strutils
+import types, class_macros, players, state_machine, base_api, bots, builds, private_builds
+
+let is_instance = ${is_instance}
+let global_default = not is_instance
+var move_mode = 0
+
+${imports}
+
+{.experimental: "overloadable_enums".}
+
+proc echo(msg: varargs[string, `$$`]) = echo_console msg.join
+
+load_enu_script "${file_name}", Build, position, speed, scale, energy, global, drawing, color, initial_position
+
+exit()

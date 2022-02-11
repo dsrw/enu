@@ -1,13 +1,11 @@
-import std / os except sleep
+import std / os
 import std / [macros, sugar, sets, strutils, times, monotimes, sequtils, importutils, tables, options, math]
 import pkg / [print, model_citizen]
 import pkg / compiler / vm except get_int
 import pkg / compiler / ast except new_node
 import pkg / compiler / [vmdef, lineinfos, astalgo,  renderer, msgs]
 
-import core, models / [types, states, bots, units], libs / [interpreters, eval]
-
-include script_controllers/converters
+import core, models / [types, states, bots, builds, units, colors], libs / [interpreters, eval]
 
 type ScriptController* = ref object
   interpreter: Interpreter
@@ -17,6 +15,8 @@ type ScriptController* = ref object
   node_map: Table[Unit, PNode]
   retry_failures: bool
   failed: seq[tuple[unit: Unit, e: ref VMQuit]]
+
+include script_controllers/bindings
 
 const
   advance_step* = 0.5.seconds
@@ -39,6 +39,21 @@ proc get_unit(self: ScriptController, a: VmArgs, pos: int): Unit =
   let pnode = a.get_node(pos)
   self.unit_map[pnode]
 
+proc get_bot(self: ScriptController, a: VmArgs, pos: int): Bot =
+  let unit = self.get_unit(a, pos)
+  assert not unit.is_nil and unit of Bot
+  Bot(unit)
+
+proc get_build(self: ScriptController, a: VmArgs, pos: int): Build =
+  let unit = self.get_unit(a, pos)
+  assert not unit.is_nil and unit of Build
+  Build(unit)
+
+proc to_node(self: ScriptController, unit: Unit): PNode =
+  self.node_map[unit]
+
+# Common bindings
+
 proc register_active(self: ScriptController, pnode: PNode) =
   self.map_unit(self.active_unit, pnode)
 
@@ -54,6 +69,8 @@ proc new_instance(self: ScriptController, src: Unit, dest: PNode) =
     self.active_unit = active
   discard clone.script_ctx.call_proc("run_script", dest)
 
+proc active_unit(self: ScriptController): Unit = self.active_unit
+
 proc begin_turn(self: ScriptController, unit: Unit, direction: Vector3, degrees: float, move_mode: int): string =
   var degrees = degrees
   var direction = direction
@@ -61,7 +78,7 @@ proc begin_turn(self: ScriptController, unit: Unit, direction: Vector3, degrees:
   if degrees < 0:
     degrees = degrees * -1
     direction = direction * -1
-  ctx.callback = unit.on_begin_turn(direction, degrees, 1)
+  ctx.callback = unit.on_begin_turn(direction, degrees, move_mode)
   if not ctx.callback.is_nil:
     ctx.pause()
 
@@ -72,7 +89,7 @@ proc begin_move(self: ScriptController, unit: Unit, direction: Vector3, steps: f
   if steps < 0:
     steps = steps * -1
     direction = direction * -1
-  ctx.callback = unit.on_begin_move(direction, steps, 1)
+  ctx.callback = unit.on_begin_move(direction, steps, move_mode)
   if not ctx.callback.is_nil:
     ctx.pause()
 
@@ -116,6 +133,24 @@ proc position(self: Unit): Vector3 =
 proc `position=`(self: Unit, position: Vector3) =
   self.transform.origin = position
 
+proc speed(self: Unit): float =
+  self.speed
+
+proc `speed=`(self: Unit, speed: float) =
+  self.speed = speed
+
+proc scale(self: Unit): float =
+  self.scale.value
+
+proc `scale=`(self: Unit, scale: float) =
+  self.scale.value = scale
+
+proc energy(self: Unit): float =
+  self.energy.value
+
+proc `energy=`(self: Unit, energy: float) =
+  self.energy.value = energy
+
 proc rotation(self: Unit): Vector3 =
   # TODO: fix this
   proc nm(f: float): float =
@@ -147,45 +182,41 @@ proc exit(ctx: ScriptCtx, exit_code: int) =
   ctx.pause()
   ctx.running = false
 
-macro bind_procs(self: ScriptController, proc_refs: varargs[typed]): untyped =
-  result = new_stmt_list()
-  result.add quote do:
-    let script_controller {.inject.} = `self`
+# Bot bindings
 
-  for proc_ref in proc_refs:
-    let
-      proc_impl = proc_ref.get_impl
-      proc_name = proc_impl[0].str_val
-      return_node = proc_impl[3][0]
-      arg_nodes = proc_impl[3][1..^1]
+proc play(self: Bot, animation_name: string) =
+  self.animation.value = animation_name
 
-    let args = collect:
-      var pos = -1
-      for ident_def in arg_nodes:
-        let typ = ident_def[1].str_val
-        if typ == $ScriptController.type:
-          ident"script_controller"
-        elif typ == "VmArgs":
-          ident"a"
-        elif typ == "ScriptCtx":
-          quote do: script_controller.active_unit.script_ctx
-        elif typ in ["Unit", "Bot", "Build"]:
-          let getter = "get_" & typ
-          pos.inc
-          new_call(bind_sym(getter), ident"script_controller", ident"a", new_lit(pos))
-        else:
-          let getter = "get_" & typ
-          pos.inc
-          new_call(bind_sym(getter), ident"a", new_lit(pos))
+# Build bindings
 
-    var call = new_call(proc_ref, args)
-    if return_node.kind == nnkSym:
-      call = new_call(bind_sym"set_result", ident"a", new_call(bind_sym"to_node", call))
+proc color(self: Build): Colors =
+  action_index self.color
 
-    result.add quote do:
-      mixin implement_routine
-      `self`.interpreter.implement_routine "*", "base_api", `proc_name`, proc(a {.inject.}: VmArgs) {.gcsafe.} =
-        `call`
+proc `color=`(self: Build, color: Colors) =
+  self.color = action_colors[color]
+
+proc drawing(self: Build): bool =
+  self.drawing
+
+proc `drawing=`(self: Build, drawing: bool) =
+  self.drawing = drawing
+
+proc initial_position(self: Build): Vector3 =
+  self.initial_position
+
+proc save(self: Build, name: string) =
+  self.save_points[name] = (self.transform.value, self.color, self.drawing)
+
+proc restore(self: Build, name: string) =
+  (self.transform.value, self.color, self.drawing) = self.save_points[name]
+
+proc reset(self: Build, clear: bool) =
+  if clear:
+    self.reset()
+  else:
+    self.reset_state()
+
+# End of bindings
 
 proc script_error(self: ScriptController, unit: Unit, e: ref VMQuit) =
   echo "error: ", e.msg
@@ -287,6 +318,7 @@ proc watch_units(self: ScriptController, units: ZenSeq[Unit]) =
         unit.code.value = read_file(unit.script_file)
     if removed:
       self.unmap_unit(unit)
+      self.module_names.excl unit.script_ctx.module_name
 
 proc reload_all*(self: ScriptController) =
   # TODO?
@@ -341,9 +373,18 @@ proc init*(_: type ScriptController): ScriptController =
   result = controller
   result.watch_units state.units
 
-  result.bind_procs begin_turn, begin_move, register_active, echo_console, new_instance,
-                    action_running, `action_running=`, yield_script, collision, sleep,
-                    exit, global, `global=`, position, `position=`, rotation
+  # Note: if we have multiple implementations of a proc that we want to bind (ie. sleep and scale)
+  # we have to cast to the appropriate type to get the specific one we want.
+  result.bind_procs "base_api", begin_turn, begin_move, register_active, echo_console, new_instance,
+                    action_running, `action_running=`, yield_script, collision,
+                    (proc(ctx: ScriptCtx, seconds: float))sleep, exit,
+                    global, `global=`, position, `position=`, rotation, energy, `energy=`,
+                    speed, `speed=`, (proc(self: Unit): float)scale, `scale=`, active_unit
+
+  result.bind_procs "bots", play
+
+  result.bind_procs "builds", (proc(self: Build): Colors)color, `color=`, drawing, `drawing=`, initial_position,
+                    save, restore, (proc(self: Build, clear: bool))reset
 
 when is_main_module:
   state.config.lib_dir = current_source_path().parent_dir / ".." / ".." / "vmlib"

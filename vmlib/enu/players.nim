@@ -20,5 +20,5 @@ proc get_velocity(): Vector3 = discard
 # me.ctrl.set_velocity = proc(v: Vector3) =
 #   set_velocity(v)
 
-proc bounce*(me: PlayerType, power = 1.0) =
-  me.velocity = me.velocity + UP * power * 30
+# proc bounce*(me: PlayerType, power = 1.0) =
+#   me.velocity = me.velocity + UP * power * 30

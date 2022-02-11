@@ -3,7 +3,7 @@ import pkg / [model_citizen, print]
 import core, models / [types, states, bots, colors, units]
 const BufferSize = vec3(16, 16, 16)
 
-include "default_builder.nim.nimf"
+include "build_code_template.nim.nimf"
 
 const default_color = action_colors[blue]
 
@@ -15,7 +15,7 @@ var dont_join* = false
 proc draw*(self: Build, position: Vector3, voxel: VoxelInfo)
 
 method code_template*(self: Build, imports: string): string =
-  result = default_builder(self.script_file, imports, self.script_ctx.is_clone)
+  result = build_code_template(self.script_file, imports, not self.clone_of.is_nil)
 
 proc buffer(position: Vector3): Vector3 = (position / BufferSize).floor
 
@@ -201,6 +201,10 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
         self.transform.origin = self.transform.origin + (moving * self.speed * delta)
         return true
   else:
+    self.voxels_per_frame = if self.speed == 0:
+      float.high
+    else:
+      self.speed
     var count = 0
     result = proc(delta: float): bool =
       var remaining = self.voxels_remaining_this_frame
@@ -241,7 +245,7 @@ method on_begin_turn*(self: Build, axis: Vector3, degrees: float, move_mode: int
     self.draw_transform.basis = self.draw_transform.basis.rotated(axis, deg_to_rad(degrees))
     self.draw_transform = self.draw_transform.orthonormalized()
 
-proc reset_state(self: Build) =
+proc reset_state*(self: Build) =
   self.draw_transform = Transform.init
 
 method reset*(self: Build) =
@@ -337,7 +341,8 @@ proc init*(_: type Build, transform = Transform.init, color = default_color,
     speed: 1.0,
     clone_of: clone_of,
     bot_collisions: bot_collisions,
-    frame_delta: ZenValue[float].init
+    frame_delta: ZenValue[float].init,
+    scale: Zen.init(1.0)
   )
   if global: self.flags += Global
 
