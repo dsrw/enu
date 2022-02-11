@@ -239,16 +239,17 @@ proc transition(from_state, to_state, body, immediate: NimNode): NimNode =
           frame.action = nil
         raise (ref Halt)()
 
-macro `+->`*(from_state: untyped, to_state: untyped, body: untyped = nil) =
+macro `-->`*(from_state: untyped, to_state: untyped, body: untyped = nil) =
   result = transition(from_state, to_state, body, ident"true")
 
 macro `->`*(from_state: untyped, to_state: untyped, body: untyped = nil) =
   result = transition(from_state, to_state, body, ident"false")
 
 when is_main_module:
-  proc task1 =
+  - task1:
     echo "task1"
-  proc task2 =
+
+  - task2:
     echo "task2"
 
   var

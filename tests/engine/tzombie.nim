@@ -8,7 +8,7 @@ forward 10
 turn right
 p.turn right
 
-assert p.color == green
+#assert p.color == green
 assert not p.is_nil
 assert p of PotatoType
 assert p.length == 5

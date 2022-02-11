@@ -1,5 +1,6 @@
 import std / [macros, strformat, strutils, sugar, sequtils, genasts]
-import types, base_api
+import types
+import base_api
 
 proc params_to_assignments(target: NimNode, nodes: seq[NimNode]): NimNode =
   result = new_stmt_list()
@@ -87,8 +88,7 @@ proc extract_class_info(name_node: NimNode): tuple[name: string, params: seq[Nim
       error("expected `name my_name` or `name my_name(my_param1 = 1, my_param2 = 2, ...)`", name_node)
       return
 
-proc build_class(name_node: NimNode): NimNode =
-  let base_class = ident"ScriptNode"
+proc build_class(name_node: NimNode, base_type: NimNode): NimNode =
   let (name, params) = extract_class_info(name_node)
 
   let
@@ -101,7 +101,7 @@ proc build_class(name_node: NimNode): NimNode =
 
   let name_str = name
   var type_def = quote do:
-    type `type_name`* = ref object of `base_class`
+    type `type_name`* = ref object of `base_type`
 
   type_def[0][2][0][2] = params_to_properties(params)
   result.add quote do:
@@ -121,34 +121,45 @@ proc pop_name_node(ast: NimNode): NimNode =
         ast.del(i)
         break
 
-macro load_enu_script*(file_name, include_name: string): untyped =
+proc visit_tree(parent: NimNode, convert: seq[NimNode], alias: ptr seq[NimNode]) =
+  for i, node in parent:
+    if node.kind in [nnkProcDef, nnkBlockStmt, nnkIfExpr, nnkIfStmt]:
+      # The alias list should only live as long as a scope. We need to make a new
+      # copy each time a scope is opened. The above list needs to be expanded.
+      var alias = alias[]
+      visit_tree(node, convert, addr alias)
+    else:
+      if node in convert and parent.kind == nnkIdentDefs:
+        alias[].add node
+      elif node in convert and node notin alias[] and parent.kind notin [nnkDotExpr, nnkExprEqExpr]:
+        parent[i] = new_dot_expr(ident"me", node)
+      visit_tree(node, convert, alias)
+
+proc auto_insert_me_receiver(ast: NimNode, convert: NimNode): NimNode =
+  var alias: seq[NimNode] = @[]
+  visit_tree(ast, convert.to_seq, addr alias)
+  result = ast
+
+macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[untyped]): untyped =
   let file_name = file_name.str_val
-  let ast = parse_stmt(file_name.static_read, file_name)
+  let ast = parse_stmt(file_name.static_read, file_name).auto_insert_me_receiver(convert)
   let name_node = pop_name_node(ast)
-  let include_file = quote do:
-    include `include_name`
   result = new_stmt_list()
   var inner = new_stmt_list()
   if name_node.kind != nnkNilLit:
     let (name, params) = extract_class_info(name_node)
-    result.add build_class(name_node)
-    result.add include_file
+    result.add build_class(name_node, base_type)
     inner.add params_to_assignments(ident"me", params)
 
   else:
     result.add quote do:
-      let me {.inject.} = ScriptNode()
+      let me {.inject.} = `base_type`()
       register_active(me)
-
-    result.add include_file
 
   inner.add ast
   result.add quote do:
-    #proc run_script*(me {.inject.}: me.type) =
-    var target {.inject.}: ScriptNode = me
-    include loops
-    `inner`
-    #run_script(me)
-
-  system.echo "code: "
-  system.echo result.repr
+    proc run_script*(me {.inject.}: me.type) =
+      var target {.inject.}: `base_type` = me
+      include loops
+      `inner`
+    run_script(me)

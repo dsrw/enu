@@ -1,0 +1,18 @@
+#? stdtmpl
+#proc bot_code_template(file_name, imports: string, is_instance: bool): string =
+import std / strutils
+import types, class_macros, players, state_machine, base_api, bots, builds, private_bots
+
+let is_instance = ${is_instance}
+let global_default = true
+var move_mode = 1
+
+${imports}
+
+{.experimental: "overloadable_enums".}
+
+proc echo(msg: varargs[string, `$$`]) = echo_console msg.join
+
+load_enu_script "${file_name}", Bot, position, speed, scale, energy, global
+
+exit()

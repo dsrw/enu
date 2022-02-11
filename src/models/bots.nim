@@ -1,12 +1,12 @@
 import std / [math, sugar, monotimes]
 import pkg / model_citizen
 import core, models / [types, states, units]
-include "default_robot.nim.nimf"
+include "bot_code_template.nim.nimf"
 
 let state = GameState.active
 
 method code_template*(self: Bot, imports: string): string =
-  result = default_robot(self.script_file, imports)
+  result = bot_code_template(self.script_file, imports, not self.clone_of.is_nil)
 
 method on_begin_move*(self: Bot, direction: Vector3, steps: float, moving_mode: int): Callback =
   # move_mode param is ignored
@@ -83,7 +83,8 @@ proc init*(_: type Bot, transform = Transform.init, clone_of: Bot = nil, global 
     energy: ZenValue[float].init,
     speed: 1.0,
     clone_of: clone_of,
-    frame_delta: ZenValue[float].init
+    frame_delta: ZenValue[float].init,
+    scale: Zen.init(1.0)
   )
   if global: self.flags += Global
 

@@ -14,43 +14,15 @@ type
   Directions* = enum
     up, u, down, d, left, l, right, r, forward, f, back, b
 
-  # Controller*  = object
-  #   action_running*: bool
-  #   advance_state_machine*: proc(): bool
-  #   yield_script*: proc()
-  #   begin_move*: proc(direction: Vector3, steps: float, self: ScriptNode, moving: int)
-  #   begin_turn*: proc(axis: Vector3, degrees: float, self: ScriptNode, moving: int)
-  #   look_at*: proc(target: ScriptNode)
-  #   set*: proc(var_name: string, value: float)
-  #   get*: proc(var_name: string): float
-  #   create_new*: proc()
-  #   set_color*: proc(value: ColorIndex)
-  #   get_color*: proc(): ColorIndex
-  #   get_position*: proc(): Vector3
-  #   set_position*: proc(position: Vector3)
-  #   get_rotation*: proc(): Vector3
-  #   set_velocity*: proc(velocity: Vector3)
-  #   get_velocity*: proc(): Vector3
-  #   set_global*: proc(global: bool)
-  #   get_global*: proc(): bool
-  #   stash*: proc()
-  #   add_stashed*: proc()
-
   ScriptNode* = ref object of Node
-    color*: ColorIndex
-    speed*: float
-    global*: bool
-    velocity*: Vector3
     advance_state_machine*: proc(): bool
 
-  ColorIndex* = enum
-    eraser = 0,
-    blue = 1,
-    red = 2,
-    green = 3,
-    black = 4,
-    white = 5,
-    brown = 6
+  Bot* = ref object of ScriptNode
+
+  Build* = ref object of ScriptNode
+
+  Colors* = enum
+    eraser, blue, red, green, black, white, brown
 
   Energy* = range[0.0..100.0]
 
@@ -329,67 +301,3 @@ proc moveToward*(vFrom, to: Vector3, delta: float32): Vector3 =
 
 converter vec3_to_bool*(v: Vector3): bool =
   v != vec3(0, 0, 0)
-
-# proc `speed=`*(self: ScriptNode, speed: float) =
-#   self.ctrl.set("speed", speed)
-#
-# proc speed*(self: ScriptNode): float =
-#   self.ctrl.get("speed")
-#
-# proc `color=`*(self: ScriptNode, color: ColorIndex) =
-#   self.ctrl.set_color(color)
-#
-# proc color*(self: ScriptNode): ColorIndex =
-#   self.ctrl.get_color()
-#
-# proc `global=`*(self: ScriptNode, global: bool) =
-#   self.ctrl.set_global(global)
-#
-# proc global*(self: ScriptNode): bool =
-#   self.ctrl.get_global()
-#
-# proc `velocity=`*(self: PlayerType, v: Vector3) =
-#   self.ctrl.set_velocity(v)
-#
-# proc velocity*(self: PlayerType): Vector3 =
-#   self.ctrl.get_velocity()
-#
-# proc position*(self: ScriptNode): Vector3 =
-#   self.ctrl.get_position()
-#
-# proc `position=`*(self: ScriptNode, position: Vector3) =
-#   self.ctrl.set_position(position)
-#
-# template up*(target: ScriptNode, steps = 1.0) =
-#   target.ctrl.begin_move(UP, steps, me)
-#
-# template down*(target: ScriptNode, steps = 1.0) =
-#   target.ctrl.begin_move(DOWN, steps, me)
-#
-# template turn_up*(target: ScriptNode, degrees = 90.0) =
-#   target.ctrl.begin_turn(UP, degrees, me)
-#
-# template turn_down*(target: ScriptNode, degrees = 90.0) =
-#   target.ctrl.begin_turn(DOWN, degrees, me)
-#
-# proc look_at*(actor: ScriptNode) =
-#   actor.ctrl.look_at(actor)
-#
-# proc near*(actor, target: ScriptNode, less_than = 5.0): bool =
-#   let distance = actor.ctrl.get_position().distance_to(target.ctrl.get_position())
-#   result = distance < less_than
-#
-# proc get_position*(actor: ScriptNode): Vector3 =
-#   actor.ctrl.get_position()
-#
-# proc set_position*(actor: ScriptNode, position: Vector3) =
-#   actor.ctrl.set_position(position)
-#
-# proc get_rotation*(actor: ScriptNode): Vector3 =
-#   actor.ctrl.get_rotation()
-#
-# proc stash*(actor: ScriptNode) =
-#   actor.ctrl.stash()
-#
-# proc add_stashed*(actor: ScriptNode) =
-#   actor.ctrl.add_stashed()
