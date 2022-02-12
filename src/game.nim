@@ -126,7 +126,6 @@ gdobj Game of Node:
       elif host_os == "linux":
         config.lib_dir = join_path(exe_dir.parent_dir, "lib", "vmlib")
 
-    print config
     self.node_controller = NodeController.init
     self.script_controller = ScriptController.init
 
