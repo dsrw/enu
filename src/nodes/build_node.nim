@@ -100,7 +100,7 @@ gdobj BuildNode of VoxelTerrain:
     let was_skipping_join = dont_join
     dont_join = true
     self.unit = unit
-    self.transform = unit.initial_transform
+    self.transform = unit.start_transform
     self.track_changes
     self.unit.draw(vec3(), (Manual, unit.start_color))
     dont_join = was_skipping_join

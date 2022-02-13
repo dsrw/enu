@@ -62,11 +62,11 @@ proc set_global(unit: Unit, global: bool) =
   if global:
     state.nodes.data.add_child(unit.node)
     unit.node.owner = state.nodes.data
-    unit.origin = unit.origin + unit.initial_transform.origin
+    unit.origin = unit.origin + unit.start_transform.origin
   else:
     unit.parent.node.add_child(unit.node)
     unit.node.owner = unit.parent.node
-    unit.origin = unit.origin - unit.initial_transform.origin
+    unit.origin = unit.origin - unit.start_transform.origin
 
 proc find_nested_changes(parent: Change[Unit]) =
   for change in parent.triggered_by:

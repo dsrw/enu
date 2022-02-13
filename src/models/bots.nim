@@ -67,7 +67,7 @@ proc bot_at*(state: GameState, position: Vector3): Bot =
       return Bot(unit)
 
 method reset*(self: Bot) =
-  self.transform = self.initial_transform
+  self.transform = self.start_transform
   self.animation.value = ""
   self.units.clear()
 
@@ -75,7 +75,7 @@ proc init*(_: type Bot, transform = Transform.init, clone_of: Bot = nil, global 
   let self = Bot(
     id: "bot_" & generate_id(),
     units: Zen.init(seq[Unit]),
-    initial_transform: transform,
+    start_transform: transform,
     flags: ZenSet[ModelFlags].init,
     code: ZenValue[string].init,
     velocity: ZenValue[Vector3].init,

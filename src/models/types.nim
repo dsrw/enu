@@ -62,7 +62,7 @@ type
     id*: string
     parent*: Unit
     units*: ZenSeq[Unit]
-    initial_transform*: Transform
+    start_transform*: Transform
     scale*: ZenValue[float]
     energy*: ZenValue[float]
     speed*: float
