@@ -58,7 +58,7 @@ gdobj BotNode of KinematicBody:
 
   proc setup*(unit: Bot) =
     self.unit = unit
-    self.transform = unit.initial_transform
+    self.transform = unit.start_transform
     self.track_changes
 
   method process(delta: float) =

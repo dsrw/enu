@@ -250,7 +250,7 @@ proc reset_state*(self: Build) =
   self.draw_transform = Transform.init
 
 method reset*(self: Build) =
-  self.transform = self.initial_transform
+  self.transform = self.start_transform
   self.reset_state()
   let chunks = self.chunks.value
   for chunk_id, chunk in chunks:
@@ -327,7 +327,7 @@ proc init*(_: type Build, transform = Transform.init, color = default_color,
   let self = Build(
     id: "build_" & generate_id(),
     chunks: ZenTable[Vector3, Chunk].init(track_children = false),
-    initial_transform: transform,
+    start_transform: transform,
     draw_transform: Transform.init,
     units: ZenSeq[Unit].init,
     color: color,
