@@ -1,6 +1,7 @@
 import std / [os, sugar]
 import pkg / model_citizen
-import godotapi / node
+import godotapi / spatial
+from pkg/core/godotcoretypes import Basis
 import core, models / [types, states], libs / interpreters
 
 proc init*(_: type Model, node: Node): Model =
@@ -8,7 +9,7 @@ proc init*(_: type Model, node: Node): Model =
 
 proc find_root*(self: Unit, all_clones = false): tuple[unit: Unit, offset: Vector3] =
   result.unit = self
-  result.offset -= self.transform.origin
+  result.offset -= self.node.transform.origin
   var parent = self.parent
 
   while parent != nil:
@@ -18,7 +19,7 @@ proc find_root*(self: Unit, all_clones = false): tuple[unit: Unit, offset: Vecto
       parent = nil
 
     else:
-      result.offset -= parent.transform.origin
+      result.offset -= parent.node.transform.origin
       parent = parent.parent
 
 proc walk_tree*(units: seq[Unit], callback: proc(unit: Unit)) =
@@ -41,6 +42,28 @@ proc script_file*(self: Unit): string =
   else:
     GameState.active.config.script_dir / self.id & ".nim"
 
+proc `transform=`*(self: Unit, value: Transform) {.inline.} =
+  self.node.transform = value
+
+proc transform*(self: Unit): Transform {.inline.} =
+  self.node.transform
+
+proc `origin=`*(self: Unit, value: Vector3) {.inline.} =
+  var transform = self.node.transform
+  transform.origin = value
+  self.node.transform = transform
+
+proc origin*(self: Unit): Vector3 {.inline.} =
+  self.node.transform.origin
+
+proc `basis=`*(self: Unit, value: Basis) {.inline.} =
+  var transform = self.node.transform
+  transform.basis = value
+  self.node.transform = transform
+
+proc basis*(self: Unit): Basis {.inline.} =
+  self.node.transform.basis
+
 proc data_file*(self: Unit): string =
   self.data_dir / self.id & ".json"
 
@@ -54,7 +77,7 @@ method clone*(self: Unit, clone_to: Unit): Unit {.base.} =
   quit "override me"
 
 method code_template*(self: Unit, imports: string): string {.base.} =
-  quit "override me"
+  read_file self.script_ctx.script
 
 method on_script_loaded*(self: Unit) {.base.} =
   quit "override me"

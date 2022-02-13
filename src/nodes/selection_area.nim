@@ -1,6 +1,6 @@
 import pkg / [godot, model_citizen]
 import godotapi / [area, control]
-import core, globals, world/bot_node
+import core, globals, nodes/bot_node
 
 let state = GameState.active
 

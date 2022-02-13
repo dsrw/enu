@@ -1,9 +1,9 @@
 import std / [tables, monotimes]
-import godotapi/node
+import godotapi/spatial
 import pkg/model_citizen
 import pkg/core/godotcoretypes except Color
 import pkg / core / [vector3, basis, aabb, godotbase]
-import core, models/colors, utils/transforms, libs/eval
+import core, models/colors, libs / [transforms, eval]
 
 export Vector3, Transform, vector3, transforms, basis, AABB, aabb
 export godotbase except print
@@ -42,7 +42,7 @@ type
       data: Node,
       player: Node
     ]
-    player*: PlayerModel
+    player*: Player
     logger*: proc(level, msg: string)
     units*: ZenSeq[Unit]
     ground*: Ground
@@ -54,23 +54,15 @@ type
     target_point*: Vector3
     target_normal*: Vector3
     flags*: ZenSet[ModelFlags]
-    to_local*: proc(global: Vector3): Vector3
-    to_global*: proc(local: Vector3): Vector3
-    get_global_transform*: proc(): Transform
-    get_global_rotation*: proc(): Vector3
-    node*: Node
+    node*: Spatial
 
   Ground* = ref object of Model
-
-  PlayerModel* = ref object of Model
-    colliders*: HashSet[Model]
 
   Unit* = ref object of Model
     id*: string
     parent*: Unit
     units*: ZenSeq[Unit]
-    start_transform*: Transform
-    transform*: ZenValue[Transform]
+    initial_transform*: Transform
     scale*: ZenValue[float]
     energy*: ZenValue[float]
     speed*: float
@@ -81,6 +73,9 @@ type
     clone_of*: Unit
     collisions*: seq[tuple[model: Model, normal: Vector3]]
     frame_delta*: ZenValue[float]
+
+  Player* = ref object of Unit
+    colliders*: HashSet[Model]
 
   Bot* = ref object of Unit
     animation*: ZenValue[string]
@@ -155,7 +150,7 @@ proc local_to*(self: Vector3, unit: Unit): Vector3 =
   result = self
   var unit = unit
   while unit:
-    result -= unit.transform.value.origin
+    result -= unit.node.transform.origin
     unit = unit.parent
 
 proc global_from*(self: Vector3, unit: Unit): Vector3 =
@@ -168,13 +163,18 @@ proc init*(_: type Transform, origin = vec3()): Transform =
 proc `+=`*(self: ZenValue[string], str: string) =
   self.value = self.value & str
 
-proc origin*(self: ZenValue[Transform]): Vector3 =
-  self.value.origin
+# proc origin*(self: ZenValue[Transform]): Vector3 =
+#   self.value.origin
 
-proc `origin=`*(self: ZenValue[Transform], value: Vector3) =
-  var transform = self.value
-  transform.origin = value
-  self.value = transform
+# proc `origin=`*(self: ZenValue[Transform], value: Vector3) =
+#   var transform = self.value
+#   transform.origin = value
+#   self.value = transform
+
+# proc `origin=`*(self: var Transform, value: Vector3) =
+#   var transform = self
+#   transform.origin = value
+#   self.value = transform
 
 proc basis*(self: ZenValue[Transform]): Basis =
   self.value.basis

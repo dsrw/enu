@@ -7,5 +7,5 @@ gdobj GroundNode of MeshInstance:
   var model*: Ground
 
   method ready() =
-    self.model = Ground.init(Node, self)
+    self.model = Ground.init(self)
     GameState.active.ground = self.model

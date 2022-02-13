@@ -4,7 +4,7 @@ import pkg / [print, model_citizen]
 import pkg / compiler / vm except get_int
 import pkg / compiler / ast except new_node
 import pkg / compiler / [vmdef, lineinfos, astalgo,  renderer, msgs]
-
+import godotapi / spatial
 import core, models / [types, states, bots, builds, units, colors], libs / [interpreters, eval]
 
 type ScriptController* = ref object
@@ -126,10 +126,10 @@ proc `global=`(self: Unit, global: bool) =
     self.flags -= Global
 
 proc position(self: Unit): Vector3 =
-  self.to_global(vec3(0, 0, 0))
+  self.node.to_global(vec3(0, 0, 0))
 
 proc `position=`(self: Unit, position: Vector3) =
-  self.transform.origin = position
+  self.origin = position
 
 proc speed(self: Unit): float =
   self.speed
@@ -148,6 +148,12 @@ proc energy(self: Unit): float =
 
 proc `energy=`(self: Unit, energy: float) =
   self.energy.value = energy
+
+proc velocity(self: Unit): Vector3 =
+  self.velocity.value
+
+proc `velocity=`(self: Unit, velocity: Vector3) =
+  self.velocity.value = velocity
 
 proc rotation(self: Unit): Vector3 =
   # TODO: fix this
@@ -203,10 +209,10 @@ proc initial_position(self: Build): Vector3 =
   self.initial_position
 
 proc save(self: Build, name: string) =
-  self.save_points[name] = (self.transform.value, self.color, self.drawing)
+  self.save_points[name] = (self.transform, self.color, self.drawing)
 
 proc restore(self: Build, name: string) =
-  (self.transform.value, self.color, self.drawing) = self.save_points[name]
+  (self.transform, self.color, self.drawing) = self.save_points[name]
 
 proc reset(self: Build, clear: bool) =
   if clear:
@@ -337,6 +343,16 @@ proc reload_all*(self: ScriptController) =
     unit.script_ctx = nil
     unit.code.touch unit.code.value
 
+proc load_player*(self: ScriptController) =
+  let unit = state.player
+  self.active_unit = unit
+  defer:
+    self.active_unit = nil
+
+  unit.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter)
+  unit.script_ctx.script = state.config.lib_dir & "/enu/players.nim"
+  self.load_script(unit)
+
 proc init*(_: type ScriptController): ScriptController =
   private_access ScriptCtx
 
@@ -383,18 +399,15 @@ proc init*(_: type ScriptController): ScriptController =
   result = controller
   result.watch_units state.units
 
-  # Note: if we have multiple implementations of a proc that we want to bind (ie. sleep and scale)
-  # we have to cast to the appropriate type to get the specific one we want.
   result.bind_procs "base_api", begin_turn, begin_move, register_active, echo_console, new_instance,
                     action_running, `action_running=`, yield_script, collision,
-                    (proc(ctx: ScriptCtx, seconds: float))sleep, exit,
-                    global, `global=`, position, `position=`, rotation, energy, `energy=`,
-                    speed, `speed=`, (proc(self: Unit): float)scale, `scale=`, active_unit
+                    sleep, exit, global, `global=`, position, `position=`, rotation, energy, `energy=`,
+                    speed, `speed=`, scale, `scale=`, velocity, `velocity=`, active_unit
 
   result.bind_procs "bots", play
 
-  result.bind_procs "builds", (proc(self: Build): Colors)color, `color=`, drawing, `drawing=`, initial_position,
-                    save, restore, (proc(self: Build, clear: bool))reset
+  result.bind_procs "builds", color, `color=`, drawing, `drawing=`, initial_position,
+                    save, restore, reset
 
 when is_main_module:
   state.config.lib_dir = current_source_path().parent_dir / ".." / ".." / "vmlib"

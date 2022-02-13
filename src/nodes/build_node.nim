@@ -14,7 +14,6 @@ gdobj BuildNode of VoxelTerrain:
   var
     unit*: Build
     active_chunks: Table[Vector3, ZID]
-    transform_zid: ZID
 
   proc init*() =
     self.bind_signals self, "block_loaded", "block_unloaded"
@@ -75,10 +74,6 @@ gdobj BuildNode of VoxelTerrain:
       if added:
         self.set_energy(change.item)
 
-    self.transform_zid = self.unit.transform.changes:
-      if added:
-        self.transform = change.item
-
     self.unit.bounds.changes:
       if added:
         self.bounds = change.item
@@ -99,22 +94,13 @@ gdobj BuildNode of VoxelTerrain:
 
   method process(delta: float) =
     if self.unit:
-      # self.unit.transform.pause self.transform_zid:
-      #   self.unit.transform.value = self.transform
-
       self.unit.frame_delta.touch delta
 
   proc setup*(unit: Build) =
     let was_skipping_join = dont_join
     dont_join = true
     self.unit = unit
-    self.unit.to_global = proc(local: Vector3): Vector3 =
-      self.to_global(local)
-    self.unit.to_local = proc(global: Vector3): Vector3 =
-      self.to_local(global)
-    self.unit.get_global_transform = proc(): Transform =
-      self.global_transform
-    self.transform = unit.transform.value
+    self.transform = unit.initial_transform
     self.track_changes
     self.unit.draw(vec3(), (Manual, unit.start_color))
     dont_join = was_skipping_join

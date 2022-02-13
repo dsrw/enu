@@ -2,7 +2,7 @@ import std / [strutils, os, tables]
 import pkg / [model_citizen, print]
 import pkg/godot except print
 import godotapi / [node, spatial]
-import models, world / [bot_node, build_node]
+import models, nodes / [bot_node, build_node]
 
 type
   NodeController* = object
@@ -62,11 +62,11 @@ proc set_global(unit: Unit, global: bool) =
   if global:
     state.nodes.data.add_child(unit.node)
     unit.node.owner = state.nodes.data
-    unit.transform.origin = unit.transform.origin + unit.start_transform.origin
+    unit.origin = unit.origin + unit.initial_transform.origin
   else:
     unit.parent.node.add_child(unit.node)
     unit.node.owner = unit.parent.node
-    unit.transform.origin = unit.transform.origin - unit.start_transform.origin
+    unit.origin = unit.origin - unit.initial_transform.origin
 
 proc find_nested_changes(parent: Change[Unit]) =
   for change in parent.triggered_by:

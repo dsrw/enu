@@ -59,14 +59,16 @@ proc from_json_hook(self: var ZenTable[Vector3, Chunk], json: JsonNode) =
 proc to_json_hook(self: Build): JsonNode =
   %* {
     "id": self.id,
-    "start_transform": self.start_transform.to_json,
+    "initial_transform": self.initial_transform.to_json,
     "start_color": self.start_color.to_json,
     "chunks": self.chunks.to_json,
   }
 
 proc from_json_hook(self: var Build, json: JsonNode) =
   let color = json["start_color"].json_to(Color)
-  self = Build.init(transform = json["start_transform"].json_to(Transform), color = color)
+  # TODO: remove me
+  let transform_key = if "start_transform" in json: "start_transform" else: "initial_transform"
+  self = Build.init(transform = json[transform_key].json_to(Transform), color = color)
 
   self.id.from_json(json["id"])
   self.chunks.from_json(json["chunks"])
@@ -74,11 +76,13 @@ proc from_json_hook(self: var Build, json: JsonNode) =
 proc to_json_hook(self: Bot): JsonNode =
   %* {
     "id": self.id,
-    "start_transform": self.start_transform.to_json
+    "initial_transform": self.initial_transform.to_json
   }
 
 proc from_json_hook(self: var Bot, json: JsonNode) =
-  self = Bot.init(transform = json["start_transform"].json_to(Transform))
+  # TODO: remove me
+  let transform_key = if "start_transform" in json: "start_transform" else: "initial_transform"
+  self = Bot.init(transform = json[transform_key].json_to(Transform))
   self.id = json["id"].json_to(string)
 
 proc ready(self: Unit) =

@@ -23,6 +23,11 @@ proc color*(self: ScriptNode): Colors = discard
 proc `color=`*(self: ScriptNode, color: Colors) = discard
 proc rotation*(self: ScriptNode): Vector3 = discard
 proc collision*(self: ScriptNode, node: ScriptNode): Vector3 = discard
+proc `velocity=`(self: ScriptNode, velocity: Vector3) = discard
+proc velocity(self: ScriptNode): Vector3 = discard
+
+proc bounce*(me: PlayerType, power = 1.0) =
+  me.velocity = me.velocity + UP * power * 30
 
 proc action_running(self: ScriptNode): bool = discard
 proc `action_running=`(self: ScriptNode, value: bool) = discard

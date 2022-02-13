@@ -14,7 +14,6 @@ gdobj BotNode of KinematicBody:
     skin: Spatial
     mesh: MeshInstance
     animation_player: AnimationPlayer
-    transform_zid: ZID
 
   proc update_material*(value: Material) =
     self.mesh.set_surface_material(0, value)
@@ -45,10 +44,6 @@ gdobj BotNode of KinematicBody:
       elif Highlight.removed:
         self.set_default_material()
 
-    self.transform_zid = self.unit.transform.changes:
-      if added:
-        self.transform = change.item
-
     var velocity_zid: ZID
     velocity_zid = self.unit.velocity.changes:
       if touched:
@@ -63,20 +58,11 @@ gdobj BotNode of KinematicBody:
 
   proc setup*(unit: Bot) =
     self.unit = unit
-    self.unit.to_global = proc(local: Vector3): Vector3 =
-      self.to_global(local)
-    self.unit.to_local = proc(global: Vector3): Vector3 =
-      self.to_local(global)
-    self.unit.get_global_transform = proc(): Transform =
-      self.global_transform
-    self.transform = unit.transform.value
+    self.transform = unit.initial_transform
     self.track_changes
 
   method process(delta: float) =
     if self.unit:
-      self.unit.transform.pause self.transform_zid:
-        self.unit.transform.value = self.transform
-
       self.unit.frame_delta.touch delta
 
 let bot_scene = load("res://components/BotNode.tscn") as PackedScene
