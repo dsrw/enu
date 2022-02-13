@@ -5,10 +5,10 @@ import godotapi / [kinematic_body, spatial, input, input_event,
                    input_event_mouse_motion, input_event_joypad_motion,
                    ray_cast, scene_tree, input_event_pan_gesture, viewport, camera, global_constants,
                    collision_shape, kinematic_collision]
-import core, globals, game, models / [units, player_model], world / nodes
+import core, globals, game, nodes / helpers
 import aim_target, models
 
-proc handle_collisions(self: PlayerModel, collisions: seq[KinematicCollision]) {.inline.} =
+proc handle_collisions(self: Player, collisions: seq[KinematicCollision]) {.inline.} =
   var colliders: HashSet[Model]
   for collision in collisions:
     let collider = collision.collider
@@ -39,7 +39,8 @@ let
   nil_time = none(DateTime)
   input_command_timeout = 0.25
 
-gdobj Player of KinematicBody:
+# NOTE: Most of this needs to be moved into player model
+gdobj PlayerNode of KinematicBody:
   var
     flying, running, always_run, skip_release, skip_next_mouse_move, jump_down: bool
     aim_ray, world_ray, high_ray, low_ray: RayCast
@@ -55,7 +56,7 @@ gdobj Player of KinematicBody:
     index = 0
     collision_shape: CollisionShape
     command_timer = 0.0
-    model*: PlayerModel
+    model*: Player
 
   proc get_look_direction(): Vector2 =
     vec2(get_action_strength("look_right") - get_action_strength("look_left"),
@@ -94,7 +95,7 @@ gdobj Player of KinematicBody:
       result.y = velocity_current.y + gravity * delta
 
   method ready*() =
-    self.model = PlayerModel.init(Node, self)
+    self.model = Player.init(self)
     state.player = self.model
     self.camera_rig = self.get_node("CameraRig") as Spatial
     self.collision_shape = self.get_node("CollisionShape") as CollisionShape
@@ -149,29 +150,6 @@ gdobj Player of KinematicBody:
           self.aim_ray.cast_to = vec3(0, 0, -100)
           self.aim_target.update(self.aim_ray)
 
-  # proc load_script() =
-  #   let ctx = ScriptCtx.init
-  #   ctx.script = config.lib_dir & "/enu/players.nim"
-  #   let code = read_file ctx.script
-  #   ctx.engine.load(config.script_dir, ctx.script, code, config.lib_dir, "")
-  #   ctx.engine.expose "quit", proc(a: VmArgs): bool =
-  #     engine.pause(ctx.engine)
-  #     ctx.engine.running = false
-  #     result = false
-  #   ctx.engine.expose "get_position", proc(a: VmArgs): bool =
-  #     let n = self.global_transform.origin.to_node
-  #     a.set_result(n)
-  #     return false
-  #   ctx.engine.expose "get_rotation", proc(a: VmArgs): bool =
-  #     a.set_result(self.rotation_degrees.to_node)
-  #     return false
-  #   ctx.engine.expose "set_velocity", proc(a: VmArgs): bool =
-  #     let v = a.get_vec3(0)
-  #     self.velocity = v
-  #   ctx.engine.expose "get_velocity", proc(a: VmArgs): bool =
-  #     a.set_result(self.velocity.to_node)
-  #   discard ctx.engine.run()
-
   method physics_process*(delta: float) =
     trace:
       for i in 0..(self.get_slide_count() - 1):
@@ -200,8 +178,6 @@ gdobj Player of KinematicBody:
 
       move_direction.y = 0
       move_direction += up
-
-
 
       var velocity = self.calculate_velocity(self.velocity, move_direction,
                                              delta, self.flying, self.running)
@@ -319,4 +295,4 @@ gdobj Player of KinematicBody:
     elif event.is_action_released("remove"):
       state.input_flags -= Secondary
 
-proc get_player*(): Player = Player(state.nodes.player)
+proc get_player*(): PlayerNode = PlayerNode(state.nodes.player)

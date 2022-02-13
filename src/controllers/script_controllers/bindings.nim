@@ -42,7 +42,7 @@ proc to_node(tree: ref tuple|ref object): PNode =
   for field in tree.fields:
     result.sons.add(field.to_node)
 
-macro bind_procs(self: ScriptController, module_name: string, proc_refs: varargs[typed]): untyped =
+macro bind_procs(self: ScriptController, module_name: string, proc_refs: varargs[untyped]): untyped =
   result = new_stmt_list()
   result.add quote do:
     when not declared(script_controller):
@@ -50,7 +50,8 @@ macro bind_procs(self: ScriptController, module_name: string, proc_refs: varargs
 
   for proc_ref in proc_refs:
     let
-      proc_impl = proc_ref.get_impl
+      symbol = bind_sym($proc_ref)
+      proc_impl = (if symbol.kind == nnkSym: symbol else: symbol[0]).get_impl
       proc_name = proc_impl[0].str_val
       return_node = proc_impl[3][0]
       arg_nodes = proc_impl[3][1..^1]

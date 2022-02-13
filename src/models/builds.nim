@@ -1,5 +1,6 @@
 import std / [hashes, tables, sets, options, sequtils, math, wrapnils, monotimes, sugar]
 import pkg / [model_citizen, print]
+import godotapi / spatial
 import core, models / [types, states, bots, colors, units]
 const BufferSize = vec3(16, 16, 16)
 
@@ -49,8 +50,8 @@ proc add_build(self, source: Build) =
   dont_join = true
   for chunk_id, chunk in source.chunks:
     for position, info in chunk:
-      var position = source.to_global(position)
-      position = self.to_local(position)
+      var position = source.node.to_global(position)
+      position = self.node.to_local(position)
       self.draw(position, info)
 
   if source.parent.is_nil:
@@ -71,8 +72,8 @@ proc maybe_join_previous_build(self: Build, position: Vector3, voxel: VoxelInfo)
       partner = Build(root.unit)
 
     if partner != self:
-      for position in self.to_global(position).surrounding:
-        if partner.to_local(position) in partner:
+      for position in self.node.to_global(position).surrounding:
+        if partner.node.to_local(position) in partner:
           var source, dest: Build
           if partner.code.value.strip == "":
             source = partner
@@ -144,7 +145,7 @@ proc remove(self: Build) =
   if state.tool.value == Block:
     let point = self.target_point - self.target_normal - (self.target_normal.inverse_normalized * 0.5)
     self.draw(point, (Hole, action_colors[eraser]))
-    state.draw_plane = self.to_global(self.target_point) * self.target_normal
+    state.draw_plane = self.node.to_global(self.target_point) * self.target_normal
     if not self.chunks.any_it(it.value.any_it(it.value.color != action_colors[eraser])):
       if self.parent.is_nil:
         state.units -= self
@@ -152,8 +153,8 @@ proc remove(self: Build) =
         self.parent.units -= self
 
 proc fire(self: Build) =
-  let global_point = self.to_global(self.target_point)
-  state.draw_plane = self.to_global(self.target_point) * self.target_normal
+  let global_point = self.node.to_global(self.target_point)
+  state.draw_plane = self.node.to_global(self.target_point) * self.target_normal
   if state.tool.value == Block:
     let point = (self.target_point + (self.target_normal * 0.5)).floor
     self.draw(point, (Manual, state.selected_color))
@@ -188,17 +189,17 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
     let steps = steps.float
     var duration = 0.0
     let
-      moving = self.transform.basis.xform(direction)
-      finish = self.transform.origin + moving * steps
+      moving = self.basis.xform(direction)
+      finish = self.origin + moving * steps
       finish_time = 1.0 / self.speed * steps
 
     result = proc(delta: float): bool =
       duration += delta
       if duration >= finish_time:
-        self.transform.origin = finish
+        self.origin = finish
         return false
       else:
-        self.transform.origin = self.transform.origin + (moving * self.speed * delta)
+        self.origin = self.origin + (moving * self.speed * delta)
         return true
   else:
     self.voxels_per_frame = if self.speed == 0:
@@ -226,18 +227,18 @@ method on_begin_turn*(self: Build, axis: Vector3, degrees: float, move_mode: int
   if move:
     self.voxels_per_frame = 0
     var duration = 0.0
-    let axis = self.transform.basis.xform(axis)
-    var final_transform = self.transform.value
+    let axis = self.basis.xform(axis)
+    var final_transform = self.transform
     final_transform.basis = final_transform.basis.rotated(axis, deg_to_rad(degrees))
                                                  .orthonormalized()
     result = proc(delta: float): bool =
       duration += delta
-      self.transform.basis = self.transform.basis.rotated(axis, deg_to_rad(degrees * delta * self.speed))
+      self.basis = self.basis.rotated(axis, deg_to_rad(degrees * delta * self.speed))
       if duration <= 1.0 / self.speed:
         true
       else:
         # TODO?
-        self.transform.value = final_transform
+        self.transform = final_transform
         false
     #active_ctx().start_advance_timer()
   else:
@@ -249,7 +250,7 @@ proc reset_state*(self: Build) =
   self.draw_transform = Transform.init
 
 method reset*(self: Build) =
-  self.transform.value = self.start_transform
+  self.transform = self.initial_transform
   self.reset_state()
   let chunks = self.chunks.value
   for chunk_id, chunk in chunks:
@@ -326,8 +327,7 @@ proc init*(_: type Build, transform = Transform.init, color = default_color,
   let self = Build(
     id: "build_" & generate_id(),
     chunks: ZenTable[Vector3, Chunk].init(track_children = false),
-    transform: Zen.init(transform),
-    start_transform: transform,
+    initial_transform: transform,
     draw_transform: Transform.init,
     units: ZenSeq[Unit].init,
     color: color,
@@ -354,7 +354,7 @@ proc init*(_: type Build, transform = Transform.init, color = default_color,
       let (root, _) = self.find_root(true)
       root.walk_tree proc(unit: Unit) = unit.flags -= Highlight
     if TargetMoved.touched:
-      let plane = self.to_global(self.target_point) * self.target_normal
+      let plane = self.node.to_global(self.target_point) * self.target_normal
       if plane == state.draw_plane:
         if Secondary in state.input_flags:
           self.remove
@@ -393,7 +393,7 @@ method off_collision*(self: Build, partner: Model) =
     self.script_ctx.timer = get_mono_time()
 
 method clone*(self: Build, clone_to: Unit): Unit =
-  var transform = clone_to.transform.value
+  var transform = clone_to.transform
   var global = true
   if clone_to of Build:
     transform = Build(clone_to).draw_transform

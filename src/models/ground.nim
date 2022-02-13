@@ -1,5 +1,6 @@
 import std / [sugar]
 import pkg / [model_citizen, print]
+import godotapi / spatial
 import core, types, states, bots, builds
 
 let state = GameState.active
@@ -21,7 +22,7 @@ proc fire(self: Ground, append = false) =
     var t = Transform.init(origin = self.target_point)
     state.units += Bot.init(transform = t)
 
-proc init*(_: type Ground, T: type, node: T): Ground =
+proc init*(_: type Ground, node: Spatial): Ground =
   let self = Ground(flags: ZenSet[ModelFlags].init, node: node)
 
   state.input_flags.changes:

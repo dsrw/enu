@@ -1,5 +1,6 @@
 import std / [math, sugar, monotimes]
 import pkg / model_citizen
+import godotapi / spatial
 import core, models / [types, states, units]
 include "bot_code_template.nim.nimf"
 
@@ -19,7 +20,7 @@ method on_begin_move*(self: Bot, direction: Vector3, steps: float, moving_mode: 
   result = proc(delta: float): bool =
     duration += delta
     if duration >= finish_time:
-      self.transform.origin = self.transform.origin.snapped(vec3(0.1, 0.1, 0.1))
+      self.origin = self.origin.snapped(vec3(0.1, 0.1, 0.1))
       return false
     else:
       self.velocity.touch(moving * self.speed)
@@ -31,14 +32,14 @@ method on_begin_turn*(self: Bot, axis: Vector3, degrees: float, move_mode: int):
   # move mode param is ignored
   let degrees = degrees * -axis.x
   var duration = 0.0
-  var final_basis = self.transform.basis.rotated(UP, deg_to_rad(degrees))
+  var final_basis = self.basis.rotated(UP, deg_to_rad(degrees))
   result = proc(delta: float): bool =
     duration += delta
-    self.transform.basis = self.transform.basis.rotated(UP, deg_to_rad(degrees * delta * self.speed))
+    self.basis = self.basis.rotated(UP, deg_to_rad(degrees * delta * self.speed))
     if duration <= 1.0 / self.speed:
       true
     else:
-      self.transform.basis = final_basis
+      self.basis = final_basis
       false
   # TODO?
   # active_ctx().start_advance_timer()
@@ -62,11 +63,11 @@ method on_begin_turn*(self: Bot, axis: Vector3, degrees: float, move_mode: int):
 
 proc bot_at*(state: GameState, position: Vector3): Bot =
   for unit in state.units:
-    if unit of Bot and unit.transform.origin == position:
+    if unit of Bot and unit.origin == position:
       return Bot(unit)
 
 method reset*(self: Bot) =
-  self.transform.value = self.start_transform
+  self.transform = self.initial_transform
   self.animation.value = ""
   self.units.clear()
 
@@ -74,8 +75,7 @@ proc init*(_: type Bot, transform = Transform.init, clone_of: Bot = nil, global 
   let self = Bot(
     id: "bot_" & generate_id(),
     units: Zen.init(seq[Unit]),
-    transform: Zen.init(transform),
-    start_transform: transform,
+    initial_transform: transform,
     flags: ZenSet[ModelFlags].init,
     code: ZenValue[string].init,
     velocity: ZenValue[Vector3].init,
@@ -114,7 +114,7 @@ proc init*(_: type Bot, transform = Transform.init, clone_of: Bot = nil, global 
   result = self
 
 method clone*(self: Bot, clone_to: Unit): Unit =
-  var transform = clone_to.transform.value
+  var transform = clone_to.transform
   result = Bot.init(transform = transform, clone_of = self)
   result.parent = clone_to
 
