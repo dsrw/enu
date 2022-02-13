@@ -135,7 +135,7 @@ gdobj Game of Node:
     self.scaled_viewport = self.get_node("ViewportContainer/Viewport") as Viewport
     self.bind_signals(self.get_viewport(), "size_changed")
     assert not self.scaled_viewport.is_nil
-    load_world()
+    load_world(self.script_controller)
     self.get_tree().set_auto_accept_quit(false)
     let (theme_holder, theme) = if hostOS == "macosx":
       ( self.find_node("ThemeHolder").as(Container),
