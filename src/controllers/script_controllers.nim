@@ -13,7 +13,7 @@ type ScriptController* = ref object
   active_unit: Unit
   unit_map: Table[PNode, Unit]
   node_map: Table[Unit, PNode]
-  retry_failures: bool
+  retry_failures*: bool
   failed: seq[tuple[unit: Unit, e: ref VMQuit]]
 
 include script_controllers/bindings
@@ -23,8 +23,6 @@ const
   error_code = some(99)
 
 let state = GameState.active
-
-var failed: seq[tuple[unit: Unit, ex: ref VMQuit]]
 
 proc map_unit(self: ScriptController, unit: Unit, pnode: PNode) =
   self.unit_map[pnode] = unit
@@ -285,6 +283,18 @@ proc load_script(self: ScriptController, unit: Unit) =
 
 proc remove_module*(self: ScriptController, file_name: string) =
   self.module_names.excl file_name.split_file.name
+
+proc retry_failed_scripts*(self: ScriptController) =
+  var prev_failed: self.failed.type = @[]
+  while prev_failed.len != self.failed.len:
+    prev_failed = self.failed
+    self.failed = @[]
+    for f in prev_failed:
+      echo "retrying: ", f.unit.script_ctx.script
+      self.load_script(f.unit)
+
+  for f in prev_failed:
+    self.script_error(f.unit, f.e)
 
 proc change_code(self: ScriptController, unit: Unit, code: string) =
   unit.reset()

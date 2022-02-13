@@ -20,11 +20,11 @@ proc remove_from_scene(unit: Unit) =
         field.untrack_all
   if unit of Build: Build(unit).untrack_all
   elif unit of Bot: Bot(unit).untrack_all
-  unit.script_ctx.callback = nil
+  if unit.script_ctx:
+    unit.script_ctx.callback = nil
   if not unit.clone_of:
     remove_file unit.script_file
-    # TODO?
-    # remove_module unit.script_file
+
     remove_dir unit.data_dir
   for child in unit.units:
     child.remove_from_scene()

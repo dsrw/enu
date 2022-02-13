@@ -1,6 +1,6 @@
 import std / [json, jsonutils, sugar, tables, os, strutils]
 import pkg / print
-import core, models
+import core, models, controllers / script_controllers
 
 let state = GameState.active
 
@@ -128,10 +128,10 @@ proc load_units(parent: Unit) =
     unit.ready()
     load_units(unit)
 
-proc load_world*() =
+proc load_world*(controller: ScriptController) =
   dont_join = true
-  #retry_failures = true
+  controller.retry_failures = true
   load_units(nil)
-  #retry_failed_scripts()
-  #retry_failures = false
+  controller.retry_failed_scripts()
+  controller.retry_failures = false
   dont_join = false
