@@ -14,7 +14,9 @@ proc handle_collisions(self: Player, collisions: seq[KinematicCollision]) {.inli
     let collider = collision.collider
     let normal = collision.normal
     let model = collider.model
-    if model notin self.colliders and model notin colliders:
+    if model.is_nil:
+      echo "model ", model.type, " is nil"
+    elif model notin self.colliders and model notin colliders:
       model.on_collision(self, normal)
     colliders.incl model
   for model in self.colliders - colliders:
@@ -188,7 +190,7 @@ gdobj PlayerNode of KinematicBody:
         for i in 0..(self.get_slide_count - 1):
           self.get_slide_collision(i)
 
-      handle_collisions(self.model, collisions)
+      #handle_collisions(self.model, collisions)
 
       if process_input:
         # climb 1m blocks automatically

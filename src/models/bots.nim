@@ -7,7 +7,7 @@ include "bot_code_template.nim.nimf"
 let state = GameState.active
 
 method code_template*(self: Bot, imports: string): string =
-  result = bot_code_template(self.script_file, imports, not self.clone_of.is_nil)
+  result = bot_code_template(self.script_file, imports)
 
 method on_begin_move*(self: Bot, direction: Vector3, steps: float, moving_mode: int): Callback =
   # move_mode param is ignored

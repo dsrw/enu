@@ -33,17 +33,18 @@ proc selectRoutine*(i: Interpreter; name: string, moduleName: string): PSym =
                                         skMethod, skProc, skConverter},
                               moduleName)
 
-proc load_module*(i: Interpreter, module_name, code: string) =
+proc load_module*(i: Interpreter, file_name, code: string) =
   assert i != nil
 
   var module: PSym
+  let module_name = file_name.split_file.name
   for iface in i.graph.ifaces:
     if iface.module != nil and iface.module.name.s == module_name:
       module = iface.module
       break
 
   if module.is_nil:
-    module = i.graph.make_module(module_name)
+    module = i.graph.make_module(file_name)
 
   init_str_tables(i.graph, module)
   module.ast = nil

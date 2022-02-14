@@ -149,7 +149,10 @@ macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[u
   if name_node.kind != nnkNilLit:
     let (name, params) = extract_class_info(name_node)
     result.add build_class(name_node, base_type)
-    inner.add params_to_assignments(ident"me", params)
+    let assignments = params_to_assignments(ident"me", params)
+    inner.add quote do:
+      if not is_instance:
+        `assignments`
 
   else:
     result.add quote do:
@@ -158,8 +161,8 @@ macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[u
 
   inner.add ast
   result.add quote do:
-    proc run_script*(me {.inject.}: me.type) =
+    proc run_script*(me {.inject.}: me.type, is_instance {.inject.}: bool) =
       var target {.inject.}: `base_type` = me
       include loops
       `inner`
-    run_script(me)
+    run_script(me, false)
