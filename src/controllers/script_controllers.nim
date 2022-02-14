@@ -57,15 +57,17 @@ proc register_active(self: ScriptController, pnode: PNode) =
 
 proc new_instance(self: ScriptController, src: Unit, dest: PNode) =
   var clone = src.clone(self.active_unit)
+  clone.id = src.id & "_" & self.active_unit.id & "_instance_" & $self.active_unit.units.len
   clone.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter,
-                               module_name: src.script_ctx.module_name)
+                               module_name: src.id)
   self.map_unit(clone, dest)
   self.active_unit.units.add(clone)
   let active = self.active_unit
   self.active_unit = clone
   defer:
     self.active_unit = active
-  discard clone.script_ctx.call_proc("run_script", dest)
+  clone.script_ctx.running = true
+  discard clone.script_ctx.call_proc("run_script", dest.to_node, true.to_bool_node)
 
 proc active_unit(self: ScriptController): Unit = self.active_unit
 
@@ -287,9 +289,6 @@ proc load_script(self: ScriptController, unit: Unit) =
   finally:
     self.active_unit = nil
 
-proc remove_module*(self: ScriptController, file_name: string) =
-  self.module_names.excl file_name.split_file.name
-
 proc retry_failed_scripts*(self: ScriptController) =
   var prev_failed: self.failed.type = @[]
   while prev_failed.len != self.failed.len:
@@ -307,7 +306,7 @@ proc change_code(self: ScriptController, unit: Unit, code: string) =
   state.console.show_errors.value = false
   if code.strip == "" and file_exists(unit.script_file):
     remove_file unit.script_file
-    self.remove_module unit.script_file
+    self.module_names.excl unit.script_ctx.module_name
   elif code.strip != "":
     write_file(unit.script_file, code)
     if unit.script_ctx.is_nil:
@@ -334,7 +333,8 @@ proc watch_units(self: ScriptController, units: ZenSeq[Unit]) =
         unit.code.value = read_file(unit.script_file)
     if removed:
       self.unmap_unit(unit)
-      self.module_names.excl unit.script_ctx.module_name
+      if not unit.clone_of and unit.script_ctx:
+        self.module_names.excl unit.script_ctx.module_name
 
 proc reload_all*(self: ScriptController) =
   # TODO?

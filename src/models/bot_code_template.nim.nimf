@@ -1,9 +1,8 @@
 #? stdtmpl
-#proc bot_code_template(file_name, imports: string, is_instance: bool): string =
+#proc bot_code_template(file_name, imports: string): string =
 import std / strutils
-import types, class_macros, players, state_machine, base_api, bots, builds, private_bots
+import types, class_macros, players, state_machine, base_api, bots, builds, private_bots, helpers
 
-let is_instance = ${is_instance}
 let global_default = true
 var move_mode = 1
 

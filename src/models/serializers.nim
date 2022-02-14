@@ -83,10 +83,6 @@ proc from_json_hook(self: var Bot, json: JsonNode) =
   self = Bot.init(transform = json["start_transform"].json_to(Transform))
   self.id = json["id"].json_to(string)
 
-proc ready(self: Unit) =
-  if self.script_file.file_exists:
-    self.code.value = self.script_file.read_file
-
 proc save(units: ZenSeq[Unit]) =
   for unit in units:
     if not unit.clone_of:
@@ -127,7 +123,6 @@ proc load_units(parent: Unit) =
       state.units.add(unit)
     else:
       parent.units.add(unit)
-    unit.ready()
     load_units(unit)
 
 proc load_world*(controller: ScriptController) =

@@ -36,11 +36,16 @@ proc to_node(tree: tuple|object): PNode =
   for field in tree.fields:
     result.sons.add(field.to_node)
 
+proc to_node(a: PNode): PNode = a
+
 proc to_node(tree: ref tuple|ref object): PNode =
   result = nkPar.new_tree
   if tree.is_nil: return result
   for field in tree.fields:
     result.sons.add(field.to_node)
+
+proc to_bool_node(a: bool): Pnode =
+  new_int_node(nkIntLit, a.BiggestInt)
 
 macro bind_procs(self: ScriptController, module_name: string, proc_refs: varargs[untyped]): untyped =
   result = new_stmt_list()

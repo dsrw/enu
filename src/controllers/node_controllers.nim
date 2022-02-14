@@ -79,7 +79,7 @@ proc find_nested_changes(parent: Change[Unit]) =
         change.item.add_to_scene()
       elif Removed in change.changes:
         change.item.remove_from_scene()
-    if change of Change[ModelFlags]:
+    elif change of Change[ModelFlags]:
       let change = Change[ModelFlags](change)
       if change.item == Global:
         if Added in change.changes:

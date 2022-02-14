@@ -16,7 +16,7 @@ var dont_join* = false
 proc draw*(self: Build, position: Vector3, voxel: VoxelInfo)
 
 method code_template*(self: Build, imports: string): string =
-  result = build_code_template(self.script_file, imports, not self.clone_of.is_nil)
+  result = build_code_template(self.script_file, imports)
 
 proc buffer(position: Vector3): Vector3 = (position / BufferSize).floor
 
@@ -261,66 +261,6 @@ method reset*(self: Build) =
         if self.chunks[chunk_id].len == 0:
           self.chunks.del(chunk_id)
   self.units.clear()
-
-# proc set_vars*(self: Build) =
-#   let engine = self.script_ctx.engine
-#   let module_name = engine.module_name
-#
-#   engine.call_proc("set_vars", module_name = module_name, action_index(self.color).int,
-#                    self.drawing, self.speed, self.scale, self.energy.value)
-#
-# method load_vars*(self: Build) =
-#   let old_speed = self.speed
-#   let ctx = self.script_ctx
-#   self.speed = ctx.engine.get_float("speed", ctx.engine.module_name)
-#
-#   let
-#     e = ctx.engine
-#     scale_factor = ctx.engine.get_float("scale", e.module_name).round(3)
-#   self.color = action_colors[Colors(ctx.engine.get_int("color", e.module_name))]
-#   self.drawing = ctx.engine.get_bool("drawing", e.module_name)
-#   self.voxels_per_frame = if self.speed == 0:
-#     float.high
-#   else:
-#     self.speed
-#   if self.speed != old_speed:
-#     self.voxels_remaining_this_frame = 0
-#   if scale_factor != self.scale.round(3):
-#     self.scale = scale_factor
-#     var basis = self.transform.basis
-#     basis.set_scale(vec3(scale_factor, scale_factor, scale_factor))
-#     self.transform.basis = basis
-#   self.energy.value = ctx.engine.get_float("energy", e.module_name).round(3)
-#
-#   self.set_vars()
-
-# method on_script_loaded*(self: Build) =
-#   var save_points: Table[string, tuple[transform: Transform, color: Color, drawing: bool]]
-#   let e = self.script_ctx.engine
-#   self.voxels_remaining_this_frame = 0
-#   e.expose "set_energy", proc(a: VmArgs): bool =
-#     self.energy.value = get_float(a, 0)
-#     false
-#   e.expose "save", proc(a: VmArgs): bool =
-#     self.load_vars()
-#     let name = get_string(a, 0)
-#     save_points[name] = (self.transform.value, self.color, self.drawing)
-#     false
-#   e.expose "restore", proc(a: VmArgs): bool =
-#     let name = get_string(a, 0)
-#     (self.transform.value, self.color, self.drawing) = save_points[name]
-#     self.set_vars()
-#     false
-#   e.expose "reset", proc(a: VmArgs): bool =
-#     let clear = get_bool(a, 0)
-#     if clear:
-#       self.reset()
-#     else:
-#       self.reset_state()
-#     false
-#   e.expose "load_defaults", proc(a: VmArgs): bool =
-#     self.set_vars()
-#     false
 
 proc init*(_: type Build, transform = Transform.init, color = default_color,
                           clone_of: Unit = nil, global = true, bot_collisions = true): Build =
