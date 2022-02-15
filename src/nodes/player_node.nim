@@ -14,11 +14,10 @@ proc handle_collisions(self: Player, collisions: seq[KinematicCollision]) {.inli
     let collider = collision.collider
     let normal = collision.normal
     let model = collider.model
-    if model.is_nil:
-      echo "model ", model.type, " is nil"
-    elif model notin self.colliders and model notin colliders:
-      model.on_collision(self, normal)
-    colliders.incl model
+    if not model.is_nil:
+      if model notin self.colliders and model notin colliders:
+        model.on_collision(self, normal)
+      colliders.incl model
   for model in self.colliders - colliders:
     model.off_collision(self)
   self.colliders = colliders
@@ -116,6 +115,10 @@ gdobj PlayerNode of KinematicBody:
       if MouseCaptured.removed:
         self.skip_next_mouse_move = true
 
+    self.model.velocity.changes:
+      if added:
+        self.velocity = change.item
+
   proc current_raycast*: RayCast =
     if state.mouse_captured:
       self.aim_ray
@@ -123,34 +126,35 @@ gdobj PlayerNode of KinematicBody:
       self.world_ray
 
   method process*(delta: float) {.gdExport.} =
-    trace:
-      if not state.editing or state.command_mode:
-        var transform = self.camera_rig.global_transform
-        transform.origin = self.global_transform.origin + self.position_start
+    self.model.velocity.pause:
+      self.model.velocity.value = self.velocity
+    if not state.editing or state.command_mode:
+      var transform = self.camera_rig.global_transform
+      transform.origin = self.global_transform.origin + self.position_start
 
-        var look_direction = self.get_look_direction()
+      var look_direction = self.get_look_direction()
 
-        if self.input_relative.length() > 0:
-          self.update_rotation(self.input_relative * sensitivity_mouse)
-          self.input_relative = vec2()
-        elif look_direction.length() > 0:
-          self.update_rotation(look_direction * sensitivity_gamepad * delta)
+      if self.input_relative.length() > 0:
+        self.update_rotation(self.input_relative * sensitivity_mouse)
+        self.input_relative = vec2()
+      elif look_direction.length() > 0:
+        self.update_rotation(look_direction * sensitivity_gamepad * delta)
 
-        var r = self.camera_rig.rotation
-        r.y = wrap(r.y, -PI, PI)
-        self.camera_rig.rotation = r
-        if not state.mouse_captured:
-          let
-            mouse_pos = self.get_viewport().
-                             get_mouse_position() * float get_game().scale_factor
-            cast_from = self.camera.project_ray_origin(mouse_pos)
-            cast_to = self.aim_ray.translation + self.camera.project_ray_normal(mouse_pos) * 100
-          self.world_ray.cast_to = cast_to
-          self.world_ray.translation = cast_from
-          self.aim_target.update(self.world_ray)
-        else:
-          self.aim_ray.cast_to = vec3(0, 0, -100)
-          self.aim_target.update(self.aim_ray)
+      var r = self.camera_rig.rotation
+      r.y = wrap(r.y, -PI, PI)
+      self.camera_rig.rotation = r
+      if not state.mouse_captured:
+        let
+          mouse_pos = self.get_viewport().
+                           get_mouse_position() * float get_game().scale_factor
+          cast_from = self.camera.project_ray_origin(mouse_pos)
+          cast_to = self.aim_ray.translation + self.camera.project_ray_normal(mouse_pos) * 100
+        self.world_ray.cast_to = cast_to
+        self.world_ray.translation = cast_from
+        self.aim_target.update(self.world_ray)
+      else:
+        self.aim_ray.cast_to = vec3(0, 0, -100)
+        self.aim_target.update(self.aim_ray)
 
   method physics_process*(delta: float) =
     trace:
@@ -190,7 +194,7 @@ gdobj PlayerNode of KinematicBody:
         for i in 0..(self.get_slide_count - 1):
           self.get_slide_collision(i)
 
-      #handle_collisions(self.model, collisions)
+      handle_collisions(self.model, collisions)
 
       if process_input:
         # climb 1m blocks automatically

@@ -27,7 +27,7 @@ proc `global=`*(self: ScriptNode, global: bool) = discard
 proc color*(self: ScriptNode): Colors = discard
 proc `color=`*(self: ScriptNode, color: Colors) = discard
 proc rotation*(self: ScriptNode): Vector3 = discard
-proc collision*(self: ScriptNode, node: ScriptNode): Vector3 = discard
+proc hit*(self: ScriptNode, node: ScriptNode): Vector3 = discard
 proc `velocity=`(self: ScriptNode, velocity: Vector3) = discard
 proc velocity(self: ScriptNode): Vector3 = discard
 
@@ -178,3 +178,6 @@ template turn*(self: ScriptNode, target: NegativeNode) =
 
 template turn*(target: NegativeNode) =
   active_unit().turn(target)
+
+template hit*(node: ScriptNode): Vector3 =
+  target.hit(node)

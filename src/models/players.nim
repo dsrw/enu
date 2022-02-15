@@ -3,5 +3,8 @@ import godotapi / spatial
 import models / [types]
 
 proc init*(_: type Player, node: Spatial): Player =
-  let self = Player(flags: ZenSet[ModelFlags].init, node: node)
-  result = self
+  result = Player(
+    flags: ZenSet[ModelFlags].init,
+    node: node,
+    velocity: ZenValue[Vector3].init
+  )

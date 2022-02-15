@@ -104,7 +104,7 @@ proc sleep(ctx: ScriptCtx, seconds: float) =
     return duration < seconds
   ctx.pause()
 
-proc collision(unit_a: Unit, unit_b: Unit): Vector3 =
+proc hit(unit_a: Unit, unit_b: Unit): Vector3 =
   for collision in unit_a.collisions:
     if collision.model == unit_b:
       return collision.normal.snapped(vec3(1, 1, 1))
@@ -413,7 +413,7 @@ proc init*(_: type ScriptController): ScriptController =
   result.watch_units state.units
 
   result.bind_procs "base_api", begin_turn, begin_move, register_active, echo_console, new_instance, exec_instance,
-                    action_running, `action_running=`, yield_script, collision,
+                    action_running, `action_running=`, yield_script, hit,
                     sleep, exit, global, `global=`, position, `position=`, rotation, energy, `energy=`,
                     speed, `speed=`, scale, `scale=`, velocity, `velocity=`, active_unit, id
 
