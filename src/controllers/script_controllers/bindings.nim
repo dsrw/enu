@@ -18,12 +18,10 @@ proc get_vector3(a: VmArgs, pos: int): Vector3 =
   result = vec3(x, y, z)
 
 # adapted from https://github.com/h0lley/embeddedNimScript/blob/6101fb37d4bd3f947db86bac96f53b35d507736a/embeddedNims/enims.nim#L31
-proc to_node(val: int): PNode =
-  echo "converting int"
-  new_int_node(nkIntLit, val)
+proc to_node(val: int): PNode = new_int_node(nkIntLit, val)
 proc to_node(val: float): PNode = new_float_node(nkFloatLit, val)
 proc to_node(val: string): PNode = new_str_node(nkStrLit, val)
-proc to_node(val: bool): BiggestInt = BiggestInt(val)
+proc to_node(a: bool): Pnode = new_int_node(nkIntLit, a.BiggestInt)
 proc to_node(val: enum): PNode = val.ord.to_node
 
 proc to_node(list: open_array[int|float|string|bool|enum]): PNode =
@@ -44,8 +42,9 @@ proc to_node(tree: ref tuple|ref object): PNode =
   for field in tree.fields:
     result.sons.add(field.to_node)
 
-proc to_bool_node(a: bool): Pnode =
-  new_int_node(nkIntLit, a.BiggestInt)
+proc to_result(val: float): BiggestFloat = BiggestFloat(val)
+proc to_result(val: SomeOrdinal or enum or bool): BiggestInt = BiggestInt(val)
+proc to_result(val: Vector3 or string): PNode = val.to_node
 
 macro bind_procs(self: ScriptController, module_name: string, proc_refs: varargs[untyped]): untyped =
   result = new_stmt_list()
@@ -85,7 +84,7 @@ macro bind_procs(self: ScriptController, module_name: string, proc_refs: varargs
       if return_node.str_val in ["Unit", "Bot", "Build"]:
         call = new_call(bind_sym"set_result", ident"a", new_call(bind_sym"to_node", ident"script_controller", call))
       else:
-        call = new_call(bind_sym"set_result", ident"a", new_call(bind_sym"to_node", call))
+        call = new_call(bind_sym"set_result", ident"a", new_call(bind_sym"to_result", call))
 
     result.add quote do:
       mixin implement_routine

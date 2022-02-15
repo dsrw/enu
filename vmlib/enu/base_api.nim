@@ -1,11 +1,16 @@
 import std / [random, strutils, math]
 import types, state_machine
 
+proc echo_console*(msg: string) = discard
+
 proc register_active*(self: ScriptNode) = discard
 proc new_instance*(src, dest: ScriptNode) = discard
+proc exec_instance*(self: ScriptNode) = discard
 proc active_unit*(): ScriptNode = discard
 
+var speed_counter = 0
 # API
+proc id*(self: ScriptNode): string = discard
 proc exit*(exit_code = 0) = discard
 proc sleep*(seconds = 1.0) = discard
 proc create_new*(self: ScriptNode) = discard
@@ -36,8 +41,6 @@ proc yield_script(self: ScriptNode) = discard
 
 proc begin_move(self: ScriptNode, direction: Vector3, steps: float, move_mode: int) = discard
 proc begin_turn(self: ScriptNode, axis: Vector3, steps: float, move_mode: int) = discard
-
-proc echo_console*(msg: string) = discard
 
 template wait(body: untyped) =
   mixin action_running, `action_running=`, yield_script
