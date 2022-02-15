@@ -21,6 +21,7 @@ include script_controllers/bindings
 const
   advance_step* = 0.5.seconds
   error_code = some(99)
+  script_timeout = 2.0.seconds
 
 let state = GameState.active
 
@@ -65,10 +66,12 @@ proc new_instance(self: ScriptController, src: Unit, dest: PNode) =
 
 proc exec_instance(self: ScriptController, unit: Unit) =
   let active = self.active_unit
+  let ctx = unit.script_ctx
   self.active_unit = unit
   defer:
     self.active_unit = active
-  unit.script_ctx.running = unit.script_ctx.call_proc("run_script", self.node_map[unit], true).paused
+  ctx.timeout_at = get_mono_time() + script_timeout
+  ctx.running = ctx.call_proc("run_script", self.node_map[unit], true).paused
 
 proc active_unit(self: ScriptController): Unit = self.active_unit
 
@@ -248,6 +251,7 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
           ctx.action_running = false
           assert self.active_unit.is_nil
           self.active_unit = unit
+          ctx.timeout_at = get_mono_time() + script_timeout
           ctx.running = ctx.resume()
           if unit of Build:
             let unit = Build(unit)
@@ -258,6 +262,7 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
           ctx.saved_callback = ctx.callback
           ctx.callback = nil
           self.active_unit = unit
+          ctx.timeout_at = get_mono_time() + script_timeout
           discard ctx.resume()
     except VMQuit as e:
       self.script_error(unit, e)
@@ -278,9 +283,12 @@ proc load_script(self: ScriptController, unit: Unit) =
       else:
         ""
       let code = unit.code_template(imports)
+      # I don't think it's possible to get into an infinite loop here, but I can't be bothered to verify that.
+      ctx.timeout_at = get_mono_time() + script_timeout
       ctx.load(state.config.script_dir, ctx.script, code, state.config.lib_dir)
 
     if not state.paused:
+      ctx.timeout_at = get_mono_time() + script_timeout
       ctx.running = ctx.run()
 
   except VMQuit as e:
@@ -382,6 +390,8 @@ proc init*(_: type ScriptController): ScriptController =
 
     let ctx = controller.active_unit.script_ctx
     let info = c.debug[pc]
+    if ctx.timeout_at < get_mono_time():
+      raise (ref VMQuit)(info: info, msg: "Timeout. Script executed for too long without yielding.")
 
     if ctx.previous_line != info:
       let config = interpreter.config

@@ -116,6 +116,7 @@ type
   ScriptCtx* = ref object
     script*: string
     timer*: MonoTime
+    timeout_at*: MonoTime
     load_vars*: proc()
     is_clone*: bool
     ctx: PCtx
