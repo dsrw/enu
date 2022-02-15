@@ -68,8 +68,7 @@ proc exec_instance(self: ScriptController, unit: Unit) =
   self.active_unit = unit
   defer:
     self.active_unit = active
-  unit.script_ctx.running = true
-  discard unit.script_ctx.call_proc("run_script", self.node_map[unit], true)
+  unit.script_ctx.running = unit.script_ctx.call_proc("run_script", self.node_map[unit], true).paused
 
 proc active_unit(self: ScriptController): Unit = self.active_unit
 

@@ -49,6 +49,11 @@ proc load_module*(i: Interpreter, file_name, code: string) =
   init_str_tables(i.graph, module)
   module.ast = nil
   let s = ll_stream_open(code)
+
+  # after some kinds of errors the vm will switch back to em_static_stmt mode,
+  # which causes "cannot evaluate at compile time" issues with some variables.
+  # Force things back to em_repl.
+  PCtx(i.graph.vm).mode = em_repl
   process_module(i.graph, module, i.idgen, s)
 
 proc config*(i: Interpreter): ConfigRef = i.graph.config
