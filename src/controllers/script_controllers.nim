@@ -62,12 +62,14 @@ proc new_instance(self: ScriptController, src: Unit, dest: PNode) =
                                module_name: src.id)
   self.map_unit(clone, dest)
   self.active_unit.units.add(clone)
+
+proc exec_instance(self: ScriptController, unit: Unit) =
   let active = self.active_unit
-  self.active_unit = clone
+  self.active_unit = unit
   defer:
     self.active_unit = active
-  clone.script_ctx.running = true
-  discard clone.script_ctx.call_proc("run_script", dest.to_node, true.to_bool_node)
+  unit.script_ctx.running = true
+  discard unit.script_ctx.call_proc("run_script", self.node_map[unit], true)
 
 proc active_unit(self: ScriptController): Unit = self.active_unit
 
@@ -117,6 +119,8 @@ proc `action_running=`(self: Unit, value: bool) =
   else:
     self.script_ctx.timer = MonoTime.high
   self.script_ctx.action_running = value
+
+proc id(self: Unit): string = self.id
 
 proc global(self: Unit): bool =
   Global in self.flags
@@ -399,10 +403,10 @@ proc init*(_: type ScriptController): ScriptController =
   result = controller
   result.watch_units state.units
 
-  result.bind_procs "base_api", begin_turn, begin_move, register_active, echo_console, new_instance,
+  result.bind_procs "base_api", begin_turn, begin_move, register_active, echo_console, new_instance, exec_instance,
                     action_running, `action_running=`, yield_script, collision,
                     sleep, exit, global, `global=`, position, `position=`, rotation, energy, `energy=`,
-                    speed, `speed=`, scale, `scale=`, velocity, `velocity=`, active_unit
+                    speed, `speed=`, scale, `scale=`, velocity, `velocity=`, active_unit, id
 
   result.bind_procs "bots", play
 

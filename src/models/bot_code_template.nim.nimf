@@ -3,7 +3,7 @@
 import std / strutils
 import types, class_macros, players, state_machine, base_api, bots, builds, private_bots, helpers
 
-let global_default = true
+let instance_global_by_default = true
 var move_mode = 1
 
 ${imports}

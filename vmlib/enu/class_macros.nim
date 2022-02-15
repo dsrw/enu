@@ -53,7 +53,7 @@ proc build_ctors(name_str: string, type_name: NimNode, params: seq[NimNode]): Ni
 
   var global = "global".ident
   if "global" notin var_names:
-    params &= new_ident_defs(global, new_empty_node(), ident("global_default"))
+    params &= new_ident_defs(global, new_empty_node(), ident"instance_global_by_default")
   ctor_body.add quote do:
     result.global = `global`
 
@@ -68,6 +68,9 @@ proc build_ctors(name_str: string, type_name: NimNode, params: seq[NimNode]): Ni
     params &= new_ident_defs(color, new_empty_node(), bind_sym"eraser")
   ctor_body.add quote do:
     result.color = `color`
+
+  ctor_body.add quote do:
+    exec_instance(result)
 
   # add baked in constructor params for speed, color, etc.
   # probably shouldn't be here.
