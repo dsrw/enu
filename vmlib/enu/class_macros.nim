@@ -38,6 +38,7 @@ proc params_to_properties(nodes: seq[NimNode]): NimNode =
 
 proc build_ctors(name_str: string, type_name: NimNode, params: seq[NimNode]): NimNode =
   var ctor_body = quote do:
+    assert not instance.is_nil
     result = `type_name`()
     new_instance(instance, result)
 
