@@ -181,3 +181,12 @@ template turn*(target: NegativeNode) =
 
 template hit*(node: ScriptNode): Vector3 =
   target.hit(node)
+
+proc distance*(node: ScriptNode): float =
+  node.position.distance_to(active_unit().position)
+
+proc near*(node: ScriptNode, less_than = 5.0): bool =
+  result = node.distance < less_than
+
+proc far*(node: ScriptNode, greater_than = 100.0): bool =
+  result = node.distance > greater_than
