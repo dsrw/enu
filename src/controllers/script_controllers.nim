@@ -54,10 +54,12 @@ proc to_node(self: ScriptController, unit: Unit): PNode =
 # Common bindings
 
 proc register_active(self: ScriptController, pnode: PNode) =
+  assert not self.active_unit.is_nil
   self.map_unit(self.active_unit, pnode)
 
 proc new_instance(self: ScriptController, src: Unit, dest: PNode) =
   var clone = src.clone(self.active_unit)
+  assert not clone.is_nil
   clone.id = src.id & "_" & self.active_unit.id & "_instance_" & $self.active_unit.units.len
   clone.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter,
                                module_name: src.id)
@@ -243,13 +245,13 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
       unit.voxels_remaining_this_frame += unit.voxels_per_frame
     var resume_script = true
     try:
+      assert self.active_unit.is_nil
       while resume_script and not state.paused:
         resume_script = false
 
         if ctx.callback == nil or (not ctx.callback(delta)):
           ctx.timer = MonoTime.high
           ctx.action_running = false
-          assert self.active_unit.is_nil
           self.active_unit = unit
           ctx.timeout_at = get_mono_time() + script_timeout
           ctx.running = ctx.resume()
@@ -271,8 +273,9 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
 
 proc load_script(self: ScriptController, unit: Unit) =
   let ctx = unit.script_ctx
-  self.active_unit = unit
   try:
+    self.active_unit = unit
+
     if not state.paused:
       let module_name = ctx.script.split_file.name
       var others = self.module_names
@@ -412,8 +415,8 @@ proc init*(_: type ScriptController): ScriptController =
   result = controller
   result.watch_units state.units
 
-  result.bind_procs "base_api", begin_turn, begin_move, register_active, echo_console, new_instance, exec_instance,
-                    action_running, `action_running=`, yield_script, hit,
+  result.bind_procs "base_api", begin_turn, begin_move, register_active, echo_console, new_instance,
+                    exec_instance, action_running, `action_running=`, yield_script, hit,
                     sleep, exit, global, `global=`, position, `position=`, rotation, energy, `energy=`,
                     speed, `speed=`, scale, `scale=`, velocity, `velocity=`, active_unit, id
 
