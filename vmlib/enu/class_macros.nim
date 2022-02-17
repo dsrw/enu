@@ -135,7 +135,7 @@ proc visit_tree(parent: NimNode, convert: seq[NimNode], alias: ptr seq[NimNode])
     else:
       if node in convert and parent.kind == nnkIdentDefs:
         alias[].add node
-      elif node in convert and node notin alias[] and parent.kind notin [nnkDotExpr, nnkExprEqExpr]:
+      elif node in convert and node notin alias[] and parent.kind != nnkExprEqExpr and not (parent.kind == nnkDotExpr and i == 1):
         parent[i] = new_dot_expr(ident"me", node)
       visit_tree(node, convert, alias)
 
@@ -146,12 +146,15 @@ proc auto_insert_me_receiver(ast: NimNode, convert: NimNode): NimNode =
 
 macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[untyped]): untyped =
   let file_name = file_name.str_val
-  let ast = parse_stmt(file_name.static_read, file_name).auto_insert_me_receiver(convert)
+  var ast = parse_stmt(file_name.static_read, file_name)
   let name_node = pop_name_node(ast)
   result = new_stmt_list()
   var inner = new_stmt_list()
   if name_node.kind != nnkNilLit:
     let (name, params) = extract_class_info(name_node)
+    for param in params:
+      convert.add(param[0])
+    ast = ast.auto_insert_me_receiver(convert)
     result.add build_class(name_node, base_type)
     let assignments = params_to_assignments(ident"me", params)
     inner.add quote do:
@@ -159,6 +162,7 @@ macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[u
         `assignments`
 
   else:
+    ast = ast.auto_insert_me_receiver(convert)
     result.add quote do:
       let me {.inject.} = `base_type`()
       register_active(me)
