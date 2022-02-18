@@ -1,6 +1,6 @@
 import std / [macros, strformat, strutils, sugar, sequtils, genasts]
 import types
-import base_api
+import base_api, macro_helpers
 
 proc params_to_assignments(target: NimNode, nodes: seq[NimNode]): NimNode =
   result = new_stmt_list()

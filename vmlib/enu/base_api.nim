@@ -11,7 +11,7 @@ proc active_unit*(): ScriptNode = discard
 var speed_counter = 0
 # API
 proc id*(self: ScriptNode): string = discard
-proc exit*(exit_code = 0) = discard
+proc exit*(exit_code = 0, msg = "") = discard
 proc sleep*(seconds = 1.0) = discard
 proc create_new*(self: ScriptNode) = discard
 proc position*(self: ScriptNode): Vector3 = discard
