@@ -4,7 +4,9 @@ import pkg / print
 import enu/base_api
 import enu/state_machine
 
-load_enu_script "potato_code.nim", speed, global
+let instance_global_by_default = false
+var move_mode = 1
+load_enu_script "potato_code.nim", Bot, speed, global
 
 var clone_obj*: PotatoType
 
