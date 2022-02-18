@@ -1,35 +1,11 @@
 import std / [macros, strformat, strutils, sequtils, tables]
-import types, helpers
+import types, helpers, macro_helpers
 
 proc current_loop(value: Loop = nil): Loop =
   var loop {.global.}: Loop
   if not value.is_nil:
     loop = value
   result = loop
-
-proc parse(sig: NimNode): (string, string, NimNode) =
-  var
-    name = ""
-    args: seq[string]
-    vars = new_stmt_list()
-  if sig.kind == nnkIdent:
-    name = $sig
-  else:
-    name = $sig[0]
-    for i, arg in sig[1..^1]:
-      case arg.kind
-      of nnkExprColonExpr:
-        args.add &"{arg[0]}: {arg[1]}"
-      of nnkExprEqExpr:
-        args.add &"{arg[0]} = {arg[1].to_str_lit}"
-        vars.add new_var_stmt(arg[0], arg[0])
-      of nnkIdent:
-        args.add &"{arg}: auto"
-      else:
-        error "invalid signature", sig
-    if args.len > 0:
-      args.add "" # to get a trailing comma before the context arg
-  return (name, args.join(", "), vars)
 
 proc advance*(ctx: Context, frame: Frame = nil): bool =
   ## advance state machine. Returns true if statemachine is still running.
@@ -124,17 +100,22 @@ macro loop*(body: untyped) =
   result = new_block_stmt(result)
 
 macro loop*(sig: untyped,  body: untyped): untyped =
-  let
-    (name, args, vars) = sig.parse
-    code = &"""
-      proc {name}({args} ctx: Context = nil) =
-        const this_state = "{name}"
-    """
-  result = parse_stmt(code)
-  var outer = result[0].find_child(it.kind == nnkStmtList)
-  outer.add(vars)
-  outer.add(new_call("loop", body))
-  echo result.repr
+  var (name, params, vars) = sig.parse_sig
+
+  let proc_body = quote do:
+    const this_state {.inject.} = `name.ast_to_str`
+    `vars`
+    loop:
+      `body`
+
+  result = new_stmt_list()
+  params.add new_ident_defs(ident"ctx", ident"Context", new_nil_lit())
+
+  result.add new_proc(
+    name = ident(name),
+    params = params,
+    body = proc_body
+  )
 
 macro smart_call*(call: untyped) =
   var call_without_ctx = call.copy_nim_tree

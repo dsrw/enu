@@ -144,9 +144,30 @@ proc auto_insert_me_receiver(ast: NimNode, convert: NimNode): NimNode =
   visit_tree(ast, convert.to_seq, addr alias)
   result = ast
 
+proc build_proc(sig, body: NimNode, return_type = new_empty_node()): NimNode =
+  let (name, params, vars) = sig.parse_sig(return_type)
+  let new_body = new_stmt_list(vars, body)
+  result = new_proc(
+    name = ident(name),
+    params = params,
+    body = new_body,
+    pragmas = new_nim_node(nnkPragma).add(ident"discardable")
+  )
+
+proc transform_proc_lists(parent: NimNode): NimNode =
+  for i, node in parent:
+    if parent.kind == nnkStmtList and node.kind == nnkPrefix and node[0] == ident"-":
+      if node[1].kind in [nnkIdent, nnkCall]:
+        let new_proc = build_proc(node[1], node[2])
+        parent[i] = new_proc
+      elif node[1].kind == nnkCommand:
+        let new_proc = build_proc(node[1][0], node[2], node[1][1])
+        parent[i] = new_proc
+  parent
+
 macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[untyped]): untyped =
   let file_name = file_name.str_val
-  var ast = parse_stmt(file_name.static_read, file_name)
+  var ast = parse_stmt(file_name.static_read, file_name).transform_proc_lists
   let name_node = pop_name_node(ast)
   result = new_stmt_list()
   var inner = new_stmt_list()
