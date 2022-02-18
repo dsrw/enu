@@ -239,17 +239,17 @@ proc transition(from_state, to_state, body, immediate: NimNode): NimNode =
           frame.action = nil
         raise (ref Halt)()
 
-macro `-->`*(from_state: untyped, to_state: untyped, body: untyped = nil) =
+macro `==>`*(from_state: untyped, to_state: untyped, body: untyped = nil) =
   result = transition(from_state, to_state, body, ident"true")
 
 macro `->`*(from_state: untyped, to_state: untyped, body: untyped = nil) =
   result = transition(from_state, to_state, body, ident"false")
 
 when is_main_module:
-  - task1:
+  proc task1 =
     echo "task1"
 
-  - task2:
+  proc task2 =
     echo "task2"
 
   var
@@ -322,11 +322,11 @@ when is_main_module:
     nil -> action_b(name)
     inc counter
     if counter == 2:
-      action_b +-> loop_b:
+      action_b ==> loop_b:
         counter = -20
-      loop_b +-> action_c(name)
+      loop_b ==> action_c(name)
     if counter == 6:
-      action_c +-> nil
+      action_c ==> nil
 
   counter = 0
   loop:
@@ -338,21 +338,21 @@ when is_main_module:
   counter = 0
   var name = "loop_main"
   loop:
-    nil +-> loop_a as initial_loop:
+    nil ==> loop_a as initial_loop:
       echo "initial loop "
     inc counter
     if done:
-      initial_loop +-> action_a(name):
+      initial_loop ==> action_a(name):
         counter = 0
     if counter == 3:
-      action_a +-> action_b(name):
+      action_a ==> action_b(name):
         counter = 0
-      action_b +-> action_c(name) as ac:
+      action_b ==> action_c(name) as ac:
         counter = 0
-      ac +-> loop_a:
+      ac ==> loop_a:
         counter = 0
     if counter == 70:
-      loop_a +-> nil:
+      loop_a ==> nil:
         echo "loop_main done ", counter
 
   loop:
