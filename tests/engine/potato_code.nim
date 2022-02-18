@@ -5,21 +5,26 @@ name potato(length = 5, width = 2, color = red, label = "hi", friendly = true)
   turn right
 
 - run_away(fast=true, msg="Help!") string:
+  - say_hello() string:
+    echo "hello"
+    "goodbye"
+  echo say_hello()
   echo msg
-  msg = "somehting"
+  msg = "something"
   echo msg
   forward 100
+
+block:
+  - test_me:
+    echo "hi"
+
+  test_me()
 
 speed = 5
 me.speed = 10
 echo speed
 echo me.speed
 run_away()
-# assert me.length == 5
-# assert potato.length == 5
-# me.length = 10
-# potato.label = "red"
-# assert me.label == "red"
 
 proc tester(speed = 50) =
   echo speed

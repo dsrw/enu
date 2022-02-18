@@ -158,11 +158,15 @@ proc transform_proc_lists(parent: NimNode): NimNode =
   for i, node in parent:
     if parent.kind == nnkStmtList and node.kind == nnkPrefix and node[0] == ident"-":
       if node[1].kind in [nnkIdent, nnkCall]:
-        let new_proc = build_proc(node[1], node[2])
+        let new_proc = build_proc(node[1], transform_proc_lists node[2])
         parent[i] = new_proc
       elif node[1].kind == nnkCommand:
-        let new_proc = build_proc(node[1][0], node[2], node[1][1])
+        let new_proc = build_proc(node[1][0], transform_proc_lists node[2], node[1][1])
         parent[i] = new_proc
+      else:
+        parent[i] = transform_proc_lists(node)
+    else:
+      parent[i] = transform_proc_lists(node)
   parent
 
 macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[untyped]): untyped =
