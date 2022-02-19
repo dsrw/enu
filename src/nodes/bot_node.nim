@@ -53,8 +53,13 @@ gdobj BotNode of KinematicBody:
     self.unit.animation.changes:
       if "".added:
         self.animation_player.stop(true)
-      elif added():
+      elif added:
         self.animation_player.play(change.item)
+
+    self.unit.scale.changes:
+      if added:
+        let scale = change.item
+        self.scale = vec3(scale, scale, scale)
 
   proc setup*(unit: Bot) =
     self.unit = unit

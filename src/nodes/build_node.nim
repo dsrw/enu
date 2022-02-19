@@ -92,6 +92,11 @@ gdobj BuildNode of VoxelTerrain:
       elif Highlight.removed:
         self.set_energy default_energy
 
+    self.unit.scale.changes:
+      if added:
+        let scale = change.item
+        self.scale = vec3(scale, scale, scale)
+
   method process(delta: float) =
     if self.unit:
       self.unit.frame_delta.touch delta
