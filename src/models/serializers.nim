@@ -123,6 +123,8 @@ proc load_units(parent: Unit) =
       state.units.add(unit)
     else:
       parent.units.add(unit)
+    if unit of Build:
+      Build(unit).reset_bounds
     load_units(unit)
 
 proc load_world*(controller: ScriptController) =

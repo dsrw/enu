@@ -2,7 +2,7 @@ import std / [hashes, tables, sets, options, sequtils, math, wrapnils, monotimes
 import pkg / [model_citizen, print]
 import godotapi / spatial
 import core, models / [types, states, bots, colors, units]
-const BufferSize = vec3(16, 16, 16)
+const ChunkSize = vec3(16, 16, 16)
 
 include "build_code_template.nim.nimf"
 
@@ -18,7 +18,7 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo)
 method code_template*(self: Build, imports: string): string =
   result = build_code_template(self.script_file, imports)
 
-proc buffer(position: Vector3): Vector3 = (position / BufferSize).floor
+proc buffer(position: Vector3): Vector3 = (position / ChunkSize).floor
 
 proc contains*(self: Build, position: Vector3): bool =
   let buf = position.buffer
@@ -86,6 +86,18 @@ proc maybe_join_previous_build(self: Build, position: Vector3, voxel: VoxelInfo)
             dest.add_build(source)
             current_build = dest
             return
+
+proc reset_bounds*(self: Build) =
+  self.bounds.value = init_aabb(vec3(), vec3(-1, -1, -1))
+
+  for chunk_id, chunk in self.chunks:
+    let range = chunk_id * ChunkSize
+    let min = range - ChunkSize
+    let max = range + ChunkSize
+    if max notin self.bounds.value:
+      self.bounds.value = self.bounds.value.expand(max)
+    if min notin self.bounds.value:
+      self.bounds.value = self.bounds.value.expand(min)
 
 proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
   var target = self
@@ -218,7 +230,6 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
         self.voxels_remaining_this_frame -= 1
         self.drop_block()
       result = count.float < steps
-  #active_ctx().start_advance_timer()
 
 method on_begin_turn*(self: Build, axis: Vector3, degrees: float, move_mode: int): Callback =
   let map = {LEFT: UP, RIGHT: DOWN, UP: RIGHT, DOWN: LEFT}.to_table
@@ -237,10 +248,8 @@ method on_begin_turn*(self: Build, axis: Vector3, degrees: float, move_mode: int
       if duration <= 1.0 / self.speed:
         true
       else:
-        # TODO?
         self.transform = final_transform
         false
-    #active_ctx().start_advance_timer()
   else:
     let axis = self.draw_transform.basis.xform(axis)
     self.draw_transform.basis = self.draw_transform.basis.rotated(axis, deg_to_rad(degrees))
