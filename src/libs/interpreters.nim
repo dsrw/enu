@@ -38,6 +38,10 @@ proc run*(self: ScriptCtx): bool =
     result = false
   except VMPause:
     result = self.exit_code.is_none
+  except:
+    self.running = false
+    self.exit_code = some(99)
+    raise
 
 proc call_proc*(self: ScriptCtx, proc_name: string, args: varargs[PNode, `to_node`]): tuple[paused: bool, result: PNode] =
   let foreign_proc = self.interpreter.select_routine(proc_name, module_name = self.module_name)
@@ -47,6 +51,10 @@ proc call_proc*(self: ScriptCtx, proc_name: string, args: varargs[PNode, `to_nod
     (false, self.interpreter.call_routine(foreign_proc, args))
   except VMPause:
     (self.exit_code.is_none, nil)
+  except:
+    self.running = false
+    self.exit_code = some(99)
+    raise
 
 proc get_var*(self: ScriptCtx, var_name: string, module_name: string): PNode =
   let sym = self.interpreter.select_unique_symbol(var_name, module_name = module_name)
@@ -62,3 +70,7 @@ proc resume*(self: ScriptCtx): bool =
     false
   except VMPause:
     self.exit_code.is_none
+  except:
+    self.running = false
+    self.exit_code = some(99)
+    raise
