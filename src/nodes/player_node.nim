@@ -58,6 +58,7 @@ gdobj PlayerNode of KinematicBody:
     collision_shape: CollisionShape
     command_timer = 0.0
     model*: Player
+    velocity_zid: ZID
 
   proc get_look_direction(): Vector2 =
     vec2(get_action_strength("look_right") - get_action_strength("look_left"),
@@ -115,7 +116,7 @@ gdobj PlayerNode of KinematicBody:
       if MouseCaptured.removed:
         self.skip_next_mouse_move = true
 
-    self.model.velocity.changes:
+    self.velocity_zid = self.model.velocity.changes:
       if added:
         self.velocity = change.item
 
@@ -126,7 +127,7 @@ gdobj PlayerNode of KinematicBody:
       self.world_ray
 
   method process*(delta: float) {.gdExport.} =
-    self.model.velocity.pause:
+    self.model.velocity.pause self.velocity_zid:
       self.model.velocity.value = self.velocity
     if not state.editing or state.command_mode:
       var transform = self.camera_rig.global_transform
