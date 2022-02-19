@@ -11,8 +11,6 @@ ${imports}
 
 {.experimental: "overloadable_enums".}
 
-proc echo(msg: varargs[string, `$$`]) = echo_console msg.join
-
 load_enu_script "${file_name}", Build, position, speed, scale, energy, global, drawing, color, initial_position
 
 exit()
