@@ -126,7 +126,7 @@ gdobj PlayerNode of KinematicBody:
     else:
       self.world_ray
 
-  method process*(delta: float) {.gdExport.} =
+  method process*(delta: float) =
     self.model.velocity.pause self.velocity_zid:
       self.model.velocity.value = self.velocity
     if not state.editing or state.command_mode:

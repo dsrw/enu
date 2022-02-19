@@ -87,17 +87,20 @@ proc maybe_join_previous_build(self: Build, position: Vector3, voxel: VoxelInfo)
             current_build = dest
             return
 
+proc expand_bounds_to_chunk(self: Build, chunk_id: Vector3) =
+  let range = chunk_id * ChunkSize
+  let min = range - ChunkSize
+  let max = range + ChunkSize
+  if max notin self.bounds.value:
+    self.bounds.value = self.bounds.value.expand(max)
+  if min notin self.bounds.value:
+    self.bounds.value = self.bounds.value.expand(min)
+
 proc reset_bounds*(self: Build) =
   self.bounds.value = init_aabb(vec3(), vec3(-1, -1, -1))
 
   for chunk_id, chunk in self.chunks:
-    let range = chunk_id * ChunkSize
-    let min = range - ChunkSize
-    let max = range + ChunkSize
-    if max notin self.bounds.value:
-      self.bounds.value = self.bounds.value.expand(max)
-    if min notin self.bounds.value:
-      self.bounds.value = self.bounds.value.expand(min)
+    self.expand_bounds_to_chunk(chunk_id)
 
 proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
   var target = self
@@ -135,8 +138,7 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
   else:
     if buffer notin target.chunks:
       target.chunks[buffer] = Chunk.init
-  if position notin target.bounds.value:
-    target.bounds.value = target.bounds.value.expand(position).grow(1)
+      self.expand_bounds_to_chunk(buffer)
   if voxel.kind == Hole and not replaced:
     target.chunks[buffer].del(position)
   else:
@@ -359,6 +361,7 @@ method clone*(self: Build, clone_to: Unit): Unit =
         target_chunk[location] = info
     if target_chunk.len > 0:
       clone.chunks[chunk_id] = target_chunk
+  clone.reset_bounds
   result = clone
 
 when is_main_module:
