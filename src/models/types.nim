@@ -118,7 +118,6 @@ type
     timer*: MonoTime
     timeout_at*: MonoTime
     load_vars*: proc()
-    is_clone*: bool
     ctx: PCtx
     pc: int
     tos: PStackFrame

@@ -15,7 +15,7 @@ proc find_root*(self: Unit, all_clones = false): tuple[unit: Unit, offset: Vecto
   while parent != nil:
     result.unit = parent
 
-    if (all_clones and not parent.script_ctx.is_clone) or (not all_clones and Global in parent.flags):
+    if (all_clones and not parent.clone_of) or (not all_clones and Global in parent.flags):
       parent = nil
 
     else:
