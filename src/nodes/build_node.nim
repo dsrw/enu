@@ -18,20 +18,23 @@ gdobj BuildNode of VoxelTerrain:
   proc init*() =
     self.bind_signals self, "block_loaded", "block_unloaded"
 
-  proc clone_materials =
-    # generate our own copy of the library materials, so we can manipulate them without impacting other builds.
-    let count = self.mesher.as(VoxelMesherBlocky).library.voxel_count
-    for i in 0..int.high:
-      let m = self.get_material(i)
-      if m.is_nil:
-        break
-      else:
-        let m = m.duplicate.as(ShaderMaterial)
-        m.set_shader_param("emission_energy", default_energy.to_variant)
-        self.set_material(i, m)
+  proc prepare_materials =
+    if self.unit.shared_assets.materials.len == 0:
+      # generate our own copy of the library materials, so we can manipulate them without impacting other builds.
+      for i in 0..int.high:
+        let m = self.get_material(i)
+        if m.is_nil:
+          break
+        else:
+          let m = m.duplicate.as(ShaderMaterial)
+          m.set_shader_param("emission_energy", default_energy.to_variant)
+          self.unit.shared_assets.materials.add(m)
+
+    for i, material in self.unit.shared_assets.materials:
+      self.set_material(i, material)
 
   method ready() =
-    self.clone_materials()
+    self.prepare_materials()
 
   proc draw(location: Vector3, color: Color) =
     self.get_voxel_tool.set_voxel(location, color.action_index.ord)

@@ -58,6 +58,9 @@ type
 
   Ground* = ref object of Model
 
+  SharedAssets* = ref object
+    materials*: seq[ShaderMaterial]
+
   Unit* = ref object of Model
     id*: string
     parent*: Unit
@@ -73,6 +76,7 @@ type
     clone_of*: Unit
     collisions*: seq[tuple[model: Model, normal: Vector3]]
     frame_delta*: ZenValue[float]
+    shared_assets*: SharedAssets
 
   Player* = ref object of Unit
     colliders*: HashSet[Model]

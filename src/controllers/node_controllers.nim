@@ -51,6 +51,11 @@ proc add_to_scene(unit: Unit) =
   else:
     unit.parent.node
 
+  unit.shared_assets = if unit.parent:
+    unit.parent.shared_assets
+  else:
+    SharedAssets()
+
   if unit of Bot: Bot(unit).add(BotNode)
   elif unit of Build: Build(unit).add(BuildNode)
   parent_node.add_child(unit.node)
