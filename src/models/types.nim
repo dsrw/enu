@@ -73,6 +73,7 @@ type
     script_ctx*: ScriptCtx
     disabled*: bool
     velocity*: ZenValue[Vector3]
+    transform*: ZenValue[Transform]
     clone_of*: Unit
     collisions*: seq[tuple[model: Model, normal: Vector3]]
     frame_delta*: ZenValue[float]
@@ -167,18 +168,13 @@ proc init*(_: type Transform, origin = vec3()): Transform =
 proc `+=`*(self: ZenValue[string], str: string) =
   self.value = self.value & str
 
-# proc origin*(self: ZenValue[Transform]): Vector3 =
-#   self.value.origin
+proc origin*(self: ZenValue[Transform]): Vector3 =
+  self.value.origin
 
-# proc `origin=`*(self: ZenValue[Transform], value: Vector3) =
-#   var transform = self.value
-#   transform.origin = value
-#   self.value = transform
-
-# proc `origin=`*(self: var Transform, value: Vector3) =
-#   var transform = self
-#   transform.origin = value
-#   self.value = transform
+proc `origin=`*(self: ZenValue[Transform], value: Vector3) =
+  var transform = self.value
+  transform.origin = value
+  self.value = transform
 
 proc basis*(self: ZenValue[Transform]): Basis =
   self.value.basis

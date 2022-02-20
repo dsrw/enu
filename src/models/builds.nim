@@ -203,17 +203,17 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
     let steps = steps.float
     var duration = 0.0
     let
-      moving = self.basis.xform(direction)
-      finish = self.origin + moving * steps
+      moving = self.transform.basis.xform(direction)
+      finish = self.transform.origin + moving * steps
       finish_time = 1.0 / self.speed * steps
 
     result = proc(delta: float): bool =
       duration += delta
       if duration >= finish_time:
-        self.origin = finish
+        self.transform.origin = finish
         return false
       else:
-        self.origin = self.origin + (moving * self.speed * delta)
+        self.transform.origin = self.transform.origin + (moving * self.speed * delta)
         return true
   else:
     self.voxels_per_frame = if self.speed == 0:
@@ -240,17 +240,17 @@ method on_begin_turn*(self: Build, axis: Vector3, degrees: float, move_mode: int
   if move:
     self.voxels_per_frame = 0
     var duration = 0.0
-    let axis = self.basis.xform(axis)
-    var final_transform = self.transform
+    let axis = self.transform.basis.xform(axis)
+    var final_transform = self.transform.value
     final_transform.basis = final_transform.basis.rotated(axis, deg_to_rad(degrees))
                                                  .orthonormalized()
     result = proc(delta: float): bool =
       duration += delta
-      self.basis = self.basis.rotated(axis, deg_to_rad(degrees * delta * self.speed))
+      self.transform.basis = self.transform.basis.rotated(axis, deg_to_rad(degrees * delta * self.speed))
       if duration <= 1.0 / self.speed:
         true
       else:
-        self.transform = final_transform
+        self.transform.value = final_transform
         false
   else:
     let axis = self.draw_transform.basis.xform(axis)
@@ -261,7 +261,7 @@ proc reset_state*(self: Build) =
   self.draw_transform = Transform.init
 
 method reset*(self: Build) =
-  self.transform = self.start_transform
+  self.transform.value = self.start_transform
   self.reset_state()
   let chunks = self.chunks.value
   for chunk_id, chunk in chunks:
@@ -279,6 +279,7 @@ proc init*(_: type Build, transform = Transform.init, color = default_color,
     id: "build_" & generate_id(),
     chunks: ZenTable[Vector3, Chunk].init(track_children = false),
     start_transform: transform,
+    transform: Zen.init(transform),
     draw_transform: Transform.init,
     units: ZenSeq[Unit].init,
     color: color,
@@ -344,7 +345,7 @@ method off_collision*(self: Build, partner: Model) =
     self.script_ctx.timer = get_mono_time()
 
 method clone*(self: Build, clone_to: Unit): Unit =
-  var transform = clone_to.transform
+  var transform = clone_to.transform.value
   var global = true
   if clone_to of Build:
     transform = Build(clone_to).draw_transform

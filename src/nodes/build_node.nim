@@ -14,6 +14,7 @@ gdobj BuildNode of VoxelTerrain:
   var
     unit*: Build
     active_chunks: Table[Vector3, ZID]
+    transform_zid: ZID
 
   proc init*() =
     self.bind_signals self, "block_loaded", "block_unloaded"
@@ -100,9 +101,15 @@ gdobj BuildNode of VoxelTerrain:
         let scale = change.item
         self.scale = vec3(scale, scale, scale)
 
+    self.transform_zid = self.unit.transform.changes:
+      if added:
+        self.transform = change.item
+
   method process(delta: float) =
     if self.unit:
       self.unit.frame_delta.touch delta
+      self.unit.transform.pause self.transform_zid:
+        self.unit.transform.value = self.transform
 
   proc setup*(unit: Build) =
     let was_skipping_join = dont_join

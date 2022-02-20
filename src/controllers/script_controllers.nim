@@ -139,7 +139,7 @@ proc position(self: Unit): Vector3 =
   self.node.to_global(vec3(0, 0, 0))
 
 proc `position=`(self: Unit, position: Vector3) =
-  self.origin = position
+  self.transform.origin = position
 
 proc speed(self: Unit): float =
   self.speed
@@ -219,10 +219,10 @@ proc initial_position(self: Build): Vector3 =
   self.initial_position
 
 proc save(self: Build, name: string) =
-  self.save_points[name] = (self.transform, self.color, self.drawing)
+  self.save_points[name] = (self.transform.value, self.color, self.drawing)
 
 proc restore(self: Build, name: string) =
-  (self.transform, self.color, self.drawing) = self.save_points[name]
+  (self.transform.value, self.color, self.drawing) = self.save_points[name]
 
 proc reset(self: Build, clear: bool) =
   if clear:

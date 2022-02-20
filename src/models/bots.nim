@@ -20,54 +20,33 @@ method on_begin_move*(self: Bot, direction: Vector3, steps: float, moving_mode: 
   result = proc(delta: float): bool =
     duration += delta
     if duration >= finish_time:
-      self.origin = self.origin.snapped(vec3(0.1, 0.1, 0.1))
+      self.transform.origin = self.transform.origin.snapped(vec3(0.1, 0.1, 0.1))
       return false
     else:
       self.velocity.touch(moving * self.speed)
       return true
-  # TODO?
-  # active_ctx().start_advance_timer()
 
 method on_begin_turn*(self: Bot, axis: Vector3, degrees: float, move_mode: int): Callback =
   # move mode param is ignored
   let degrees = degrees * -axis.x
   var duration = 0.0
-  var final_basis = self.basis.rotated(UP, deg_to_rad(degrees))
+  var final_basis = self.transform.basis.rotated(UP, deg_to_rad(degrees))
   result = proc(delta: float): bool =
     duration += delta
-    self.basis = self.basis.rotated(UP, deg_to_rad(degrees * delta * self.speed))
+    self.transform.basis = self.transform.basis.rotated(UP, deg_to_rad(degrees * delta * self.speed))
     if duration <= 1.0 / self.speed:
       true
     else:
-      self.basis = final_basis
+      self.transform.basis = final_basis
       false
-  # TODO?
-  # active_ctx().start_advance_timer()
-
-# method load_vars*(self: Bot) =
-#   let old_speed = self.speed
-#   let ctx = self.script_ctx
-#   self.speed = ctx.engine.get_float("speed", ctx.engine.module_name)
-#   let scale = ctx.engine.get_float("scale", ctx.engine.module_name)
-#   if scale != self.scale:
-#     var basis = self.transform.basis
-#     basis.set_scale(vec3(scale, scale, scale))
-#     self.transform.basis = basis
-#     self.scale = scale
-
-# method on_script_loaded*(self: Bot) =
-#   let e = self.script_ctx.engine
-#   e.expose "play", proc(a: VmArgs): bool =
-#     self.animation.value = get_string(a, 0)
-#     return false
 
 proc bot_at*(state: GameState, position: Vector3): Bot =
   for unit in state.units:
-    if unit of Bot and unit.origin == position:
+    if unit of Bot and unit.transform.origin == position:
       return Bot(unit)
 
 method reset*(self: Bot) =
-  self.transform = self.start_transform
+  self.transform.value = self.start_transform
   self.animation.value = ""
   self.units.clear()
 
@@ -76,6 +55,7 @@ proc init*(_: type Bot, transform = Transform.init, clone_of: Bot = nil, global 
     id: "bot_" & generate_id(),
     units: Zen.init(seq[Unit]),
     start_transform: transform,
+    transform: Zen.init(transform),
     flags: ZenSet[ModelFlags].init,
     code: ZenValue[string].init,
     velocity: ZenValue[Vector3].init,
@@ -114,7 +94,7 @@ proc init*(_: type Bot, transform = Transform.init, clone_of: Bot = nil, global 
   result = self
 
 method clone*(self: Bot, clone_to: Unit): Unit =
-  var transform = clone_to.transform
+  var transform = clone_to.transform.value
   result = Bot.init(transform = transform, clone_of = self)
   result.parent = clone_to
 
