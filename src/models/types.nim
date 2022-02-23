@@ -133,7 +133,7 @@ type
     module_name*: string
     file_name: string
     exit_code*: Option[int]
-    errors*: seq[tuple[msg: string, info: TLineInfo]]
+    errors*: seq[tuple[msg: string, info: TLineInfo, location: string]]
     callback*: Callback
     saved_callback*: Callback
     action_running*: bool
@@ -145,6 +145,7 @@ type
 
   VMQuit* = object of VMError
     info*: TLineInfo
+    location*: string
 
   VMPause* = object of CatchableError
 

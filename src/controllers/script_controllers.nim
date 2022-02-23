@@ -1,5 +1,6 @@
 import std / os
-import std / [macros, sugar, sets, strutils, times, monotimes, sequtils, importutils, tables, options, math]
+import std / [macros, sugar, sets, strutils, times, monotimes, sequtils, importutils, tables,
+              options, math, re]
 import pkg / [print, model_citizen]
 import pkg / compiler / vm except get_int
 import pkg / compiler / ast except new_node
@@ -112,7 +113,8 @@ proc hit(unit_a: Unit, unit_b: Unit): Vector3 =
       return collision.normal.snapped(vec3(1, 1, 1))
 
 proc echo_console(msg: string) =
-  echo msg
+  state.console.log += msg & "\n"
+  state.console.visible.value = true
 
 proc action_running(self: Unit): bool =
   self.script_ctx.action_running
@@ -233,7 +235,9 @@ proc reset(self: Build, clear: bool) =
 # End of bindings
 
 proc script_error(self: ScriptController, unit: Unit, e: ref VMQuit) =
-  echo "error: ", e.msg
+  write_stack_trace()
+  state.logger("err", e.msg)
+  state.console.show_errors.value = true
 
 proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
   let ctx = unit.script_ctx
@@ -318,6 +322,7 @@ proc retry_failed_scripts*(self: ScriptController) =
 proc change_code(self: ScriptController, unit: Unit, code: string) =
   unit.reset()
   state.console.show_errors.value = false
+  state.console.visible.value = false
   if code.strip == "" and file_exists(unit.script_file):
     remove_file unit.script_file
     self.module_names.excl unit.script_ctx.module_name
@@ -367,24 +372,37 @@ proc load_player*(self: ScriptController) =
   unit.script_ctx.script = state.config.lib_dir & "/enu/players.nim"
   self.load_script(unit)
 
-proc init*(_: type ScriptController): ScriptController =
+proc extract_file_info(msg: string): tuple[name: string, info: TLineInfo] =
+  if msg =~ re"unhandled exception: (.*)\((\d+), (\d+)\)":
+    result = (matches[0], TLineInfo(line: matches[1].parse_int.uint16, col: matches[2].parse_int.int16))
+
+proc init*(T: type ScriptController): ScriptController =
   private_access ScriptCtx
 
   let interpreter = Interpreter.init(state.config.script_dir, state.config.lib_dir)
+  interpreter.config.spell_suggest_max = 0
   let controller = ScriptController(interpreter: interpreter)
 
   interpreter.register_error_hook proc(config, info, msg, severity: auto) {.gcsafe.} =
+    var info = info
+    var msg = msg
     let ctx = controller.active_unit.script_ctx
     if severity == Severity.Error and config.error_counter >= config.error_max:
-      let file_name = if info.file_index.int >= 0:
+      var file_name = if info.file_index.int >= 0:
         config.m.file_infos[info.file_index.int].full_path.string
       else:
         "???"
-      let msg = &"{file_name}({int info.line},{int info.col}): {msg}"
+
+      if file_name.get_file_info != ctx.file_name.get_file_info:
+        (file_name, info) = extract_file_info msg
+        msg = msg.replace(re"unhandled exception:.*\) Error\: ", "")
+      else:
+        msg = msg.replace(re"(?ms);.*", "")
+      var loc = &"{file_name}({int info.line},{int info.col})"
       echo "error: ", msg, " from ", ctx.file_name
-      ctx.errors.add (msg, info)
+      ctx.errors.add (msg, info, loc)
       ctx.exit_code = error_code
-      raise (ref VMQuit)(info: info, msg: msg)
+      raise (ref VMQuit)(info: info, msg: msg, location: loc)
 
   interpreter.register_enter_hook proc(c, pc, tos, instr: auto) =
     assert controller
