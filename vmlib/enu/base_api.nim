@@ -8,7 +8,12 @@ proc new_instance*(src, dest: ScriptNode) = discard
 proc exec_instance*(self: ScriptNode) = discard
 proc active_unit*(): ScriptNode = discard
 
-var speed_counter = 0
+proc action_running(self: ScriptNode): bool = discard
+proc `action_running=`(self: ScriptNode, value: bool) = discard
+proc yield_script(self: ScriptNode) = discard
+proc begin_move(self: ScriptNode, direction: Vector3, steps: float, move_mode: int) = discard
+proc begin_turn(self: ScriptNode, axis: Vector3, steps: float, move_mode: int) = discard
+
 # API
 proc id*(self: ScriptNode): string = discard
 proc exit*(exit_code = 0, msg = "") = discard
@@ -33,14 +38,6 @@ proc velocity(self: ScriptNode): Vector3 = discard
 
 proc bounce*(me: PlayerType, power = 1.0) =
   me.velocity = me.velocity + UP * power * 30
-
-proc action_running(self: ScriptNode): bool = discard
-proc `action_running=`(self: ScriptNode, value: bool) = discard
-
-proc yield_script(self: ScriptNode) = discard
-
-proc begin_move(self: ScriptNode, direction: Vector3, steps: float, move_mode: int) = discard
-proc begin_turn(self: ScriptNode, axis: Vector3, steps: float, move_mode: int) = discard
 
 template wait(body: untyped) =
   mixin action_running, `action_running=`, yield_script
@@ -147,10 +144,12 @@ template turn*(degrees: float) =
 template move*[T: ScriptNode](new_target: T) =
   target = new_target
   move_mode = 2
+  target.speed = 1
 
 template build*(new_target: ScriptNode) =
   target = new_target
   move_mode = 1
+  target.speed = 1
 
 type NegativeNode = ref object
   node: ScriptNode

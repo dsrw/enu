@@ -180,21 +180,7 @@ proc fire(self: Build) =
     state.open_unit.value = root
 
 proc is_moving(self: Build, move_mode: int): bool =
-  result = if move_mode == 1:
-    false
-  elif move_mode == 2:
-    true
-  else:
-    var computed, manual = 0
-    for _, chunk in self.chunks:
-      for _, info in chunk:
-        if info.kind == Computed:
-          computed += 1
-        elif info.kind == Manual:
-          manual += 1
-        if computed > 1:
-          return false
-    manual > 1
+  move_mode == 2
 
 method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: int): Callback =
   let move = self.is_moving(move_mode)
