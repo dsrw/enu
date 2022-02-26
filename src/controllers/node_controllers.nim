@@ -39,11 +39,15 @@ proc remove_from_scene(unit: Unit) =
   unit.node = nil
 
 proc add_to_scene(unit: Unit) =
-  proc add(unit: auto, T: type) =
+  proc add(unit: auto, T: type, parent_node: Node) =
     var node = unit.node as T
     if node.is_nil:
       node = T.init
     unit.node = node
+    node.unit = unit
+    node.transform = unit.start_transform
+    parent_node.add_child(unit.node)
+    unit.node.owner = parent_node
     node.setup(unit)
 
   let parent_node = if Global in unit.flags:
@@ -56,10 +60,8 @@ proc add_to_scene(unit: Unit) =
   else:
     SharedAssets()
 
-  if unit of Bot: Bot(unit).add(BotNode)
-  elif unit of Build: Build(unit).add(BuildNode)
-  parent_node.add_child(unit.node)
-  unit.node.owner = parent_node
+  if unit of Bot: Bot(unit).add(BotNode, parent_node)
+  elif unit of Build: Build(unit).add(BuildNode, parent_node)
 
 proc set_global(unit: Unit, global: bool) =
   var parent_node = unit.node.get_node("..")

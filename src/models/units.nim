@@ -7,19 +7,16 @@ import core, models / [types, states], libs / interpreters
 proc init*(_: type Model, node: Node): Model =
   result = Model(flags: ZenSet[ModelFlags].init, node: node)
 
-proc find_root*(self: Unit, all_clones = false): tuple[unit: Unit, offset: Vector3] =
-  result.unit = self
-  result.offset -= self.transform.origin
+proc find_root*(self: Unit, all_clones = false): Unit =
+  result = self
   var parent = self.parent
 
   while parent != nil:
-    result.unit = parent
+    result = parent
 
     if (all_clones and not parent.clone_of) or (not all_clones and Global in parent.flags):
       parent = nil
-
     else:
-      result.offset -= parent.transform.origin
       parent = parent.parent
 
 proc walk_tree*(units: seq[Unit], callback: proc(unit: Unit)) =

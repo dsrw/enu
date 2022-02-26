@@ -114,10 +114,8 @@ gdobj BuildNode of VoxelTerrain:
   proc setup*(unit: Build) =
     let was_skipping_join = dont_join
     dont_join = true
-    self.unit = unit
-    self.transform = unit.start_transform
     self.track_changes
-    self.unit.draw(vec3(), (Manual, unit.start_color))
+
     dont_join = was_skipping_join
     if not unit.bot_collisions:
       var layer = 0

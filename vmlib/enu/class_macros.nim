@@ -65,10 +65,12 @@ proc build_ctors(name_str: string, type_name: NimNode, params: seq[NimNode]): Ni
     result.speed = `speed`
 
   var color = "color".ident
+  var eraser = bind_sym"eraser"
   if "color" notin var_names:
-    params &= new_ident_defs(color, new_empty_node(), bind_sym"eraser")
+    params &= new_ident_defs(color, new_empty_node(), eraser)
   ctor_body.add quote do:
-    result.color = `color`
+    if `color` != `eraser`:
+      result.color = `color`
 
   ctor_body.add quote do:
     exec_instance(result)

@@ -29,8 +29,6 @@ proc energy*(self: ScriptNode): float = discard
 proc `energy=`*(self: ScriptNode, energy: float) = discard
 proc global*(self: ScriptNode): bool = discard
 proc `global=`*(self: ScriptNode, global: bool) = discard
-proc color*(self: ScriptNode): Colors = discard
-proc `color=`*(self: ScriptNode, color: Colors) = discard
 proc rotation*(self: ScriptNode): Vector3 = discard
 proc hit*(self: ScriptNode, node: ScriptNode): Vector3 = discard
 proc `velocity=`(self: ScriptNode, velocity: Vector3) = discard

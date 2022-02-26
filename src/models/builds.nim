@@ -24,6 +24,9 @@ proc contains*(self: Build, position: Vector3): bool =
   let buf = position.buffer
   result = buf in self.chunks and position in self.chunks[buf]
 
+proc voxel_info*(self: Build, position: Vector3): VoxelInfo =
+  self.chunks[position.buffer][position]
+
 proc find_voxel*(self: Build, position: Vector3): Option[VoxelInfo] =
   let buf = position.buffer
   result = if buf in self:
@@ -68,8 +71,8 @@ proc maybe_join_previous_build(self: Build, position: Vector3, voxel: VoxelInfo)
   if previous_build and previous_build != self:
     var partner = previous_build
     let root = previous_build.find_root
-    if root.unit of Build:
-      partner = Build(root.unit)
+    if root of Build:
+      partner = Build(root)
 
     if partner != self:
       for position in self.node.to_global(position).surrounding:
@@ -104,47 +107,43 @@ proc reset_bounds*(self: Build) =
 
 proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
   var target = self
-  var offset: Vector3
   let root = self.find_root
-  var replaced = false
-  if root.unit != self and root.unit of Build:
-    let root_build = Build(root.unit)
+  var target_position = position
+  if root != self and root of Build:
+    let root_build = Build(root)
+    let global = self.node.to_global(position)
+    let root_position = root_build.node.to_local(global)
     if voxel.kind in {Manual, Hole}:
       target = root_build
-      offset = root.offset
       let buffer = position.buffer
-      if buffer in self.chunks and position in self.chunks[buffer]:
+      if position in self:
+        # delete voxel from self if we're adding it to root
         self.chunks[buffer].del(position)
         if self.chunks[buffer].len == 0:
           self.chunks.del(buffer)
-        replaced = true
-    else:
-      let offset = root.offset
-      let position = (position - offset).floor
-      let buffer = position.buffer
-      if buffer in root_build.chunks and position in root_build.chunks[buffer]:
-        let info = root_build.chunks[buffer][position]
-        if info.kind == Manual and info.color == voxel.color:
-          root_build.chunks[buffer].del(position)
-          if root_build.chunks[buffer].len == 0:
-            root_build.chunks.del(buffer)
-        else:
-          return
+      target_position = root_position
+    elif voxel.kind == Computed and root_position in root_build:
+      return
 
-  let position = (position - offset).floor
-  let buffer = position.buffer
-  if not replaced and buffer in target.chunks and position in target.chunks[buffer]:
-    replaced = true
-  else:
-    if buffer notin target.chunks:
-      target.chunks[buffer] = Chunk.init
-      self.expand_bounds_to_chunk(buffer)
-  if voxel.kind == Hole and not replaced:
-    target.chunks[buffer].del(position)
-  else:
-    target.chunks[buffer][position] = voxel
+  if target_position in target:
+    let buffer = target_position.buffer
+    let info = target.voxel_info(target_position)
+    if (voxel.kind == Manual and info.kind == Hole) or (info.kind == Manual and info.color == voxel.color):
+      # fill holes and replace same color blocks
+      target.chunks[buffer].del(target_position)
+      if target.chunks[buffer].len == 0:
+        target.chunks.del(buffer)
+    elif voxel.kind == Computed:
+     return
 
-  if position == vec3(0, 0, 0):
+  let buffer = target_position.buffer
+  if buffer notin target.chunks:
+    target.chunks[buffer] = Chunk.init
+  target.expand_bounds_to_chunk(buffer)
+
+  target.chunks[buffer][target_position] = voxel
+
+  if target == self and position == vec3(0, 0, 0) and voxel.kind != Computed:
     self.start_color = voxel.color
 
   if not dont_join and voxel.kind == Manual:
@@ -176,7 +175,7 @@ proc fire(self: Build) =
     let transform = Transform.init(origin = global_point)
     state.units += Bot.init(transform = transform)
   elif state.tool.value == Code:
-    let (root, _) = self.find_root(true)
+    let root = self.find_root(true)
     state.open_unit.value = root
 
 proc is_moving(self: Build, move_mode: int): bool =
@@ -202,10 +201,11 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
         self.transform.origin = self.transform.origin + (moving * self.speed * delta)
         return true
   else:
-    self.voxels_per_frame = if self.speed == 0:
-      float.high
+    if self.speed == 0:
+      self.voxels_per_frame = float.high
     else:
-      self.speed
+      self.voxels_remaining_this_frame = self.speed
+      self.voxels_per_frame = self.speed
     var count = 0
     result = proc(delta: float): bool =
       var remaining = self.voxels_remaining_this_frame
@@ -248,6 +248,8 @@ proc reset_state*(self: Build) =
 
 method reset*(self: Build) =
   self.transform.value = self.start_transform
+  self.color = self.start_color
+  self.speed = 1
   self.reset_state()
   let chunks = self.chunks.value
   for chunk_id, chunk in chunks:
@@ -258,6 +260,7 @@ method reset*(self: Build) =
         if self.chunks[chunk_id].len == 0:
           self.chunks.del(chunk_id)
   self.units.clear()
+  self.draw(vec3(), (Computed, self.start_color))
 
 proc init*(_: type Build, transform = Transform.init, color = default_color,
                           clone_of: Unit = nil, global = true, bot_collisions = true): Build =
@@ -283,13 +286,13 @@ proc init*(_: type Build, transform = Transform.init, color = default_color,
     scale: Zen.init(1.0)
   )
   if global: self.flags += Global
-
+  self.reset()
   self.flags.changes:
     if Hover.added and state.tool.value == Code:
-      let (root, _) = self.find_root(true)
+      let root = self.find_root(true)
       root.walk_tree proc(unit: Unit) = unit.flags += Highlight
     elif Hover.removed:
-      let (root, _) = self.find_root(true)
+      let root = self.find_root(true)
       root.walk_tree proc(unit: Unit) = unit.flags -= Highlight
     if TargetMoved.touched:
       let plane = self.node.to_global(self.target_point) * self.target_normal
