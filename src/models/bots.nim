@@ -1,7 +1,7 @@
 import std / [math, sugar, monotimes]
 import pkg / model_citizen
 import godotapi / spatial
-import core, models / [types, states, units]
+import core, models / [types, states, units, colors]
 include "bot_code_template.nim.nimf"
 
 let state = GameState.active
@@ -64,7 +64,8 @@ proc init*(_: type Bot, transform = Transform.init, clone_of: Bot = nil, global 
     speed: 1.0,
     clone_of: clone_of,
     frame_delta: ZenValue[float].init,
-    scale: Zen.init(1.0)
+    scale: Zen.init(1.0),
+    start_color: action_colors[black]
   )
   if global: self.flags += Global
 

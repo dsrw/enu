@@ -65,6 +65,7 @@ proc new_instance(self: ScriptController, src: Unit, dest: PNode) =
   clone.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter,
                                module_name: src.id)
   self.map_unit(clone, dest)
+  clone.reset
   self.active_unit.units.add(clone)
 
 proc exec_instance(self: ScriptController, unit: Unit) =
@@ -167,6 +168,12 @@ proc velocity(self: Unit): Vector3 =
 proc `velocity=`(self: Unit, velocity: Vector3) =
   self.velocity.value = velocity
 
+proc color(self: Unit): Colors =
+  action_index self.color
+
+proc `color=`(self: Unit, color: Colors) =
+  self.color = action_colors[color]
+
 proc rotation(self: Unit): Vector3 =
   # TODO: fix this
   proc nm(f: float): float =
@@ -204,12 +211,6 @@ proc play(self: Bot, animation_name: string) =
   self.animation.value = animation_name
 
 # Build bindings
-
-proc color(self: Build): Colors =
-  action_index self.color
-
-proc `color=`(self: Build, color: Colors) =
-  self.color = action_colors[color]
 
 proc drawing(self: Build): bool =
   self.drawing
@@ -436,11 +437,12 @@ proc init*(T: type ScriptController): ScriptController =
   result.bind_procs "base_api", begin_turn, begin_move, register_active, echo_console, new_instance,
                     exec_instance, action_running, `action_running=`, yield_script, hit,
                     sleep, exit, global, `global=`, position, `position=`, rotation, energy, `energy=`,
-                    speed, `speed=`, scale, `scale=`, velocity, `velocity=`, active_unit, id
+                    speed, `speed=`, scale, `scale=`, velocity, `velocity=`, active_unit, id,
+                    color, `color=`
 
   result.bind_procs "bots", play
 
-  result.bind_procs "builds", color, `color=`, drawing, `drawing=`, initial_position,
+  result.bind_procs "builds", drawing, `drawing=`, initial_position,
                     save, restore, reset
 
 when is_main_module:

@@ -3,8 +3,6 @@ import helpers, types, base_api
 
 proc drawing*(self: Build): bool = discard
 proc `drawing=`*(self: Build, drawing: bool) = discard
-proc color*(self: Build): Colors = discard
-proc `color=`*(self: Build, color: Colors) = discard
 proc initial_position(self: Build): Vector3 = discard
 
 proc home*(self: Build) =

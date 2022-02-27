@@ -78,6 +78,8 @@ type
     collisions*: seq[tuple[model: Model, normal: Vector3]]
     frame_delta*: ZenValue[float]
     shared_assets*: SharedAssets
+    start_color*: Color
+    color*: Color
 
   Player* = ref object of Unit
     colliders*: HashSet[Model]
@@ -97,8 +99,6 @@ type
   Build* = ref object of Unit
     chunks*: ZenTable[Vector3, Chunk]
     draw_transform*: Transform
-    start_color*: Color
-    color*: Color
     voxels_per_frame*: float
     voxels_remaining_this_frame*: float
     drawing*: bool

@@ -33,6 +33,8 @@ proc rotation*(self: ScriptNode): Vector3 = discard
 proc hit*(self: ScriptNode, node: ScriptNode): Vector3 = discard
 proc `velocity=`(self: ScriptNode, velocity: Vector3) = discard
 proc velocity(self: ScriptNode): Vector3 = discard
+proc color*(self: ScriptNode): Colors = discard
+proc `color=`*(self: ScriptNode, color: Colors) = discard
 
 proc bounce*(me: PlayerType, power = 1.0) =
   me.velocity = me.velocity + UP * power * 30

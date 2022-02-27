@@ -75,7 +75,8 @@ proc from_json_hook(self: var Build, json: JsonNode) =
 proc to_json_hook(self: Bot): JsonNode =
   %* {
     "id": self.id,
-    "start_transform": self.start_transform.to_json
+    "start_transform": self.start_transform.to_json,
+    "start_color": self.start_color.to_json
   }
 
 proc from_json_hook(self: var Bot, json: JsonNode) =
