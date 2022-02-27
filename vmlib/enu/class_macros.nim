@@ -40,6 +40,7 @@ proc build_ctors(name_str: string, type_name: NimNode, params: seq[NimNode]): Ni
   var ctor_body = quote do:
     assert not instance.is_nil
     result = `type_name`()
+    result.seed = active_unit().seed
     new_instance(instance, result)
 
   for param in params:
@@ -136,7 +137,10 @@ proc visit_tree(parent: NimNode, convert: seq[NimNode], alias: ptr seq[NimNode])
       visit_tree(node, convert, addr alias)
     else:
       if node in convert and parent.kind == nnkIdentDefs:
-        alias[].add node
+        if i == 0:
+          alias[].add node
+        elif i == 2:
+          parent[i] = new_dot_expr(ident"me", node)
       elif node in convert and node notin alias[] and parent.kind != nnkExprEqExpr and not (parent.kind == nnkDotExpr and i == 1):
         parent[i] = new_dot_expr(ident"me", node)
       visit_tree(node, convert, alias)
@@ -197,7 +201,7 @@ macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[u
   inner.add ast
   result.add quote do:
     proc run_script*(me {.inject.}: me.type, is_instance {.inject.}: bool) =
-      var target {.inject.}: ScriptNode = me
+      var target {.inject.}: Unit = me
       include loops
       `inner`
     run_script(me, false)

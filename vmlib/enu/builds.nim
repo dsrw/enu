@@ -1,5 +1,5 @@
 import std / [strutils]
-import helpers, types, base_api
+import types, base_api
 
 proc drawing*(self: Build): bool = discard
 proc `drawing=`*(self: Build, drawing: bool) = discard

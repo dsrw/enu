@@ -65,8 +65,8 @@ proc new_instance(self: ScriptController, src: Unit, dest: PNode) =
   clone.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter,
                                module_name: src.id)
   self.map_unit(clone, dest)
-  clone.reset
   self.active_unit.units.add(clone)
+  clone.reset
 
 proc exec_instance(self: ScriptController, unit: Unit) =
   let active = self.active_unit

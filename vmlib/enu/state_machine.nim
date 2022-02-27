@@ -1,5 +1,5 @@
 import std / [macros, strformat, strutils, sequtils, tables]
-import types, helpers, macro_helpers
+import types, macro_helpers
 
 proc current_loop(value: Loop = nil): Loop =
   var loop {.global.}: Loop

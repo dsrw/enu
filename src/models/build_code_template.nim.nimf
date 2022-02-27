@@ -1,7 +1,7 @@
 #? stdtmpl
 #proc build_code_template(file_name, imports: string): string =
 import std / strutils
-import types, class_macros, players, state_machine, base_api, bots, builds, private_builds, helpers
+import types, class_macros, players, state_machine, base_api, bots, builds, private_builds
 include overrides
 
 let instance_global_by_default = false
@@ -11,6 +11,6 @@ ${imports}
 
 {.experimental: "overloadable_enums".}
 
-load_enu_script "${file_name}", Build, position, speed, scale, energy, global, drawing, color, initial_position
+load_enu_script "${file_name}", Build, position, speed, scale, energy, global, drawing, color, initial_position, seed
 
 exit()

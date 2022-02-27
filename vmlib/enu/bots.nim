@@ -1,5 +1,5 @@
 import std / [strutils, math]
-import helpers, types, base_api
+import types, base_api
 
 proc play*(self: Bot, animation_name: string) = discard
 

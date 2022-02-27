@@ -1,7 +1,10 @@
 import potato_class, enu/types, pkg/print
 import enu/base_api, enu/state_machine
 var move_mode = 1
-var me = ScriptNode()
+var me = Unit()
+if 1 in 100:
+  echo "hit22"
+
 let p = potato.new(label = "orange", color = green)
 var target = p
 forward 10

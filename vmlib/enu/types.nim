@@ -1,5 +1,4 @@
-import helpers, strutils, strformat
-import macros, math, hashes
+import std / [strutils, strformat, macros, math, hashes, tables, random]
 
 var global_default* = false
 
@@ -7,26 +6,26 @@ type
   Vector3* = object
     x*, y*, z*: float
 
-  Node* = ref object of RootObj
-    id: int
-    name*: string
-
   Directions* = enum
     up, u, down, d, left, l, right, r, forward, f, back, b
 
-  ScriptNode* = ref object of Node
+  Unit* = ref object of RootObj
+    id: int
+    name*: string
     advance_state_machine*: proc(): bool
+    rng: Rand
+    seed: int
 
-  Bot* = ref object of ScriptNode
+  Bot* = ref object of Unit
 
-  Build* = ref object of ScriptNode
+  Build* = ref object of Unit
 
   Colors* = enum
     eraser, blue, red, green, black, white, brown
 
   Energy* = range[0.0..100.0]
 
-  PlayerType* = ref object of ScriptNode
+  PlayerType* = ref object of Unit
 
   Context* = ref object
     stack*: seq[Frame]

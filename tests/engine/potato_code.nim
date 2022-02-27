@@ -25,6 +25,8 @@ me.speed = 10
 echo speed
 echo me.speed
 run_away()
+color = red
+var c: Colors = color
 
 proc tester(speed = 50) =
   echo speed
