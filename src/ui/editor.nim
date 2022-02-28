@@ -105,6 +105,23 @@ gdobj Editor of TextEdit:
       elif false.added:
         self.clear_errors()
 
+    state.open_unit.changes:
+      if added:
+        let unit = change.item
+        if unit.is_nil:
+          self.release_focus()
+          self.visible = false
+          if self.open_script_ctx:
+            self.open_script_ctx.line_changed = nil
+            self.open_script_ctx = nil
+        else:
+          self.visible = true
+          self.set_open_script_ctx()
+          self.text = state.open_unit.value.code.value
+          self.grab_focus()
+          self.clear_errors()
+          self.highlight_errors()
+
     state.target_flags.changes:
       if CommandMode.added:
         if Editing in state.target_flags:
@@ -121,20 +138,5 @@ gdobj Editor of TextEdit:
         self.readonly = false
         var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
         stylebox.bg_color = self.og_bg_color
-
-      elif Editing.added:
-        self.visible = true
-        self.set_open_script_ctx()
-        self.text = state.open_unit.value.code.value
-        self.grab_focus()
-        self.clear_errors()
-        self.highlight_errors()
-
-      elif Editing.removed:
-        self.release_focus()
-        self.visible = false
-        if self.open_script_ctx:
-          self.open_script_ctx.line_changed = nil
-          self.open_script_ctx = nil
 
     self.configure_highlighting()
