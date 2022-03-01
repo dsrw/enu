@@ -251,6 +251,10 @@ proc contains*(max, chance: int): bool =
   var r = rng().rand(1..max)
   result = r <= chance
 
+template forever*(body) =
+  while true:
+    body
+
 template o*(body) =
   while true:
     body
