@@ -63,7 +63,7 @@ proc new_instance(self: ScriptController, src: Unit, dest: PNode) =
   assert not clone.is_nil
   clone.id = src.id & "_" & self.active_unit.id & "_instance_" & $self.active_unit.units.len
   clone.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter,
-                               module_name: src.id)
+                               module_name: src.id, timeout_at: MonoTime.high)
   self.map_unit(clone, dest)
   self.active_unit.units.add(clone)
   clone.reset
@@ -276,7 +276,7 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
     finally:
       self.active_unit = nil
 
-proc load_script(self: ScriptController, unit: Unit) =
+proc load_script(self: ScriptController, unit: Unit, timeout = script_timeout) =
   let ctx = unit.script_ctx
   try:
     self.active_unit = unit
@@ -292,11 +292,11 @@ proc load_script(self: ScriptController, unit: Unit) =
         ""
       let code = unit.code_template(imports)
       # I don't think it's possible to get into an infinite loop here, but I can't be bothered to verify that.
-      ctx.timeout_at = get_mono_time() + script_timeout
+      ctx.timeout_at = get_mono_time() + timeout
       ctx.load(state.config.script_dir, ctx.script, code, state.config.lib_dir)
 
     if not state.paused:
-      ctx.timeout_at = get_mono_time() + script_timeout
+      ctx.timeout_at = get_mono_time() + timeout
       ctx.running = ctx.run()
 
   except VMQuit as e:
@@ -330,7 +330,7 @@ proc change_code(self: ScriptController, unit: Unit, code: string) =
   elif code.strip != "":
     write_file(unit.script_file, code)
     if unit.script_ctx.is_nil:
-      unit.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter)
+      unit.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter, timeout_at: MonoTime.high)
     unit.script_ctx.script = unit.script_file
     self.load_script(unit)
 
@@ -369,9 +369,9 @@ proc load_player*(self: ScriptController) =
   defer:
     self.active_unit = nil
 
-  unit.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter)
+  unit.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter, timeout_at: MonoTime.high)
   unit.script_ctx.script = state.config.lib_dir & "/enu/players.nim"
-  self.load_script(unit)
+  self.load_script(unit, timeout = 30.seconds)
 
 proc extract_file_info(msg: string): tuple[name: string, info: TLineInfo] =
   if msg =~ re"unhandled exception: (.*)\((\d+), (\d+)\)":
@@ -412,8 +412,9 @@ proc init*(T: type ScriptController): ScriptController =
 
     let ctx = controller.active_unit.script_ctx
     let info = c.debug[pc]
-    if ctx.timeout_at < get_mono_time():
-      raise (ref VMQuit)(info: info, msg: "Timeout. Script executed for too long without yielding.")
+    let now = get_mono_time()
+    if ctx.timeout_at < now:
+      raise (ref VMQuit)(info: info, msg: &"Timeout. Script {ctx.script} executed for too long without yielding: {now - ctx.timeout_at}")
 
     if ctx.previous_line != info:
       let config = interpreter.config

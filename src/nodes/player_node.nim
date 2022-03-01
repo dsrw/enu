@@ -110,8 +110,7 @@ gdobj PlayerNode of KinematicBody:
 
     self.position_start = self.camera_rig.translation
     state.nodes.player = self
-    # TODO
-    # self.load_script()
+
     state.target_flags.changes:
       if MouseCaptured.removed:
         self.skip_next_mouse_move = true

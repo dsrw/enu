@@ -17,7 +17,7 @@ var
   godot_opts      = "target=release_debug"
   generator_path  = ""
 
-version       = "0.1.99"
+version       = "0.1.97"
 author        = "Scott Wadden"
 description   = "Logo-like DSL for Godot"
 license       = "MIT"
@@ -26,9 +26,9 @@ bin_dir       = "app/_dlls"
 src_dir       = "src"
 bin           = @["enu" & lib_ext]
 
-requires "nim 1.6.3", # godot transform issue in 1.6.2
+requires "nim 1.6.4",
          "https://github.com/pragmagic/godot-nim#982ab52",
-         "https://github.com/dsrw/Nim#a797a04",
+         "https://github.com/dsrw/Nim#a6d502f",
          "https://github.com/dsrw/model_citizen 0.6.7",
          "cligen 1.5.19",
          "print#f78c855",
@@ -117,7 +117,7 @@ task dist, "Build distribution":
     exec &"cp {release_bin} dist/Enu.app/Contents/MacOS/Enu"
     let pck_path = this_dir() & "/dist/Enu.app/Contents/Resources/Enu.pck"
     exec &"{godot_bin} --path app --export-pack \"mac\" " & pck_path
-    exec "nimble build -d:release -d:dist"
+    exec "nimble build -d:release -d:dist --stackTrace"
     exec "cp app/_dlls/enu.dylib dist/Enu.app/Contents/Frameworks"
     exec "cp -r vmlib dist/Enu.app/Contents/Resources/vmlib"
 

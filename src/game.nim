@@ -118,6 +118,7 @@ gdobj Game of Node:
 
     self.add_platform_input_actions()
 
+    let exe_dir = parent_dir get_executable_path()
     when defined(dist):
       if host_os == "macosx":
         config.lib_dir = join_path(exe_dir.parent_dir, "Resources", "vmlib")
