@@ -12,7 +12,7 @@
 	<key>CFBundleName</key>
 	<string>Enu</string>
 	<key>CFBundleGetInfoString</key>
-	<string>(c) 2021 Scott Wadden</string>
+	<string>(c) 2022 Scott Wadden</string>
 	<key>CFBundleIconFile</key>
 	<string>Enu.icns</string>
 	<key>CFBundleIdentifier</key>
@@ -28,7 +28,7 @@
 	<key>CFBundleVersion</key>
 	<string>$version</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>© 2021 Scott Wadden</string>
+	<string>© 2022 Scott Wadden</string>
 	<key>CFBundleSupportedPlatforms</key>
 	<array>
 		<string>MacOSX</string>

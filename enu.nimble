@@ -99,6 +99,68 @@ task gen, "Generate build_helpers":
 proc code_sign(id, path: string) =
   exec &"codesign -s '{id}' -v --timestamp --options runtime {path}"
 
+# NOTE! this is hacky and specific to my system. Will be fixed.
+task dist_universal_mac, "Build Universal mac distribution":
+  lib_ext = ".dylib.x86"
+  cpu = "64"
+  exec "rm ../Nim"
+  exec "ln -s NimRosetta ../Nim"
+  var release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
+  prereqs_task()
+  exec &"{gen()} write_export_presets --enu_version {version}"
+  godot_opts = "target=release tools=no"
+  build_godot_task()
+  rm_dir "dist"
+
+  let config = read_file("dist_config.json").parse_json
+  mkdir "dist"
+  exec "cp -r installer/Enu.app dist/Enu.app"
+  exec &"{gen()} write_info_plist --enu_version {version}"
+  exec "mkdir -p dist/Enu.app/Contents/MacOS"
+  exec "mkdir -p dist/Enu.app/Contents/Frameworks"
+  exec &"cp {release_bin} dist/Enu.app/Contents/MacOS/Enu.x86"
+  let pck_path = this_dir() & "/dist/Enu.app/Contents/Resources/Enu.pck"
+  exec &"{godot_bin} --path app --export-pack \"mac\" " & pck_path
+
+  exec "nimble build -d:release -d:dist"
+  exec "cp app/_dlls/enu.dylib dist/Enu.app/Contents/Frameworks/enu.dylib.x86"
+
+  lib_ext = ".dylib.arm64"
+  cpu = "arm64"
+  exec "rm ../Nim"
+  exec "ln -s NimNative ../Nim"
+  release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
+  build_godot_task()
+  exec &"cp {release_bin} dist/Enu.app/Contents/MacOS/Enu.arm64"
+  exec "nimble build -d:release -d:dist"
+  exec "cp app/_dlls/enu.dylib dist/Enu.app/Contents/Frameworks/enu.dylib.arm64"
+
+  exec "lipo -create dist/Enu.app/Contents/Frameworks/enu.dylib.x86 dist/Enu.app/Contents/Frameworks/enu.dylib.arm64 -output dist/Enu.app/Contents/Frameworks/enu.dylib"
+  exec "rm dist/Enu.app/Contents/Frameworks/enu.dylib.*"
+
+  exec "lipo -create dist/Enu.app/Contents/MacOS/Enu.x86 dist/Enu.app/Contents/MacOS/Enu.arm64 -output dist/Enu.app/Contents/MacOS/Enu"
+  exec "rm dist/Enu.app/Contents/MacOS/Enu.*"
+
+  exec "cp -r vmlib dist/Enu.app/Contents/Resources/vmlib"
+
+  if config["sign"].get_bool:
+    let id = config["id"].get_str
+    code_sign(id, "dist/Enu.app/Contents/Frameworks/enu.dylib")
+    code_sign(id, "dist/Enu.app")
+
+  let package_name = &"enu-{version}.dmg"
+  if config["package"].get_bool:
+
+    exec &"hdiutil create {package_name} -ov -volname Enu -fs HFS+ -srcfolder dist"
+    exec &"mv {package_name} dist"
+
+  if config["notarize"].get_bool:
+    let
+      username = config["notarize-username"].get_str
+      password = config["notarize-password"].get_str
+
+    exec &"xcrun altool --notarize-app --primary-bundle-id 'ca.dsrw.enu'  --username '{username}' --password '{password}' --file dist/{package_name}"
+
 task dist, "Build distribution":
   let release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
   prereqs_task()
