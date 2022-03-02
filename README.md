@@ -182,8 +182,8 @@ Turn a unit. Can be passed:
 - a number in degrees. Positive for clockwise, negative for counter-clockwise. Ex. `turn 180`
 - a direction (`forward/back/up/down/left/right`) which will turn in that direction. 45 degrees by default.
   Ex. `turn left`, or `turn up, 180`
-- a unit, which will turn towards that unit. Ex. `turn player`
-- a negative unit, which will turn away from that unit. Ex. `turn -player`
+- a unit to turn towards. Ex. `turn player`
+- a negative unit to turn away from. Ex. `turn -player`
 
 ## `near(less_than = 5.0) / far(greater_than = 100.0)`
 
