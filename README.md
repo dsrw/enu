@@ -22,14 +22,12 @@ traditional Nim.*
 Enu is meant for anyone who wants to explore, experiment, or make games, but particular care has been taken to make
 it usable by younger people who may struggle with reading or typing. However, rather than bypassing the keyboard with
 a Scratch-like visual programming language, Enu attempts to reduce and simplify the keystrokes required for a text-based
-language, while hopefully preserving most of the tremendous flexibility text-based code offers.
+language, while (hopefully) preserving most of the flexibility text-based code offers.
 
 With this in mind, Enu tries to:
 
-- Reduce nesting. Instead of defining a `class` and nesting code inside of it, Enu lets you
-  specify a `name` at the top of a script, and everything following is assumed to be part of the definition.
-
-- Reduce the use of the shift key. Lower case is used almost everywhere. Commands are designed to
+- Reduce nesting. Indentation can be tricky for new programmers.
+- Reduce the use of the shift key. Lower case is used almost everywhere. Commands are written to
   avoid underscores and parenthesis. By default (for now at least), a `;` keypress is interpreted as `:`, as colons are
   required frequently in Nim (and require shift, at least on US English keyboards) while semi-colons are not.
 
@@ -324,7 +322,7 @@ forever:
 
 # Shorthand Commands
 
-Many Enu command also have a 1 or 2 letter alias. This is harder to read, but can reduce friction for folks new to
+Many Enu command also have a 1 letter alias. These are harder to read, but can reduce friction for folks new to
 typing.
 
 The aliases are:
