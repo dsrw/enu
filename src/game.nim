@@ -86,11 +86,14 @@ gdobj Game of Node:
   proc init* =
     state.nodes.game = self
     let
-      screen_scale = get_screen_scale(-1)
       work_dir = get_user_data_dir()
       config_file = join_path(work_dir, "config.json")
+      screen_scale = if host_os == "macos":
+        get_screen_scale(-1)
+      else:
+        get_screen_dpi(-1).float / 96.0
 
-    echo "Screen size: ", get_screen_size(-1)
+    echo "Screen size: ", get_screen_size(-1), " scale ", screen_scale
 
     var initial_user_config = UserConfig()
     if file_exists(config_file):

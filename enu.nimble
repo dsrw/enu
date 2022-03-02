@@ -72,7 +72,7 @@ task prereqs, "Generate Godot API binding":
   exec &"{gen()} copy_stdlib -d=vmlib/stdlib"
   if host_os == "windows":
     # Assumes mingw
-    find_and_copy_dlls find_exe("gcc").parent_dir, join_path("app", "_dlls"), gcc_dlls
+    #  find_and_copy_dlls find_exe("gcc").parent_dir, join_path("app", "_dlls"), gcc_dlls
     find_and_copy_dlls get_current_compiler_exe().parent_dir, join_path("vendor", "godot", "bin"), nim_dlls
 
 task import_assets, "Import Godot assets. Only required if you're not using the Godot editor":
