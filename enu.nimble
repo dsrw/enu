@@ -211,7 +211,7 @@ task dist, "Build distribution":
     exec &"{godot_bin} --path app --export-pack \"win\" " & pck_path
     exec "nimble build -d:release -d:dist"
     cp_file "app/_dlls/enu.dll", root & "/enu.dll"
-    find_and_copy_dlls find_exe("gcc").parent_dir, root, gcc_dlls
+    #find_and_copy_dlls find_exe("gcc").parent_dir, root, gcc_dlls
     find_and_copy_dlls get_current_compiler_exe().parent_dir, root, nim_dlls
     cp_dir "vmlib", root & "/vmlib"
     exec &"iscc /DVersion={version} installer/enu.iss"
