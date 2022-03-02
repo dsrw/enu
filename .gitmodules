@@ -1,6 +1,6 @@
 [submodule "vendor/godot_voxel"]
 	path = vendor/modules/voxel
-	url = https://github.com/Zylann/godot_voxel.git
+	url = https://github.com/dsrw/godot_voxel.git
 	branch = master
 [submodule "vendor/godot"]
 	path = vendor/godot
