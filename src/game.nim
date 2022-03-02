@@ -245,6 +245,7 @@ gdobj Game of Node:
     elif event.is_action_pressed("quit"):
       if host_os != "macosx":
         save_world()
+        self.get_tree().quit()
     elif not state.editing:
       if event.is_action_pressed("toggle_mouse_captured"):
         state.mouse_captured = not state.mouse_captured
