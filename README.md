@@ -110,7 +110,7 @@ forward 1.0..5.0 # Convert to a random float between 1.0 and 5.0
 forward 1..5 # Convert to a random int between 1 and 5, then convert the int to a float
 ```
 
-The `in` operator can be used between two numbers to test for random chance, for example:
+The `in` operator can be used between two numbers to test for random chance. For example:
 
 ```nim
 if 1 in 2:
