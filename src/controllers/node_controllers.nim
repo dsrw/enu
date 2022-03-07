@@ -10,7 +10,6 @@ type
 let state = GameState.active
 
 proc remove_from_scene(unit: Unit) =
-  unit.reset()
   if unit == previous_build: previous_build = nil
   if unit == current_build: current_build = nil
   let parent_node = unit.node.get_node("..")
@@ -54,11 +53,6 @@ proc add_to_scene(unit: Unit) =
     state.nodes.data
   else:
     unit.parent.node
-
-  unit.shared_assets = if unit.parent:
-    unit.parent.shared_assets
-  else:
-    SharedAssets()
 
   if unit of Bot: Bot(unit).add(BotNode, parent_node)
   elif unit of Build: Build(unit).add(BuildNode, parent_node)

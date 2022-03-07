@@ -59,9 +59,9 @@ proc register_active(self: ScriptController, pnode: PNode) =
   self.map_unit(self.active_unit, pnode)
 
 proc new_instance(self: ScriptController, src: Unit, dest: PNode) =
-  var clone = src.clone(self.active_unit)
+  let id = src.id & "_" & self.active_unit.id & "_instance_" & $(self.active_unit.units.len + 1)
+  var clone = src.clone(self.active_unit, id)
   assert not clone.is_nil
-  clone.id = src.id & "_" & self.active_unit.id & "_instance_" & $self.active_unit.units.len
   clone.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter,
                                module_name: src.id, timeout_at: MonoTime.high)
   self.map_unit(clone, dest)
@@ -236,7 +236,6 @@ proc reset(self: Build, clear: bool) =
 # End of bindings
 
 proc script_error(self: ScriptController, unit: Unit, e: ref VMQuit) =
-  write_stack_trace()
   state.logger("err", e.msg)
   state.console.show_errors.value = true
 
@@ -260,10 +259,13 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
           self.active_unit = unit
           ctx.timeout_at = get_mono_time() + script_timeout
           ctx.running = ctx.resume()
+          if not ctx.running and not unit.clone_of:
+            unit.collect_garbage
           if unit of Build:
             let unit = Build(unit)
             if unit.voxels_per_frame > 0 and ctx.running and unit.voxels_remaining_this_frame >= 1:
               resume_script = true
+
         elif now >= ctx.timer:
           ctx.timer = now + advance_step
           ctx.saved_callback = ctx.callback
@@ -298,6 +300,8 @@ proc load_script(self: ScriptController, unit: Unit, timeout = script_timeout) =
     if not state.paused:
       ctx.timeout_at = get_mono_time() + timeout
       ctx.running = ctx.run()
+      if not ctx.running and not unit.clone_of:
+        unit.collect_garbage
 
   except VMQuit as e:
     ctx.running = false
@@ -321,6 +325,15 @@ proc retry_failed_scripts*(self: ScriptController) =
     self.script_error(f.unit, f.e)
 
 proc change_code(self: ScriptController, unit: Unit, code: string) =
+  if unit.script_ctx and unit.script_ctx.running and not unit.clone_of:
+    unit.collect_garbage
+
+  var all_edits = unit.shared.edits
+  for id, edits in unit.shared.edits:
+    if id != unit.id and edits.len == 0:
+      all_edits.del id
+  unit.shared.edits = all_edits
+
   unit.reset()
   state.console.show_errors.value = false
   state.console.visible.value = false
@@ -357,8 +370,6 @@ proc watch_units(self: ScriptController, units: ZenSeq[Unit]) =
         self.module_names.excl unit.script_ctx.module_name
 
 proc reload_all*(self: ScriptController) =
-  # TODO?
-  # reset_interpreter()
   walk_tree state.units.value, proc(unit: Unit) =
     unit.script_ctx = nil
     unit.code.touch unit.code.value

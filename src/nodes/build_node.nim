@@ -20,7 +20,7 @@ gdobj BuildNode of VoxelTerrain:
     self.bind_signals self, "block_loaded", "block_unloaded"
 
   proc prepare_materials =
-    if self.unit.shared_assets.materials.len == 0:
+    if self.unit.shared.materials.len == 0:
       # generate our own copy of the library materials, so we can manipulate them without impacting other builds.
       for i in 0..int.high:
         let m = self.get_material(i)
@@ -29,9 +29,9 @@ gdobj BuildNode of VoxelTerrain:
         else:
           let m = m.duplicate.as(ShaderMaterial)
           m.set_shader_param("emission_energy", default_energy.to_variant)
-          self.unit.shared_assets.materials.add(m)
+          self.unit.shared.materials.add(m)
 
-    for i, material in self.unit.shared_assets.materials:
+    for i, material in self.unit.shared.materials:
       self.set_material(i, material)
 
   method ready() =
@@ -78,6 +78,7 @@ gdobj BuildNode of VoxelTerrain:
       if added:
         self.set_energy(change.item)
 
+    self.bounds = self.unit.bounds.value
     self.unit.bounds.changes:
       if added:
         self.bounds = change.item

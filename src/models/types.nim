@@ -58,8 +58,9 @@ type
 
   Ground* = ref object of Model
 
-  SharedAssets* = ref object
+  Shared* = ref object
     materials*: seq[ShaderMaterial]
+    edits*: Table[string, Table[Vector3, VoxelInfo]]
 
   Unit* = ref object of Model
     id*: string
@@ -77,7 +78,7 @@ type
     clone_of*: Unit
     collisions*: seq[tuple[model: Model, normal: Vector3]]
     frame_delta*: ZenValue[float]
-    shared_assets*: SharedAssets
+    shared*: Shared
     start_color*: Color
     color*: Color
 
@@ -105,6 +106,9 @@ type
     save_points*: Table[string, tuple[position: Transform, color: Color, drawing: bool]]
     bounds*: ZenValue[AABB]
     bot_collisions*: bool
+
+  Edit = ref object of RootObj
+    chunk*: Chunk
 
   Config* = ref object
     font_size*: int

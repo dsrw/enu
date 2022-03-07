@@ -15,7 +15,7 @@ proc fire(self: Ground, append = false) =
       let local = point.local_to(add_to)
       add_to.draw(local, (Manual, state.selected_color))
     else:
-      add_to = Build.init(Transform.init(origin = point), global = true, color = state.selected_color)
+      add_to = Build.init(transform = Transform.init(origin = point), global = true, color = state.selected_color)
       state.units += add_to
 
   elif state.tool.value == Place and state.bot_at(self.target_point).is_nil:

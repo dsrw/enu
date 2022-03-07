@@ -8,3 +8,6 @@ proc init*(_: type Player, node: Spatial): Player =
     node: node,
     velocity: ZenValue[Vector3].init
   )
+
+method collect_garbage*(self: Player) =
+  discard

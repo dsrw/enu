@@ -50,9 +50,10 @@ method reset*(self: Bot) =
   self.animation.value = ""
   self.units.clear()
 
-proc init*(_: type Bot, transform = Transform.init, clone_of: Bot = nil, global = true): Bot =
+proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init, clone_of: Bot = nil,
+           global = true, parent: Unit = nil): Bot =
   let self = Bot(
-    id: "bot_" & generate_id(),
+    id: id,
     units: Zen.init(seq[Unit]),
     start_transform: transform,
     transform: Zen.init(transform),
@@ -65,7 +66,9 @@ proc init*(_: type Bot, transform = Transform.init, clone_of: Bot = nil, global 
     clone_of: clone_of,
     frame_delta: ZenValue[float].init,
     scale: Zen.init(1.0),
-    start_color: action_colors[black]
+    start_color: action_colors[black],
+    shared: if parent: parent.shared else: Shared(),
+    parent: parent
   )
   if global: self.flags += Global
 
@@ -94,10 +97,9 @@ proc init*(_: type Bot, transform = Transform.init, clone_of: Bot = nil, global 
 
   result = self
 
-method clone*(self: Bot, clone_to: Unit): Unit =
+method clone*(self: Bot, clone_to: Unit, id: string): Unit =
   var transform = clone_to.transform.value
-  result = Bot.init(transform = transform, clone_of = self)
-  result.parent = clone_to
+  result = Bot.init(id = id, transform = transform, clone_of = self, parent = clone_to)
 
 method on_collision*(self: Unit, partner: Model, normal: Vector3) =
   self.collisions.add (partner, normal)

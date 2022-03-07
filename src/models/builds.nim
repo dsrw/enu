@@ -105,45 +105,49 @@ proc reset_bounds*(self: Build) =
   for chunk_id, chunk in self.chunks:
     self.expand_bounds_to_chunk(chunk_id)
 
+proc add_voxel(self: Build, position: Vector3, voxel: VoxelInfo) =
+  let buffer = position.buffer
+
+  if buffer notin self.chunks:
+    self.chunks[buffer] = Chunk.init
+    self.expand_bounds_to_chunk(buffer)
+
+  self.chunks[buffer][position] = voxel
+
+proc del_voxel(self: Build, position: Vector3) =
+  let buffer = position.buffer
+  self.chunks[buffer].del position
+
+proc restore_edits*(self: Build) =
+  if self.id in self.shared.edits:
+    for loc, info in self.shared.edits[self.id]:
+      assert info.kind in [Manual, Hole]
+      if info.kind != Hole:
+        self.add_voxel(loc, info)
+
 proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
-  var target = self
-  let root = self.find_root
-  var target_position = position
-  if root != self and root of Build:
-    let root_build = Build(root)
-    let global = self.node.to_global(position)
-    let root_position = root_build.node.to_local(global)
-    if voxel.kind in {Manual, Hole}:
-      target = root_build
-      let buffer = position.buffer
-      if position in self:
-        # delete voxel from self if we're adding it to root
-        self.chunks[buffer].del(position)
-        if self.chunks[buffer].len == 0:
-          self.chunks.del(buffer)
-      target_position = root_position
-    elif voxel.kind == Computed and root_position in root_build:
-      return
+  if voxel.kind == Computed:
+    if position in self.shared.edits[self.id]:
+      var edit = self.shared.edits[self.id][position]
+      if edit.kind == Hole:
+        # We're using color as a flag to indicate that the hole is active
+        edit.color = voxel.color
+        self.shared.edits[self.id][position] = edit
+        return
+      elif edit.kind == Manual and edit.color == voxel.color:
+        self.shared.edits[self.id].del position
+    else:
+      self.add_voxel(position, voxel)
+  else:
+    if self.id notin self.shared.edits:
+      self.shared.edits[self.id] = init_table[Vector3, VoxelInfo]()
+    self.shared.edits[self.id][position] = voxel
+    if voxel.kind != Hole:
+      self.add_voxel(position, voxel)
+    else:
+      self.del_voxel(position)
 
-  if target_position in target:
-    let buffer = target_position.buffer
-    let info = target.voxel_info(target_position)
-    if (voxel.kind == Manual and info.kind == Hole) or (info.kind == Manual and info.color == voxel.color):
-      # fill holes and replace same color blocks
-      target.chunks[buffer].del(target_position)
-      if target.chunks[buffer].len == 0:
-        target.chunks.del(buffer)
-    elif voxel.kind == Computed:
-     return
-
-  let buffer = target_position.buffer
-  if buffer notin target.chunks:
-    target.chunks[buffer] = Chunk.init
-  target.expand_bounds_to_chunk(buffer)
-
-  target.chunks[buffer][target_position] = voxel
-
-  if target == self and position == vec3(0, 0, 0) and voxel.kind != Computed:
+  if position == vec3(0, 0, 0) and voxel.kind != Computed:
     self.start_color = voxel.color
 
   if not dont_join and voxel.kind == Manual:
@@ -262,10 +266,10 @@ method reset*(self: Build) =
   self.units.clear()
   self.draw(vec3(), (Computed, self.start_color))
 
-proc init*(_: type Build, transform = Transform.init, color = default_color,
-                          clone_of: Unit = nil, global = true, bot_collisions = true): Build =
+proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.init, color = default_color,
+                          clone_of: Unit = nil, global = true, bot_collisions = true, parent: Unit = nil): Build =
   let self = Build(
-    id: "build_" & generate_id(),
+    id: id,
     chunks: ZenTable[Vector3, Chunk].init(track_children = false),
     start_transform: transform,
     transform: Zen.init(transform),
@@ -283,8 +287,11 @@ proc init*(_: type Build, transform = Transform.init, color = default_color,
     clone_of: clone_of,
     bot_collisions: bot_collisions,
     frame_delta: ZenValue[float].init,
-    scale: Zen.init(1.0)
+    scale: Zen.init(1.0),
+    shared: if parent: parent.shared else: Shared()
   )
+  if id notin self.shared.edits:
+    self.shared.edits[id] = init_table[Vector3, VoxelInfo]()
   if global: self.flags += Global
   self.reset()
   self.flags.changes:
@@ -333,7 +340,7 @@ method off_collision*(self: Build, partner: Model) =
   if self.script_ctx:
     self.script_ctx.timer = get_mono_time()
 
-method clone*(self: Build, clone_to: Unit): Unit =
+method clone*(self: Build, clone_to: Unit, id: string): Unit =
   var transform = clone_to.transform.value
   var global = true
   if clone_to of Build:
@@ -341,17 +348,20 @@ method clone*(self: Build, clone_to: Unit): Unit =
     global = false
 
   let bot_collisions = not (clone_to of Bot)
-  let clone = Build.init(transform = transform, clone_of = self, global = global,
+  let clone = Build.init(id = id, transform = transform, clone_of = self, global = global, parent = clone_to,
                          color = self.start_color, bot_collisions = bot_collisions)
-  clone.parent = clone_to
+
   for chunk_id, chunk in self.chunks:
     let target_chunk = Chunk.init
+    clone.chunks[chunk_id] = target_chunk
     for location, info in chunk:
       if info.kind != Computed:
+        clone.expand_bounds_to_chunk(chunk_id)
         target_chunk[location] = info
-    if target_chunk.len > 0:
-      clone.chunks[chunk_id] = target_chunk
-  clone.reset_bounds
+    if target_chunk.len == 0:
+      clone.chunks.del chunk_id
+
+  clone.restore_edits
   result = clone
 
 when is_main_module:

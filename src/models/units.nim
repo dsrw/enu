@@ -2,7 +2,7 @@ import std / [os, sugar]
 import pkg / model_citizen
 import godotapi / spatial
 from pkg/core/godotcoretypes import Basis
-import core, models / [types, states], libs / interpreters
+import core, models / [types, states, colors], libs / interpreters
 
 proc init*(_: type Model, node: Node): Model =
   result = Model(flags: ZenSet[ModelFlags].init, node: node)
@@ -48,7 +48,7 @@ method on_begin_move*(self: Unit, direction: Vector3, steps: float, move_mode: i
 method on_begin_turn*(self: Unit, direction: Vector3, degrees: float, move_mode: int): Callback {.base.} =
   quit "override me"
 
-method clone*(self: Unit, clone_to: Unit): Unit {.base.} =
+method clone*(self: Unit, clone_to: Unit, id: string): Unit {.base.} =
   quit "override me"
 
 method code_template*(self: Unit, imports: string): string {.base.} =
@@ -62,6 +62,19 @@ method load_vars*(self: Unit) {.base.} =
 
 method reset*(self: Unit) {.base.} =
   quit "override me"
+
+method collect_garbage*(self: Unit) {.base.} =
+  var edits = self.shared.edits
+  for id, edit in self.shared.edits:
+    var junk: seq[Vector3]
+    for loc, voxel in edit:
+      if voxel.kind == Hole and voxel.color == action_colors[eraser]:
+        edits[id].del loc
+      elif voxel.kind == Hole:
+        var voxel = voxel
+        voxel.color = action_colors[eraser]
+        edits[id][loc] = voxel
+  self.shared.edits = edits
 
 method on_collision*(self: Model, partner: Model, normal: Vector3) {.base.} =
   discard
