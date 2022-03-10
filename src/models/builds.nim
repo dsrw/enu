@@ -162,7 +162,10 @@ proc remove(self: Build) =
   if state.tool.value == Block:
     let point = self.target_point - self.target_normal - (self.target_normal.inverse_normalized * 0.5)
     self.draw(point, (Hole, action_colors[eraser]))
-    state.draw_plane = self.node.to_global(self.target_point) * self.target_normal
+    state.local_draw_plane = self.target_point * self.target_normal
+    state.local_draw_unit_id = self.id
+    state.global_draw_plane = self.node.to_global(self.target_point) *
+                              self.node.transform.basis.xform(self.target_normal).snapped(vec3(1, 1, 1))
     if not self.chunks.any_it(it.value.any_it(it.value.color != action_colors[eraser])):
       if self.parent.is_nil:
         state.units -= self
@@ -171,7 +174,9 @@ proc remove(self: Build) =
 
 proc fire(self: Build) =
   let global_point = self.node.to_global(self.target_point)
-  state.draw_plane = self.node.to_global(self.target_point) * self.target_normal
+  state.local_draw_plane = self.target_point * self.target_normal
+  state.local_draw_unit_id = self.id
+  state.global_draw_plane = global_point * self.node.transform.basis.xform(self.target_normal).snapped(vec3(1, 1, 1))
   if state.tool.value == Block:
     let point = (self.target_point + (self.target_normal * 0.5)).floor
     self.draw(point, (Manual, state.selected_color))
@@ -302,8 +307,14 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
       let root = self.find_root(true)
       root.walk_tree proc(unit: Unit) = unit.flags -= Highlight
     if TargetMoved.touched:
-      let plane = self.node.to_global(self.target_point) * self.target_normal
-      if plane == state.draw_plane:
+      let local_draw_plane = self.target_point * self.target_normal
+      let global_draw_plane = self.node.to_global(self.target_point) *
+                              self.node.transform.basis.xform(self.target_normal).snapped(vec3(1, 1, 1))
+      if (local_draw_plane == state.local_draw_plane and state.local_draw_unit_id == self.id) or
+          global_draw_plane == state.global_draw_plane:
+        state.local_draw_plane = local_draw_plane
+        state.local_draw_unit_id = self.id
+        state.global_draw_plane = global_draw_plane
         if Secondary in state.input_flags:
           self.remove
         elif Primary in state.input_flags:
@@ -322,7 +333,9 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
       elif Secondary.added:
         self.remove
     if Primary.removed or Secondary.removed:
-      state.draw_plane = vec3()
+      state.local_draw_plane = vec3()
+      state.local_draw_unit_id = ""
+      state.global_draw_plane = vec3()
 
   result = self
 

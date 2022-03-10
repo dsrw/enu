@@ -46,7 +46,9 @@ type
     logger*: proc(level, msg: string)
     units*: ZenSeq[Unit]
     ground*: Ground
-    draw_plane*: Vector3
+    local_draw_plane*: Vector3
+    local_draw_unit_id*: string
+    global_draw_plane*: Vector3
     console*: ConsoleModel
     paused*: bool
 
