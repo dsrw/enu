@@ -22,14 +22,8 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0 )
 [node name="VoxelViewer" type="VoxelViewer" parent="."]
 view_distance = 256
 
-[node name="HighRay" type="RayCast" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0 )
+[node name="DownRay" type="RayCast" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -0.5 )
 enabled = true
-cast_to = Vector3( 0, 0, -0.5 )
-collision_mask = 0
-
-[node name="LowRay" type="RayCast" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0 )
-enabled = true
-cast_to = Vector3( 0, 0, -0.5 )
+cast_to = Vector3( 0, -1.5, 0 )
 collision_mask = 5

@@ -30,8 +30,7 @@ let
   angle_x_max = PI / 2.25
   max_speed = 50.0
   move_speed = 500.0
-  jump_impulse = 25.0
-  climb_stair_impulse = 25.0
+  jump_impulse = 10.0
   fly_toggle = 0.3.seconds
   float_time = 0.3.seconds
   run_toggle = 0.3.seconds
@@ -44,7 +43,7 @@ let
 gdobj PlayerNode of KinematicBody:
   var
     flying, running, always_run, skip_release, skip_next_mouse_move, jump_down: bool
-    aim_ray, world_ray, high_ray, low_ray: RayCast
+    aim_ray, world_ray, down_ray: RayCast
     jump_time, run_time: Option[DateTime]
 
     position_start: Vector3
@@ -59,6 +58,7 @@ gdobj PlayerNode of KinematicBody:
     command_timer = 0.0
     model*: Player
     velocity_zid: ZID
+    boosted = false
 
   proc get_look_direction(): Vector2 =
     vec2(get_action_strength("look_right") - get_action_strength("look_left"),
@@ -104,8 +104,7 @@ gdobj PlayerNode of KinematicBody:
     self.camera = self.camera_rig.get_node("Camera") as Camera
     self.aim_ray  = self.camera_rig.get_node("Camera/AimRay") as RayCast
     self.world_ray = state.nodes.game.get_node("WorldRay") as RayCast
-    self.high_ray = self.get_node("HighRay") as RayCast
-    self.low_ray = self.get_node("LowRay") as RayCast
+    self.down_ray = self.find_node("DownRay") as RayCast
     self.aim_target = self.camera_rig.get_node("AimTarget") as AimTarget
 
     self.position_start = self.camera_rig.translation
@@ -197,13 +196,19 @@ gdobj PlayerNode of KinematicBody:
       handle_collisions(self.model, collisions)
 
       if process_input:
-        # climb 1m blocks automatically
-        if move_direction.length > 0.5:
-          self.low_ray.cast_to = move_direction * 0.3
-          self.high_ray.cast_to = move_direction * 0.3
+        if self.is_on_floor:
+          self.boosted = false
 
-          if self.is_on_floor() and self.low_ray.is_colliding() and not self.high_ray.is_colliding():
-            self.velocity += vec3(0, climb_stair_impulse, 0)
+        if move_direction.length > 0.5:
+          self.down_ray.translation = move_direction * 0.3 + vec3(0, 1, 0)
+          if self.down_ray.is_colliding():
+            let length = self.down_ray.cast_to.length
+            let diff = length - (self.down_ray.global_transform.origin - self.down_ray.get_collision_point).y
+            if diff > 0 and diff < length and (self.is_on_floor() or not self.boosted):
+              let boost = 15 * cbrt(diff)
+              if boost > self.velocity.y:
+                self.boosted = true
+                self.velocity.y = boost
 
         # drop us back in the middle of the world if we fall through
         if self.translation.y < -10:
