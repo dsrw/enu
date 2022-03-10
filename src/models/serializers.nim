@@ -139,8 +139,9 @@ proc load_units(parent: Unit) =
     load_units(unit)
 
 proc load_world*(controller: ScriptController) =
-  let world = read_file(state.config.world_dir / "world.json").parse_json.json_to(WorldInfo)
-  load_chunks = world.format_version == "v0.9"
+  if file_exists state.config.world_dir / "world.json":
+    let world = read_file(state.config.world_dir / "world.json").parse_json.json_to(WorldInfo)
+    load_chunks = world.format_version == "v0.9"
 
   dont_join = true
   controller.retry_failures = true
