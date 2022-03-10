@@ -149,9 +149,15 @@ template turn*(direction: Directions, degrees = 90.0) =
   mixin wait
   wait target.turn(direction, degrees, move_mode)
 
+template t*(direction: Directions, degrees = 90.0) =
+  turn direction, degrees
+
 template turn*(degrees: float) =
   mixin wait
   wait target.turn(degrees, move_mode)
+
+template t*(degrees: float) =
+  turn degrees
 
 template move*[T: Unit](new_target: T) =
   target = new_target
@@ -181,6 +187,9 @@ template turn*(self: Unit, target: Unit) =
 template turn*(target: Unit) =
   active_unit().turn(target)
 
+template t*(target: Unit) =
+  turn target
+
 proc `-`*(node: Unit): NegativeNode =
   NegativeNode(node: node)
 
@@ -189,6 +198,9 @@ template turn*(self: Unit, target: NegativeNode) =
 
 template turn*(target: NegativeNode) =
   active_unit().turn(target)
+
+template t*(target: NegativeNode) =
+  turn(target)
 
 template hit*(node: Unit): Vector3 =
   target.hit(node)
