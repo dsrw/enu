@@ -124,6 +124,13 @@ proc restore_edits*(self: Build) =
       assert info.kind in [Manual, Hole]
       if info.kind != Hole:
         self.add_voxel(loc, info)
+      else:
+        let buffer = loc.buffer
+        if buffer in self.chunks and loc in self.chunks[buffer]:
+          var info = info
+          info.color = self.chunks[buffer][loc].color
+          self.shared.edits[self.id][loc] = info
+          self.chunks[buffer].del loc
 
 proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
   if voxel.kind == Computed:
@@ -136,11 +143,18 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
         return
       elif edit.kind == Manual and edit.color == voxel.color:
         self.shared.edits[self.id].del position
+    elif self.clone_of and position in self.clone_of.shared.edits[self.clone_of.id] and
+         self.clone_of.shared.edits[self.clone_of.id][position].kind == Hole:
+      return
     else:
       self.add_voxel(position, voxel)
+
   else:
     if self.id notin self.shared.edits:
       self.shared.edits[self.id] = init_table[Vector3, VoxelInfo]()
+    var voxel = voxel
+    if voxel.kind == Hole and position in self:
+      voxel.color = self.voxel_info(position).color
     self.shared.edits[self.id][position] = voxel
     if voxel.kind != Hole:
       self.add_voxel(position, voxel)
@@ -364,15 +378,9 @@ method clone*(self: Build, clone_to: Unit, id: string): Unit =
   let clone = Build.init(id = id, transform = transform, clone_of = self, global = global, parent = clone_to,
                          color = self.start_color, bot_collisions = bot_collisions)
 
-  for chunk_id, chunk in self.chunks:
-    let target_chunk = Chunk.init
-    clone.chunks[chunk_id] = target_chunk
-    for location, info in chunk:
-      if info.kind != Computed:
-        clone.expand_bounds_to_chunk(chunk_id)
-        target_chunk[location] = info
-    if target_chunk.len == 0:
-      clone.chunks.del chunk_id
+  for loc, info in self.shared.edits[self.id]:
+    if info.kind != Hole and loc notin clone.shared.edits[clone.id]:
+      clone.add_voxel(loc, info)
 
   clone.restore_edits
   result = clone
