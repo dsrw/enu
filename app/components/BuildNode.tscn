@@ -44,7 +44,7 @@ cube_tiles/front = Vector2( 0, 0 )
 
 [sub_resource type="Voxel" id=4]
 voxel_name = "red"
-color = Color( 0.988235, 0.054902, 0.0431373, 1 )
+color = Color( 0.384314, 0.0117647, 0.00784314, 1 )
 material_id = 1
 geometry_type = 1
 collision_aabbs = [ AABB( 0, 0, 0, 1, 1, 1 ) ]
@@ -145,7 +145,7 @@ shader_param/texture_normal = ExtResource( 8 )
 
 [sub_resource type="ShaderMaterial" id=12]
 shader = ExtResource( 7 )
-shader_param/albedo = Color( 0.988235, 0.054902, 0.0431373, 1 )
+shader_param/albedo = Color( 0.211765, 0.0117647, 0.0117647, 1 )
 shader_param/specular = 0.5
 shader_param/metallic = 0.0
 shader_param/draw_distance = 230.0
@@ -164,7 +164,7 @@ shader_param/texture_normal = ExtResource( 8 )
 
 [sub_resource type="ShaderMaterial" id=13]
 shader = ExtResource( 7 )
-shader_param/albedo = Color( 0.0784314, 0.968627, 0.027451, 1 )
+shader_param/albedo = Color( 0.0156863, 0.25098, 0.00392157, 1 )
 shader_param/specular = 0.5
 shader_param/metallic = 0.0
 shader_param/draw_distance = 230.0
@@ -202,13 +202,13 @@ shader_param/texture_normal = ExtResource( 8 )
 
 [sub_resource type="ShaderMaterial" id=15]
 shader = ExtResource( 7 )
-shader_param/albedo = Color( 0.85098, 0.933333, 0.847059, 1 )
+shader_param/albedo = Color( 0.447059, 0.447059, 0.447059, 1 )
 shader_param/specular = 0.5
 shader_param/metallic = 0.0
 shader_param/draw_distance = 230.0
 shader_param/roughness = 1.0
 shader_param/point_size = 1.0
-shader_param/emission = Color( 0.286275, 0.286275, 0.286275, 1 )
+shader_param/emission = Color( 1, 1, 1, 1 )
 shader_param/emission_energy = 1.0
 shader_param/normal_scale = 2.0
 shader_param/uv1_blend_sharpness = 1.0
