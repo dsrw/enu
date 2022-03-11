@@ -1,7 +1,7 @@
-import std / [monotimes, times, os, jsonutils, json, math]
+import std / [monotimes, times, os, jsonutils, json, math, bitops]
 import pkg / [godot, model_citizen]
-import godotapi / [input, input_event, gd_os, node, scene_tree, viewport,
-                   packed_scene, sprite, control, viewport,
+import godotapi / [input, input_event, gd_os, node, scene_tree,
+                   packed_scene, sprite, control, viewport, viewport_texture,
                    performance, label, theme, dynamic_font, resource_loader, main_loop,
                    gd_os, project_settings, input_map, input_event, input_event_action]
 import core, globals, controllers / [node_controllers, script_controllers], models / serializers
@@ -139,6 +139,10 @@ gdobj Game of Node:
     self.scaled_viewport = self.get_node("ViewportContainer/Viewport") as Viewport
     self.bind_signals(self.get_viewport(), "size_changed")
     assert not self.scaled_viewport.is_nil
+    if config.mega_pixels >= 1.0:
+      self.scaled_viewport.get_texture.flags = FLAG_FILTER
+      self.scaled_viewport.fxaa = true
+
     self.script_controller.load_player()
     load_world(self.script_controller)
     self.get_tree().set_auto_accept_quit(false)
