@@ -3,8 +3,8 @@ import std / [strutils, strformat, macros, math, hashes, tables, random]
 var global_default* = false
 
 type
-  Vector3* = object
-    x*, y*, z*: float
+  Vector3* = tuple
+    x, y, z: float
 
   Directions* = enum
     up, u, down, d, left, l, right, r, forward, f, back, b
@@ -40,8 +40,7 @@ type
     states*: Table[string, NimNode]
     from_states*: seq[(string, NimNode)]
 
-proc vec3*(x, y, z: float): Vector3 {.inline.} =
-  Vector3(x:x, y:y, z:z)
+proc vec3*(x, y, z: float): Vector3 {.inline.} = (x:x, y:y, z:z)
 
 const
   UP* = vec3(0, 1, 0)

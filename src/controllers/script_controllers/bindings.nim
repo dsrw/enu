@@ -5,17 +5,8 @@ proc get_colors(a: VmArgs; i: Natural): Colors = Colors(vm.get_int(a, 1))
 proc get_pnode(a: VmArgs, pos: int): PNode {.inline.} = a.get_node(pos)
 
 proc get_vector3(a: VmArgs, pos: int): Vector3 =
-  proc float_val(node: PNode, name: string): float =
-    assert node.kind == nkExprColonExpr
-    assert node.sons[0].sym.kind == skField
-    assert node.sons[0].sym.name.s == name
-    result = node.sons[1].float_val
-  let
-    fields = a.get_node(pos).sons
-    x = float_val(fields[1], "x")
-    y = float_val(fields[2], "y")
-    z = float_val(fields[3], "z")
-  result = vec3(x, y, z)
+  let fields = a.get_node(pos).sons
+  result = vec3(fields[0].float_val, fields[1].float_val, fields[2].float_val)
 
 # adapted from https://github.com/h0lley/embeddedNimScript/blob/6101fb37d4bd3f947db86bac96f53b35d507736a/embeddedNims/enims.nim#L31
 proc to_node(val: int): PNode = new_int_node(nkIntLit, val)
