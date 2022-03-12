@@ -145,7 +145,7 @@ shader_param/texture_normal = ExtResource( 8 )
 
 [sub_resource type="ShaderMaterial" id=12]
 shader = ExtResource( 7 )
-shader_param/albedo = Color( 0.211765, 0.0117647, 0.0117647, 1 )
+shader_param/albedo = Color( 0.192157, 0.164706, 0.121569, 1 )
 shader_param/specular = 0.5
 shader_param/metallic = 0.0
 shader_param/draw_distance = 230.0
