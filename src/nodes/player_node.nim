@@ -202,10 +202,10 @@ gdobj PlayerNode of KinematicBody:
         if move_direction.length > 0.5:
           self.down_ray.translation = move_direction * 0.3 + vec3(0, 1, 0)
           if self.down_ray.is_colliding():
-            let length = self.down_ray.cast_to.length
+            let length = 1.85
             let diff = length - (self.down_ray.global_transform.origin - self.down_ray.get_collision_point).y
-            if diff > 0 and diff < length and (self.is_on_floor() or not self.boosted):
-              let boost = 15 * cbrt(diff)
+            if diff > 0 and (self.is_on_floor() or not self.boosted):
+              let boost = 16.1 * cbrt(diff)
               if boost > self.velocity.y:
                 self.boosted = true
                 self.velocity.y = boost
