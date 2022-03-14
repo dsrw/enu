@@ -179,7 +179,7 @@ task dist, "Build distribution":
     exec &"cp {release_bin} dist/Enu.app/Contents/MacOS/Enu"
     let pck_path = this_dir() & "/dist/Enu.app/Contents/Resources/Enu.pck"
     exec &"{godot_bin} --path app --export-pack \"mac\" " & pck_path
-    exec "nimble build -d:release -d:dist --stackTrace"
+    exec "nimble build -d:release -d:dist"
     exec "cp app/_dlls/enu.dylib dist/Enu.app/Contents/Frameworks"
     exec "cp -r vmlib dist/Enu.app/Contents/Resources/vmlib"
 
