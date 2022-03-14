@@ -782,32 +782,6 @@ The Enu data directory lives in `~/Library/Application Support/enu` on Mac, `%Ap
 
 # TODO for 0.2
 
-### Child unit edits
-
-Enu aims to make it easy to combine procedural and manual content. It's fairly easy to make a simple building with a
-script, then manually add windows, doors, and other adornments. When the script runs again, as long as it generates
-the same basic shape, manual edits should be preserved.
-
-This doesn't really work properly for nested objects. Currently, all edits, even for child units, are saved to the top
-level unit, because child units are ephemeral and get recreated each time a script is run. This works in many cases,
-but falls down if the child unit is rotated, scaled, out of alignment with the parent, moving, or if the parent
-unit is a `Bot` rather than a `Build`.
-
-This will be reimplemented in a way that properly associates child edits with their proper unit, but worlds created with the
-current system might lose some edits when loaded in 0.2.
-
-### Clean up manually removed procedural blocks
-
-Somewhat related to the above, Enu saves manual edits made to procedural units and tries to reapply them if the unit
-is regenerated. In addition to saving placed blocks, which is fairly straightforward, Enu also saves the position
-of removed blocks. Enu 0.1.x had a system for cleaning these up if a unit was regenerated and the removed block
-no longer matched a procedural block, but 0.1.99 keeps them around forever. Something will be done to clean them up.
-
-### Lighting
-
-At some point I mistakenly changed something with lighting/colors and everything now looks highly oversaturated. This
-will be fixed.
-
 ### Pivot point
 
 Currently it isn't possible to change the pivot point for a unit, and the default point isn't properly centered for
