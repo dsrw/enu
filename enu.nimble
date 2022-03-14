@@ -17,7 +17,7 @@ var
   godot_opts      = "target=release_debug"
   generator_path  = ""
 
-version       = "0.1.97"
+version       = "0.1.98"
 author        = "Scott Wadden"
 description   = "Logo-like DSL for Godot"
 license       = "MIT"
