@@ -123,6 +123,8 @@ type
     script_dir*: string
     scene*: string
     lib_dir*: string
+    start_full_screen*: bool
+    semicolon_as_colon*: bool
 
   ScriptCtx* = ref object
     script*: string

@@ -13,6 +13,8 @@ type
     world: Option[string]
     show_stats: Option[bool]
     mega_pixels: Option[float]
+    start_full_screen: Option[bool]
+    semicolon_as_colon: Option[bool]
 
 const auto_save_interval = 30.seconds
 let state = GameState.active
@@ -109,6 +111,8 @@ gdobj Game of Node:
       world = uc.world ||= "default"
       show_stats = uc.show_stats ||= false
       mega_pixels = uc.mega_pixels ||= 2.0
+      start_full_screen = uc.start_full_screen ||= true
+      semicolon_as_colon = uc.semicolon_as_colon ||= false
       world_dir = join_path(work_dir, config.world)
       data_dir = join_path(config.world_dir, "data")
       script_dir = join_path(config.world_dir, "scripts")
@@ -116,6 +120,7 @@ gdobj Game of Node:
 
     create_dir(state.config.data_dir)
     create_dir(state.config.script_dir)
+    set_window_fullscreen config.start_full_screen
     if uc != initial_user_config:
       write_file(config_file, uc.to_json.pretty)
 

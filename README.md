@@ -776,6 +776,8 @@ The Enu data directory lives in `~/Library/Application Support/enu` on Mac, `%Ap
 
 `show_stats`: Show FPS and other stats.
 
+`start_full_screen`: Whether to start Enu full screen, or in a window.
+
 `semicolon_as_colon`: Both `;` and `:` will be interpreted as `:`, allowing `:` to be typed without shift. Sometimes useful for new typists.
 
 # TODO for 0.2
