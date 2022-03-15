@@ -789,10 +789,10 @@ most builds, making it difficult to rotate builds nicely. Enu 0.2 will use the d
 it to be moved, and will shift everything over 0.5m, allowing most builds to rotate in a balanced way. There will
 also be a command to move the draw point (and thus the pivot point) in the exact center of a build.
 
-### Moving child builds from a parent build
+### REPL?
 
-Creating a child build with a parent build, then attempting to move the child causes the child to disappear. I have no
-idea why. This will be fixed.
+We need a way to switch worlds without editing a config file. Adding a REPL may be the easiest way to accomplish
+this, and is something I wanted to add anyway.
 
 ### Testing and bug fixes
 

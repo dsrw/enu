@@ -139,10 +139,10 @@ proc `global=`(self: Unit, global: bool) =
     self.flags -= Global
 
 proc position(self: Unit): Vector3 =
-  self.node.to_global(vec3(0, 0, 0))
+  self.node.to_global(self.transform.origin)
 
 proc `position=`(self: Unit, position: Vector3) =
-  self.transform.origin = position
+  self.transform.origin = self.node.to_local(position)
 
 proc speed(self: Unit): float =
   self.speed

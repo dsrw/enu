@@ -202,6 +202,7 @@ macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[u
   result.add quote do:
     proc run_script*(me {.inject.}: me.type, is_instance {.inject.}: bool) =
       var target {.inject.}: Unit = me
+      var move_mode {.inject.} = 1
       include loops
       `inner`
     run_script(me, false)
