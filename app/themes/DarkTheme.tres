@@ -1,6 +1,8 @@
-[gd_resource type="Theme" load_steps=1032 format=2]
+[gd_resource type="Theme" load_steps=1034 format=2]
 
 [ext_resource path="res://themes/Inconsolata-Bold.ttf" type="DynamicFontData" id=1]
+[ext_resource path="res://themes/Hack Regular Nerd Font Complete.ttf" type="DynamicFontData" id=2]
+[ext_resource path="res://themes/Hack Bold Nerd Font Complete.ttf" type="DynamicFontData" id=3]
 
 [sub_resource type="StyleBoxFlat" id=1]
 content_margin_left = 6.0
@@ -6743,6 +6745,7 @@ margin_bottom = 6.0
 [sub_resource type="DynamicFont" id=1008]
 size = 26
 font_data = ExtResource( 1 )
+fallback/0 = ExtResource( 3 )
 
 [sub_resource type="StyleBoxEmpty" id=1009]
 
@@ -6920,6 +6923,7 @@ font_path = "res://themes/Inconsolata-Regular.ttf"
 size = 26
 use_mipmaps = true
 font_data = SubResource( 1029 )
+fallback/0 = ExtResource( 2 )
 
 [resource]
 default_font = SubResource( 1030 )

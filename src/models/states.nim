@@ -1,59 +1,15 @@
-import std / [tables, strutils]
+import std / [tables, strutils, macros]
 import pkg / model_citizen
-import models / [types, colors]
+import models / [types, colors, console]
 
-proc set_flag(flags: var set[TargetFlags], flag: TargetFlags, add: bool) =
-  if add:
-    flags.incl(flag)
+const computed_flags = {EditorVisible, ConsoleVisible, ErrorsVisible, BlockTargetVisible, ReticleVisible,
+                        MouseCaptured, EditorFocused, ConsoleFocused}
+
+proc set_flag*(self: GameState, flag: StateFlags, set: bool) =
+  if set:
+    self.flags += flag
   else:
-    flags.excl(flag)
-
-proc apply_target_flags(state: GameState) =
-  let requested = state.requested_target_flags
-
-  var flags: set[TargetFlags]
-
-  for flag in {CommandMode, TargetBlock, Editing, MouseCaptured}:
-    if flag in requested: flags.incl(flag)
-
-  if Editing in requested:
-    flags.excl(MouseCaptured)
-  if CommandMode in requested:
-    flags.incl(MouseCaptured)
-  if Reticle in requested and MouseCaptured in flags:
-    flags.incl(Reticle)
-
-  state.target_flags.value = flags
-
-proc `mouse_captured=`*(state: GameState, captured: bool) =
-  state.requested_target_flags.set_flag(MouseCaptured, captured)
-  state.apply_target_flags()
-
-proc `command_mode=`*(state: GameState, command_mode: bool) =
-  state.requested_target_flags.set_flag(CommandMode, command_mode)
-  state.apply_target_flags()
-
-proc `target_block=`*(state: GameState, target_block: bool) =
-  if target_block:
-    state.requested_target_flags.incl(TargetBlock)
-    state.requested_target_flags.excl(Reticle)
-  else:
-    state.requested_target_flags.excl(TargetBlock)
-  state.apply_target_flags()
-
-proc `reticle=`*(state: GameState, reticle: bool) =
-  if reticle:
-    state.requested_target_flags.incl(Reticle)
-    state.requested_target_flags.excl(TargetBlock)
-  else:
-    state.requested_target_flags.excl(Reticle)
-  state.apply_target_flags()
-
-proc mouse_captured*(state: GameState): bool = MouseCaptured in state.target_flags
-proc command_mode*(state: GameState): bool = CommandMode in state.target_flags
-proc target_block*(state: GameState): bool = TargetBlock in state.target_flags
-proc reticle*(state: GameState): bool = Reticle in state.target_flags
-proc editing*(state: GameState): bool = Editing in state.target_flags
+    self.flags -= flag
 
 proc selected_color*(self: GameState): Color =
   action_colors[Colors(self.action_index)]
@@ -69,8 +25,7 @@ proc err*(self: GameState, args: varargs[string, `$`]) =
 
 proc init*(_: type GameState, action_count = 0, action_index = 0): GameState =
   let self = GameState(
-    target_flags: Zen.init(set[TargetFlags]),
-    input_flags: Zen.init(set[InputFlags]),
+    flags: Zen.init(set[StateFlags]),
     units: Zen.init(seq[Unit]),
     action_count: action_count,
     action_index: action_index,
@@ -78,20 +33,48 @@ proc init*(_: type GameState, action_count = 0, action_index = 0): GameState =
     config: Config(),
     tool: %Block,
     gravity: -80.0,
-    console: ConsoleModel(
-      log: Zen.init(seq[string]),
-      visible: ZenValue[bool].init(false),
-      show_errors: ZenValue[bool].init(false)
-    )
+    console: Console.init
   )
 
   self.open_unit.changes:
     if added():
       let editing = not change.item.is_nil
-      self.requested_target_flags.set_flag(Editing, editing)
-      self.apply_target_flags()
+      self.flags += ShowEditor
+
+  self.flags.changes:
+    if ReticleVisible.added:
+      self.flags -= BlockTargetVisible
+    elif BlockTargetVisible.added:
+      self.flags -= ReticleVisible
+    elif FocusEditor.added:
+      self.flags -= FocusConsole
+    elif FocusConsole.added:
+      self.flags -= FocusEditor
+    elif EditorVisible.removed:
+      self.flags -= FocusEditor
+    elif ConsoleVisible.removed:
+      self.flags -= FocusConsole
+
+    self.set_flag MouseCaptured,
+      (CaptureMouse in self.flags and EditorVisible notin self.flags) or CommandMode in self.flags
+    self.set_flag ReticleVisible,
+      ShowReticle in self.flags and (MouseCaptured in self.flags or CommandMode in self.flags)
+    self.set_flag BlockTargetVisible, ShowBlockTarget in self.flags
+    self.set_flag EditorVisible, ShowEditor in self.flags
+    self.set_flag ConsoleVisible, ShowConsole in self.flags
+    self.set_flag ErrorsVisible, ShowErrors in self.flags
+    self.set_flag EditorFocused, FocusEditor in self.flags and CommandMode notin self.flags
+    self.set_flag ConsoleFocused, FocusConsole in self.flags and CommandMode notin self.flags
 
   result = self
+
+proc `+=`*(self: ZenSet[StateFlags], flag: StateFlags) =
+  assert flag notin computed_flags, $flag & " cannot be set"
+  model_citizen.`+=`(self, flag)
+
+proc `-=`*(self: ZenSet[StateFlags], flag: StateFlags) =
+  assert flag notin computed_flags, $flag & " cannot be removed"
+  model_citizen.`-=`(self, flag)
 
 proc active*(_: type GameState): GameState =
   let instance {.global.} = GameState.init(action_count = 7, action_index = 1)
@@ -102,71 +85,66 @@ when is_main_module:
   type Node = ref object
   var state = GameState.init
 
-  state.reticle = true
+  state.flags += ReticleVisible
   check:
-    not state.reticle
-    not state.target_block
+    not state.reticle_visible
+    not state.block_target_visible
     not state.command_mode
     not state.mouse_captured
 
-  state.mouse_captured = true
+  state.flags += MouseCaptured
   check:
-    state.reticle
+    state.reticle_visible
     state.mouse_captured
-    not state.target_block
+    not state.block_target_visible
 
-  state.target_block = true
+  state.flags += BlockTargetVisible
   check:
     state.mouse_captured
-    state.target_block
-    not state.reticle
+    state.block_target_visible
+    not state.reticle_visible
 
-  state.mouse_captured = false
-  state.reticle = true
+  state.flags -= MouseCaptured
+  state.flags += ReticleVisible
   check:
-    not state.reticle
+    not state.reticle_visible
     not state.mouse_captured
-    not state.target_block
+    not state.block_target_visible
     not state.command_mode
 
-  var added: set[TargetFlags]
-  var removed: set[TargetFlags]
+  var added: set[StateFlags]
+  var removed: set[StateFlags]
 
-  state.target_flags.track proc(changes, _: auto) =
+  state.flags.track proc(changes, _: auto) =
     added = {}
     removed = {}
     for change in changes:
       if Added in change.changes: added.incl change.item
       if Removed in change.changes: removed.incl change.item
 
-  state.command_mode = true
+  state.flags += CommandMode
   check:
-    added == {CommandMode, MouseCaptured, Reticle}
-    removed == {}
     state.command_mode
     state.mouse_captured
-    state.reticle
-    not state.target_block
+    state.reticle_visible
+    not state.block_target_visible
 
-  state.command_mode = false
-  check:
-    added == {}
-    removed == {CommandMode, MouseCaptured, Reticle}
+  state.flags -= CommandMode
 
-  state.mouse_captured = true
+  state.flags += MouseCaptured
   check state.mouse_captured
 
   state.open_unit.value = Unit()
   check not state.mouse_captured
 
-  state.command_mode = true
+  state.flags += CommandMode
   check state.mouse_captured
 
-  state.mouse_captured = false
+  state.flags -= MouseCaptured
   check state.mouse_captured
 
   state.open_unit.value = nil
   check state.mouse_captured
 
-  state.command_mode = false
+  state.flags -= CommandMode
   check not state.mouse_captured

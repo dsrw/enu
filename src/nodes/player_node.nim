@@ -110,7 +110,7 @@ gdobj PlayerNode of KinematicBody:
     self.position_start = self.camera_rig.translation
     state.nodes.player = self
 
-    state.target_flags.changes:
+    state.flags.changes:
       if MouseCaptured.removed:
         self.skip_next_mouse_move = true
 
@@ -119,7 +119,7 @@ gdobj PlayerNode of KinematicBody:
         self.velocity = change.item
 
   proc current_raycast*: RayCast =
-    if state.mouse_captured:
+    if MouseCaptured in state.flags:
       self.aim_ray
     else:
       self.world_ray
@@ -127,7 +127,7 @@ gdobj PlayerNode of KinematicBody:
   method process*(delta: float) =
     self.model.velocity.pause self.velocity_zid:
       self.model.velocity.value = self.velocity
-    if not state.editing or state.command_mode:
+    if EditorVisible notin state.flags or CommandMode in state.flags:
       var transform = self.camera_rig.global_transform
       transform.origin = self.global_transform.origin + self.position_start
 
@@ -142,7 +142,7 @@ gdobj PlayerNode of KinematicBody:
       var r = self.camera_rig.rotation
       r.y = wrap(r.y, -PI, PI)
       self.camera_rig.rotation = r
-      if not state.mouse_captured:
+      if MouseCaptured notin state.flags:
         let
           mouse_pos = self.get_viewport().
                            get_mouse_position() * float get_game().scale_factor
@@ -161,13 +161,13 @@ gdobj PlayerNode of KinematicBody:
         let collision = self.get_slide_collision(i)
         let collider = collision.collider
 
-      if state.command_mode and self.command_timer > 0:
+      if CommandMode in state.flags and self.command_timer > 0:
         self.command_timer -= delta
         if self.command_timer <= 0:
-          state.command_mode = false
+          state.flags -= CommandMode
 
       const forward_rotation = deg_to_rad(-90.0)
-      let process_input = not state.editing or state.command_mode
+      let process_input = EditorVisible notin state.flags or CommandMode in state.flags
       let
         input_direction = if process_input: self.get_input_direction()
                           else: vec3()
@@ -228,20 +228,20 @@ gdobj PlayerNode of KinematicBody:
       if event.axis == JOY_ANALOG_L2 or event.axis == JOY_ANALOG_R2:
         return
 
-    if event of InputEventMouseMotion and state.mouse_captured:
+    if event of InputEventMouseMotion and MouseCaptured in state.flags:
       if not self.skip_next_mouse_move:
         self.input_relative += event.as(InputEventMouseMotion).relative()
       else:
         self.skip_next_mouse_move = false
-    if state.editing and not self.skip_release and (event of InputEventJoypadButton or event of InputEventJoypadMotion):
+    if EditorVisible in state.flags and not self.skip_release and (event of InputEventJoypadButton or event of InputEventJoypadMotion):
       let active_input = self.has_active_input(event.device.int)
-      if state.command_mode and not active_input:
+      if CommandMode in state.flags and not active_input:
         self.command_timer = input_command_timeout
-      elif state.command_mode and active_input:
+      elif CommandMode in state.flags and active_input:
         self.command_timer = 0.0
       elif active_input:
         self.command_timer = 0.0
-        state.command_mode = true
+        state.flags += CommandMode
 
     if event.is_action_pressed("jump"):
       self.jump_down = true
@@ -294,16 +294,16 @@ gdobj PlayerNode of KinematicBody:
 
     let ray = self.current_raycast
     if event.is_action_pressed("fire"):
-      if not state.editing:
+      if EditorVisible notin state.flags:
         self.skip_release = true
-      state.input_flags += Primary
+      state.flags += PrimaryDown
     elif event.is_action_released("fire"):
       self.skip_release = false
-      state.input_flags -= Primary
+      state.flags -= PrimaryDown
 
     if event.is_action_pressed("remove"):
-      state.input_flags += Secondary
+      state.flags += SecondaryDown
     elif event.is_action_released("remove"):
-      state.input_flags -= Secondary
+      state.flags -= SecondaryDown
 
 proc get_player*(): PlayerNode = PlayerNode(state.nodes.player)

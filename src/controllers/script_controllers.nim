@@ -115,7 +115,7 @@ proc hit(unit_a: Unit, unit_b: Unit): Vector3 =
 
 proc echo_console(msg: string) =
   state.console.log += msg & "\n"
-  state.console.visible.value = true
+  state.flags += ShowConsole
 
 proc action_running(self: Unit): bool =
   self.script_ctx.action_running
@@ -237,7 +237,7 @@ proc reset(self: Build, clear: bool) =
 
 proc script_error(self: ScriptController, unit: Unit, e: ref VMQuit) =
   state.logger("err", e.msg)
-  state.console.show_errors.value = true
+  state.flags += ShowErrors
 
 proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
   let ctx = unit.script_ctx
@@ -335,8 +335,7 @@ proc change_code(self: ScriptController, unit: Unit, code: string) =
   unit.shared.edits = all_edits
 
   unit.reset()
-  state.console.show_errors.value = false
-  state.console.visible.value = false
+  state.flags -= {ShowErrors, ShowConsole}
   if code.strip == "" and file_exists(unit.script_file):
     remove_file unit.script_file
     self.module_names.excl unit.script_ctx.module_name

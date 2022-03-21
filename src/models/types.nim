@@ -1,4 +1,4 @@
-import std / [tables, monotimes]
+import std / [tables, monotimes, macros]
 import godotapi/spatial
 import pkg/model_citizen
 import pkg/core/godotcoretypes except Color
@@ -10,8 +10,10 @@ export godotbase except print
 export Interpreter
 
 type
-  TargetFlags* = enum
-    Reticle, TargetBlock, MouseCaptured, CommandMode, Editing
+  StateFlags* = enum
+    CommandMode, EditorVisible, ConsoleVisible, ErrorsVisible, BlockTargetVisible, ReticleVisible, MouseCaptured,
+    PrimaryDown, SecondaryDown, EditorFocused, ConsoleFocused,
+    ShowReticle, ShowBlockTarget, ShowEditor, ShowConsole, ShowErrors, FocusEditor, FocusConsole, CaptureMouse
 
   ModelFlags* = enum
     Hover, TargetMoved, Highlight, Global
@@ -22,15 +24,11 @@ type
   Tools* = enum
     Code, Block, Place
 
-  ConsoleModel* = ref object
+  Console* = ref object
     log*: ZenSeq[string]
-    visible*: ZenValue[bool]
-    show_errors*: ZenValue[bool]
 
   GameState* = ref object
-    target_flags*: ZenSet[TargetFlags]
-    input_flags*: ZenSet[InputFlags]
-    requested_target_flags*: set[TargetFlags]
+    flags*: ZenSet[StateFlags]
     config*: Config
     open_unit*: ZenValue[Unit]
     action_index*: int
@@ -49,7 +47,7 @@ type
     local_draw_plane*: Vector3
     local_draw_unit_id*: string
     global_draw_plane*: Vector3
-    console*: ConsoleModel
+    console*: Console
     paused*: bool
 
   Model* = ref object of RootObj

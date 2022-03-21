@@ -170,7 +170,7 @@ gdobj Game of Node:
     self.stats = self.find_node("stats").as(Label)
     self.stats.visible = config.show_stats
 
-    state.target_flags.changes:
+    state.flags.changes:
       if MouseCaptured.added:
         let center = self.get_viewport().get_visible_rect().size * 0.5
         self.saved_mouse_position = self.get_viewport().get_mouse_position()
@@ -180,12 +180,9 @@ gdobj Game of Node:
         set_mouse_mode MOUSE_MODE_VISIBLE
         warp_mouse_position(self.saved_mouse_position)
 
-      if Reticle.added:
-        self.reticle.visible = true
-      elif Reticle.removed:
-        self.reticle.visible = false
+      self.reticle.visible = ReticleVisible in state.flags
 
-    state.mouse_captured = true
+    state.flags += CaptureMouse
 
   proc update_action_index*(change: int) =
     state.action_index += change
@@ -212,7 +209,7 @@ gdobj Game of Node:
       self.block_mode(self.last_index)
     else:
       state.tool.value = Code
-      state.reticle = true
+      state.flags += ShowReticle
       state.action_index = 0
       if update_actionbar:
         self.trigger("update_actionbar", 0)
@@ -220,14 +217,14 @@ gdobj Game of Node:
   proc block_mode*(index: int, update_actionbar = true) =
     self.last_index = index
     state.tool.value = Block
-    state.reticle = false
+    state.flags += ShowReticle
     state.action_index = index
     if update_actionbar:
       self.trigger("update_actionbar", index)
 
   proc obj_mode*(index: int, update_actionbar = true) =
     state.tool.value = Place
-    state.reticle = false
+    state.flags -= ShowReticle
     state.action_index = index
     if update_actionbar:
       self.trigger("update_actionbar", index)
@@ -237,9 +234,9 @@ gdobj Game of Node:
 
   method unhandled_input*(event: InputEvent) =
     if event.is_action_pressed("command_mode"):
-      state.command_mode = true
+      state.flags += CommandMode
     elif event.is_action_released("command_mode"):
-      state.command_mode = false
+      state.flags -= CommandMode
     elif event.is_action_pressed("save_and_reload"):
       echo "reload all"
       save_world()
@@ -250,14 +247,14 @@ gdobj Game of Node:
     elif event.is_action_pressed("clear_console"):
       state.console.log.clear()
     elif event.is_action_pressed("toggle_console"):
-      state.console.visible.value = not state.console.visible.value
+      state.set_flag ShowConsole, ConsoleVisible notin state.flags
     elif event.is_action_pressed("quit"):
       if host_os != "macosx":
         save_world()
         self.get_tree().quit()
-    elif not state.editing:
+    elif EditorVisible notin state.flags:
       if event.is_action_pressed("toggle_mouse_captured"):
-        state.mouse_captured = not state.mouse_captured
+        state.set_flag CaptureMouse, CaptureMouse notin state.flags
         self.get_tree().set_input_as_handled()
 
       if event.is_action_pressed("toggle_fullscreen"):

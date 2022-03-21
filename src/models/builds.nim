@@ -194,7 +194,7 @@ proc fire(self: Build) =
   if state.tool.value == Block:
     let point = (self.target_point + (self.target_normal * 0.5)).floor
     self.draw(point, (Manual, state.selected_color))
-  elif state.tool.value == Place and state.target_block and state.bot_at(global_point).is_nil:
+  elif state.tool.value == Place and BlockTargetVisible in state.flags and state.bot_at(global_point).is_nil:
     let transform = Transform.init(origin = global_point)
     state.units += Bot.init(transform = transform)
   elif state.tool.value == Code:
@@ -329,24 +329,24 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
         state.local_draw_plane = local_draw_plane
         state.local_draw_unit_id = self.id
         state.global_draw_plane = global_draw_plane
-        if Secondary in state.input_flags:
+        if SecondaryDown in state.flags:
           self.remove
-        elif Primary in state.input_flags:
+        elif PrimaryDown in state.flags:
           self.fire
 
     if change.item in {TargetMoved, Hover} and state.tool.value == Place:
       if self.target_normal == UP:
-        state.target_block = true
+        state.flags += ShowBlockTarget
       else:
-        state.reticle = true
+        state.flags += ShowReticle
 
-  state.input_flags.changes:
+  state.flags.changes:
     if Hover in self.flags:
-      if Primary.added:
+      if PrimaryDown.added:
         self.fire
-      elif Secondary.added:
+      elif SecondaryDown.added:
         self.remove
-    if Primary.removed or Secondary.removed:
+    if PrimaryDown.removed or SecondaryDown.removed:
       state.local_draw_plane = vec3()
       state.local_draw_unit_id = ""
       state.global_draw_plane = vec3()

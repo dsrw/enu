@@ -65,7 +65,7 @@ gdobj Editor of TextEdit:
   method unhandled_input*(event: InputEvent) =
     if self.visible:
       if event.is_action_pressed("ui_cancel"):
-        if not (event of InputEventJoypadButton) or not state.command_mode:
+        if not (event of InputEventJoypadButton) or CommandMode notin state.flags:
           state.open_unit.value.code.value = self.text
           state.open_unit.value = nil
           self.get_tree().set_input_as_handled()
@@ -99,10 +99,10 @@ gdobj Editor of TextEdit:
     var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
     self.og_bg_color = stylebox.bg_color
 
-    state.console.show_errors.changes:
-      if true.added:
+    state.flags.changes:
+      if ErrorsVisible.added:
         self.highlight_errors()
-      elif false.added:
+      elif ErrorsVisible.removed:
         self.clear_errors()
 
     state.open_unit.changes:
@@ -122,9 +122,9 @@ gdobj Editor of TextEdit:
           self.clear_errors()
           self.highlight_errors()
 
-    state.target_flags.changes:
+    state.flags.changes:
       if CommandMode.added:
-        if Editing in state.target_flags:
+        if EditorVisible in state.flags:
           state.open_unit.value.code.value = self.text
         self.mouse_filter = MOUSE_FILTER_IGNORE
         self.shortcut_keys_enabled = false
