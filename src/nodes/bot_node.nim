@@ -61,6 +61,8 @@ gdobj BotNode of KinematicBody:
       if added:
         let scale = change.item
         self.scale = vec3(scale, scale, scale)
+        self.unit.transform.pause(self.transform_zid):
+          self.unit.transform.value = self.transform
 
     self.transform_zid = self.unit.transform.changes:
       if added:
