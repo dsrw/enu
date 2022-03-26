@@ -35,6 +35,7 @@ gdobj BuildNode of VoxelTerrain:
       self.set_material(i, material)
 
   method ready() =
+    self.unit.sight_ray = self.get_node("SightRay") as RayCast
     self.prepare_materials()
 
   proc draw(location: Vector3, color: Color) =
@@ -95,7 +96,7 @@ gdobj BuildNode of VoxelTerrain:
       if Highlight.added:
         self.set_energy highlight_energy
       elif Highlight.removed:
-        self.set_energy default_energy
+        self.set_energy self.unit.energy.value
 
     self.unit.scale.changes:
       if added:

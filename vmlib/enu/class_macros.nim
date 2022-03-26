@@ -115,18 +115,25 @@ proc build_class(name_node: NimNode, base_type: NimNode): NimNode =
     `type_def`
 
     let me {.inject.} = `type_name`(name: `name_str`)
+    var target {.inject.} = me
+    include loops
+
     register_active(me)
     let `var_name`* {.inject.} = me
     `ctors`
 
-proc pop_name_node(ast: NimNode): NimNode =
+proc pop_name_node(ast: NimNode): tuple[start: NimNode, name_node: NimNode] =
   let ident_name = "name"
+  result.start = new_stmt_list()
   for i, node in ast:
     if node.kind in [nnkCommand, nnkCall]:
       if node.len == 2 and node[1].kind in [nnkIdent, nnkCall] and node[0].eq_ident(ident_name):
-        result = node[1]
+        result.name_node = node[1]
         ast.del(i)
         break
+    result.start.add node
+  for i, node in result.start:
+   ast.del(i)
 
 proc visit_tree(parent: NimNode, convert: seq[NimNode], alias: ptr seq[NimNode]) =
   for i, node in parent:
@@ -178,9 +185,10 @@ proc transform_proc_lists(parent: NimNode): NimNode =
 macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[untyped]): untyped =
   let file_name = file_name.str_val
   var ast = parse_stmt(file_name.static_read, file_name).transform_proc_lists
-  let name_node = pop_name_node(ast)
+  var (script_start, name_node) = pop_name_node(ast)
   result = new_stmt_list()
   var inner = new_stmt_list()
+  script_start = script_start.auto_insert_me_receiver(convert)
   if name_node.kind != nnkNilLit:
     let (name, params) = extract_class_info(name_node)
     for param in params:
@@ -196,9 +204,12 @@ macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[u
     ast = ast.auto_insert_me_receiver(convert)
     result.add quote do:
       let me {.inject.} = `base_type`()
+      var target {.inject.} = me
       register_active(me)
+      include loops
 
   inner.add ast
+  result.add script_start
   result.add quote do:
     proc run_script*(me {.inject.}: me.type, is_instance {.inject.}: bool) =
       var target {.inject.}: Unit = me

@@ -140,6 +140,7 @@ indent_using_spaces = true
 indent_size = 2
 syntax_highlighting = true
 show_line_numbers = true
+wrap_enabled = true
 caret_blink = true
 caret_moving_by_right_click = false
 script = ExtResource( 2 )

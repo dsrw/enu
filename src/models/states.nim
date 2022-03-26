@@ -13,7 +13,7 @@ proc apply_target_flags(state: GameState) =
 
   var flags: set[TargetFlags]
 
-  for flag in {CommandMode, TargetBlock, Editing, MouseCaptured}:
+  for flag in {CommandMode, TargetBlock, Editing, MouseCaptured, Playing}:
     if flag in requested: flags.incl(flag)
 
   if Editing in requested:
@@ -22,6 +22,11 @@ proc apply_target_flags(state: GameState) =
     flags.incl(MouseCaptured)
   if Reticle in requested and MouseCaptured in flags:
     flags.incl(Reticle)
+  if Playing in requested:
+    flags.excl(Editing)
+    flags.excl(Reticle)
+    flags.incl(MouseCaptured)
+    flags.excl(TargetBlock)
 
   state.target_flags.value = flags
 
@@ -49,11 +54,19 @@ proc `reticle=`*(state: GameState, reticle: bool) =
     state.requested_target_flags.excl(Reticle)
   state.apply_target_flags()
 
+proc `playing=`*(state: GameState, playing: bool) =
+  if playing:
+    state.requested_target_flags.incl(Playing)
+  else:
+    state.requested_target_flags.excl(Playing)
+  state.apply_target_flags()
+
 proc mouse_captured*(state: GameState): bool = MouseCaptured in state.target_flags
 proc command_mode*(state: GameState): bool = CommandMode in state.target_flags
 proc target_block*(state: GameState): bool = TargetBlock in state.target_flags
 proc reticle*(state: GameState): bool = Reticle in state.target_flags
 proc editing*(state: GameState): bool = Editing in state.target_flags
+proc playing*(state: GameState): bool = Playing in state.target_flags
 
 proc selected_color*(self: GameState): Color =
   action_colors[Colors(self.action_index)]

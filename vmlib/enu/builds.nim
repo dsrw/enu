@@ -6,9 +6,12 @@ proc `drawing=`*(self: Build, drawing: bool) = discard
 proc initial_position(self: Build): Vector3 = discard
 
 proc home*(self: Build) =
-  self.forward self.position.z - self.initial_position.z, 1
-  self.left self.position.x - self.initial_position.x, 1
-  self.down self.position.y - self.initial_position.y, 1
+  self.rotation = 0
+  self.scale = 1
+  self.energy = 0
+  self.forward self.position.z - self.start_position.z, 2
+  self.left self.position.x - self.start_position.x, 2
+  self.down self.position.y - self.start_position.y, 2
 
 proc fill_square*(self: Build, length = 1) =
   for l in 0..length:

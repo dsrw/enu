@@ -56,7 +56,7 @@ gdobj PlayerNode of KinematicBody:
     index = 0
     collision_shape: CollisionShape
     command_timer = 0.0
-    model*: Player
+    unit*: Player
     velocity_zid: ZID
     boosted = false
 
@@ -97,8 +97,8 @@ gdobj PlayerNode of KinematicBody:
       result.y = velocity_current.y + gravity * delta
 
   method ready*() =
-    self.model = Player.init(self)
-    state.player = self.model
+    self.unit = Player.init(self)
+    state.player = self.unit
     self.camera_rig = self.get_node("CameraRig") as Spatial
     self.collision_shape = self.get_node("CollisionShape") as CollisionShape
     self.camera = self.camera_rig.get_node("Camera") as Camera
@@ -114,7 +114,16 @@ gdobj PlayerNode of KinematicBody:
       if MouseCaptured.removed:
         self.skip_next_mouse_move = true
 
-    self.velocity_zid = self.model.velocity.changes:
+    self.unit.transform.changes:
+      if added:
+        self.transform = change.item
+
+    self.unit.rotation.changes:
+      if touched:
+        echo "SETTING RIG ROTATION"
+        self.camera_rig.rotation = vec3(0, change.item, 0)
+
+    self.velocity_zid = self.unit.velocity.changes:
       if added:
         self.velocity = change.item
 
@@ -125,8 +134,8 @@ gdobj PlayerNode of KinematicBody:
       self.world_ray
 
   method process*(delta: float) =
-    self.model.velocity.pause self.velocity_zid:
-      self.model.velocity.value = self.velocity
+    self.unit.velocity.pause self.velocity_zid:
+      self.unit.velocity.value = self.velocity
     if not state.editing or state.command_mode:
       var transform = self.camera_rig.global_transform
       transform.origin = self.global_transform.origin + self.position_start
@@ -156,63 +165,64 @@ gdobj PlayerNode of KinematicBody:
         self.aim_target.update(self.aim_ray)
 
   method physics_process*(delta: float) =
-    trace:
-      for i in 0..(self.get_slide_count() - 1):
-        let collision = self.get_slide_collision(i)
-        let collider = collision.collider
+    for i in 0..(self.get_slide_count() - 1):
+      let collision = self.get_slide_collision(i)
+      let collider = collision.collider
 
-      if state.command_mode and self.command_timer > 0:
-        self.command_timer -= delta
-        if self.command_timer <= 0:
-          state.command_mode = false
+    if state.command_mode and self.command_timer > 0:
+      self.command_timer -= delta
+      if self.command_timer <= 0:
+        state.command_mode = false
 
-      const forward_rotation = deg_to_rad(-90.0)
-      let process_input = not state.editing or state.command_mode
-      let
-        input_direction = if process_input: self.get_input_direction()
-                          else: vec3()
-        basis   = self.camera_rig.global_transform.basis
-        right   = basis.x * input_direction.x
-        up      = UP * input_direction.y
-        forward = (basis.x * input_direction.z).rotated(UP, forward_rotation)
+    const forward_rotation = deg_to_rad(-90.0)
+    let process_input = not state.editing or state.command_mode
+    let
+      input_direction = if process_input: self.get_input_direction()
+                        else: vec3()
+      basis   = self.camera_rig.global_transform.basis
+      right   = basis.x * input_direction.x
+      up      = UP * input_direction.y
+      forward = (basis.x * input_direction.z).rotated(UP, forward_rotation)
 
-      var move_direction = forward + right
+    var move_direction = forward + right
 
-      if move_direction.length() > 1.0:
-        move_direction = move_direction.normalized()
+    if move_direction.length() > 1.0:
+      move_direction = move_direction.normalized()
 
-      move_direction.y = 0
-      move_direction += up
+    move_direction.y = 0
+    move_direction += up
 
-      var velocity = self.calculate_velocity(self.velocity, move_direction,
-                                             delta, self.flying, self.running)
+    var velocity = self.calculate_velocity(self.velocity, move_direction,
+                                           delta, self.flying, self.running)
 
-      self.velocity = self.move_and_slide(velocity, UP)
+    self.velocity = self.move_and_slide(velocity, UP)
 
-      let collisions = collect:
-        for i in 0..(self.get_slide_count - 1):
-          self.get_slide_collision(i)
+    self.unit.transform.value = self.transform
 
-      handle_collisions(self.model, collisions)
+    let collisions = collect:
+      for i in 0..(self.get_slide_count - 1):
+        self.get_slide_collision(i)
 
-      if process_input:
-        if self.is_on_floor:
-          self.boosted = false
+    handle_collisions(self.unit, collisions)
 
-        if move_direction.length > 0.5:
-          self.down_ray.translation = move_direction * 0.3 + vec3(0, 1, 0)
-          if self.down_ray.is_colliding():
-            let length = 1.85
-            let diff = length - (self.down_ray.global_transform.origin - self.down_ray.get_collision_point).y
-            if diff > 0 and (self.is_on_floor() or not self.boosted):
-              let boost = 16.1 * cbrt(diff)
-              if boost > self.velocity.y:
-                self.boosted = true
-                self.velocity.y = boost
+    if process_input:
+      if self.is_on_floor:
+        self.boosted = false
 
-        # drop us back in the middle of the world if we fall through
-        if self.translation.y < -10:
-          self.translation = vec3(0, 100, 0)
+      if move_direction.length > 0.5:
+        self.down_ray.translation = move_direction * 0.3 + vec3(0, 1, 0)
+        if self.down_ray.is_colliding():
+          let length = 1.85
+          let diff = length - (self.down_ray.global_transform.origin - self.down_ray.get_collision_point).y
+          if diff > 0 and (self.is_on_floor() or not self.boosted):
+            let boost = 16.1 * cbrt(diff)
+            if boost > self.velocity.y:
+              self.boosted = true
+              self.velocity.y = boost
+
+      # drop us back in the middle of the world if we fall through
+      if self.translation.y < -10:
+        self.translation = vec3(0, 100, 0)
 
   proc has_active_input(device: int): bool =
     for axis in 0..JOY_AXIS_MAX:
@@ -251,7 +261,10 @@ gdobj PlayerNode of KinematicBody:
 
       if toggle:
         self.jump_time = nil_time
-        self.flying = not self.flying
+        if state.playing:
+          self.flying = false
+        else:
+          self.flying = not self.flying
         for i in [0, 1, 2]:
           self.set_collision_mask_bit(i, not self.flying)
       elif self.is_on_floor():
@@ -296,7 +309,8 @@ gdobj PlayerNode of KinematicBody:
     if event.is_action_pressed("fire"):
       if not state.editing:
         self.skip_release = true
-      state.input_flags += Primary
+      if not state.playing:
+        state.input_flags += Primary
     elif event.is_action_released("fire"):
       self.skip_release = false
       state.input_flags -= Primary

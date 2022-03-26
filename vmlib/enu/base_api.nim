@@ -1,4 +1,5 @@
-import std / [random, strutils, math, importutils]
+import std / [strutils, math, importutils]
+import random except rand
 import types, state_machine
 
 proc echo_console*(msg: string) = discard
@@ -16,6 +17,8 @@ proc `action_running=`(self: Unit, value: bool) = discard
 proc yield_script(self: Unit) = discard
 proc begin_move(self: Unit, direction: Vector3, steps: float, move_mode: int) = discard
 proc begin_turn(self: Unit, axis: Vector3, steps: float, move_mode: int) = discard
+proc start_game* = discard
+proc stop_game* = discard
 
 # API
 proc id*(self: Unit): string = discard
@@ -24,6 +27,7 @@ proc sleep*(seconds = 1.0) = discard
 proc create_new*(self: Unit) = discard
 proc position*(self: Unit): Vector3 = discard
 proc `position=`*(self: Unit, position: Vector3) = discard
+proc start_position*(self: Unit): Vector3 = discard
 proc speed*(self: Unit): float = discard
 proc `speed=`*(self: Unit, speed: float) = discard
 proc scale*(self: Unit): float = discard
@@ -32,7 +36,8 @@ proc energy*(self: Unit): float = discard
 proc `energy=`*(self: Unit, energy: float) = discard
 proc global*(self: Unit): bool = discard
 proc `global=`*(self: Unit, global: bool) = discard
-proc rotation*(self: Unit): Vector3 = discard
+proc rotation*(self: Unit): float = discard
+proc `rotation=`*(self: Unit, degrees: float) = discard
 proc hit*(self: Unit, node: Unit): Vector3 = discard
 proc `velocity=`(self: Unit, velocity: Vector3) = discard
 proc velocity(self: Unit): Vector3 = discard
@@ -159,6 +164,13 @@ template turn*(degrees: float) =
 template t*(degrees: float) =
   turn degrees
 
+template turn*(self: Unit, degrees: float) =
+  mixin wait
+  wait self.turn(degrees, move_mode)
+
+template t*(self: Unit, degrees: float) =
+  turn self, degrees
+
 template move*[T: Unit](new_target: T) =
   target = new_target
   move_mode = 2
@@ -179,7 +191,7 @@ proc angle_to(self: Unit, target: Unit): float =
     d = (p1 - p2).normalized()
   let n = arctan2(d.x, d.z).rad_to_deg
   let rot = self.rotation
-  result = -(n - rot.y)
+  result = -(n - rot)
 
 template turn*(self: Unit, target: Unit) =
   self.turn(self.angle_to(target), move_mode)
@@ -214,6 +226,8 @@ proc near*(node: Unit, less_than = 5.0): bool =
 proc far*(node: Unit, greater_than = 100.0): bool =
   result = node.distance > greater_than
 
+proc seen*(node: Unit, less_than = 100.0): bool = discard
+
 import macros, random, tables
 export random, tables
 
@@ -226,17 +240,45 @@ proc rng(): var Rand =
     unit.rng = init_rand(unit.seed)
   unit.rng
 
+proc rand*[T: int | float](range: Slice[T]): T =
+  random.rand rng(), if range.a > range.b:
+    range.b..range.a
+  else:
+    range
+
 converter int_to_float*(i: int): float =
   result = i.float
 
-converter int_slice_to_float*(range: Slice[int]): float = rng().rand(range).float
+converter int_slice_to_float*(range: Slice[int]): float =
+  rand(range).float
 
-converter int_slice_to_fint*(range: Slice[int]): int = rng().rand(range)
+converter int_slice_to_fint*(range: Slice[int]): int =
+  rand(range)
 
-converter float_slice_to_float*(range: Slice[float]): float = rng().rand(range)
+converter float_slice_to_float*(range: Slice[float]): float =
+  rand(range)
+
+proc fuzzed*(self, range: float): float =
+  result = if range > 0:
+    self + (rand(0.0..range) - (range / 2.0))
+  else:
+    self
+
+proc fuzzed*(self, range: Vector3): Vector3 =
+  vec3(self.x.fuzzed(range.x), self.y.fuzzed(range.y), self.z.fuzzed(range.z))
+
+proc fuzzed*(self: Vector3, range: float): Vector3 =
+  self.fuzzed(vec3(range, range, range))
+
+proc fuzzed*(self: Vector3, x, y, z: float): Vector3 =
+  self.fuzzed(vec3(x, y, z))
 
 template times*(count: int, body: untyped): untyped =
   for x in 0..<count:
+    body
+
+template times*(count: int, name: untyped, body: untyped): untyped =
+  for name {.inject.} in 0..<count:
     body
 
 template x*(count: int, body: untyped): untyped = times(count, body)

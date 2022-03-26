@@ -1,12 +1,12 @@
 import std / os
 import std / [macros, sugar, sets, strutils, times, monotimes, sequtils, importutils, tables,
               options, math, re]
-import pkg / [print, model_citizen]
+import pkg / [print, model_citizen, godot]
 import pkg / compiler / vm except get_int
 import pkg / compiler / ast except new_node
 import pkg / compiler / [vmdef, lineinfos, astalgo,  renderer, msgs]
-import godotapi / spatial
-import core, models / [types, states, bots, builds, units, colors], libs / [interpreters, eval]
+import godotapi / [spatial, ray_cast, voxel_terrain]
+import core, models / [types, states, bots, builds, units, colors], libs / [interpreters, eval], nodes / [helpers, build_node]
 
 type ScriptController* = ref object
   interpreter: Interpreter
@@ -22,7 +22,7 @@ include script_controllers/bindings
 const
   advance_step* = 0.5.seconds
   error_code = some(99)
-  script_timeout = 2.0.seconds
+  script_timeout = 12.0.seconds
 
 let state = GameState.active
 
@@ -80,6 +80,7 @@ proc exec_instance(self: ScriptController, unit: Unit) =
 proc active_unit(self: ScriptController): Unit = self.active_unit
 
 proc begin_turn(self: ScriptController, unit: Unit, direction: Vector3, degrees: float, move_mode: int): string =
+  assert not degrees.is_nan
   var degrees = degrees
   var direction = direction
   let ctx = self.active_unit.script_ctx
@@ -139,10 +140,25 @@ proc `global=`(self: Unit, global: bool) =
     self.flags -= Global
 
 proc position(self: Unit): Vector3 =
-  self.node.to_global(self.transform.origin)
+  if Global in self.flags:
+    self.transform.origin
+  else:
+    self.parent.node.to_global(self.transform.origin)
+
+proc start_position(self: Unit): Vector3 =
+  if Global in self.flags:
+    self.start_transform.origin
+  else:
+    self.parent.node.to_global(self.start_transform.origin)
 
 proc `position=`(self: Unit, position: Vector3) =
-  self.transform.origin = self.node.to_local(position)
+  if Global in self.flags:
+    echo "setting global position"
+
+    self.transform.origin = position
+  else:
+    echo "setting local position"
+    self.transform.origin = self.parent.node.to_local(position)
 
 proc speed(self: Unit): float =
   self.speed
@@ -174,7 +190,7 @@ proc color(self: Unit): Colors =
 proc `color=`(self: Unit, color: Colors) =
   self.color = action_colors[color]
 
-proc rotation(self: Unit): Vector3 =
+proc rotation(self: Unit): float =
   # TODO: fix this
   proc nm(f: float): float =
     if f.is_equal_approx(0):
@@ -187,18 +203,57 @@ proc rotation(self: Unit): Vector3 =
   proc nm(v: Vector3): Vector3 =
     vec3(v.x.nm, v.y.nm, v.z.nm)
 
-  let e = self.transform.basis.get_euler
+  let e = self.transform.basis.orthonormalized.get_euler
 
   let n = e.nm
   let v = vec3(nm(n.x).rad_to_deg, nm(n.y).rad_to_deg, nm(n.z).rad_to_deg)
   let m = if v.z > 0: 1.0 else: -1.0
-  result = vec3(0.0, (v.x - v.y) * m, 0.0)
+  result = (v.x - v.y) * m
+
+proc `rotation=`(self: Unit, degrees: float) =
+  var t = Transform.init
+  if self of Player:
+    Player(self).rotation.touch degrees
+    t.origin = self.transform.origin
+  else:
+    var t = Transform.init
+    var s = self.scale.value
+    t = t.rotated(UP, deg_to_rad(degrees)).scaled(vec3(s, s, s))
+    t.origin = self.transform.origin
+  self.transform.value = t
+
+proc seen(self: ScriptController, target: Unit, distance: float): bool =
+  let unit = self.active_unit
+  if unit of Build:
+    let ray = Build(unit).sight_ray
+    let node = BuildNode(Build(unit).node)
+    let unit_position = unit.node.to_local(unit.position)
+    let target_position = unit.node.to_local(target.position)
+    let angle = target_position - ray.transform.origin
+    if angle.length <= distance and angle.normalized.z <= -0.3:
+      ray.cast_to = angle
+      var old_layer = node.collision_layer
+      node.collision_layer = 0
+      ray.force_raycast_update
+      if ray.is_colliding:
+        let collider = ray.get_collider as Spatial
+        if collider == target.node:
+          result = true
+      node.collision_layer = old_layer
+
+
 
 proc yield_script(self: ScriptController, unit: Unit) =
   let ctx = unit.script_ctx
   ctx.callback = ctx.saved_callback
   ctx.saved_callback = nil
   ctx.pause()
+
+proc start_game() =
+  state.playing = true
+
+proc stop_game() =
+  state.playing = false
 
 proc exit(ctx: ScriptCtx, exit_code: int) =
   ctx.exit_code = some(exit_code)
@@ -293,7 +348,6 @@ proc load_script(self: ScriptController, unit: Unit, timeout = script_timeout) =
       else:
         ""
       let code = unit.code_template(imports)
-      # I don't think it's possible to get into an infinite loop here, but I can't be bothered to verify that.
       ctx.timeout_at = get_mono_time() + timeout
       ctx.load(state.config.script_dir, ctx.script, code, state.config.lib_dir)
 
@@ -448,9 +502,9 @@ proc init*(T: type ScriptController): ScriptController =
 
   result.bind_procs "base_api", begin_turn, begin_move, register_active, echo_console, new_instance,
                     exec_instance, action_running, `action_running=`, yield_script, hit,
-                    sleep, exit, global, `global=`, position, `position=`, rotation, energy, `energy=`,
+                    sleep, exit, global, `global=`, position, `position=`, rotation, `rotation=`, energy, `energy=`,
                     speed, `speed=`, scale, `scale=`, velocity, `velocity=`, active_unit, id,
-                    color, `color=`
+                    color, `color=`, seen, start_game, stop_game, start_position
 
   result.bind_procs "bots", play
 

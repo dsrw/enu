@@ -1,5 +1,5 @@
 import std / [tables, monotimes]
-import godotapi/spatial
+import godotapi / [spatial, ray_cast]
 import pkg/model_citizen
 import pkg/core/godotcoretypes except Color
 import pkg / core / [vector3, basis, aabb, godotbase]
@@ -11,7 +11,7 @@ export Interpreter
 
 type
   TargetFlags* = enum
-    Reticle, TargetBlock, MouseCaptured, CommandMode, Editing
+    Reticle, TargetBlock, MouseCaptured, CommandMode, Editing, Playing
 
   ModelFlags* = enum
     Hover, TargetMoved, Highlight, Global
@@ -83,9 +83,11 @@ type
     shared*: Shared
     start_color*: Color
     color*: Color
+    sight_ray*: RayCast
 
   Player* = ref object of Unit
     colliders*: HashSet[Model]
+    rotation*: ZenValue[float]
 
   Bot* = ref object of Unit
     animation*: ZenValue[string]

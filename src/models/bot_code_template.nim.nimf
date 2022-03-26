@@ -11,6 +11,6 @@ ${imports}
 
 {.experimental: "overloadable_enums".}
 
-load_enu_script r"${file_name}", Bot, position, speed, scale, energy, global, seed, color
+load_enu_script r"${file_name}", Bot, position, start_position, speed, scale, energy, global, seed, color
 
 exit()

@@ -245,6 +245,7 @@ gdobj Game of Node:
       save_world()
       self.script_controller.reload_all()
       self.get_tree().set_input_as_handled()
+      state.playing = false
     elif event.is_action_pressed("pause"):
       state.paused = not state.paused
     elif event.is_action_pressed("clear_console"):

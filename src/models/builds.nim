@@ -211,7 +211,7 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
     let steps = steps.float
     var duration = 0.0
     let
-      moving = self.transform.basis.xform(direction)
+      moving = self.transform.basis.xform(direction) / self.scale.value
       finish = self.transform.origin + moving * steps
       finish_time = 1.0 / self.speed * steps
 
@@ -236,7 +236,10 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
       while count.float < steps and self.voxels_remaining_this_frame >= 1:
         remaining = self.voxels_remaining_this_frame
         per_frame = self.voxels_per_frame
-        self.draw_transform = self.draw_transform.translated(direction)
+        if steps < 1:
+          self.draw_transform = self.draw_transform.translated(direction * steps)
+        else:
+          self.draw_transform = self.draw_transform.translated(direction)
         inc count
         self.voxels_remaining_this_frame -= 1
         self.drop_block()
@@ -249,10 +252,12 @@ method on_begin_turn*(self: Build, axis: Vector3, degrees: float, move_mode: int
   if move:
     self.voxels_per_frame = 0
     var duration = 0.0
-    let axis = self.transform.basis.xform(axis)
+    let axis = self.transform.basis.orthonormalized.xform(axis)
+    let scale = self.scale.value
     var final_transform = self.transform.value
     final_transform.basis = final_transform.basis.rotated(axis, deg_to_rad(degrees))
-                                                 .orthonormalized()
+                                           .orthonormalized.scaled(vec3(scale, scale, scale))
+
     result = proc(delta: float): bool =
       duration += delta
       self.transform.basis = self.transform.basis.rotated(axis, deg_to_rad(degrees * delta * self.speed))
@@ -315,8 +320,9 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
   self.reset()
   self.flags.changes:
     if Hover.added and state.tool.value == Code:
-      let root = self.find_root(true)
-      root.walk_tree proc(unit: Unit) = unit.flags += Highlight
+      if Playing notin state.target_flags:
+        let root = self.find_root(true)
+        root.walk_tree proc(unit: Unit) = unit.flags += Highlight
     elif Hover.removed:
       let root = self.find_root(true)
       root.walk_tree proc(unit: Unit) = unit.flags -= Highlight
