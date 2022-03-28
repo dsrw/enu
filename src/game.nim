@@ -15,6 +15,7 @@ type
     mega_pixels: Option[float]
     start_full_screen: Option[bool]
     semicolon_as_colon: Option[bool]
+    world_prefix: Option[string]
 
 const auto_save_interval = 30.seconds
 let state = GameState.active
@@ -36,6 +37,7 @@ gdobj Game of Node:
     script_controller: ScriptController
 
   method process*(delta: float) =
+    inc state.frame_count
     let time = get_mono_time()
     if config.show_stats:
       let fps = get_monitor(TIME_FPS)
@@ -63,6 +65,14 @@ gdobj Game of Node:
     let vp = self.get_viewport().size
     self.scale_factor = sqrt(config.mega_pixels * 1_000_000.0 / (vp.x * vp.y))
     self.scaled_viewport.size = vp * self.scale_factor
+    var p = self.find_node("LeftPanel") as Control
+
+    assert not p.is_nil
+    var s = p.rect_size
+
+    s.x = vp.x / 2
+    p.rect_size = s
+
 
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
@@ -85,11 +95,24 @@ gdobj Game of Node:
           action_add_event(name, event)
         erase_action(action)
 
+  proc load_user_config(): UserConfig =
+    let
+      work_dir = get_user_data_dir()
+      config_file = join_path(work_dir, "config.json")
+    if file_exists(config_file):
+      let opt = Joptions(allow_missing_keys: true, allow_extra_keys: true)
+      result.from_json(read_file(config_file).parse_json, opt)
+
+  proc save_user_config(config: UserConfig) =
+    let
+      work_dir = get_user_data_dir()
+      config_file = join_path(work_dir, "config.json")
+    write_file(config_file, config.to_json.pretty)
+
   proc init* =
     state.nodes.game = self
     let
       work_dir = get_user_data_dir()
-      config_file = join_path(work_dir, "config.json")
       screen_scale = if host_os == "macos":
         get_screen_scale(-1)
       else:
@@ -97,10 +120,7 @@ gdobj Game of Node:
 
     echo "Screen size: ", get_screen_size(-1), " scale ", screen_scale
 
-    var initial_user_config = UserConfig()
-    if file_exists(config_file):
-      let opt = Joptions(allow_missing_keys: true, allow_extra_keys: true)
-      initial_user_config.from_json(read_file(config_file).parse_json, opt)
+    var initial_user_config = self.load_user_config()
 
     var uc = initial_user_config
     assert not state.is_nil
@@ -108,7 +128,8 @@ gdobj Game of Node:
     with state.config:
       font_size = uc.font_size ||= (14 * screen_scale).int
       dock_icon_size = uc.dock_icon_size ||= 50 * screen_scale
-      world = uc.world ||= "default"
+      world = uc.world ||= "default-1"
+      world_prefix = uc.world_prefix ||= "default"
       show_stats = uc.show_stats ||= false
       mega_pixels = uc.mega_pixels ||= 2.0
       start_full_screen = uc.start_full_screen ||= true
@@ -122,7 +143,7 @@ gdobj Game of Node:
     create_dir(state.config.script_dir)
     set_window_fullscreen config.start_full_screen
     if uc != initial_user_config:
-      write_file(config_file, uc.to_json.pretty)
+      self.save_user_config(uc)
 
     self.add_platform_input_actions()
 
@@ -235,8 +256,43 @@ gdobj Game of Node:
   method on_size_changed() =
     self.rescale_at = get_mono_time()
 
+  proc try_load_world(diff: int) =
+    if config.world_prefix == "":
+      config.world_prefix = "default"
+
+    var world = config.world
+    let prefix = config.world_prefix & "-"
+    world.remove_prefix(prefix)
+    var num = try:
+      world.parse_int
+    except ValueError:
+      1
+    num += diff
+    save_world()
+    var user_config = self.load_user_config()
+    user_config.world = some(prefix & $num)
+    self.save_user_config(user_config)
+
+    state.units.untrack_all
+    state.target_flags.untrack_all
+    state.input_flags.untrack_all
+    state.open_unit.untrack_all
+    state.tool.untrack_all
+    state.units.clear
+
+    state.nodes.game = nil
+    state.nodes.player = nil
+    state.nodes.data = nil
+    NodeController.reset_nodes
+    discard self.get_tree.reload_current_scene
+    #self.init
+
   method unhandled_input*(event: InputEvent) =
-    if event.is_action_pressed("command_mode"):
+    if event.is_action_pressed("next_world"):
+      self.try_load_world(+1)
+    elif event.is_action_pressed("prev_world"):
+      self.try_load_world(-1)
+    elif event.is_action_pressed("command_mode"):
       state.command_mode = true
     elif event.is_action_released("command_mode"):
       state.command_mode = false

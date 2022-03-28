@@ -30,11 +30,33 @@ proc params_to_properties(nodes: seq[NimNode]): NimNode =
     let prop = node[0]
     if prop.str_val notin ["global", "speed", "color"]:
       if node.kind == nnkExprEqExpr:
-        result.add nnkIdentDefs.new_tree(node[0].postfix("*"), new_call(ident"type", node[1]), empty)
+        result.add nnkIdentDefs.new_tree(node[0], new_call(ident"type", node[1]), empty)
       elif node.kind == nnkExprColonExpr:
-        result.add nnkIdentDefs.new_tree(node[0].postfix("*"), node[1], empty)
+        result.add nnkIdentDefs.new_tree(node[0], node[1], empty)
       else:
         error("expected `my_param = 1`, `my_param: int` kind: " & $node.kind, node)
+
+proc params_to_accessors(type_name: NimNode, nodes: seq[NimNode]): NimNode =
+  result = new_stmt_list()
+  let empty = new_empty_node()
+  for node in nodes:
+    let node = node.copy_nim_tree
+    let getter = node[0]
+    if getter.str_val notin ["global", "speed", "color"]:
+      let setter = ident(getter.str_val & "=")
+      let typ = if node.kind == nnkExprEqExpr:
+        new_call(ident"type", node[1])
+      else:
+        node[1]
+
+      result.add quote do:
+        proc `getter`*(self: `type_name`): `typ` =
+          self.`getter`
+
+        proc `setter`*(self: `type_name`, value: `typ`) =
+          if value != self.`getter`:
+            self.`getter` = value
+            self.wake
 
 proc build_ctors(name_str: string, type_name: NimNode, params: seq[NimNode]): NimNode =
   var ctor_body = quote do:
@@ -111,14 +133,16 @@ proc build_class(name_node: NimNode, base_type: NimNode): NimNode =
     type `type_name`* = ref object of `base_type`
 
   type_def[0][2][0][2] = params_to_properties(params)
+  let accessors = params_to_accessors(type_name, params)
   result.add quote do:
     `type_def`
-
+    `accessors`
     let me {.inject.} = `type_name`(name: `name_str`)
     var target {.inject.} = me
     include loops
 
     register_active(me)
+    let home {.inject.} = PositionOffset(position: me.start_position)
     let `var_name`* {.inject.} = me
     `ctors`
 
@@ -206,6 +230,7 @@ macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[u
       let me {.inject.} = `base_type`()
       var target {.inject.} = me
       register_active(me)
+      let home {.inject.} = PositionOffset(position: me.start_position)
       include loops
 
   inner.add ast
@@ -213,6 +238,7 @@ macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[u
   result.add quote do:
     proc run_script*(me {.inject.}: me.type, is_instance {.inject.}: bool) =
       var target {.inject.}: Unit = me
+      let home {.inject.} = PositionOffset(position: me.start_position)
       var move_mode {.inject.} = 1
       include loops
       `inner`

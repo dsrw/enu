@@ -106,8 +106,10 @@ proc init*(_: type GameState, action_count = 0, action_index = 0): GameState =
 
   result = self
 
-proc active*(_: type GameState): GameState =
-  let instance {.global.} = GameState.init(action_count = 7, action_index = 1)
+proc active*(_: type GameState, new_state = false): GameState =
+  var instance {.global.} = GameState.init(action_count = 7, action_index = 1)
+  if new_state:
+    instance = GameState.init(action_count = 7, action_index = 1)
   result = instance
 
 when is_main_module:

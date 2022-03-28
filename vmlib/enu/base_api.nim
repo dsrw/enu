@@ -19,8 +19,10 @@ proc begin_move(self: Unit, direction: Vector3, steps: float, move_mode: int) = 
 proc begin_turn(self: Unit, axis: Vector3, steps: float, move_mode: int) = discard
 proc start_game* = discard
 proc stop_game* = discard
+proc wake*(self: Unit) = discard
 
 # API
+proc frame_count*(): int = discard
 proc id*(self: Unit): string = discard
 proc exit*(exit_code = 0, msg = "") = discard
 proc sleep*(seconds = 1.0) = discard
@@ -113,6 +115,101 @@ template d*(self: Unit, steps = 1.0) = self.down(steps)
 template f*(self: Unit, steps = 1.0) = self.forward(steps)
 template b*(self: Unit, steps = 1.0) = self.back(steps)
 
+template forward*(steps = 1.0) = target.forward(steps)
+template back*(steps = 1.0) = target.back(steps)
+template left*(steps = 1.0) = target.left(steps)
+template right*(steps = 1.0) = target.right(steps)
+template up*(steps = 1.0) = target.up(steps)
+template down*(steps = 1.0) = target.down(steps)
+
+template l*(steps = 1.0) = target.left(steps)
+template r*(steps = 1.0) = target.right(steps)
+template u*(steps = 1.0) = target.up(steps)
+template d*(steps = 1.0) = target.down(steps)
+template f*(steps = 1.0) = target.forward(steps)
+template b*(steps = 1.0) = target.back(steps)
+
+proc forward*(self: Unit, value: PositionOffset, move_mode: int) =
+  let steps = self.position.z - value.position.z + value.offset
+  wait self.begin_move(FORWARD, steps, move_mode)
+
+template forward*(self: Unit, value: PositionOffset) =
+  mixin wait, begin_move
+  let steps = self.position.z - value.position.z + value.offset
+  wait self.begin_move(FORWARD, steps, move_mode)
+
+template forward*(offset: PositionOffset) = target.forward(offset)
+
+proc back*(self: Unit, value: PositionOffset, move_mode: int) =
+  let steps = self.position.z - value.position.z - value.offset
+  wait self.begin_move(FORWARD, steps, move_mode)
+
+template back*(self: Unit, value: PositionOffset) =
+  mixin wait, begin_move
+  let steps = self.position.z - value.position.z - value.offset
+  wait self.begin_move(FORWARD, steps, move_mode)
+
+template back*(offset: PositionOffset) = target.back(offset)
+
+proc left*(self: Unit, value: PositionOffset, move_mode: int) =
+  let steps = self.position.x - value.position.x + value.offset
+  wait self.begin_move(LEFT, steps, move_mode)
+
+template left*(self: Unit, value: PositionOffset) =
+  mixin wait, begin_move
+  let steps = self.position.x - value.position.x + value.offset
+  wait self.begin_move(LEFT, steps, move_mode)
+
+template left*(offset: PositionOffset) = target.left(offset)
+
+proc right*(self: Unit, value: PositionOffset, move_mode: int) =
+  let steps = self.position.x - value.position.x - value.offset
+  wait self.begin_move(LEFT, steps, move_mode)
+
+template right*(self: Unit, value: PositionOffset) =
+  mixin wait, begin_move
+  let steps = self.position.x - value.position.x - value.offset
+  wait self.begin_move(LEFT, steps, move_mode)
+
+template right*(offset: PositionOffset) = target.right(offset)
+
+proc down*(self: Unit, value: PositionOffset, move_mode: int) =
+  let steps = self.position.y - value.position.y + value.offset
+  wait self.begin_move(DOWN, steps, move_mode)
+
+template down*(self: Unit, value: PositionOffset) =
+  mixin wait, begin_move
+  let steps = self.position.y - value.position.y + value.offset
+  wait self.begin_move(DOWN, steps, move_mode)
+
+template down*(offset: PositionOffset) = target.down(offset)
+
+proc up*(self: Unit, value: PositionOffset, move_mode: int) =
+  let steps = self.position.y - value.position.y - value.offset
+  wait self.begin_move(DOWN, steps, move_mode)
+
+template up*(self: Unit, value: PositionOffset) =
+  mixin wait, begin_move
+  let steps = self.position.y - value.position.y - value.offset
+  wait self.begin_move(DOWN, steps, move_mode)
+
+template up*(offset: PositionOffset) = target.up(offset)
+
+type NegativeNode = ref object
+  node: Unit
+
+proc `-`*(node: Unit): NegativeNode =
+  NegativeNode(node: node)
+
+proc angle_to(self: Unit, target: Unit): float =
+  let
+    p1 = self.position
+    p2 = target.position
+    d = (p1 - p2).normalized()
+  let n = arctan2(d.x, d.z).rad_to_deg
+  let rot = self.rotation
+  result = -(n - rot)
+
 proc turn*(self: Unit, direction: Directions, degrees = 90.0, move_mode: int) =
   let dir = case direction:
     of Directions.forward, Directions.f: FORWARD
@@ -135,20 +232,6 @@ proc turn*(self: Unit, degrees: float, move_mode: int) =
 template turn*(self: Unit, direction: Directions, degrees = 90.0) =
   mixin wait
   wait turn(self, direction, degrees, move_mode)
-
-template forward*(steps = 1.0) = target.forward(steps)
-template back*(steps = 1.0) = target.back(steps)
-template left*(steps = 1.0) = target.left(steps)
-template right*(steps = 1.0) = target.right(steps)
-template up*(steps = 1.0) = target.up(steps)
-template down*(steps = 1.0) = target.down(steps)
-
-template l*(steps = 1.0) = target.left(steps)
-template r*(steps = 1.0) = target.right(steps)
-template u*(steps = 1.0) = target.up(steps)
-template d*(steps = 1.0) = target.down(steps)
-template f*(steps = 1.0) = target.forward(steps)
-template b*(steps = 1.0) = target.back(steps)
 
 template turn*(direction: Directions, degrees = 90.0) =
   mixin wait
@@ -181,18 +264,6 @@ template build*(new_target: Unit) =
   target = new_target
   move_mode = 1
 
-type NegativeNode = ref object
-  node: Unit
-
-proc angle_to(self: Unit, target: Unit): float =
-  let
-    p1 = self.position
-    p2 = target.position
-    d = (p1 - p2).normalized()
-  let n = arctan2(d.x, d.z).rad_to_deg
-  let rot = self.rotation
-  result = -(n - rot)
-
 template turn*(self: Unit, target: Unit) =
   self.turn(self.angle_to(target), move_mode)
 
@@ -201,9 +272,6 @@ template turn*(target: Unit) =
 
 template t*(target: Unit) =
   turn target
-
-proc `-`*(node: Unit): NegativeNode =
-  NegativeNode(node: node)
 
 template turn*(self: Unit, target: NegativeNode) =
   self.turn(self.angle_to(target.node) - 180, move_mode)
@@ -312,3 +380,11 @@ template forever*(body) =
 template o*(body) =
   while true:
     body
+
+proc `+`*(self: PositionOffset, offset: float): PositionOffset =
+  result = self
+  result.offset += offset
+
+proc `-`*(self: PositionOffset, offset: float): PositionOffset =
+  result = self
+  result.offset -= offset

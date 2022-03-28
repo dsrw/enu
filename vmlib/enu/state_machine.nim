@@ -1,5 +1,5 @@
 import std / [macros, strformat, strutils, sequtils, tables]
-import types, macro_helpers
+import types, macro_helpers, base_api
 
 proc current_loop(value: Loop = nil): Loop =
   var loop {.global.}: Loop
@@ -42,6 +42,7 @@ template loop_body(body: untyped) =
     main_loop = false
     current_state {.inject, used.} = "nil"
     done {.inject.} = true
+    first_iteration {.inject.} = true
     frame {.inject.} = Frame()
 
   when not declared(ctx):
@@ -77,7 +78,14 @@ template loop_body(body: untyped) =
     while looping:
       done = false
       try:
+        let previous_state = current_state
+        var frames = frame_count()
         frame.action()
+        if frame_count() - frames <= 1 and previous_state == current_state:
+          # we didn't change states and the action didn't do anything. This probably means that
+          # we're stuck in an infinite loop, or idling on a finished command like `up home`.
+          # Sleep so we don't freeze or burn excessive CPU.
+          sleep 0.5
       except Halt:
         if frame in ctx.stack:
           # we're in the stack (which has already been shrunk)
@@ -201,7 +209,7 @@ proc transition(from_state, to_state, body, immediate: NimNode): NimNode =
 
   result = quote do:
     when not declared(current_state) or not declared(ctx):
-      {.error: "`->` or `-=>` must be inside a `loop` ".}
+      {.error: "`->` or `==>` must be inside a `loop` ".}
     if `immediate` or (active and done):
       let
         from_includes: seq[string] = `includes_str`.split(",")
@@ -211,9 +219,12 @@ proc transition(from_state, to_state, body, immediate: NimNode): NimNode =
           (("others" in from_includes and `to_state_name` != current_state) or
           "any" in from_includes))) and current_state notin from_excludes:
         current_state = `to_state_name`
-        `body`
+        first_iteration = true
         proc action() =
+          if first_iteration:
+            `body`
           smart_call(`to_state`)
+          first_iteration = false
         if `to_state_name` != "nil":
           frame.action = action
         else:

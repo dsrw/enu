@@ -103,33 +103,34 @@ margin_bottom = 50.0
 group = SubResource( 1 )
 icon = null
 
-[node name="Panels" type="MarginContainer" parent="."]
+[node name="LeftPanel" type="MarginContainer" parent="."]
 anchor_right = 0.4
 anchor_bottom = 1.0
+margin_right = 192.0
 mouse_filter = 2
 theme = ExtResource( 6 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="ThemeHolder" type="VBoxContainer" parent="Panels"]
-margin_right = 768.0
+[node name="ThemeHolder" type="VBoxContainer" parent="LeftPanel"]
+margin_right = 960.0
 margin_bottom = 1080.0
 mouse_filter = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="MarginContainer" type="MarginContainer" parent="Panels/ThemeHolder"]
-margin_right = 768.0
+[node name="MarginContainer" type="MarginContainer" parent="LeftPanel/ThemeHolder"]
+margin_right = 960.0
 margin_bottom = 1080.0
 mouse_filter = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 size_flags_stretch_ratio = 2.0
 
-[node name="Editor" type="TextEdit" parent="Panels/ThemeHolder/MarginContainer"]
+[node name="Editor" type="TextEdit" parent="LeftPanel/ThemeHolder/MarginContainer"]
 visible = false
-margin_right = 768.0
+margin_right = 960.0
 margin_bottom = 1080.0
 size_flags_vertical = 3
 custom_colors/selection_color = Color( 0.184314, 0.0117647, 0.686275, 1 )
@@ -140,6 +141,7 @@ indent_using_spaces = true
 indent_size = 2
 syntax_highlighting = true
 show_line_numbers = true
+smooth_scrolling = true
 wrap_enabled = true
 caret_blink = true
 caret_moving_by_right_click = false
@@ -148,11 +150,11 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="Console" type="RichTextLabel" parent="Panels/ThemeHolder"]
+[node name="Console" type="RichTextLabel" parent="LeftPanel/ThemeHolder"]
 visible = false
-margin_top = 481.0
-margin_right = 512.0
-margin_bottom = 720.0
+margin_top = 721.0
+margin_right = 960.0
+margin_bottom = 1080.0
 focus_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3

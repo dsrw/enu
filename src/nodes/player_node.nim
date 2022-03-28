@@ -151,17 +151,18 @@ gdobj PlayerNode of KinematicBody:
       var r = self.camera_rig.rotation
       r.y = wrap(r.y, -PI, PI)
       self.camera_rig.rotation = r
+      let ray_length = if state.tool.value == Code: 200.0 else: 100.0
       if not state.mouse_captured:
         let
           mouse_pos = self.get_viewport().
                            get_mouse_position() * float get_game().scale_factor
           cast_from = self.camera.project_ray_origin(mouse_pos)
-          cast_to = self.aim_ray.translation + self.camera.project_ray_normal(mouse_pos) * 100
+          cast_to = self.aim_ray.translation + self.camera.project_ray_normal(mouse_pos) * ray_length
         self.world_ray.cast_to = cast_to
         self.world_ray.translation = cast_from
         self.aim_target.update(self.world_ray)
       else:
-        self.aim_ray.cast_to = vec3(0, 0, -100)
+        self.aim_ray.cast_to = vec3(0, 0, -ray_length)
         self.aim_target.update(self.aim_ray)
 
   method physics_process*(delta: float) =

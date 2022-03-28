@@ -51,6 +51,7 @@ type
     global_draw_plane*: Vector3
     console*: ConsoleModel
     paused*: bool
+    frame_count*: int
 
   Model* = ref object of RootObj
     target_point*: Vector3
@@ -127,6 +128,7 @@ type
     lib_dir*: string
     start_full_screen*: bool
     semicolon_as_colon*: bool
+    world_prefix*: string
 
   ScriptCtx* = ref object
     script*: string

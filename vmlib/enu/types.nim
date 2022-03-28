@@ -16,6 +16,11 @@ type
     rng: Rand
     seed: int
 
+  PositionOffset* = object
+    position*: Vector3
+    offset*: float
+    direction*: Vector3
+
   Bot* = ref object of Unit
 
   Build* = ref object of Unit

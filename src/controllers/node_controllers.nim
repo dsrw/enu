@@ -5,7 +5,7 @@ import godotapi / [node, spatial]
 import models, nodes / [bot_node, build_node]
 
 type
-  NodeController* = object
+  NodeController* = ref object
 
 let state = GameState.active
 
@@ -96,6 +96,10 @@ proc watch*(f: NodeController, state: GameState) =
       find_nested_changes(change)
     elif removed():
       change.item.remove_from_scene()
+
+proc reset_nodes*(_: type NodeController) =
+  current_build = nil
+  previous_build = nil
 
 proc init*(_: type NodeController): NodeController =
   result = NodeController()

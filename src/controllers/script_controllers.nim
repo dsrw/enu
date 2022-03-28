@@ -241,7 +241,8 @@ proc seen(self: ScriptController, target: Unit, distance: float): bool =
           result = true
       node.collision_layer = old_layer
 
-
+proc wake(self: Unit) =
+  self.script_ctx.timer = get_mono_time()
 
 proc yield_script(self: ScriptController, unit: Unit) =
   let ctx = unit.script_ctx
@@ -259,6 +260,8 @@ proc exit(ctx: ScriptCtx, exit_code: int) =
   ctx.exit_code = some(exit_code)
   ctx.pause()
   ctx.running = false
+
+proc frame_count(): int = state.frame_count
 
 # Bot bindings
 
@@ -504,7 +507,7 @@ proc init*(T: type ScriptController): ScriptController =
                     exec_instance, action_running, `action_running=`, yield_script, hit,
                     sleep, exit, global, `global=`, position, `position=`, rotation, `rotation=`, energy, `energy=`,
                     speed, `speed=`, scale, `scale=`, velocity, `velocity=`, active_unit, id,
-                    color, `color=`, seen, start_game, stop_game, start_position
+                    color, `color=`, seen, start_game, stop_game, start_position, wake, frame_count
 
   result.bind_procs "bots", play
 
