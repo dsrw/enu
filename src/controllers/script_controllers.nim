@@ -156,11 +156,8 @@ proc start_position(self: Unit): Vector3 =
 
 proc `position=`(self: Unit, position: Vector3) =
   if Global in self.flags:
-    echo "setting global position"
-
     self.transform.origin = position
   else:
-    echo "setting local position"
     self.transform.origin = self.parent.node.to_local(position)
 
 proc speed(self: Unit): float =

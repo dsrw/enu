@@ -21,9 +21,8 @@ proc remove_from_scene(unit: Unit) =
   elif unit of Bot: Bot(unit).untrack_all
   if unit.script_ctx:
     unit.script_ctx.callback = nil
-  if not unit.clone_of:
+  if not state.reloading and not unit.clone_of:
     remove_file unit.script_file
-
     remove_dir unit.data_dir
   for child in unit.units:
     child.remove_from_scene()

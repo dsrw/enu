@@ -120,7 +120,6 @@ gdobj PlayerNode of KinematicBody:
 
     self.unit.rotation.changes:
       if touched:
-        echo "SETTING RIG ROTATION"
         self.camera_rig.rotation = vec3(0, change.item, 0)
 
     self.velocity_zid = self.unit.velocity.changes:

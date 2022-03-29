@@ -109,6 +109,14 @@ gdobj Game of Node:
       config_file = join_path(work_dir, "config.json")
     write_file(config_file, config.to_json.pretty)
 
+  proc prepare_to_load_world() =
+    let work_dir = get_user_data_dir()
+    config.world_dir = join_path(work_dir, config.world)
+    config.data_dir = join_path(config.world_dir, "data")
+    config.script_dir = join_path(config.world_dir, "scripts")
+    create_dir(state.config.data_dir)
+    create_dir(state.config.script_dir)
+
   proc init* =
     state.nodes.game = self
     let
@@ -134,13 +142,9 @@ gdobj Game of Node:
       mega_pixels = uc.mega_pixels ||= 2.0
       start_full_screen = uc.start_full_screen ||= true
       semicolon_as_colon = uc.semicolon_as_colon ||= false
-      world_dir = join_path(work_dir, config.world)
-      data_dir = join_path(config.world_dir, "data")
-      script_dir = join_path(config.world_dir, "scripts")
       lib_dir = join_path(get_executable_path().parent_dir(), "..", "..", "..", "vmlib")
 
-    create_dir(state.config.data_dir)
-    create_dir(state.config.script_dir)
+    self.prepare_to_load_world()
     set_window_fullscreen config.start_full_screen
     if uc != initial_user_config:
       self.save_user_config(uc)
@@ -256,7 +260,7 @@ gdobj Game of Node:
   method on_size_changed() =
     self.rescale_at = get_mono_time()
 
-  proc try_load_world(diff: int) =
+  proc switch_world(diff: int) =
     if config.world_prefix == "":
       config.world_prefix = "default"
 
@@ -270,34 +274,28 @@ gdobj Game of Node:
     num += diff
     save_world()
     var user_config = self.load_user_config()
-    user_config.world = some(prefix & $num)
+    config.world = prefix & $num
+    user_config.world = some(config.world)
     self.save_user_config(user_config)
 
-    state.units.untrack_all
-    state.target_flags.untrack_all
-    state.input_flags.untrack_all
-    state.open_unit.untrack_all
-    state.tool.untrack_all
+    state.reloading = true
+    state.playing = false
     state.units.clear
-
-    state.nodes.game = nil
-    state.nodes.player = nil
-    state.nodes.data = nil
     NodeController.reset_nodes
-    discard self.get_tree.reload_current_scene
-    #self.init
+    self.prepare_to_load_world()
+    load_world(self.script_controller)
+    state.reloading = false
 
   method unhandled_input*(event: InputEvent) =
     if event.is_action_pressed("next_world"):
-      self.try_load_world(+1)
+      self.switch_world(+1)
     elif event.is_action_pressed("prev_world"):
-      self.try_load_world(-1)
+      self.switch_world(-1)
     elif event.is_action_pressed("command_mode"):
       state.command_mode = true
     elif event.is_action_released("command_mode"):
       state.command_mode = false
     elif event.is_action_pressed("save_and_reload"):
-      echo "reload all"
       save_world()
       self.script_controller.reload_all()
       self.get_tree().set_input_as_handled()

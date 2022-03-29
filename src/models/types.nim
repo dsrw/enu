@@ -52,6 +52,7 @@ type
     console*: ConsoleModel
     paused*: bool
     frame_count*: int
+    reloading*: bool
 
   Model* = ref object of RootObj
     target_point*: Vector3
