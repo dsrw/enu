@@ -102,11 +102,14 @@ proc begin_move(self: ScriptController, unit: Unit, direction: Vector3, steps: f
   if not ctx.callback.is_nil:
     ctx.pause()
 
-proc sleep(ctx: ScriptCtx, seconds: float) =
+proc sleep_impl(ctx: ScriptCtx, seconds: float) =
   var duration = 0.0
   ctx.callback = proc(delta: float): bool =
     duration += delta
-    return duration < seconds
+    if seconds > 0:
+      return duration < seconds
+    else:
+      return duration <= 0.5 and ctx.timer > get_mono_time()
   ctx.pause()
 
 proc hit(unit_a: Unit, unit_b: Unit): Vector3 =
@@ -505,7 +508,7 @@ proc init*(T: type ScriptController): ScriptController =
 
   result.bind_procs "base_api", begin_turn, begin_move, register_active, echo_console, new_instance,
                     exec_instance, action_running, `action_running=`, yield_script, hit,
-                    sleep, exit, global, `global=`, position, `position=`, rotation, `rotation=`, energy, `energy=`,
+                    sleep_impl, exit, global, `global=`, position, `position=`, rotation, `rotation=`, energy, `energy=`,
                     speed, `speed=`, scale, `scale=`, velocity, `velocity=`, active_unit, id,
                     color, `color=`, seen, start_game, stop_game, start_position, wake, frame_count
 

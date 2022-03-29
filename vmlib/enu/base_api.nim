@@ -25,7 +25,7 @@ proc wake*(self: Unit) = discard
 proc frame_count*(): int = discard
 proc id*(self: Unit): string = discard
 proc exit*(exit_code = 0, msg = "") = discard
-proc sleep*(seconds = 1.0) = discard
+proc sleep_impl(seconds = 1.0) = discard
 proc create_new*(self: Unit) = discard
 proc position*(self: Unit): Vector3 = discard
 proc `position=`*(self: Unit, position: Vector3) = discard
@@ -65,6 +65,9 @@ template wait(body: untyped) =
   body
   while self.action_running and self.advance_state_machine():
     self.yield_script()
+
+proc sleep*(seconds = 0.0) =
+  wait sleep_impl(seconds)
 
 proc forward*(self: Unit, steps: float, move_mode: int) =
   wait self.begin_move(FORWARD, steps, move_mode)
