@@ -273,6 +273,7 @@ method on_begin_turn*(self: Build, axis: Vector3, degrees: float, move_mode: int
 
 proc reset_state*(self: Build) =
   self.draw_transform = Transform.init
+  self.transform.value = self.start_transform
 
 method reset*(self: Build) =
   self.transform.value = self.start_transform
