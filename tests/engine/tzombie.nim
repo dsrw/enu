@@ -1,4 +1,5 @@
-import potato_class, enu/types, pkg/print
+import zombie_class, potato_class
+import enu/types, pkg/print
 import enu/base_api, enu/state_machine
 var move_mode = 1
 var me = Unit()

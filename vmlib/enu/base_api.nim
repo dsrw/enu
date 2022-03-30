@@ -267,8 +267,11 @@ template build*(new_target: Unit) =
   target = new_target
   move_mode = 1
 
-template turn*(self: Unit, target: Unit) =
+proc turn*(self: Unit, target: Unit, move_mode: int) =
   self.turn(self.angle_to(target), move_mode)
+
+template turn*(self: Unit, target: Unit) =
+  self.turn(target, move_mode)
 
 template turn*(target: Unit) =
   active_unit().turn(target)
@@ -391,3 +394,7 @@ proc `+`*(self: PositionOffset, offset: float): PositionOffset =
 proc `-`*(self: PositionOffset, offset: float): PositionOffset =
   result = self
   result.offset -= offset
+
+proc go*(unit: Unit) =
+  active_unit().turn(unit, 2)
+  active_unit().forward((unit.position - active_unit().position).length, 2)

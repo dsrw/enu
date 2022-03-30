@@ -17,7 +17,7 @@ type
     Hover, TargetMoved, Highlight, Global
 
   InputFlags* = enum
-    Primary, Secondary
+    Primary, Secondary, Flying
 
   Tools* = enum
     Code, Block, Place

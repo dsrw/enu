@@ -6,7 +6,9 @@ import pkg / compiler / vm except get_int
 import pkg / compiler / ast except new_node
 import pkg / compiler / [vmdef, lineinfos, astalgo,  renderer, msgs]
 import godotapi / [spatial, ray_cast, voxel_terrain]
-import core, models / [types, states, bots, builds, units, colors], libs / [interpreters, eval], nodes / [helpers, build_node]
+import core, models / [types, states, bots, builds, units, colors],
+             libs / [interpreters, eval],
+             nodes / [helpers, build_node]
 
 type ScriptController* = ref object
   interpreter: Interpreter
@@ -223,6 +225,8 @@ proc `rotation=`(self: Unit, degrees: float) =
   self.transform.value = t
 
 proc seen(self: ScriptController, target: Unit, distance: float): bool =
+  if target == state.player and Flying in state.input_flags:
+    return false
   let unit = self.active_unit
   if unit of Build:
     let ray = Build(unit).sight_ray

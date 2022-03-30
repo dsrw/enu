@@ -5,10 +5,11 @@ import base_api, macro_helpers
 proc params_to_assignments(target: NimNode, nodes: seq[NimNode]): NimNode =
   result = new_stmt_list()
   for node in nodes:
-    let prop = node[0]
-    let value = node[1]
-    result.add quote do:
-      `target`.`prop` = `value`
+    if node.kind == nnkExprEqExpr:
+      let prop = node[0]
+      let value = node[1]
+      result.add quote do:
+        `target`.`prop` = `value`
 
 proc params_to_ident_defs(nodes: seq[NimNode]): seq[NimNode] =
   for node in nodes:
@@ -90,7 +91,7 @@ proc build_ctors(name_str: string, type_name: NimNode, params: seq[NimNode]): Ni
   var color = "color".ident
   var eraser = bind_sym"eraser"
   if "color" notin var_names:
-    params &= new_ident_defs(color, new_empty_node(), eraser)
+    params &= new_ident_defs(color, new_empty_node(), ident"eraser")
   ctor_body.add quote do:
     if `color` != `eraser`:
       result.color = `color`
@@ -110,7 +111,7 @@ proc build_ctors(name_str: string, type_name: NimNode, params: seq[NimNode]): Ni
 proc extract_class_info(name_node: NimNode): tuple[name: string, params: seq[NimNode]] =
   result = if name_node.kind == nnkIdent:
       (name_node.str_val, @[])
-    elif name_node.kind in [nnkCall, nnkCommand]:
+    elif name_node.kind in [nnkCall, nnkCommand, nnkObjConstr]:
       name_node[0].expect_kind nnkIdent
       (name_node[0].str_val, name_node[1..^1])
     else:
@@ -151,7 +152,7 @@ proc pop_name_node(ast: NimNode): tuple[start: NimNode, name_node: NimNode] =
   result.start = new_stmt_list()
   for i, node in ast:
     if node.kind in [nnkCommand, nnkCall]:
-      if node.len == 2 and node[1].kind in [nnkIdent, nnkCall] and node[0].eq_ident(ident_name):
+      if node.len == 2 and node[1].kind in [nnkIdent, nnkCall, nnkObjConstr] and node[0].eq_ident(ident_name):
         result.name_node = node[1]
         ast.del(i)
         break

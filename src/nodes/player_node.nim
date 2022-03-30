@@ -42,7 +42,7 @@ let
 # NOTE: Most of this needs to be moved into player model
 gdobj PlayerNode of KinematicBody:
   var
-    flying, running, always_run, skip_release, skip_next_mouse_move, jump_down: bool
+    running, always_run, skip_release, skip_next_mouse_move, jump_down: bool
     aim_ray, world_ray, down_ray: RayCast
     jump_time, run_time: Option[DateTime]
 
@@ -59,6 +59,15 @@ gdobj PlayerNode of KinematicBody:
     unit*: Player
     velocity_zid: ZID
     boosted = false
+
+  proc flying(): bool =
+    Flying in state.input_flags
+
+  proc flying(value: bool) =
+    if value:
+      state.input_flags += Flying
+    else:
+      state.input_flags -= Flying
 
   proc get_look_direction(): Vector2 =
     vec2(get_action_strength("look_right") - get_action_strength("look_left"),
@@ -262,9 +271,9 @@ gdobj PlayerNode of KinematicBody:
       if toggle:
         self.jump_time = nil_time
         if state.playing:
-          self.flying = false
+          self.flying(false)
         else:
-          self.flying = not self.flying
+          self.flying(not self.flying)
         for i in [0, 1, 2]:
           self.set_collision_mask_bit(i, not self.flying)
       elif self.is_on_floor():
