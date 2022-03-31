@@ -398,3 +398,6 @@ proc `-`*(self: PositionOffset, offset: float): PositionOffset =
 proc go*(unit: Unit) =
   active_unit().turn(unit, 2)
   active_unit().forward((unit.position - active_unit().position).length, 2)
+
+proc even*(self: int): bool = self mod 2 == 0
+proc odd*(self: int): bool = not self.even
