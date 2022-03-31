@@ -261,23 +261,24 @@ gdobj Game of Node:
     self.rescale_at = get_mono_time()
 
   proc switch_world(diff: int) =
-    if config.world_prefix == "":
-      config.world_prefix = "default"
+    if diff != 0:
 
-    var world = config.world
-    let prefix = config.world_prefix & "-"
-    world.remove_prefix(prefix)
-    var num = try:
-      world.parse_int
-    except ValueError:
-      1
-    num += diff
+      if config.world_prefix == "":
+        config.world_prefix = "default"
+
+      var world = config.world
+      let prefix = config.world_prefix & "-"
+      world.remove_prefix(prefix)
+      var num = try:
+        world.parse_int
+      except ValueError:
+        1
+      num += diff
+      var user_config = self.load_user_config()
+      config.world = prefix & $num
+      user_config.world = some(config.world)
+      self.save_user_config(user_config)
     save_world()
-    var user_config = self.load_user_config()
-    config.world = prefix & $num
-    user_config.world = some(config.world)
-    self.save_user_config(user_config)
-
     state.reloading = true
     state.playing = false
     state.units.clear
@@ -296,8 +297,7 @@ gdobj Game of Node:
     elif event.is_action_released("command_mode"):
       state.command_mode = false
     elif event.is_action_pressed("save_and_reload"):
-      save_world()
-      self.script_controller.reload_all()
+      self.switch_world(0)
       self.get_tree().set_input_as_handled()
       state.playing = false
     elif event.is_action_pressed("pause"):
