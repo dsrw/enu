@@ -144,6 +144,9 @@ proc `global=`(self: Unit, global: bool) =
   else:
     self.flags -= Global
 
+proc local_position(self: Unit): Vector3 =
+  self.transform.origin
+
 proc position(self: Unit): Vector3 =
   if Global in self.flags:
     self.transform.origin
@@ -406,6 +409,7 @@ proc change_code(self: ScriptController, unit: Unit, code: string) =
     if unit.script_ctx.is_nil:
       unit.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter, timeout_at: MonoTime.high)
     unit.script_ctx.script = unit.script_file
+    echo "loading ", unit.id
     self.load_script(unit)
 
 proc watch_code(self: ScriptController, unit: Unit) =
@@ -429,11 +433,6 @@ proc watch_units(self: ScriptController, units: ZenSeq[Unit]) =
       self.unmap_unit(unit)
       if not unit.clone_of and unit.script_ctx:
         self.module_names.excl unit.script_ctx.module_name
-
-proc reload_all*(self: ScriptController) =
-  walk_tree state.units.value, proc(unit: Unit) =
-    unit.script_ctx = nil
-    unit.code.touch unit.code.value
 
 proc load_player*(self: ScriptController) =
   let unit = state.player
@@ -509,8 +508,8 @@ proc init*(T: type ScriptController): ScriptController =
 
   result.bind_procs "base_api", begin_turn, begin_move, register_active, echo_console, new_instance,
                     exec_instance, action_running, `action_running=`, yield_script, hit,
-                    sleep_impl, exit, global, `global=`, position, `position=`, rotation, `rotation=`, energy, `energy=`,
-                    speed, `speed=`, scale, `scale=`, velocity, `velocity=`, active_unit, id,
+                    sleep_impl, exit, global, `global=`, position, `position=`, local_position, rotation, `rotation=`,
+                    energy, `energy=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`, active_unit, id,
                     color, `color=`, seen, start_game, stop_game, start_position, wake, frame_count
 
   result.bind_procs "bots", play
