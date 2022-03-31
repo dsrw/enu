@@ -143,7 +143,7 @@ proc build_class(name_node: NimNode, base_type: NimNode): NimNode =
     include loops
 
     register_active(me)
-    let home {.inject.} = PositionOffset(position: me.start_position)
+    let home {.inject.} = PositionOffset(position: me.local_position)
     let `var_name`* {.inject.} = me
     `ctors`
 
@@ -231,7 +231,7 @@ macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[u
       let me {.inject.} = `base_type`()
       var target {.inject.} = me
       register_active(me)
-      let home {.inject.} = PositionOffset(position: me.start_position)
+      let home {.inject.} = PositionOffset(position: me.local_position)
       include loops
 
   inner.add ast
@@ -239,7 +239,7 @@ macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[u
   result.add quote do:
     proc run_script*(me {.inject.}: me.type, is_instance {.inject.}: bool) =
       var target {.inject.}: Unit = me
-      let home {.inject.} = PositionOffset(position: me.start_position)
+      let home {.inject.} = PositionOffset(position: me.local_position)
       var move_mode {.inject.} = 1
       include loops
       `inner`
