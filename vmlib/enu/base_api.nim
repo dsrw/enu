@@ -28,6 +28,7 @@ proc exit*(exit_code = 0, msg = "") = discard
 proc sleep_impl(seconds = 1.0) = discard
 proc create_new*(self: Unit) = discard
 proc position*(self: Unit): Vector3 = discard
+proc local_position*(self: Unit): Vector3 = discard
 proc `position=`*(self: Unit, position: Vector3) = discard
 proc start_position*(self: Unit): Vector3 = discard
 proc speed*(self: Unit): float = discard
@@ -133,12 +134,12 @@ template f*(steps = 1.0) = target.forward(steps)
 template b*(steps = 1.0) = target.back(steps)
 
 proc forward*(self: Unit, value: PositionOffset, move_mode: int) =
-  let steps = self.position.z - value.position.z + value.offset
+  let steps = self.local_position.z - value.position.z + value.offset
   wait self.begin_move(FORWARD, steps, move_mode)
 
 template forward*(self: Unit, value: PositionOffset) =
   mixin wait, begin_move
-  let steps = self.position.z - value.position.z + value.offset
+  let steps = self.local_position.z - value.position.z + value.offset
   wait self.begin_move(FORWARD, steps, move_mode)
 
 template forward*(offset: PositionOffset) = target.forward(offset)
@@ -149,51 +150,51 @@ proc back*(self: Unit, value: PositionOffset, move_mode: int) =
 
 template back*(self: Unit, value: PositionOffset) =
   mixin wait, begin_move
-  let steps = self.position.z - value.position.z - value.offset
+  let steps = self.local_position.z - value.position.z - value.offset
   wait self.begin_move(FORWARD, steps, move_mode)
 
 template back*(offset: PositionOffset) = target.back(offset)
 
 proc left*(self: Unit, value: PositionOffset, move_mode: int) =
-  let steps = self.position.x - value.position.x + value.offset
+  let steps = self.local_position.x - value.position.x + value.offset
   wait self.begin_move(LEFT, steps, move_mode)
 
 template left*(self: Unit, value: PositionOffset) =
   mixin wait, begin_move
-  let steps = self.position.x - value.position.x + value.offset
+  let steps = self.local_position.x - value.position.x + value.offset
   wait self.begin_move(LEFT, steps, move_mode)
 
 template left*(offset: PositionOffset) = target.left(offset)
 
 proc right*(self: Unit, value: PositionOffset, move_mode: int) =
-  let steps = self.position.x - value.position.x - value.offset
+  let steps = self.local_position.x - value.position.x - value.offset
   wait self.begin_move(LEFT, steps, move_mode)
 
 template right*(self: Unit, value: PositionOffset) =
   mixin wait, begin_move
-  let steps = self.position.x - value.position.x - value.offset
+  let steps = self.local_position.x - value.position.x - value.offset
   wait self.begin_move(LEFT, steps, move_mode)
 
 template right*(offset: PositionOffset) = target.right(offset)
 
 proc down*(self: Unit, value: PositionOffset, move_mode: int) =
-  let steps = self.position.y - value.position.y + value.offset
+  let steps = self.local_position.y - value.position.y + value.offset
   wait self.begin_move(DOWN, steps, move_mode)
 
 template down*(self: Unit, value: PositionOffset) =
   mixin wait, begin_move
-  let steps = self.position.y - value.position.y + value.offset
+  let steps = self.local_position.y - value.position.y + value.offset
   wait self.begin_move(DOWN, steps, move_mode)
 
 template down*(offset: PositionOffset) = target.down(offset)
 
 proc up*(self: Unit, value: PositionOffset, move_mode: int) =
-  let steps = self.position.y - value.position.y - value.offset
+  let steps = self.local_position.y - value.position.y - value.offset
   wait self.begin_move(DOWN, steps, move_mode)
 
 template up*(self: Unit, value: PositionOffset) =
   mixin wait, begin_move
-  let steps = self.position.y - value.position.y - value.offset
+  let steps = self.local_position.y - value.position.y - value.offset
   wait self.begin_move(DOWN, steps, move_mode)
 
 template up*(offset: PositionOffset) = target.up(offset)
