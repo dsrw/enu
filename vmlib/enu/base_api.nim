@@ -17,8 +17,6 @@ proc `action_running=`(self: Unit, value: bool) = discard
 proc yield_script(self: Unit) = discard
 proc begin_move(self: Unit, direction: Vector3, steps: float, move_mode: int) = discard
 proc begin_turn(self: Unit, axis: Vector3, steps: float, move_mode: int) = discard
-proc start_game* = discard
-proc stop_game* = discard
 proc wake*(self: Unit) = discard
 
 # API
