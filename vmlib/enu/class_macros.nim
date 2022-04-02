@@ -2,6 +2,9 @@ import std / [macros, strformat, strutils, sugar, sequtils, genasts]
 import types
 import base_api, macro_helpers
 
+const me_props = ["seed", "global"]
+const target_props = ["position", "start_position", "speed", "scale", "energy", "global", "seed", "color"]
+
 proc params_to_assignments(target: NimNode, nodes: seq[NimNode]): NimNode =
   result = new_stmt_list()
   for node in nodes:
@@ -160,26 +163,29 @@ proc pop_name_node(ast: NimNode): tuple[start: NimNode, name_node: NimNode] =
   for i, node in result.start:
    ast.del(i)
 
-proc visit_tree(parent: NimNode, convert: seq[NimNode], alias: ptr seq[NimNode]) =
+proc visit_tree(parent: NimNode, convert: open_array[string], receiver: string, alias: ptr seq[NimNode]) =
   for i, node in parent:
     if node.kind in [nnkProcDef, nnkBlockStmt, nnkIfExpr, nnkIfStmt]:
       # The alias list should only live as long as a scope. We need to make a new
       # copy each time a scope is opened. The above list needs to be expanded.
       var alias = alias[]
-      visit_tree(node, convert, addr alias)
+      visit_tree(node, convert, receiver, addr alias)
     else:
-      if node in convert and parent.kind == nnkIdentDefs:
-        if i == 0:
-          alias[].add node
-        elif i == 2:
-          parent[i] = new_dot_expr(ident"me", node)
-      elif node in convert and node notin alias[] and parent.kind != nnkExprEqExpr and not (parent.kind == nnkDotExpr and i == 1):
-        parent[i] = new_dot_expr(ident"me", node)
-      visit_tree(node, convert, alias)
+      if node.kind == nnkIdent:
+        if $node in convert and parent.kind == nnkIdentDefs:
+          if i == 0:
+            alias[].add node
+          elif i == 2:
+            parent[i] = new_dot_expr(ident receiver, node)
+        elif $node in convert and node notin alias[] and parent.kind != nnkExprEqExpr and not (parent.kind == nnkDotExpr and i == 1):
+          parent[i] = new_dot_expr(ident receiver, node)
+      visit_tree(node, convert, receiver, alias)
 
-proc auto_insert_me_receiver(ast: NimNode, convert: NimNode): NimNode =
+proc auto_insert_receiver(ast: NimNode, convert: open_array[string]): NimNode =
   var alias: seq[NimNode] = @[]
-  visit_tree(ast, convert.to_seq, addr alias)
+  visit_tree(ast, convert, "me", addr alias)
+  visit_tree(ast, me_props, "me", addr alias)
+  visit_tree(ast, target_props, "target", addr alias)
   result = ast
 
 proc build_proc(sig, body: NimNode, return_type = new_empty_node()): NimNode =
@@ -208,17 +214,18 @@ proc transform_proc_lists(parent: NimNode): NimNode =
   parent
 
 macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[untyped]): untyped =
+  var convert = convert.map_it($it)
   let file_name = file_name.str_val
   var ast = parse_stmt(file_name.static_read, file_name).transform_proc_lists
   var (script_start, name_node) = pop_name_node(ast)
   result = new_stmt_list()
   var inner = new_stmt_list()
-  script_start = script_start.auto_insert_me_receiver(convert)
+  script_start = script_start.auto_insert_receiver(convert)
   if name_node.kind != nnkNilLit:
     let (name, params) = extract_class_info(name_node)
     for param in params:
-      convert.add(param[0])
-    ast = ast.auto_insert_me_receiver(convert)
+      convert.add($param[0])
+    ast = ast.auto_insert_receiver(convert)
     result.add build_class(name_node, base_type)
     let assignments = params_to_assignments(ident"me", params)
     inner.add quote do:
@@ -226,7 +233,7 @@ macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[u
         `assignments`
 
   else:
-    ast = ast.auto_insert_me_receiver(convert)
+    ast = ast.auto_insert_receiver(convert)
     result.add quote do:
       let me {.inject.} = `base_type`()
       var target {.inject.} = me
