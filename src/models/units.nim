@@ -76,6 +76,9 @@ method collect_garbage*(self: Unit) {.base.} =
         edits[id][loc] = voxel
   self.shared.edits = edits
 
+method ensure_visible*(self: Unit) {.base.} =
+  discard
+
 method on_collision*(self: Model, partner: Model, normal: Vector3) {.base.} =
   discard
 

@@ -326,6 +326,7 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
           ctx.running = ctx.resume()
           if not ctx.running and not unit.clone_of:
             unit.collect_garbage
+            unit.ensure_visible
           if unit of Build:
             let unit = Build(unit)
             if unit.voxels_per_frame > 0 and ctx.running and unit.voxels_remaining_this_frame >= 1:
@@ -366,6 +367,7 @@ proc load_script(self: ScriptController, unit: Unit, timeout = script_timeout) =
       ctx.running = ctx.run()
       if not ctx.running and not unit.clone_of:
         unit.collect_garbage
+        unit.ensure_visible
 
   except VMQuit as e:
     ctx.running = false

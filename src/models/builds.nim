@@ -180,7 +180,7 @@ proc remove(self: Build) =
     state.local_draw_unit_id = self.id
     state.global_draw_plane = self.node.to_global(self.target_point) *
                               self.node.transform.basis.xform(self.target_normal).snapped(vec3(1, 1, 1))
-    # TODO: How do we clean this up? What if there's a script error?
+
     if self.units.len == 0 and not self.chunks.any_it(it.value.any_it(it.value.color != action_colors[eraser])):
       if self.parent.is_nil:
         state.units -= self
@@ -291,6 +291,17 @@ method reset*(self: Build) =
           self.chunks.del(chunk_id)
   self.units.clear()
   self.draw(vec3(), (Computed, self.start_color))
+
+method ensure_visible*(self: Build) =
+  # It's possible for a build to have no blocks of its own if has childern with blocks. However, if the script
+  # fails or is changed to remove its childern, the unit will still exist but will have no presence in the world,
+  # and is therefor impossible to select or modify. In that case we want to draw a single block.
+  if self.units.len == 0 and not self.chunks.any_it(it.value.any_it(it.value.color != action_colors[eraser])):
+    let color = if self.start_color == action_colors[eraser]:
+      action_colors[blue]
+    else:
+      self.start_color
+    self.draw(vec3(), (Computed, color))
 
 proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.init, color = default_color,
                           clone_of: Unit = nil, global = true, bot_collisions = true, parent: Unit = nil): Build =
