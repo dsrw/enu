@@ -262,12 +262,6 @@ proc yield_script(self: ScriptController, unit: Unit) =
   ctx.saved_callback = nil
   ctx.pause()
 
-proc start_game() =
-  state.playing = true
-
-proc stop_game() =
-  state.playing = false
-
 proc exit(ctx: ScriptCtx, exit_code: int) =
   ctx.exit_code = some(exit_code)
   ctx.pause()
@@ -302,6 +296,14 @@ proc reset(self: Build, clear: bool) =
     self.reset()
   else:
     self.reset_state()
+
+# Player binding
+
+proc playing(self: Unit): bool =
+  state.playing
+
+proc `playing=`*(self:Unit, value: bool) =
+  state.playing = value
 
 # End of bindings
 
@@ -543,12 +545,14 @@ proc init*(T: type ScriptController): ScriptController =
                     exec_instance, action_running, `action_running=`, yield_script, hit,
                     sleep_impl, exit, global, `global=`, position, `position=`, local_position, rotation, `rotation=`,
                     energy, `energy=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`, active_unit, id,
-                    color, `color=`, seen, start_game, stop_game, start_position, wake, frame_count
+                    color, `color=`, seen, start_position, wake, frame_count
 
   result.bind_procs "bots", play
 
   result.bind_procs "builds", drawing, `drawing=`, initial_position,
                     save, restore, reset
+
+  result.bind_procs "players", playing, `playing=`
 
 when is_main_module:
   state.config.lib_dir = current_source_path().parent_dir / ".." / ".." / "vmlib"
