@@ -27,6 +27,7 @@ const
   script_timeout = 12.0.seconds
 
 let state = GameState.active
+let retry = (ref VMQuit)(msg: "magic_retry")
 
 proc map_unit(self: ScriptController, unit: Unit, pnode: PNode) =
   self.unit_map[pnode] = unit
@@ -39,7 +40,11 @@ proc unmap_unit(self: ScriptController, unit: Unit) =
 
 proc get_unit(self: ScriptController, a: VmArgs, pos: int): Unit =
   let pnode = a.get_node(pos)
-  self.unit_map[pnode]
+  if pnode in self.unit_map:
+    result = self.unit_map[pnode]
+    result.script_ctx.dependents.incl self.active_unit.script_ctx.module_name
+  else:
+    raise retry
 
 proc get_bot(self: ScriptController, a: VmArgs, pos: int): Bot =
   let unit = self.get_unit(a, pos)
@@ -301,8 +306,12 @@ proc reset(self: Build, clear: bool) =
 # End of bindings
 
 proc script_error(self: ScriptController, unit: Unit, e: ref VMQuit) =
-  state.logger("err", e.msg)
-  state.console.show_errors.value = true
+  if e == retry:
+    unit.code.touch unit.code.value
+  else:
+    state.logger("err", e.msg)
+    unit.ensure_visible
+    state.console.show_errors.value = true
 
 proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
   let ctx = unit.script_ctx
@@ -391,6 +400,7 @@ proc retry_failed_scripts*(self: ScriptController) =
 
   for f in prev_failed:
     self.script_error(f.unit, f.e)
+  self.failed = @[]
 
 proc change_code(self: ScriptController, unit: Unit, code: string) =
   if unit.script_ctx and unit.script_ctx.running and not unit.clone_of:
@@ -405,16 +415,35 @@ proc change_code(self: ScriptController, unit: Unit, code: string) =
   unit.reset()
   state.console.show_errors.value = false
   state.console.visible.value = false
-  if code.strip == "" and file_exists(unit.script_file):
+  var dependents: HashSet[string]
+  if not state.reloading and code.strip == "" and file_exists(unit.script_file):
     remove_file unit.script_file
     self.module_names.excl unit.script_ctx.module_name
   elif code.strip != "":
     write_file(unit.script_file, code)
     if unit.script_ctx.is_nil:
       unit.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter, timeout_at: MonoTime.high)
+    dependents = unit.script_ctx.dependents
+    unit.script_ctx.dependents.init
     unit.script_ctx.script = unit.script_file
     echo "loading ", unit.id
     self.load_script(unit)
+
+  if unit.script_ctx and dependents.card > 0:
+    let first = not state.reloading
+    if first:
+      state.reloading = true
+      self.retry_failures = true
+
+    walk_tree state.units.value, proc(other: Unit) =
+      if other.script_ctx:
+        if other != unit and other.script_ctx.module_name in dependents and other.code.value != "":
+          other.code.touch other.code.value
+
+    if first:
+      self.retry_failed_scripts()
+      self.retry_failures = false
+      state.reloading = false
 
 proc watch_code(self: ScriptController, unit: Unit) =
   unit.code.changes:

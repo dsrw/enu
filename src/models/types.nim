@@ -153,6 +153,7 @@ type
     running*: bool
     interpreter*: Interpreter
     code*: string
+    dependents*: HashSet[string]
 
   VMError* = object of CatchableError
 
