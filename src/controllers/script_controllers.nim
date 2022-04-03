@@ -340,6 +340,7 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
           ctx.timeout_at = get_mono_time() + script_timeout
           discard ctx.resume()
     except VMQuit as e:
+      self.interpreter.reset_module(unit.script_ctx.module_name)
       self.script_error(unit, e)
     finally:
       self.active_unit = nil
@@ -371,6 +372,7 @@ proc load_script(self: ScriptController, unit: Unit, timeout = script_timeout) =
 
   except VMQuit as e:
     ctx.running = false
+    self.interpreter.reset_module(unit.script_ctx.module_name)
     if self.retry_failures:
       self.failed.add (unit, e)
     else:

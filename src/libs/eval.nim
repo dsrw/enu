@@ -33,6 +33,13 @@ proc selectRoutine*(i: Interpreter; name: string, moduleName: string): PSym =
                                         skMethod, skProc, skConverter},
                               moduleName)
 
+proc reset_module*(i: Interpreter, module_name: string) =
+  for iface in i.graph.ifaces:
+    if iface.module != nil and iface.module.name.s == module_name:
+      init_str_tables(i.graph, iface.module)
+      iface.module.ast = nil
+      break
+
 proc load_module*(i: Interpreter, file_name, code: string) =
   assert i != nil
 
