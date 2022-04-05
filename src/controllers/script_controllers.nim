@@ -165,6 +165,10 @@ proc start_position(self: Unit): Vector3 =
     self.parent.node.to_global(self.start_transform.origin)
 
 proc `position=`(self: Unit, position: Vector3) =
+  var position = position
+  if self of Player and position.y <= 0:
+    position.y = 0.1
+
   if Global in self.flags:
     self.transform.origin = position
   else:
