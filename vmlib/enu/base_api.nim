@@ -9,6 +9,7 @@ var current_active_unit: Unit
 proc register_active*(self: Unit) = current_active_unit = self
 proc active_unit*(): Unit = current_active_unit
 
+proc write_stack_trace*() = discard
 proc new_instance*(src, dest: Unit) = discard
 proc exec_instance*(self: Unit) = discard
 

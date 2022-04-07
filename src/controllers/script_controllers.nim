@@ -5,6 +5,7 @@ import pkg / [print, model_citizen, godot]
 import pkg / compiler / vm except get_int
 import pkg / compiler / ast except new_node
 import pkg / compiler / [vmdef, lineinfos, astalgo,  renderer, msgs]
+from pkg/compiler/vm {.all.} import stack_trace_aux
 import godotapi / [spatial, ray_cast, voxel_terrain]
 import core, models / [types, states, bots, builds, units, colors],
              libs / [interpreters, eval],
@@ -37,6 +38,17 @@ proc unmap_unit(self: ScriptController, unit: Unit) =
   if unit in self.node_map:
     self.unit_map.del self.node_map[unit]
     self.node_map.del unit
+
+template info: untyped =
+  instantiationInfo(-2, fullPaths = true)
+
+proc write_stack_trace(self: ScriptController) =
+  private_access ScriptCtx
+  let ctx = self.active_unit.script_ctx
+  msg_writeln(ctx.ctx.config, "stack trace: (most recent call last)", {msgNoUnitSep})
+  stack_trace_aux(ctx.ctx, ctx.tos, ctx.pc)
+  echo "file: ", ctx.file_name
+
 
 proc get_unit(self: ScriptController, a: VmArgs, pos: int): Unit =
   let pnode = a.get_node(pos)
@@ -535,11 +547,11 @@ proc init*(T: type ScriptController): ScriptController =
             ctx.line_changed(info, ctx.previous_line)
           (ctx.previous_line, ctx.current_line) = (ctx.current_line, info)
 
+    ctx.ctx = c
+    ctx.pc = pc
+    ctx.tos = tos
     if ctx.pause_requested:
       ctx.pause_requested = false
-      ctx.ctx = c
-      ctx.pc = pc
-      ctx.tos = tos
       raise new_exception(VMPause, "vm paused")
 
   result = controller
@@ -549,7 +561,7 @@ proc init*(T: type ScriptController): ScriptController =
                     exec_instance, action_running, `action_running=`, yield_script, hit,
                     sleep_impl, exit, global, `global=`, position, `position=`, local_position, rotation, `rotation=`,
                     energy, `energy=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`, active_unit, id,
-                    color, `color=`, seen, start_position, wake, frame_count
+                    color, `color=`, seen, start_position, wake, frame_count, write_stack_trace
 
   result.bind_procs "bots", play
 
