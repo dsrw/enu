@@ -20,6 +20,13 @@ proc begin_move(self: Unit, direction: Vector3, steps: float, move_mode: int) = 
 proc begin_turn(self: Unit, axis: Vector3, steps: float, move_mode: int) = discard
 proc wake*(self: Unit) = discard
 
+proc link_dependency_impl(dep: Unit) = discard
+proc link_dependency*(dep: Unit) =
+  if not dep.is_nil:
+    link_dependency_impl(dep)
+
+proc link_dependency*(dep: not Unit) = discard
+
 # API
 proc frame_count*(): int = discard
 proc id*(self: Unit): string = discard

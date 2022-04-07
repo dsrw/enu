@@ -5,14 +5,17 @@ import base_api, macro_helpers
 const me_props = ["seed", "global"]
 const target_props = ["position", "start_position", "speed", "scale", "energy", "global", "seed", "color"]
 
-proc params_to_assignments(target: NimNode, nodes: seq[NimNode]): NimNode =
+proc params_to_assignments(nodes: seq[NimNode]): NimNode =
   result = new_stmt_list()
   for node in nodes:
+    let prop = node[0]
     if node.kind == nnkExprEqExpr:
-      let prop = node[0]
       let value = node[1]
       result.add quote do:
-        `target`.`prop` = `value`
+        if not is_instance:
+          me.`prop` = `value`
+    result.add quote do:
+      link_dependency(me.`prop`)
 
 proc params_to_ident_defs(nodes: seq[NimNode]): seq[NimNode] =
   for node in nodes:
@@ -55,16 +58,20 @@ proc params_to_accessors(type_name: NimNode, nodes: seq[NimNode]): NimNode =
 
       result.add quote do:
         proc `getter`*(self: `type_name`): `typ` =
+          link_dependency(self.`getter`)
           self.`getter`
 
         proc `setter`*(self: `type_name`, value: `typ`) =
           if value != self.`getter`:
+            link_dependency(value)
+            link_dependency(self)
             self.`getter` = value
             self.wake
 
 proc build_ctors(name_str: string, type_name: NimNode, params: seq[NimNode]): NimNode =
   var ctor_body = quote do:
     assert not instance.is_nil
+    link_dependency(instance)
     result = `type_name`()
     result.seed = active_unit().seed
     new_instance(instance, result)
@@ -73,6 +80,7 @@ proc build_ctors(name_str: string, type_name: NimNode, params: seq[NimNode]): Ni
     let prop = param[0]
     ctor_body.add quote do:
       result.`prop` = `prop`
+      link_dependency(`prop`)
 
   let vars = params_to_ident_defs(params)
   let var_names = vars.map_it $it[0]
@@ -227,10 +235,9 @@ macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[u
       convert.add($param[0])
     ast = ast.auto_insert_receiver(convert)
     result.add build_class(name_node, base_type)
-    let assignments = params_to_assignments(ident"me", params)
+    let assignments = params_to_assignments(params)
     inner.add quote do:
-      if not is_instance:
-        `assignments`
+      `assignments`
 
   else:
     ast = ast.auto_insert_receiver(convert)

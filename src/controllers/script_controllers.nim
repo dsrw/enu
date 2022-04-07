@@ -39,6 +39,13 @@ proc unmap_unit(self: ScriptController, unit: Unit) =
     self.unit_map.del self.node_map[unit]
     self.node_map.del unit
 
+proc link_dependency_impl(self: ScriptController, dep: Unit) =
+  let dep = dep.find_root
+  let active = self.active_unit.find_root
+  echo "id: ", dep.id
+  echo &"**reloading {dep.script_ctx.module_name} will reload {active.script_ctx.module_name}"
+  dep.script_ctx.dependents.incl active.script_ctx.module_name
+
 template info: untyped =
   instantiationInfo(-2, fullPaths = true)
 
@@ -52,11 +59,7 @@ proc write_stack_trace(self: ScriptController) =
 
 proc get_unit(self: ScriptController, a: VmArgs, pos: int): Unit =
   let pnode = a.get_node(pos)
-  if pnode in self.unit_map:
-    result = self.unit_map[pnode]
-    result.script_ctx.dependents.incl self.active_unit.script_ctx.module_name
-  else:
-    raise retry
+  result = self.unit_map[pnode]
 
 proc get_bot(self: ScriptController, a: VmArgs, pos: int): Bot =
   let unit = self.get_unit(a, pos)
@@ -420,6 +423,40 @@ proc retry_failed_scripts*(self: ScriptController) =
     self.script_error(f.unit, f.e)
   self.failed = @[]
 
+proc load_script_and_dependants(self: ScriptController, unit: Unit) =
+  var previous: HashSet[Unit]
+  var units_by_module: Table[string, Unit]
+  var units_to_reload: HashSet[Unit]
+  units_to_reload.incl unit
+  state.reloading = true
+  self.retry_failures = true
+
+  for other in state.units.value:
+    if other.script_ctx:
+      units_by_module[other.script_ctx.module_name] = other
+
+  while units_to_reload != previous:
+    previous = units_to_reload
+    for unit in previous:
+      for dep in unit.script_ctx.dependents:
+        units_to_reload.incl units_by_module[dep]
+
+  for other in units_to_reload:
+    if other != unit:
+      echo "resetting: ", other.script_ctx.module_name
+      self.interpreter.reset_module(other.script_ctx.module_name)
+
+  echo "loading ", unit.id
+  self.load_script(unit)
+
+  for other in units_to_reload:
+    if other != unit:
+      other.code.touch other.code.value
+
+  self.retry_failed_scripts()
+  self.retry_failures = false
+  state.reloading = false
+
 proc change_code(self: ScriptController, unit: Unit, code: string) =
   if unit.script_ctx and unit.script_ctx.running and not unit.clone_of:
     unit.collect_garbage
@@ -441,27 +478,13 @@ proc change_code(self: ScriptController, unit: Unit, code: string) =
     write_file(unit.script_file, code)
     if unit.script_ctx.is_nil:
       unit.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter, timeout_at: MonoTime.high)
-    dependents = unit.script_ctx.dependents
-    unit.script_ctx.dependents.init
+
     unit.script_ctx.script = unit.script_file
-    echo "loading ", unit.id
-    self.load_script(unit)
-
-  if unit.script_ctx and dependents.card > 0:
-    let first = not state.reloading
-    if first:
-      state.reloading = true
-      self.retry_failures = true
-
-    walk_tree state.units.value, proc(other: Unit) =
-      if other.script_ctx:
-        if other != unit and other.script_ctx.module_name in dependents and other.code.value != "":
-          other.code.touch other.code.value
-
-    if first:
-      self.retry_failed_scripts()
-      self.retry_failures = false
-      state.reloading = false
+    if not state.reloading and not self.retry_failures:
+      self.load_script_and_dependants(unit)
+    else:
+      echo "loading ", unit.id
+      self.load_script(unit)
 
 proc watch_code(self: ScriptController, unit: Unit) =
   unit.code.changes:
@@ -561,7 +584,8 @@ proc init*(T: type ScriptController): ScriptController =
                     exec_instance, action_running, `action_running=`, yield_script, hit,
                     sleep_impl, exit, global, `global=`, position, `position=`, local_position, rotation, `rotation=`,
                     energy, `energy=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`, active_unit, id,
-                    color, `color=`, seen, start_position, wake, frame_count, write_stack_trace
+                    color, `color=`, seen, start_position, wake, frame_count, link_dependency_impl,
+                    write_stack_trace
 
   result.bind_procs "bots", play
 
