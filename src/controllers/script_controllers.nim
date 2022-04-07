@@ -140,6 +140,7 @@ proc hit(unit_a: Unit, unit_b: Unit): Vector3 =
       return collision.normal.snapped(vec3(1, 1, 1))
 
 proc echo_console(msg: string) =
+  echo msg
   state.console.log += msg & "\n"
   state.console.visible.value = true
 
