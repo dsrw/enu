@@ -309,6 +309,9 @@ proc far*(node: Unit, greater_than = 100.0): bool =
 
 proc seen*(node: Unit, less_than = 100.0): bool = discard
 
+proc height*(self: Vector3): float = self.y
+proc height*(self: Unit): float = self.position.y
+
 import macros, random, tables
 export random, tables
 

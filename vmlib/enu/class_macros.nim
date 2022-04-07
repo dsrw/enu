@@ -3,7 +3,7 @@ import types
 import base_api, macro_helpers
 
 const me_props = ["seed", "global"]
-const target_props = ["position", "start_position", "speed", "scale", "energy", "global", "seed", "color"]
+const target_props = ["position", "start_position", "speed", "scale", "energy", "global", "seed", "color", "height"]
 
 proc params_to_assignments(nodes: seq[NimNode]): NimNode =
   result = new_stmt_list()
