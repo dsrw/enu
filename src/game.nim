@@ -310,14 +310,14 @@ gdobj Game of Node:
       if host_os != "macosx":
         save_world()
         self.get_tree().quit()
+    elif event.is_action_pressed("toggle_fullscreen"):
+      set_window_fullscreen not is_window_fullscreen()
     elif not state.editing:
       if event.is_action_pressed("toggle_mouse_captured"):
         state.mouse_captured = not state.mouse_captured
         self.get_tree().set_input_as_handled()
 
-      if event.is_action_pressed("toggle_fullscreen"):
-        set_window_fullscreen not is_window_fullscreen()
-      elif event.is_action_pressed("toggle_code_mode"):
+      if event.is_action_pressed("toggle_code_mode"):
         self.code_mode(restore = true)
       elif event.is_action_pressed("mode_1"):
         self.code_mode()
