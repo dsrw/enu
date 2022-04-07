@@ -35,7 +35,9 @@ proc sleep_impl(seconds = 1.0) = discard
 proc create_new*(self: Unit) = discard
 proc position*(self: Unit): Vector3 = discard
 proc local_position*(self: Unit): Vector3 = discard
-proc `position=`*(self: Unit, position: Vector3) = discard
+proc `position=impl`(self: Unit, position: Vector3) = discard
+proc `position=`*(self: Unit, position: Vector3) = self.`position=impl`(position)
+proc `position=`*(self: Unit, unit: Unit) = self.`position=impl`(unit.position)
 proc start_position*(self: Unit): Vector3 = discard
 proc speed*(self: Unit): float = discard
 proc `speed=`*(self: Unit, speed: float) = discard
