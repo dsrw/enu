@@ -9,9 +9,14 @@ include "build_code_template.nim.nimf"
 const default_color = action_colors[blue]
 
 let state = GameState.active
-var current_build*: Build
-var previous_build*: Build
-var dont_join* = false
+var
+  current_build*: Build
+  previous_build*: Build
+  dont_join* = false
+  skip_point = vec3()
+  last_point = vec3()
+  draw_normal = vec3()
+  skip_block_paint = false
 
 proc draw*(self: Build, position: Vector3, voxel: VoxelInfo)
 
@@ -174,12 +179,12 @@ proc drop_block(self: Build) =
 
 proc remove(self: Build) =
   if state.tool.value == Block:
+    skip_block_paint = true
+    draw_normal = self.target_normal
     let point = self.target_point - self.target_normal - (self.target_normal.inverse_normalized * 0.5)
+    skip_point = self.target_point - self.target_normal
+    last_point = self.target_point
     self.draw(point, (Hole, action_colors[eraser]))
-    state.local_draw_plane = self.target_point * self.target_normal
-    state.local_draw_unit_id = self.id
-    state.global_draw_plane = self.node.to_global(self.target_point) *
-                              self.node.transform.basis.xform(self.target_normal).snapped(vec3(1, 1, 1))
 
     if self.units.len == 0 and not self.chunks.any_it(it.value.any_it(it.value.color != action_colors[eraser])):
       if self.parent.is_nil:
@@ -189,11 +194,12 @@ proc remove(self: Build) =
 
 proc fire(self: Build) =
   let global_point = self.node.to_global(self.target_point)
-  state.local_draw_plane = self.target_point * self.target_normal
-  state.local_draw_unit_id = self.id
-  state.global_draw_plane = global_point * self.node.transform.basis.xform(self.target_normal).snapped(vec3(1, 1, 1))
   if state.tool.value == Block:
+    skip_block_paint = true
+    draw_normal = self.target_normal
     let point = (self.target_point + (self.target_normal * 0.5)).floor
+    skip_point = self.target_point + self.target_normal
+    last_point = self.target_point
     self.draw(point, (Manual, state.selected_color))
   elif state.tool.value == Place and state.target_block and state.bot_at(global_point).is_nil:
     let transform = Transform.init(origin = global_point)
@@ -340,14 +346,10 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
       let root = self.find_root(true)
       root.walk_tree proc(unit: Unit) = unit.flags -= Highlight
     if TargetMoved.touched:
-      let local_draw_plane = self.target_point * self.target_normal
-      let global_draw_plane = self.node.to_global(self.target_point) *
-                              self.node.transform.basis.xform(self.target_normal).snapped(vec3(1, 1, 1))
-      if (local_draw_plane == state.local_draw_plane and state.local_draw_unit_id == self.id) or
-          global_draw_plane == state.global_draw_plane:
-        state.local_draw_plane = local_draw_plane
-        state.local_draw_unit_id = self.id
-        state.global_draw_plane = global_draw_plane
+      if skip_block_paint:
+        skip_block_paint = false
+      elif state.draw_unit_id == self.id and self.target_normal == draw_normal and
+           self.target_point != skip_point and (self.target_point - last_point).length <= 5:
         if Secondary in state.input_flags:
           self.remove
         elif Primary in state.input_flags:
@@ -362,13 +364,13 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
   state.input_flags.changes:
     if Hover in self.flags:
       if Primary.added:
+        state.draw_unit_id = self.id
         self.fire
       elif Secondary.added:
+        state.draw_unit_id = self.id
         self.remove
     if Primary.removed or Secondary.removed:
-      state.local_draw_plane = vec3()
-      state.local_draw_unit_id = ""
-      state.global_draw_plane = vec3()
+      state.draw_unit_id = ""
 
   result = self
 

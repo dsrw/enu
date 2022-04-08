@@ -6,6 +6,7 @@ import core, types, states, bots, builds
 let state = GameState.active
 
 proc fire(self: Ground, append = false) =
+  state.draw_unit_id = "ground"
   var add_to {.global.}: Build
   let point = (self.target_point - vec3(0.5, 0, 0.5)).trunc
   if state.tool.value == Block:
@@ -29,12 +30,10 @@ proc init*(_: type Ground, node: Spatial): Ground =
     if Primary.added and Hover in self.flags:
       self.fire(append = false)
     if Primary.removed or Secondary.removed:
-      state.local_draw_plane = vec3()
-      state.local_draw_unit_id = ""
-      state.global_draw_plane = vec3()
+      state.draw_unit_id = ""
 
   self.flags.changes:
-    if Primary in state.input_flags and state.global_draw_plane == vec3():
+    if Primary in state.input_flags and state.draw_unit_id == "ground":
       if change.item == TargetMoved:
         self.fire(append = true)
 
