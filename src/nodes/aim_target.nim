@@ -80,6 +80,8 @@ gdobj AimTarget of Sprite3D:
           unit.flags.touch TargetMoved
         else:
           unit.flags -= TargetMoved
+    else:
+      state.skip_block_paint = false
 
   method on_collider_exiting(collider: Spatial) =
     if collider.model == self.target_model:

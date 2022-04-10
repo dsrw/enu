@@ -51,6 +51,7 @@ type
     paused*: bool
     frame_count*: int
     reloading*: bool
+    skip_block_paint*: bool
 
   Model* = ref object of RootObj
     target_point*: Vector3

@@ -1,4 +1,4 @@
-import std / [hashes, tables, sets, options, sequtils, math, wrapnils, monotimes, sugar]
+import std / [hashes, tables, sets, options, sequtils, math, wrapnils, monotimes, sugar, deques]
 import pkg / [model_citizen, print]
 import godotapi / spatial
 import core, models / [types, states, bots, colors, units]
@@ -14,9 +14,9 @@ var
   previous_build*: Build
   dont_join* = false
   skip_point = vec3()
-  last_point = vec3()
+  last_points: Deque[Vector3]
+  last_touched_points: Deque[Vector3]
   draw_normal = vec3()
-  skip_block_paint = false
 
 proc draw*(self: Build, position: Vector3, voxel: VoxelInfo)
 
@@ -177,13 +177,18 @@ proc drop_block(self: Build) =
     var p = self.draw_transform.origin.snapped(vec3(1, 1, 1))
     self.draw(p, (Computed, self.color))
 
+proc add_point(self: var Deque[Vector3], point: Vector3, length = 10) =
+  self.add_first point
+  while self.len > length:
+    self.pop_last
+
 proc remove(self: Build) =
   if state.tool.value == Block:
-    skip_block_paint = true
+    state.skip_block_paint = true
     draw_normal = self.target_normal
     let point = self.target_point - self.target_normal - (self.target_normal.inverse_normalized * 0.5)
     skip_point = self.target_point - self.target_normal
-    last_point = self.target_point
+    last_points.add_point self.target_point, 5
     self.draw(point, (Hole, action_colors[eraser]))
 
     if self.units.len == 0 and not self.chunks.any_it(it.value.any_it(it.value.color != action_colors[eraser])):
@@ -195,11 +200,11 @@ proc remove(self: Build) =
 proc fire(self: Build) =
   let global_point = self.node.to_global(self.target_point)
   if state.tool.value == Block:
-    skip_block_paint = true
+    state.skip_block_paint = true
     draw_normal = self.target_normal
     let point = (self.target_point + (self.target_normal * 0.5)).floor
     skip_point = self.target_point + self.target_normal
-    last_point = self.target_point
+    last_points.add_point self.target_point, 5
     self.draw(point, (Manual, state.selected_color))
   elif state.tool.value == Place and state.target_block and state.bot_at(global_point).is_nil:
     let transform = Transform.init(origin = global_point)
@@ -346,14 +351,22 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
       let root = self.find_root(true)
       root.walk_tree proc(unit: Unit) = unit.flags -= Highlight
     if TargetMoved.touched:
-      if skip_block_paint:
-        skip_block_paint = false
+      if state.skip_block_paint:
+        state.skip_block_paint = false
       elif state.draw_unit_id == self.id and self.target_normal == draw_normal and
-           self.target_point != skip_point and (self.target_point - last_point).length <= 5:
+           self.target_point != skip_point and last_points.any_it((self.target_point - it).length <= 6):
+        last_touched_points.clear
         if Secondary in state.input_flags:
           self.remove
         elif Primary in state.input_flags:
           self.fire
+      elif state.draw_unit_id != "ground" and (Secondary in state.input_Flags or Primary in state.input_flags):
+        last_touched_points.add_point self.target_point
+        if last_touched_points.len >= 5 and last_touched_points.all_it((self.target_point - it).length <= 5):
+          last_points.add_point self.target_point, 1
+          last_touched_points.clear
+          draw_normal = self.target_normal
+          state.draw_unit_id = self.id
 
     if change.item in {TargetMoved, Hover} and state.tool.value == Place:
       if self.target_normal == UP:
@@ -364,9 +377,13 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
   state.input_flags.changes:
     if Hover in self.flags:
       if Primary.added:
+        last_points.clear
+        last_touched_points.clear
         state.draw_unit_id = self.id
         self.fire
       elif Secondary.added:
+        last_points.clear
+        last_touched_points.clear
         state.draw_unit_id = self.id
         self.remove
     if Primary.removed or Secondary.removed:
