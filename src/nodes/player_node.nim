@@ -57,7 +57,7 @@ gdobj PlayerNode of KinematicBody:
     collision_shape: CollisionShape
     command_timer = 0.0
     unit*: Player
-    velocity_zid: ZID
+    velocity_zid, rotation_zid: ZID
     boosted = false
 
   proc flying(): bool =
@@ -127,8 +127,8 @@ gdobj PlayerNode of KinematicBody:
       if added:
         self.transform = change.item
 
-    self.unit.rotation.changes:
-      if touched:
+    self.rotation_zid = self.unit.rotation.changes:
+      if added or touched:
         self.camera_rig.rotation = vec3(0, deg_to_rad change.item, 0)
 
     self.velocity_zid = self.unit.velocity.changes:
@@ -159,6 +159,8 @@ gdobj PlayerNode of KinematicBody:
       var r = self.camera_rig.rotation
       r.y = wrap(r.y, -PI, PI)
       self.camera_rig.rotation = r
+      self.unit.rotation.pause(self.rotation_zid):
+        self.unit.rotation.value = rad_to_deg r.y
       let ray_length = if state.tool.value == Code: 200.0 else: 100.0
       if not state.mouse_captured:
         let

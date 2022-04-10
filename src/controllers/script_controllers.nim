@@ -103,12 +103,8 @@ proc active_unit(self: ScriptController): Unit = self.active_unit
 
 proc begin_turn(self: ScriptController, unit: Unit, direction: Vector3, degrees: float, move_mode: int): string =
   assert not degrees.is_nan
-  var degrees = degrees
-  var direction = direction
+  var degrees = floor_mod(degrees, 360)
   let ctx = self.active_unit.script_ctx
-  if degrees < 0:
-    degrees = degrees * -1
-    direction = direction * -1
   ctx.callback = unit.on_begin_turn(direction, degrees, move_mode)
   if not ctx.callback.is_nil:
     ctx.pause()
@@ -233,12 +229,15 @@ proc rotation(self: Unit): float =
   proc nm(v: Vector3): Vector3 =
     vec3(v.x.nm, v.y.nm, v.z.nm)
 
-  let e = self.transform.basis.orthonormalized.get_euler
+  if self of Player:
+    result = Player(self).rotation.value
+  else:
+    let e = self.transform.basis.orthonormalized.get_euler
 
-  let n = e.nm
-  let v = vec3(nm(n.x).rad_to_deg, nm(n.y).rad_to_deg, nm(n.z).rad_to_deg)
-  let m = if v.z > 0: 1.0 else: -1.0
-  result = (v.x - v.y) * m
+    let n = e.nm
+    let v = vec3(nm(n.x).rad_to_deg, nm(n.y).rad_to_deg, nm(n.z).rad_to_deg)
+    let m = if v.z > 0: 1.0 else: -1.0
+    result = (v.x - v.y) * m
 
 proc `rotation=`(self: Unit, degrees: float) =
   var t = Transform.init
