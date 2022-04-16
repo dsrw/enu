@@ -258,7 +258,6 @@ proc seen(self: ScriptController, target: Unit, distance: float): bool =
   if unit of Build:
     let ray = Build(unit).sight_ray
     let node = BuildNode(Build(unit).node)
-    let unit_position = unit.node.to_local(unit.position)
     let target_position = unit.node.to_local(target.position)
     let angle = target_position - ray.transform.origin
     if angle.length <= distance and angle.normalized.z <= -0.3:
@@ -305,10 +304,10 @@ proc initial_position(self: Build): Vector3 =
   self.initial_position
 
 proc save(self: Build, name: string) =
-  self.save_points[name] = (self.transform.value, self.color, self.drawing)
+  self.save_points[name] = (self.draw_transform, self.color, self.drawing)
 
 proc restore(self: Build, name: string) =
-  (self.transform.value, self.color, self.drawing) = self.save_points[name]
+  (self.draw_transform, self.color, self.drawing) = self.save_points[name]
 
 proc reset(self: Build, clear: bool) =
   if clear:
