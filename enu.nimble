@@ -179,7 +179,7 @@ task dist, "Build distribution":
     exec &"cp {release_bin} dist/Enu.app/Contents/MacOS/Enu"
     let pck_path = this_dir() & "/dist/Enu.app/Contents/Resources/Enu.pck"
     exec &"{godot_bin} --path app --export-pack \"mac\" " & pck_path
-    exec "nimble build -d:release -d:dist"
+    exec "nimble build -d:release -d:danger -d:dist"
     exec "cp app/_dlls/enu.dylib dist/Enu.app/Contents/Frameworks"
     exec "cp -r vmlib dist/Enu.app/Contents/Resources/vmlib"
 
@@ -209,7 +209,7 @@ task dist, "Build distribution":
     exec &"rcedit {root}/enu.exe --set-icon media/enu_icon.ico"
     let pck_path = &"{this_dir()}/{root}/enu.pck"
     exec &"{godot_bin} --path app --export-pack \"win\" " & pck_path
-    exec "nimble build -d:release -d:dist"
+    exec "nimble build -d:release -d:danger -d:dist"
     cp_file "app/_dlls/enu.dll", root & "/enu.dll"
     #find_and_copy_dlls find_exe("gcc").parent_dir, root, gcc_dlls
     find_and_copy_dlls get_current_compiler_exe().parent_dir, root, nim_dlls

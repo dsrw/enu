@@ -3,7 +3,8 @@ import pkg / [godot, model_citizen]
 import godotapi / [input, input_event, gd_os, node, scene_tree,
                    packed_scene, sprite, control, viewport, viewport_texture,
                    performance, label, theme, dynamic_font, resource_loader, main_loop,
-                   gd_os, project_settings, input_map, input_event, input_event_action]
+                   gd_os, project_settings, input_map, input_event, input_event_action,
+                   input_event_key, global_constants]
 import core, globals, controllers / [node_controllers, script_controllers], models / serializers
 
 type
@@ -180,7 +181,7 @@ gdobj Game of Node:
       ( self.find_node("ThemeHolder").as(Container),
         load("res://themes/AppleTheme.tres").as(Theme))
     else:
-      let node = self.find_node("Panels").as(Container)
+      let node = self.find_node("LeftPanel").as(Container)
       (node, node.theme)
     let
       font = theme.default_font.as(DynamicFont)
@@ -288,7 +289,11 @@ gdobj Game of Node:
     state.reloading = false
 
   method unhandled_input*(event: InputEvent) =
-    if event.is_action_pressed("next_world"):
+    # NOTE: alt+enter isn't being picked up on windows if the editor is open. Needs investigation.
+    if event.is_action_pressed("toggle_fullscreen") or (host_os == "windows" and state.command_mode and
+       state.editing and event of InputEventKey and event.as(InputEventKey).scancode == KEY_ENTER):
+      set_window_fullscreen not is_window_fullscreen()
+    elif event.is_action_pressed("next_world"):
       self.switch_world(+1)
     elif event.is_action_pressed("prev_world"):
       self.switch_world(-1)
@@ -310,8 +315,6 @@ gdobj Game of Node:
       if host_os != "macosx":
         save_world()
         self.get_tree().quit()
-    elif event.is_action_pressed("toggle_fullscreen"):
-      set_window_fullscreen not is_window_fullscreen()
     elif not state.editing:
       if event.is_action_pressed("toggle_mouse_captured"):
         state.mouse_captured = not state.mouse_captured

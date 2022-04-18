@@ -25,10 +25,9 @@ include script_controllers/bindings
 const
   advance_step* = 0.5.seconds
   error_code = some(99)
-  script_timeout = 12.0.seconds
+  script_timeout = 30.0.seconds
 
 let state = GameState.active
-let retry = (ref VMQuit)(msg: "magic_retry")
 
 proc map_unit(self: ScriptController, unit: Unit, pnode: PNode) =
   self.unit_map[pnode] = unit
@@ -326,12 +325,9 @@ proc `playing=`*(self:Unit, value: bool) =
 # End of bindings
 
 proc script_error(self: ScriptController, unit: Unit, e: ref VMQuit) =
-  if e == retry:
-    unit.code.touch unit.code.value
-  else:
-    state.logger("err", e.msg)
-    unit.ensure_visible
-    state.console.show_errors.value = true
+  state.logger("err", e.msg)
+  unit.ensure_visible
+  state.console.show_errors.value = true
 
 proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
   let ctx = unit.script_ctx
@@ -402,7 +398,7 @@ proc load_script(self: ScriptController, unit: Unit, timeout = script_timeout) =
   except VMQuit as e:
     ctx.running = false
     self.interpreter.reset_module(unit.script_ctx.module_name)
-    if self.retry_failures:
+    if self.retry_failures and e.kind != Timeout:
       self.failed.add (unit, e)
     else:
       self.script_error(unit, e)
@@ -558,7 +554,9 @@ proc init*(T: type ScriptController): ScriptController =
     let info = c.debug[pc]
     let now = get_mono_time()
     if ctx.timeout_at < now:
-      raise (ref VMQuit)(info: info, msg: &"Timeout. Script {ctx.script} executed for too long without yielding: {now - ctx.timeout_at}")
+      let duration = script_timeout
+      raise (ref VMQuit)(info: info, kind: Timeout,
+        msg: &"Timeout. Script {ctx.script} executed for too long without yielding: {duration}")
 
     if ctx.previous_line != info:
       let config = interpreter.config

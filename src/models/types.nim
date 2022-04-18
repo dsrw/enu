@@ -155,9 +155,12 @@ type
     dependents*: HashSet[string]
 
   VMError* = object of CatchableError
+  QuitKind* = enum
+    Unknown, Timeout
 
   VMQuit* = object of VMError
     info*: TLineInfo
+    kind*: QuitKind
     location*: string
 
   VMPause* = object of CatchableError
