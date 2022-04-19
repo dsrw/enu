@@ -310,12 +310,6 @@ gdobj PlayerNode of KinematicBody:
         self.pan_delta = 0
         get_game().prev_action()
 
-    if event.is_action_pressed("next"):
-      get_game().next_action()
-
-    if event.is_action_pressed("previous"):
-      get_game().prev_action()
-
     let ray = self.current_raycast
     if event.is_action_pressed("fire"):
       if not state.editing:

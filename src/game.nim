@@ -1,10 +1,9 @@
-import std / [monotimes, times, os, jsonutils, json, math, bitops]
+import std / [monotimes, times, os, jsonutils, json, math]
 import pkg / [godot, model_citizen]
 import godotapi / [input, input_event, gd_os, node, scene_tree,
                    packed_scene, sprite, control, viewport, viewport_texture,
                    performance, label, theme, dynamic_font, resource_loader, main_loop,
-                   gd_os, project_settings, input_map, input_event, input_event_action,
-                   input_event_key, global_constants]
+                   project_settings, input_map, input_event_action, input_event_key, global_constants]
 import core, globals, controllers / [node_controllers, script_controllers], models / serializers
 
 type
@@ -74,7 +73,6 @@ gdobj Game of Node:
     s.x = vp.x / 2
     p.rect_size = s
 
-
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
       save_world()
@@ -121,7 +119,6 @@ gdobj Game of Node:
   proc init* =
     state.nodes.game = self
     let
-      work_dir = get_user_data_dir()
       screen_scale = if host_os == "macos":
         get_screen_scale(-1)
       else:
@@ -152,8 +149,8 @@ gdobj Game of Node:
 
     self.add_platform_input_actions()
 
-    let exe_dir = parent_dir get_executable_path()
     when defined(dist):
+      let exe_dir = parent_dir get_executable_path()
       if host_os == "macosx":
         config.lib_dir = join_path(exe_dir.parent_dir, "Resources", "vmlib")
       elif host_os == "windows":
@@ -163,6 +160,27 @@ gdobj Game of Node:
 
     self.node_controller = NodeController.init
     self.script_controller = ScriptController.init
+
+  proc set_font_size(size: int) =
+    var user_config = self.load_user_config()
+    config.font_size = size
+    user_config.font_size = some(size)
+    self.save_user_config(user_config)
+
+    let (theme_holder, theme) = if hostOS == "macosx":
+      (self.find_node("ThemeHolder").as(Container),
+       load("res://themes/AppleTheme.tres").as(Theme))
+    else:
+      let node = self.find_node("LeftPanel").as(Container)
+      (node, node.theme)
+    let
+      font = theme.default_font.as(DynamicFont)
+      bold_font = theme.get_font("bold_font", "RichTextLabel")
+                        .as(DynamicFont)
+
+    font.size = size
+    bold_font.size = size
+    theme_holder.theme = theme
 
   method ready* =
     state.nodes.data = state.nodes.game.find_node("Level").get_node("data")
@@ -177,20 +195,7 @@ gdobj Game of Node:
     self.script_controller.load_player()
     load_world(self.script_controller)
     self.get_tree().set_auto_accept_quit(false)
-    let (theme_holder, theme) = if hostOS == "macosx":
-      ( self.find_node("ThemeHolder").as(Container),
-        load("res://themes/AppleTheme.tres").as(Theme))
-    else:
-      let node = self.find_node("LeftPanel").as(Container)
-      (node, node.theme)
-    let
-      font = theme.default_font.as(DynamicFont)
-      bold_font = theme.get_font("bold_font", "RichTextLabel")
-                        .as(DynamicFont)
-
-    font.size = config.font_size
-    bold_font.size = config.font_size
-    theme_holder.theme = theme
+    self.set_font_size config.font_size
 
     self.reticle = self.find_node("Reticle").as(Control)
     self.stats = self.find_node("stats").as(Label)
@@ -289,11 +294,23 @@ gdobj Game of Node:
     state.reloading = false
 
   method unhandled_input*(event: InputEvent) =
-    # NOTE: alt+enter isn't being picked up on windows if the editor is open. Needs investigation.
+
+    if state.editing or state.console.visible.value:
+      if event.is_action_pressed("zoom_in"):
+        self.set_font_size config.font_size + 1
+      elif event.is_action_pressed("zoom_out"):
+        self.set_font_size config.font_size - 1
+    else:
+      if event.is_action_pressed("next"):
+        self.next_action()
+
+      if event.is_action_pressed("previous"):
+       self.prev_action()
+        # NOTE: alt+enter isn't being picked up on windows if the editor is open. Needs investigation.
     if event.is_action_pressed("toggle_fullscreen") or (host_os == "windows" and state.command_mode and
        state.editing and event of InputEventKey and event.as(InputEventKey).scancode == KEY_ENTER):
       set_window_fullscreen not is_window_fullscreen()
-    elif event.is_action_pressed("next_world"):
+    elif event.is_action_pressed("next_world"):    
       self.switch_world(+1)
     elif event.is_action_pressed("prev_world"):
       self.switch_world(-1)
