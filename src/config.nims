@@ -6,11 +6,12 @@
 --define:nimPreviewHashRef
 --experimental:dynamicBindSym
 #--define:nimLeakDetector
---define:enuHacks
 
 if project_name() == "enu":
   --app:lib
   --noMain
 
+switch("warning", "GcUnsafe2:off")
+switch("warning", "LockLevel:off")
 switch("path", this_dir())
 switch("path", this_dir() & "/../generated")

@@ -1,4 +1,4 @@
-import std / [tables, os, bitops]
+import std / [tables, bitops]
 import pkg/godot except print, Color
 import pkg / [print, model_citizen]
 import godotapi / [node, voxel_terrain, voxel_mesher_blocky, voxel_tool, voxel_library, shader_material,
