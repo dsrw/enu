@@ -37,7 +37,7 @@ requires "nim 1.6.4",
 
 proc gen: string =
   if generator_path == "":
-    exec &"nimble c {generator}"
+    exec &"nimble c -d:ssl {generator}"
     generator_path = find_exe generator
   generator_path
 

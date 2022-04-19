@@ -1,13 +1,16 @@
 #!/usr/bin/env nim r --warnings:off --hints:off
 # bits of the build process that don't work from NimScript
 
-import godotapigen, os, cpuinfo, cligen, strformat,
-       compiler/nimeval
+import std / [os, cpuinfo, strformat, httpclient]
+import pkg / [compiler/nimeval, cligen]
+import godotapigen
 
 include "../installer/export_presets.cfg.nimf"
 include "../installer/Info.plist.nimf"
 
-const STDLIB = find_nim_std_lib_compile_time()
+const 
+  stdlib = find_nim_std_lib_compile_time()
+  macros_url = "https://raw.githubusercontent.com/dsrw/Nim/v1.6.4-enu/lib/core/macros.nim"
 
 proc core_count = echo count_processors()
 
@@ -26,14 +29,18 @@ proc build_last_test(debug = false) =
   quit exec_shell_cmd(cmd)
 
 proc copy_stdlib(destination: string) =
+  var client = new_http_client()
+  let macros_source = client.get_content(macros_url)
   remove_dir destination
   create_dir destination
   for path in @["core", "pure", "std", "fusion", "system"]:
-    copy_dir join_path(STDLIB, path), join_path(destination, path)
+    copy_dir join_path(stdlib, path), join_path(destination, path)
 
   for file in @["system.nim", "stdlib.nimble"]:
-    copy_file join_path(STDLIB, file),
+    copy_file join_path(stdlib, file),
               join_path(destination, file)
+
+  write_file destination / "core" / "macros.nim", macros_source
 
 proc run_tests =
   discard
