@@ -304,3 +304,6 @@ proc moveToward*(vFrom, to: Vector3, delta: float32): Vector3 =
 
 converter vec3_to_bool*(v: Vector3): bool =
   v != vec3(0, 0, 0)
+
+proc init*[T: Exception](kind: type[T], message: string, parent: ref Exception = nil): ref Exception =
+  (ref kind)(msg: message, parent: parent)

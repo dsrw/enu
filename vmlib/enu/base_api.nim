@@ -17,7 +17,7 @@ proc action_running(self: Unit): bool = discard
 proc `action_running=`(self: Unit, value: bool) = discard
 proc yield_script(self: Unit) = discard
 proc begin_move(self: Unit, direction: Vector3, steps: float, move_mode: int) = discard
-proc begin_turn(self: Unit, axis: Vector3, steps: float, move_mode: int) = discard
+proc begin_turn(self: Unit, axis: Vector3, steps: float, lean: bool, move_mode: int) = discard
 proc wake*(self: Unit) = discard
 
 proc link_dependency_impl(dep: Unit) = discard
@@ -222,8 +222,8 @@ proc angle_to(self: Unit, enu_target: Unit): float =
   let rot = self.rotation
   result = -(n - rot)
 
-proc turn*(self: Unit, direction: Directions, degrees = 90.0, move_mode: int) =
-  let dir = case direction:
+proc vec3(direction: Directions): Vector3 =
+  result = case direction:
     of Directions.forward, Directions.f: FORWARD
     of Directions.back, Directions.b: BACK
     of Directions.left, Directions.l: LEFT
@@ -231,7 +231,12 @@ proc turn*(self: Unit, direction: Directions, degrees = 90.0, move_mode: int) =
     of Directions.up, Directions.u: UP
     of Directions.down, Directions.d: DOWN
 
-  self.begin_turn(dir, degrees, move_mode)
+proc turn*(self: Unit, direction: Directions, degrees = 90.0, move_mode: int) =
+  let dir = vec3(direction)
+  if dir in [BACK, FORWARD]:
+    raise IndexDefect.init("You can't turn forward or back")
+  
+  self.begin_turn(dir, degrees, false, move_mode)
 
 proc turn*(self: Unit, degrees: float, move_mode: int) =
   let degrees = floor_mod(degrees, 360)
@@ -265,6 +270,37 @@ template turn*(self: Unit, degrees: float) =
 
 template t*(self: Unit, degrees: float) =
   turn self, degrees
+
+proc lean*(self: Unit, direction: Directions, degrees = 90.0, move_mode: int) =
+  let dir = vec3(direction)
+  if dir in [UP, DOWN]:
+    raise IndexDefect.init("You can't lean up or down")
+  
+  self.begin_turn(dir, degrees, true, move_mode)
+
+proc lean*(self: Unit, degrees: float, move_mode: int) =
+  let degrees = floor_mod(degrees, 360)
+  if degrees <= 180:
+    self.lean right, degrees, move_mode
+  else:
+    let d = 180 - (degrees - 180)
+    self.lean left, 180 - (degrees - 180), move_mode
+
+template lean*(self: Unit, direction: Directions, degrees = 90.0) =
+  mixin wait
+  wait lean(self, direction, degrees, move_mode)
+
+template lean*(direction: Directions, degrees = 90.0) =
+  mixin wait
+  wait enu_target.lean(direction, degrees, move_mode)
+
+template lean*(degrees: float) =
+  mixin wait
+  wait enu_target.lean(degrees, move_mode)
+
+template lean*(self: Unit, degrees: float) =
+  mixin wait
+  wait self.lean(degrees, move_mode)
 
 template move*[T: Unit](new_enu_target: T) =
   enu_target = new_enu_target

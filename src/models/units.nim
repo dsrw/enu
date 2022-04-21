@@ -45,7 +45,7 @@ proc data_file*(self: Unit): string =
 method on_begin_move*(self: Unit, direction: Vector3, steps: float, move_mode: int): Callback {.base.} =
   quit "override me"
 
-method on_begin_turn*(self: Unit, direction: Vector3, degrees: float, move_mode: int): Callback {.base.} =
+method on_begin_turn*(self: Unit, direction: Vector3, degrees: float, lean: bool, move_mode: int): Callback {.base.} =
   quit "override me"
 
 method clone*(self: Unit, clone_to: Unit, id: string): Unit {.base.} =

@@ -26,7 +26,7 @@ method on_begin_move*(self: Bot, direction: Vector3, steps: float, moving_mode: 
       self.velocity.touch(moving * self.speed)
       return true
 
-method on_begin_turn*(self: Bot, axis: Vector3, degrees: float, move_mode: int): Callback =
+method on_begin_turn*(self: Bot, axis: Vector3, degrees: float, lean: bool, move_mode: int): Callback =
   # move mode param is ignored
   let degrees = degrees * -axis.x
   var duration = 0.0

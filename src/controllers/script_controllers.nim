@@ -100,11 +100,11 @@ proc exec_instance(self: ScriptController, unit: Unit) =
 
 proc active_unit(self: ScriptController): Unit = self.active_unit
 
-proc begin_turn(self: ScriptController, unit: Unit, direction: Vector3, degrees: float, move_mode: int): string =
+proc begin_turn(self: ScriptController, unit: Unit, direction: Vector3, degrees: float, lean: bool, move_mode: int): string =
   assert not degrees.is_nan
   var degrees = floor_mod(degrees, 360)
   let ctx = self.active_unit.script_ctx
-  ctx.callback = unit.on_begin_turn(direction, degrees, move_mode)
+  ctx.callback = unit.on_begin_turn(direction, degrees, lean, move_mode)
   if not ctx.callback.is_nil:
     ctx.pause()
 

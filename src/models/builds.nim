@@ -251,8 +251,11 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
         self.drop_block()
       result = count.float < steps
 
-method on_begin_turn*(self: Build, axis: Vector3, degrees: float, move_mode: int): Callback =
-  let map = {LEFT: UP, RIGHT: DOWN, UP: RIGHT, DOWN: LEFT}.to_table
+method on_begin_turn*(self: Build, axis: Vector3, degrees: float, lean: bool, move_mode: int): Callback =
+  let map = if lean:
+    {LEFT: BACK, RIGHT: FORWARD, BACK: RIGHT, FORWARD: LEFT}.to_table
+  else:
+    {LEFT: UP, RIGHT: DOWN, UP: RIGHT, DOWN: LEFT}.to_table
   let axis = map[axis]
   let move = self.is_moving(move_mode)
   if move:
