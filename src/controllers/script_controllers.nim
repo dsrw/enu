@@ -197,11 +197,11 @@ proc scale(self: Unit): float =
 proc `scale=`(self: Unit, scale: float) =
   self.scale.value = scale
 
-proc energy(self: Unit): float =
-  self.energy.value
+proc glow(self: Unit): float =
+  self.glow.value
 
-proc `energy=`(self: Unit, energy: float) =
-  self.energy.value = energy
+proc `glow=`(self: Unit, glow: float) =
+  self.glow.value = glow
 
 proc velocity(self: Unit): Vector3 =
   self.velocity.value
@@ -577,12 +577,13 @@ proc init*(T: type ScriptController): ScriptController =
   result = controller
   result.watch_units state.units
 
-  result.bind_procs "base_api", begin_turn, begin_move, register_active, echo_console, new_instance,
-                    exec_instance, action_running, `action_running=`, yield_script, hit,
-                    sleep_impl, exit, global, `global=`, position, `position=impl`, local_position, rotation, `rotation=`,
-                    energy, `energy=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`, active_unit, id,
-                    color, `color=`, seen, start_position, wake, frame_count, link_dependency_impl,
-                    write_stack_trace
+  result.bind_procs "base_bridge", register_active, echo_console, new_instance, exec_instance,  hit,
+                    exit, global, `global=`, position,  local_position, rotation, `rotation=`, id,
+                    glow, `glow=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`, active_unit,
+                    color, `color=`, seen, start_position, wake, frame_count, write_stack_trace
+
+  result.bind_procs "base_bridge_private", link_dependency_impl, action_running, `action_running=`, yield_script, 
+                    begin_turn, begin_move, sleep_impl, `position=impl`
 
   result.bind_procs "bots", play
 

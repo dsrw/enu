@@ -71,7 +71,7 @@ type
     units*: ZenSeq[Unit]
     start_transform*: Transform
     scale*: ZenValue[float]
-    energy*: ZenValue[float]
+    glow*: ZenValue[float]
     speed*: float
     code*: ZenValue[string]
     script_ctx*: ScriptCtx

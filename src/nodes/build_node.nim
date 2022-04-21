@@ -6,8 +6,8 @@ import godotapi / [node, voxel_terrain, voxel_mesher_blocky, voxel_tool, voxel_l
 import models / [types, builds, colors, units], globals
 
 const
-  highlight_energy = 1.0
-  default_energy = 0.0
+  highlight_glow = 1.0
+  default_glow = 0.0
   empty_zid: ZID = 0
 
 gdobj BuildNode of VoxelTerrain:
@@ -28,7 +28,7 @@ gdobj BuildNode of VoxelTerrain:
           break
         else:
           let m = m.duplicate.as(ShaderMaterial)
-          m.set_shader_param("emission_energy", default_energy.to_variant)
+          m.set_shader_param("emission_energy", default_glow.to_variant)
           self.unit.shared.materials.add(m)
 
     for i, material in self.unit.shared.materials:
@@ -45,12 +45,12 @@ gdobj BuildNode of VoxelTerrain:
     for loc, info in voxels:
       self.draw(loc, info.color)
 
-  proc set_energy(energy: float) =
+  proc set_glow(glow: float) =
     let library = self.mesher.as(VoxelMesherBlocky).library
     for i in 0..<library.voxel_count.int:
       let m = self.get_material(i).as(ShaderMaterial)
       if not m.is_nil:
-        m.set_shader_param("emission_energy", energy.to_variant)
+        m.set_shader_param("emission_energy", glow.to_variant)
 
   proc track_chunk(chunk_id: Vector3) =
     if chunk_id in self.unit.chunks:
@@ -75,9 +75,9 @@ gdobj BuildNode of VoxelTerrain:
     self.active_chunks.del(chunk_id)
 
   proc track_changes() =
-    self.unit.energy.changes:
+    self.unit.glow.changes:
       if added:
-        self.set_energy(change.item)
+        self.set_glow(change.item)
 
     self.bounds = self.unit.bounds.value
     self.unit.bounds.changes:
@@ -94,9 +94,9 @@ gdobj BuildNode of VoxelTerrain:
 
     self.unit.flags.changes:
       if Highlight.added:
-        self.set_energy highlight_energy
+        self.set_glow highlight_glow
       elif Highlight.removed:
-        self.set_energy self.unit.energy.value
+        self.set_glow self.unit.glow.value
 
     self.unit.scale.changes:
       if added:

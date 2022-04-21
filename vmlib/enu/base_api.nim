@@ -1,59 +1,15 @@
 import std / [strutils, math, importutils]
 import random except rand
-import types, state_machine
+import types, state_machine, base_bridge, base_bridge_private
 
-proc echo_console*(msg: string) = discard
+export base_bridge
 
-# NOTE: overridden by ScriptController. Only for tests.
-var current_active_unit: Unit
-proc register_active*(self: Unit) = current_active_unit = self
-proc active_unit*(): Unit = current_active_unit
+proc `position=`*(self: Unit, position: Vector3) = self.`position=impl`(position)
+proc `position=`*(self: Unit, unit: Unit) = self.`position=impl`(unit.position)
 
-proc write_stack_trace*() = discard
-proc new_instance*(src, dest: Unit) = discard
-proc exec_instance*(self: Unit) = discard
-
-proc action_running(self: Unit): bool = discard
-proc `action_running=`(self: Unit, value: bool) = discard
-proc yield_script(self: Unit) = discard
-proc begin_move(self: Unit, direction: Vector3, steps: float, move_mode: int) = discard
-proc begin_turn(self: Unit, axis: Vector3, steps: float, lean: bool, move_mode: int) = discard
-proc wake*(self: Unit) = discard
-
-proc link_dependency_impl(dep: Unit) = discard
 proc link_dependency*(dep: Unit) =
   if not dep.is_nil:
     link_dependency_impl(dep)
-
-proc link_dependency*(dep: not Unit) = discard
-
-# API
-proc frame_count*(): int = discard
-proc id*(self: Unit): string = discard
-proc exit*(exit_code = 0, msg = "") = discard
-proc sleep_impl(seconds = 1.0) = discard
-proc create_new*(self: Unit) = discard
-proc position*(self: Unit): Vector3 = discard
-proc local_position*(self: Unit): Vector3 = discard
-proc `position=impl`(self: Unit, position: Vector3) = discard
-proc `position=`*(self: Unit, position: Vector3) = self.`position=impl`(position)
-proc `position=`*(self: Unit, unit: Unit) = self.`position=impl`(unit.position)
-proc start_position*(self: Unit): Vector3 = discard
-proc speed*(self: Unit): float = discard
-proc `speed=`*(self: Unit, speed: float) = discard
-proc scale*(self: Unit): float = discard
-proc `scale=`*(self: Unit, scale: float) = discard
-proc energy*(self: Unit): float = discard
-proc `energy=`*(self: Unit, energy: float) = discard
-proc global*(self: Unit): bool = discard
-proc `global=`*(self: Unit, global: bool) = discard
-proc rotation*(self: Unit): float = discard
-proc `rotation=`*(self: Unit, degrees: float) = discard
-proc hit*(self: Unit, node: Unit): Vector3 = discard
-proc `velocity=`(self: Unit, velocity: Vector3) = discard
-proc velocity(self: Unit): Vector3 = discard
-proc color*(self: Unit): Colors = discard
-proc `color=`*(self: Unit, color: Colors) = discard
 
 proc `seed=`*(self: Unit, seed: int) =
   private_access Unit
@@ -241,10 +197,10 @@ proc turn*(self: Unit, direction: Directions, degrees = 90.0, move_mode: int) =
 proc turn*(self: Unit, degrees: float, move_mode: int) =
   let degrees = floor_mod(degrees, 360)
   if degrees <= 180:
-    self.turn right, degrees, move_mode
+    self.turn Directions.right, degrees, move_mode
   else:
     let d = 180 - (degrees - 180)
-    self.turn left, 180 - (degrees - 180), move_mode
+    self.turn Directions.left, 180 - (degrees - 180), move_mode
 
 template turn*(self: Unit, direction: Directions, degrees = 90.0) =
   mixin wait
@@ -281,10 +237,10 @@ proc lean*(self: Unit, direction: Directions, degrees = 90.0, move_mode: int) =
 proc lean*(self: Unit, degrees: float, move_mode: int) =
   let degrees = floor_mod(degrees, 360)
   if degrees <= 180:
-    self.lean right, degrees, move_mode
+    self.lean Directions.right, degrees, move_mode
   else:
     let d = 180 - (degrees - 180)
-    self.lean left, 180 - (degrees - 180), move_mode
+    self.lean Directions.left, 180 - (degrees - 180), move_mode
 
 template lean*(self: Unit, direction: Directions, degrees = 90.0) =
   mixin wait

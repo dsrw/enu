@@ -8,7 +8,7 @@ proc initial_position(self: Build): Vector3 = discard
 proc home*(self: Build) =
   self.rotation = 0
   self.scale = 1
-  self.energy = 0
+  self.glow = 0
   self.forward self.position.z - self.start_position.z, 2
   self.left self.position.x - self.start_position.x, 2
   self.down self.position.y - self.start_position.y, 2

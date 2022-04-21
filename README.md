@@ -249,9 +249,9 @@ as nothing will actually move, so switching to move mode with a speed of 0 will 
 
 Sets the scale/size of a unit. `me` by default.
 
-## `energy/energy=`
+## `glow/glow=`
 
-Specifies the "glow" of a unit. `me` by default. Currently does nothing for bots, but will in the future.
+Specifies the glow/brightness of a unit. `me` by default. Currently does nothing for bots, but will in the future.
 
 ## `global/global=`
 

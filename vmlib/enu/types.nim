@@ -28,8 +28,6 @@ type
   Colors* = enum
     eraser, blue, red, green, black, white, brown
 
-  Energy* = range[0.0..100.0]
-
   PlayerType* = ref object of Unit
 
   Context* = ref object
@@ -85,8 +83,7 @@ proc stepify*(value, step: float32): float32 {.inline, noinit.} =
 
 # Vector3 math. https://github.com/pragmagic/godot-nim/blob/7fb22f69af92aa916e56dba14ba3938fc7fa1dd1/godot/core/vector3.nim
 
-proc hash*(self: Vector3): Hash {.inline, noinit.} =
-  !$(self.x.hash() !& self.y.hash() !& self.z.hash())
+
 
 proc `+`*(a, b: Vector3): Vector3 {.inline.} =
   result.x = a.x + b.x

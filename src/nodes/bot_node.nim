@@ -32,7 +32,7 @@ gdobj BotNode of KinematicBody:
     self.set_default_material()
 
   proc track_changes() =
-    self.unit.energy.changes:
+    self.unit.glow.changes:
       if added:
         if change.item >= 1.0:
           self.highlight()

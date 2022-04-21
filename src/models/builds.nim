@@ -325,7 +325,7 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
     flags: ZenSet[ModelFlags].init,
     code: ZenValue[string].init,
     velocity: ZenValue[Vector3].init,
-    energy: ZenValue[float].init,
+    glow: ZenValue[float].init,
     drawing: true,
     bounds: Zen.init(init_aabb(vec3(), vec3(-1, -1, -1))),
     speed: 1.0,

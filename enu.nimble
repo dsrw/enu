@@ -26,7 +26,7 @@ bin_dir       = "app/_dlls"
 src_dir       = "src"
 bin           = @["enu" & lib_ext]
 
-requires "nim 1.6.4",
+requires "nim >= 1.6.4", "nim < 1.8.0",
          "https://github.com/pragmagic/godot-nim#982ab52",
          "https://github.com/dsrw/Nim#a6d502f",
          "https://github.com/dsrw/model_citizen 0.7.1",
