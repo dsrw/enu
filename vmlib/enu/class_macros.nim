@@ -150,7 +150,7 @@ proc build_class(name_node: NimNode, base_type: NimNode): NimNode =
     `type_def`
     `accessors`
     let me {.inject.} = `type_name`(name: `name_str`)
-    var target {.inject.} = me
+    var enu_target {.inject.} = me
     include loops
 
     register_active(me)
@@ -193,7 +193,7 @@ proc auto_insert_receiver(ast: NimNode, convert: open_array[string]): NimNode =
   var alias: seq[NimNode] = @[]
   visit_tree(ast, convert, "me", addr alias)
   visit_tree(ast, me_props, "me", addr alias)
-  visit_tree(ast, target_props, "target", addr alias)
+  visit_tree(ast, target_props, "enu_target", addr alias)
   result = ast
 
 proc build_proc(sig, body: NimNode, return_type = new_empty_node()): NimNode =
@@ -243,7 +243,7 @@ macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[u
     ast = ast.auto_insert_receiver(convert)
     result.add quote do:
       let me {.inject.} = `base_type`()
-      var target {.inject.} = me
+      var enu_target {.inject.} = me
       register_active(me)
       let home {.inject.} = PositionOffset(position: me.local_position)
       include loops
@@ -252,7 +252,7 @@ macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[u
   result.add script_start
   result.add quote do:
     proc run_script*(me {.inject.}: me.type, is_instance {.inject.}: bool) =
-      var target {.inject.}: Unit = me
+      var enu_target {.inject.}: Unit = me
       let home {.inject.} = PositionOffset(position: me.local_position)
       var move_mode {.inject.} = 1
       include loops

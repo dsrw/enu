@@ -127,19 +127,19 @@ template d*(self: Unit, steps = 1.0) = self.down(steps)
 template f*(self: Unit, steps = 1.0) = self.forward(steps)
 template b*(self: Unit, steps = 1.0) = self.back(steps)
 
-template forward*(steps = 1.0) = target.forward(steps)
-template back*(steps = 1.0) = target.back(steps)
-template left*(steps = 1.0) = target.left(steps)
-template right*(steps = 1.0) = target.right(steps)
-template up*(steps = 1.0) = target.up(steps)
-template down*(steps = 1.0) = target.down(steps)
+template forward*(steps = 1.0) = enu_target.forward(steps)
+template back*(steps = 1.0) = enu_target.back(steps)
+template left*(steps = 1.0) = enu_target.left(steps)
+template right*(steps = 1.0) = enu_target.right(steps)
+template up*(steps = 1.0) = enu_target.up(steps)
+template down*(steps = 1.0) = enu_target.down(steps)
 
-template l*(steps = 1.0) = target.left(steps)
-template r*(steps = 1.0) = target.right(steps)
-template u*(steps = 1.0) = target.up(steps)
-template d*(steps = 1.0) = target.down(steps)
-template f*(steps = 1.0) = target.forward(steps)
-template b*(steps = 1.0) = target.back(steps)
+template l*(steps = 1.0) = enu_target.left(steps)
+template r*(steps = 1.0) = enu_target.right(steps)
+template u*(steps = 1.0) = enu_target.up(steps)
+template d*(steps = 1.0) = enu_target.down(steps)
+template f*(steps = 1.0) = enu_target.forward(steps)
+template b*(steps = 1.0) = enu_target.back(steps)
 
 proc forward*(self: Unit, value: PositionOffset, move_mode: int) =
   let steps = self.local_position.z - value.position.z + value.offset
@@ -150,7 +150,7 @@ template forward*(self: Unit, value: PositionOffset) =
   let steps = self.local_position.z - value.position.z + value.offset
   wait self.begin_move(FORWARD, steps, move_mode)
 
-template forward*(offset: PositionOffset) = target.forward(offset)
+template forward*(offset: PositionOffset) = enu_target.forward(offset)
 
 proc back*(self: Unit, value: PositionOffset, move_mode: int) =
   let steps = self.position.z - value.position.z - value.offset
@@ -161,7 +161,7 @@ template back*(self: Unit, value: PositionOffset) =
   let steps = self.local_position.z - value.position.z - value.offset
   wait self.begin_move(FORWARD, steps, move_mode)
 
-template back*(offset: PositionOffset) = target.back(offset)
+template back*(offset: PositionOffset) = enu_target.back(offset)
 
 proc left*(self: Unit, value: PositionOffset, move_mode: int) =
   let steps = self.local_position.x - value.position.x + value.offset
@@ -172,7 +172,7 @@ template left*(self: Unit, value: PositionOffset) =
   let steps = self.local_position.x - value.position.x + value.offset
   wait self.begin_move(LEFT, steps, move_mode)
 
-template left*(offset: PositionOffset) = target.left(offset)
+template left*(offset: PositionOffset) = enu_target.left(offset)
 
 proc right*(self: Unit, value: PositionOffset, move_mode: int) =
   let steps = self.local_position.x - value.position.x - value.offset
@@ -183,7 +183,7 @@ template right*(self: Unit, value: PositionOffset) =
   let steps = self.local_position.x - value.position.x - value.offset
   wait self.begin_move(LEFT, steps, move_mode)
 
-template right*(offset: PositionOffset) = target.right(offset)
+template right*(offset: PositionOffset) = enu_target.right(offset)
 
 proc down*(self: Unit, value: PositionOffset, move_mode: int) =
   let steps = self.local_position.y - value.position.y + value.offset
@@ -194,7 +194,7 @@ template down*(self: Unit, value: PositionOffset) =
   let steps = self.local_position.y - value.position.y + value.offset
   wait self.begin_move(DOWN, steps, move_mode)
 
-template down*(offset: PositionOffset) = target.down(offset)
+template down*(offset: PositionOffset) = enu_target.down(offset)
 
 proc up*(self: Unit, value: PositionOffset, move_mode: int) =
   let steps = self.local_position.y - value.position.y - value.offset
@@ -205,7 +205,7 @@ template up*(self: Unit, value: PositionOffset) =
   let steps = self.local_position.y - value.position.y - value.offset
   wait self.begin_move(DOWN, steps, move_mode)
 
-template up*(offset: PositionOffset) = target.up(offset)
+template up*(offset: PositionOffset) = enu_target.up(offset)
 
 type NegativeNode = ref object
   node: Unit
@@ -213,10 +213,10 @@ type NegativeNode = ref object
 proc `-`*(node: Unit): NegativeNode =
   NegativeNode(node: node)
 
-proc angle_to(self: Unit, target: Unit): float =
+proc angle_to(self: Unit, enu_target: Unit): float =
   let
     p1 = self.position
-    p2 = target.position
+    p2 = enu_target.position
     d = (p1 - p2).normalized()
   let n = arctan2(d.x, d.z).rad_to_deg
   let rot = self.rotation
@@ -247,14 +247,14 @@ template turn*(self: Unit, direction: Directions, degrees = 90.0) =
 
 template turn*(direction: Directions, degrees = 90.0) =
   mixin wait
-  wait target.turn(direction, degrees, move_mode)
+  wait enu_target.turn(direction, degrees, move_mode)
 
 template t*(direction: Directions, degrees = 90.0) =
   turn direction, degrees
 
 template turn*(degrees: float) =
   mixin wait
-  wait target.turn(degrees, move_mode)
+  wait enu_target.turn(degrees, move_mode)
 
 template t*(degrees: float) =
   turn degrees
@@ -266,39 +266,39 @@ template turn*(self: Unit, degrees: float) =
 template t*(self: Unit, degrees: float) =
   turn self, degrees
 
-template move*[T: Unit](new_target: T) =
-  target = new_target
+template move*[T: Unit](new_enu_target: T) =
+  enu_target = new_enu_target
   move_mode = 2
-  if target.speed == 0:
-    target.speed = 1
+  if enu_target.speed == 0:
+    enu_target.speed = 1
 
-template build*(new_target: Unit) =
-  target = new_target
+template build*(new_enu_target: Unit) =
+  enu_target = new_enu_target
   move_mode = 1
 
-proc turn*(self: Unit, target: Unit, move_mode: int) =
-  self.turn(self.angle_to(target), move_mode)
+proc turn*(self: Unit, enu_target: Unit, move_mode: int) =
+  self.turn(self.angle_to(enu_target), move_mode)
 
-template turn*(self: Unit, target: Unit) =
-  self.turn(target, move_mode)
+template turn*(self: Unit, enu_target: Unit) =
+  self.turn(enu_target, move_mode)
 
-template turn*(target: Unit) =
-  active_unit().turn(target)
+template turn*(enu_target: Unit) =
+  active_unit().turn(enu_target)
 
-template t*(target: Unit) =
-  turn target
+template t*(enu_target: Unit) =
+  turn enu_target
 
-template turn*(self: Unit, target: NegativeNode) =
-  self.turn(self.angle_to(target.node) - 180, move_mode)
+template turn*(self: Unit, enu_target: NegativeNode) =
+  self.turn(self.angle_to(enu_target.node) - 180, move_mode)
 
-template turn*(target: NegativeNode) =
-  active_unit().turn(target)
+template turn*(enu_target: NegativeNode) =
+  active_unit().turn(enu_target)
 
-template t*(target: NegativeNode) =
-  turn(target)
+template t*(enu_target: NegativeNode) =
+  turn(enu_target)
 
 template hit*(node: Unit): Vector3 =
-  target.hit(node)
+  enu_target.hit(node)
 
 proc distance*(node: Unit): float =
   node.position.distance_to(active_unit().position)
