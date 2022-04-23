@@ -400,9 +400,12 @@ proc `-`*(self: PositionOffset, offset: float): PositionOffset =
   result.offset -= offset
 
 proc go*(unit: Unit) =
+  # save position and height in case unit moves
+  var position = unit.position
+  var height = unit.height
   active_unit().turn(unit, 2)
-  active_unit().forward((unit.position - active_unit().position).length, 2)
-  active_unit().down(active_unit().height - unit.height, 2)
+  active_unit().forward((position - active_unit().position).length, 2)
+  active_unit().down(active_unit().height - height, 2)
 
 proc even*(self: int): bool = self mod 2 == 0
 proc odd*(self: int): bool = not self.even
