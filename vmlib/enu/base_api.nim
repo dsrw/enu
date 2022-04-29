@@ -301,8 +301,6 @@ proc near*(node: Unit, less_than = 5.0): bool =
 proc far*(node: Unit, greater_than = 100.0): bool =
   result = node.distance > greater_than
 
-proc seen*(node: Unit, less_than = 100.0): bool = discard
-
 proc height*(self: Vector3): float = self.y
 proc height*(self: Unit): float = self.position.y
 

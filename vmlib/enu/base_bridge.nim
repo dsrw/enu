@@ -26,6 +26,7 @@ proc `velocity=`*(self: Unit, velocity: Vector3) = discard
 proc velocity*(self: Unit): Vector3 = discard
 proc color*(self: Unit): Colors = discard
 proc `color=`*(self: Unit, color: Colors) = discard
+proc seen*(node: Unit, less_than = 100.0): bool = discard
 
 # TODO: These should be in base_bridge_private, but are currently needed outside of base_api.
 proc echo_console*(msg: string) = discard
