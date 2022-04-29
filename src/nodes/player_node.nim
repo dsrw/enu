@@ -28,7 +28,7 @@ let
   config = state.config
   angle_x_min = -PI / 2.25
   angle_x_max = PI / 2.25
-  max_speed = 50.0
+  max_speed = 100.0
   move_speed = 500.0
   jump_impulse = 10.0
   fly_toggle = 0.3.seconds
@@ -88,7 +88,10 @@ gdobj PlayerNode of KinematicBody:
 
   proc calculate_velocity(velocity_current: Vector3, move_direction: Vector3,
                           delta: float, flying, running: bool): Vector3 =
-    let speed = if running: move_speed * 2 else: move_speed
+    var speed = vec3(move_speed)
+    if running: speed *= vec3(2)
+    if flying: speed *= vec3(3, 2, 3)
+  
     result = move_direction * delta * speed
     if result.length() > max_speed:
       result = result.normalized() * max_speed

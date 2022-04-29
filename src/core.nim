@@ -107,6 +107,9 @@ const
 proc vec3*(x, y, z: int): Vector3 {.inline.} =
   vec3(x.float, y.float, z.float)
 
+proc vec3*(x: int | float): Vector3 {.inline.} =
+  vec3(x, x, x)
+
 proc trunc*(self: Vector3): Vector3 {.inline.} =
   vec3(trunc(self.x), trunc(self.y), trunc(self.z))
 
