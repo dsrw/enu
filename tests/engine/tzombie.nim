@@ -7,7 +7,7 @@ if 1 in 100:
   echo "hit22"
 
 let p = potato.new(label = "orange", color = green)
-var target = p
+var enu_target = p
 forward 10
 turn right
 p.turn right
