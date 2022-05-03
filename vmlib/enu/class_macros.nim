@@ -183,7 +183,7 @@ proc visit_tree(parent: NimNode, convert: open_array[string], receiver: string, 
         if $node in convert and parent.kind == nnkIdentDefs:
           if i == 0:
             alias[].add node
-          elif i == 2:
+          elif i == 2 and node notin alias[]:
             parent[i] = new_dot_expr(ident receiver, node)
         elif $node in convert and node notin alias[] and parent.kind != nnkExprEqExpr and not (parent.kind == nnkDotExpr and i == 1):
           parent[i] = new_dot_expr(ident receiver, node)
@@ -224,7 +224,10 @@ proc transform_proc_lists(parent: NimNode): NimNode =
 macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[untyped]): untyped =
   var convert = convert.map_it($it)
   let file_name = file_name.str_val
-  var ast = parse_stmt(file_name.static_read, file_name).transform_proc_lists
+  when compiles(parse_stmt(file_name, file_name)):
+    var ast = parse_stmt(file_name.static_read, file_name).transform_proc_lists
+  else:
+    var ast = parse_stmt(file_name.static_read).transform_proc_lists
   var (script_start, name_node) = pop_name_node(ast)
   result = new_stmt_list()
   var inner = new_stmt_list()
