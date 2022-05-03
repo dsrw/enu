@@ -288,6 +288,7 @@ method reset*(self: Build) =
   self.transform.value = self.start_transform
   self.color = self.start_color
   self.speed = 1
+  self.scale.value = 1
   self.reset_state()
   let chunks = self.chunks.value
   for chunk_id, chunk in chunks:

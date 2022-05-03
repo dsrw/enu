@@ -15,9 +15,11 @@ gdobj BuildNode of VoxelTerrain:
     unit*: Build
     active_chunks: Table[Vector3, ZID]
     transform_zid: ZID
+    default_view_distance: int
 
   proc init*() =
     self.bind_signals self, "block_loaded", "block_unloaded"
+    self.default_view_distance = self.max_view_distance.int
 
   proc prepare_materials =
     if self.unit.shared.materials.len == 0:
@@ -104,6 +106,7 @@ gdobj BuildNode of VoxelTerrain:
         self.scale = vec3(scale, scale, scale)
         self.unit.transform.pause self.transform_zid:
           self.unit.transform.value = self.transform
+        self.max_view_distance = int(self.default_view_distance.float / scale)
 
     self.transform_zid = self.unit.transform.changes:
       if added:
