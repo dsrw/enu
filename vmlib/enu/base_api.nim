@@ -351,10 +351,14 @@ proc fuzzed*(self: Vector3, x, y, z: float): Vector3 =
 
 template times*(count: int, body: untyped): untyped =
   for x in 0..<count:
+    let first {.inject.} = (x == 0)
+    let last {.inject.} = (x == count - 1)
     body
 
 template times*(count: int, name: untyped, body: untyped): untyped =
   for name {.inject.} in 0..<count:
+    let first {.inject.} = (name == 0)
+    let last {.inject.} = (name == count - 1)
     body
 
 template x*(count: int, body: untyped): untyped = times(count, body)
