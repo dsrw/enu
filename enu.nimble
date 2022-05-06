@@ -30,11 +30,13 @@ requires "nim >= 1.6.4", "nim < 1.8.0",
          "https://github.com/pragmagic/godot-nim#982ab52",
          "https://github.com/dsrw/Nim#a6d502f",
          "https://github.com/dsrw/model_citizen 0.7.1",
+         "https://github.com/dsrw/nanoid.nim 0.2.1",
          "cligen 1.5.19",
          "print#f78c855",
          "chroma",
-         "https://github.com/dsrw/nanoid.nim 0.2.1"
-
+         "markdown",
+         "https://github.com/haxscramper/hmatching"
+         
 proc gen: string =
   if generator_path == "":
     exec &"nimble c -d:ssl {generator}"

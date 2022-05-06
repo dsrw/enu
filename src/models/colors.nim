@@ -13,6 +13,24 @@ type
   Colors* = enum
     eraser, blue, red, green, black, white, brown
 
+  Theme* = enum
+    comment, entity, keyword, operator, class, storage, constant,
+    text, number, variable, invalid
+
+const ir_black* = [
+  comment: col"7C7C7C",
+  entity: col"FFD2A7",
+  keyword: col"96CBFE",
+  operator: col"EDEDED",
+  class: col"FFFFB6",
+  storage: col"CFCB90",
+  constant: col"99CC99",
+  text: col"A8FF60",
+  number: col"FF73FD",
+  variable: col"C6C5FE",
+  invalid: col"FD5FF1"
+]
+
 const action_colors* = [
   eraser: chroma.Color(),
   blue: col"0067ff",

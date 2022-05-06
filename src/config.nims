@@ -5,6 +5,7 @@
 --threadAnalysis:off
 --define:nimPreviewHashRef
 --experimental:dynamicBindSym
+--experimental:caseStmtMacros
 #--define:nimLeakDetector
 
 if project_name() == "enu":
