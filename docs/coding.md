@@ -33,8 +33,8 @@ Every piece of data in Enu has a type. These are the most common:
 - `Color` - Any one of `blue`, `red`, `green`, `black`, `white`, `brown` or 
   `eraser`. Someday more colors will be available. Example `color = green`
 
-- `Position` - The place of something in the world. Example: `me.position = 
-  player.position`
+- `Position` - The place of something in the world. Example: 
+  `me.position = player.position`
 
 - `Thing` - Anything that exists in the Enu world. This could be something you 
   build, a robot, or the player.
@@ -161,7 +161,7 @@ back 20
   else:
     turn left
 
-echo "We drew a bow tie! This will only be printed once because it isn't in a 
-times block"
+echo "We drew a bow tie!"
+echo "This will only be printed once because it isn't in a times block"
 ```
   
