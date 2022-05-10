@@ -309,3 +309,4 @@ file_logging/log_path="user://logs/enu.log"
 quality/depth_prepass/enable=false
 batching/options/use_batching=false
 batching/options/use_batching_in_editor=false
+gles3/shaders/shader_compilation_mode=2
