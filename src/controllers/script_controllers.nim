@@ -25,7 +25,7 @@ include script_controllers/bindings
 const
   advance_step* = 0.5.seconds
   error_code = some(99)
-  script_timeout = 30.0.seconds
+  script_timeout = 5.0.seconds
 
 let state = GameState.active
 
