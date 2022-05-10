@@ -180,3 +180,13 @@ proc generate_id*(): string = generate(
 
 proc init*[T: Exception](kind: type[T], message: string, parent: ref Exception = nil): ref Exception =
   (ref kind)(msg: message, parent: parent)
+
+# output
+when true: # do something here for tests. Godot print crashes without godot.
+  import pkg / godot
+
+  proc p*(args: varargs[string, `$`]) =
+    let msg = args.join
+    echo msg
+    godot.print msg
+

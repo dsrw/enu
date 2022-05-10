@@ -41,8 +41,8 @@ proc unmap_unit(self: ScriptController, unit: Unit) =
 proc link_dependency_impl(self: ScriptController, dep: Unit) =
   let dep = dep.find_root
   let active = self.active_unit.find_root
-  echo "id: ", dep.id
-  echo &"**reloading {dep.script_ctx.module_name} will reload {active.script_ctx.module_name}"
+  p "id: ", dep.id
+  p &"**reloading {dep.script_ctx.module_name} will reload {active.script_ctx.module_name}"
   dep.script_ctx.dependents.incl active.script_ctx.module_name
 
 template info: untyped =
@@ -53,8 +53,6 @@ proc write_stack_trace(self: ScriptController) =
   let ctx = self.active_unit.script_ctx
   msg_writeln(ctx.ctx.config, "stack trace: (most recent call last)", {msgNoUnitSep})
   stack_trace_aux(ctx.ctx, ctx.tos, ctx.pc)
-  echo "file: ", ctx.file_name
-
 
 proc get_unit(self: ScriptController, a: VmArgs, pos: int): Unit =
   let pnode = a.get_node(pos)
@@ -135,7 +133,7 @@ proc hit(unit_a: Unit, unit_b: Unit): Vector3 =
       return collision.normal.snapped(vec3(1, 1, 1))
 
 proc echo_console(msg: string) =
-  echo msg
+  p msg
   state.console.log += msg & "\n"
   state.console.visible.value = true
 
@@ -386,6 +384,7 @@ proc load_script(self: ScriptController, unit: Unit, timeout = script_timeout) =
         ""
       let code = unit.code_template(imports)
       ctx.timeout_at = get_mono_time() + timeout
+      p "loading script: ", ctx.script
       ctx.load(state.config.script_dir, ctx.script, code, state.config.lib_dir)
 
     if not state.paused:
@@ -411,7 +410,7 @@ proc retry_failed_scripts*(self: ScriptController) =
     prev_failed = self.failed
     self.failed = @[]
     for f in prev_failed:
-      echo "retrying: ", f.unit.script_ctx.script
+      p "retrying: ", f.unit.script_ctx.script
       self.load_script(f.unit)
 
   for f in prev_failed:
@@ -438,10 +437,10 @@ proc load_script_and_dependants(self: ScriptController, unit: Unit) =
 
   for other in units_to_reload:
     if other != unit:
-      echo "resetting: ", other.script_ctx.module_name
+      p "resetting: ", other.script_ctx.module_name
       self.interpreter.reset_module(other.script_ctx.module_name)
 
-  echo "loading ", unit.id
+  p "loading ", unit.id
   self.load_script(unit)
 
   for other in units_to_reload:
@@ -465,7 +464,7 @@ proc change_code(self: ScriptController, unit: Unit, code: string) =
   unit.reset()
   state.console.show_errors.value = false
   state.console.visible.value = false
-  var dependents: HashSet[string]
+
   if not state.reloading and code.strip == "" and file_exists(unit.script_file):
     remove_file unit.script_file
     self.module_names.excl unit.script_ctx.module_name
@@ -478,7 +477,7 @@ proc change_code(self: ScriptController, unit: Unit, code: string) =
     if not state.reloading and not self.retry_failures:
       self.load_script_and_dependants(unit)
     else:
-      echo "loading ", unit.id
+      p "loading ", unit.id
       self.load_script(unit)
 
 proc watch_code(self: ScriptController, unit: Unit) =
@@ -540,7 +539,7 @@ proc init*(T: type ScriptController): ScriptController =
       else:
         msg = msg.replace(re"(?ms);.*", "")
       var loc = &"{file_name}({int info.line},{int info.col})"
-      echo "error: ", msg, " from ", ctx.file_name
+      p "error: ", msg, " from ", ctx.file_name
       ctx.errors.add (msg, info, loc)
       ctx.exit_code = error_code
       raise (ref VMQuit)(info: info, msg: msg, location: loc)

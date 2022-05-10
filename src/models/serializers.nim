@@ -1,4 +1,5 @@
-import std / [json, jsonutils, sugar, tables, os, strutils]
+import system except write_file
+import std / [json, jsonutils, sugar, tables, strutils, os]
 import pkg / print
 import core, models, controllers / script_controllers
 
@@ -7,6 +8,19 @@ var load_chunks = false
 
 type WorldInfo = object
   enu_version, format_version: string
+
+proc write_file(path, text: string) =
+  let tmp = path & ".tmp"
+  let previous = path & ".previous"
+  system.write_file(tmp, text)
+  p "wrote tmp file ", tmp
+  if path.file_exists:
+    if previous.file_exists:
+      previous.remove_file
+    move_file path, previous
+    p "moved ", path, " to ", previous
+  move_file tmp, path
+  p "moved ", tmp, " to ", path
 
 proc to_json_hook(self: Color): JsonNode =
   if self == action_colors[eraser]:
