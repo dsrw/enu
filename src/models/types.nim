@@ -116,7 +116,7 @@ type
     chunk*: Chunk
 
   Config* = ref object
-    font_size*: int
+    font_size*: ZenValue[int]
     dock_icon_size*: float
     world*: string
     show_stats*: bool

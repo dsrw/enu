@@ -88,7 +88,7 @@ proc init*(_: type GameState, action_count = 0, action_index = 0): GameState =
     action_count: action_count,
     action_index: action_index,
     open_unit: ZenValue[Unit].init,
-    config: Config(),
+    config: Config(font_size: Zen.init(0)),
     tool: Zen.init(Block),
     gravity: -80.0,
     console: ConsoleModel(

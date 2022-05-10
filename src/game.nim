@@ -131,8 +131,9 @@ gdobj Game of Node:
     var uc = initial_user_config
     assert not state.is_nil
     assert not state.config.is_nil
+
+    state.config.font_size.value = uc.font_size ||= (14 * screen_scale).int
     with state.config:
-      font_size = uc.font_size ||= (14 * screen_scale).int
       dock_icon_size = uc.dock_icon_size ||= 50 * screen_scale
       world = uc.world ||= "default-1"
       world_prefix = uc.world_prefix ||= "default"
@@ -163,7 +164,7 @@ gdobj Game of Node:
 
   proc set_font_size(size: int) =
     var user_config = self.load_user_config()
-    config.font_size = size
+    config.font_size.value = size
     user_config.font_size = some(size)
     self.save_user_config(user_config)
 
@@ -195,7 +196,7 @@ gdobj Game of Node:
     self.script_controller.load_player()
     load_world(self.script_controller)
     self.get_tree().set_auto_accept_quit(false)
-    self.set_font_size config.font_size
+    self.set_font_size config.font_size.value
 
     self.reticle = self.find_node("Reticle").as(Control)
     self.stats = self.find_node("stats").as(Label)
@@ -297,9 +298,9 @@ gdobj Game of Node:
 
     if state.editing or state.console.visible.value:
       if event.is_action_pressed("zoom_in"):
-        self.set_font_size config.font_size + 1
+        self.set_font_size config.font_size.value + 1
       elif event.is_action_pressed("zoom_out"):
-        self.set_font_size config.font_size - 1
+        self.set_font_size config.font_size.value - 1
     else:
       if event.is_action_pressed("next"):
         self.next_action()

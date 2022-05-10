@@ -1,226 +1,103 @@
-[gd_scene load_steps=14 format=2]
+[gd_scene load_steps=17 format=2]
 
 [ext_resource path="res://components/MarkdownLabel.gdns" type="Script" id=1]
 [ext_resource path="res://themes/DarkTheme.tres" type="Theme" id=2]
-[ext_resource path="res://themes/Radio-Canada-Bold.ttf" type="DynamicFontData" id=3]
-[ext_resource path="res://themes/Radio-Canada-Italic.ttf" type="DynamicFontData" id=4]
-[ext_resource path="res://themes/Radio-Canada-BoldItalic.ttf" type="DynamicFontData" id=5]
-[ext_resource path="res://themes/Radio-Canada-Regular.ttf" type="DynamicFontData" id=6]
+[ext_resource path="res://themes/SF-Pro-Text-Bold.otf" type="DynamicFontData" id=3]
+[ext_resource path="res://themes/SF-Pro-Text-RegularItalic.otf" type="DynamicFontData" id=4]
+[ext_resource path="res://themes/SF-Pro-Text-Regular.otf" type="DynamicFontData" id=5]
+[ext_resource path="res://themes/SF-Pro-Text-BoldItalic.otf" type="DynamicFontData" id=6]
 [ext_resource path="res://themes/SF-Mono-Powerline-Regular.otf" type="DynamicFontData" id=7]
 
-[sub_resource type="DynamicFont" id=5]
-size = 32
-font_data = ExtResource( 7 )
-
-[sub_resource type="DynamicFont" id=1]
-size = 32
+[sub_resource type="DynamicFont" id=7]
 font_data = ExtResource( 5 )
 
-[sub_resource type="DynamicFont" id=2]
-size = 32
+[sub_resource type="DynamicFont" id=8]
 font_data = ExtResource( 4 )
 
-[sub_resource type="DynamicFont" id=3]
-size = 32
+[sub_resource type="DynamicFont" id=9]
 font_data = ExtResource( 3 )
 
-[sub_resource type="DynamicFont" id=4]
-size = 32
+[sub_resource type="DynamicFont" id=10]
 font_data = ExtResource( 6 )
+
+[sub_resource type="DynamicFont" id=11]
+font_data = ExtResource( 3 )
+
+[sub_resource type="DynamicFont" id=12]
+font_data = ExtResource( 7 )
 
 [sub_resource type="StyleBoxFlat" id=6]
 content_margin_left = 20.0
 content_margin_right = 20.0
 content_margin_top = 20.0
 content_margin_bottom = 20.0
-bg_color = Color( 0, 0, 0, 1 )
+bg_color = Color( 0.0784314, 0.0117647, 0.113725, 1 )
 
-[node name="MarkdownLabel" type="RichTextLabel"]
-rect_min_size = Vector2( 1920, 1080 )
+[sub_resource type="DynamicFont" id=13]
+font_data = ExtResource( 7 )
+
+[sub_resource type="StyleBoxFlat" id=3]
+content_margin_top = 10.0
+content_margin_bottom = 0.0
+bg_color = Color( 0, 0, 0, 0.839216 )
+border_width_top = 1
+border_width_bottom = 1
+border_color = Color( 1, 0.45098, 0.992157, 1 )
+
+[node name="MarkdownLabel" type="ScrollContainer"]
+margin_right = 1920.0
+margin_bottom = 1080.0
+scroll_horizontal_enabled = false
+script = ExtResource( 1 )
+markdown = ""
+default_font = SubResource( 7 )
+italic_font = SubResource( 8 )
+bold_font = SubResource( 9 )
+bold_italic_font = SubResource( 10 )
+header_font = SubResource( 11 )
+mono_font = SubResource( 12 )
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+custom_constants/separation = 0
+
+[node name="RichTextLabel" type="RichTextLabel" parent="VBoxContainer"]
+visible = false
+margin_right = 1920.0
+margin_bottom = 69.0
+rect_min_size = Vector2( 1920, 0 )
 focus_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
 theme = ExtResource( 2 )
 custom_colors/default_color = Color( 1, 1, 1, 1 )
-custom_colors/selection_color = Color( 0.184314, 0.0117647, 0.686275, 1 )
-custom_fonts/mono_font = SubResource( 5 )
-custom_fonts/bold_italics_font = SubResource( 1 )
-custom_fonts/italics_font = SubResource( 2 )
-custom_fonts/bold_font = SubResource( 3 )
-custom_fonts/normal_font = SubResource( 4 )
+custom_colors/selection_color = Color( 0.207843, 0, 0.321569, 1 )
 custom_styles/normal = SubResource( 6 )
 tab_size = 2
+fit_content_height = true
 selection_enabled = true
-override_selected_font_color = true
-script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
-markdown = "# Parts of an Enu Program
 
-Enu is programmed with a language called [Nim](https://nim-lang.org). This tutorial teach some of the 
-basics of Nim, as well as a few special features that are unique to Enu.
-
-## Comments
-
-Comments are a way to leave notes to yourself or other programmers. They can be 
-used for lots of different things, but generally provide more information on how 
-something works or why it was done a certain way. They can also have more 
-general information, such as the author of the code and when it was written. 
-They start with a `#` sign. Everything else on the line is ignored.
-
-```nim
-# Copyright Scott Wadden, 2022
-
-var last_row = false # we only want to change colors on the last row
-```
-
-## Types
-
-Every piece of data in Enu has a type. These are the most common:
-
-- `bool` - a `true` or `false` value. Example: `drawing = false`
-
-- `Number` - a number with a decimal, like `1.0`. Numbers without decimals, like 
-  `1` will usually auto convert, but if something isn't working, try adding a 
-  decimal. Example: `var age = 12.5`
-
-- `Text` - Any combination of letters, numbers and punctuation, contained inside 
-  double quotes. Example: `var name = \"Sackville Coding Club\"`
-
-- `Color` - Any one of `blue`, `red`, `green`, `black`, `white`, `brown` or 
-  `eraser`. Someday more colors will be available. Example `color = green`
-
-- `Position` - The place of something in the world. Example: `me.position = 
-  player.position`
-
-- `Thing` - Anything that exists in the Enu world. This could be something you 
-  build, a robot, or the player.
-
-<div style=\"page-break-after: always;\"></div>
-
-## Variables
-
-A variable is used to store data. The value is usually set when it is created, 
-and can be modified later. A variable must always hold the same type of data.
-
-```nim
-# ok:
-var age = 12
-if birthday:
-  age = age + 1
-
-if reset:
-  age = 0
-
-# not ok. Age must always be a number, not text:
-var age = 12
-if birthday:
-  age = \"13 years old\"                          
-```
-
-Usually variables are defined with just a value, but sometimes you need to 
-specify their type as well. This could be because you're not ready to give it a 
-value, or because you want it to contain more than one kind of `Thing`.
-
-For example:
-
-```nim
-# this won't work because `enemy` gets automatically set to the type of 
-# `Player`, so other things won't work:
-var enemy = player
-enemy = me
-
-# it will work if we do it like this, since `player` and `me` are both `Thing`
-var enemy: Thing
-enemy = player
-enemy = me
-```
-
-<div style=\"page-break-after: always;\"></div>
-
-Usually each variable starts with `var`, but you can also indent to define 
-multiple variables with a single `var`.
-
-```nim
-var name = \"Scott\"
-var age = 43
-var town = \"Sackville\"
-
-# this is exactly the same as the above
-
-var
-  name = \"Scott\"
-  age = 43
-  town = \"Sackville\"
-```
-
-## Special Variables
-
-Enu has some built in variables.
-
-- `me` - the `Thing` that we're working on in the current script.
-
-- `speed` - a `Number` to get or set our current speed. `1.0` by default.
-
-- `color` - the current drawing `Color`. `blue` by default.
-
-- `scale` - a `Number` to grow or shrink a `Thing`. `1.0` by default. Be careful 
-  about making this too small. You might lose the `Thing` you're working on.
-
-- `position` - where a `Thing` is. You can use this to move something 
-  immediately. `position = player.position` would teleport `me` to the player.
-
-- `drawing` - a `bool` that indicates if commands like `forward` or `back` should 
-  draw blocks. `true` by default. `drawing = false` would let you move without 
-  drawing anything, which could be useful for making a hole or a new object.
-
-- `glow` - how bright a `Thing` is. Can be used to make something flash, or to 
-  highlight it.
-
-<div style=\"page-break-after: always;\"></div>
-
-## Blocks
-
-Blocks start with a `:`, and are then indented by two spaces. Everything that's 
-inside the block is controlled by whatever started it.
-
-- `if` - an `if` block will only run if the statement is `true`.
-
-```nim
-var length = 0
-...
-if length == 0:
-  glow = 1
-  echo \"You need to provide a length!\"
-  # both of the above only happen if `length` is 0.
-```
-
-- `times` - Make something happen more than once.
-
-```nim
-4.times:
-  forward 5
-  turn right
-  # the above each happen 4 times (which draws a square!)
-
-back 20
-# this only happens once, since it isn't in a `times` block.
-
-8.times(side):
-  # It's also possible to see how many times we've already performed the action 
-  # by passing `times` an index variable.
-  # This starts from 0. in this example we're storing the counter in a variable 
-  # called `side`. Because we're doing this 8 times, `side` will be set first to 
-  # 0, then 1, 2, 3, 4, 5, 6, 7.
-  forward 5
-  if side != 4:
-    turn right
-  else:
-    turn left
-
-echo \"We drew a bow tie! This will only be printed once because it isn't in a 
-times block\"
-```
-  
-"
+[node name="TextEdit" type="TextEdit" parent="VBoxContainer"]
+visible = false
+margin_right = 1920.0
+rect_min_size = Vector2( 1920, 0 )
+size_flags_vertical = 3
+custom_colors/selection_color = Color( 0.207843, 0, 0.321569, 1 )
+custom_colors/executing_line_color = Color( 0.0392157, 0, 0.168627, 1 )
+custom_colors/font_color_readonly = Color( 0.878431, 0.878431, 0.878431, 1 )
+custom_fonts/font = SubResource( 13 )
+custom_styles/read_only = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
+indent_using_spaces = true
+indent_size = 2
+readonly = true
+syntax_highlighting = true
+show_line_numbers = true
+smooth_scrolling = true
+wrap_enabled = true
+caret_blink = true
+caret_moving_by_right_click = false
+__meta__ = {
+"_edit_use_anchors_": false
+}

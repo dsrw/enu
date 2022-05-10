@@ -1,79 +1,161 @@
 import std / lists
-import pkg / [godot, markdown, hmatching, print]
-import godotapi / [rich_text_label, theme, dynamic_font, dynamic_font_data]
+import pkg / [godot, markdown, hmatching, print, model_citizen]
+import godotapi / [rich_text_label, scroll_container, text_edit, theme,
+                   dynamic_font, dynamic_font_data, style_box]
 import core, globals, models / colors
 
-gdobj MarkdownLabel of RichTextLabel:
+const comment_color = col"808080"
+
+gdobj MarkdownLabel of ScrollContainer:
   var
     markdown* {.gd_export, hint: MultilineText.}: string
     old_markdown: string
-    heading: DynamicFont
+    default_font* {.gd_export.}:DynamicFont
+    italic_font* {.gd_export.}: DynamicFont
+    bold_font* {.gd_export.}: DynamicFont
+    bold_italic_font* {.gd_export.}: DynamicFont
+    header_font* {.gd_export.}: DynamicFont
+    mono_font* {.gd_export.}: DynamicFont
+    current_label: RichTextLabel
+    container: Node
+    og_text_edit: TextEdit
+    og_label: RichTextLabel
+    needs_margin = false
 
+  proc add_label() =
+    self.current_label = self.og_label.duplicate as RichTextLabel
+    self.container.add_child(self.current_label)
+    self.current_label.visible = true
+
+  proc set_font_sizes = 
+    let config = GameState.active.config
+    self.default_font.size = config.font_size.value
+    self.italic_font.size = config.font_size.value
+    self.bold_font.size = config.font_size.value
+    self.bold_italic_font.size = config.font_size.value
+    self.mono_font.size = config.font_size.value
+    self.header_font.size = config.font_size.value * 2
+    var first = true
+    for child in self.container.get_children:
+      var child = child.as_object(Node)
+
+      if child of TextEdit:
+        var child = TextEdit(child)
+        var height = child.get_line_count * child.get_line_height + 18
+        var size = child.rect_min_size
+        size.y = float height
+        child.rect_min_size = size
+        child.rect_size = size
+      elif child of RichTextLabel:
+        var stylebox = self.current_label.get_stylebox("normal")
+        stylebox.content_margin_bottom = 0
+        self.current_label.add_stylebox_override("normal", stylebox)
+
+        if not first:
+          stylebox = self.current_label.get_stylebox("normal")
+          stylebox.content_margin_top = float(config.font_size.value + 4)
+          self.current_label.add_stylebox_override("normal", stylebox)
+        else:
+          first = false
+
+  proc add_text_edit(): TextEdit =
+    result = self.og_text_edit.duplicate as TextEdit
+    result.add_color_region("#", "\n", comment_color, true)
+    result.add_color_region("#[", "]#", comment_color, false)
+    
   method ready() =
-    assert self.theme
-    assert self.theme.default_font
-    self.heading = self.get_font("bold_font").duplicate.as(DynamicFont)
-    self.heading.size = 60
+    self.container = self.get_node("VBoxContainer")
+    self.og_text_edit = self.container.get_node("TextEdit") as TextEdit
+    self.og_label = self.container.get_node("RichTextLabel") as RichTextLabel
+    self.container.remove_child self.og_text_edit
+    self.container.remove_child self.og_label
 
+    self.og_text_edit.add_font_override("font", self.mono_font)
+    self.og_label.add_font_override("normal_font", self.default_font)
+    
+    GameState.active.config.font_size.value = 32
+    GameState.active.config.font_size.changes:
+      if added:
+        self.set_font_sizes()
+    
   proc render_markdown(token: Token, list_position = 0, inline_blocks = false) =
     var list_position = list_position
     for t in token.children:
+      var label = self.current_label
+      if self.needs_margin and not (t of CodeBlock):
+        label.newline
+        self.needs_margin = false
       case t:
       of of Heading():
-        self.with(newline, push_font self.heading, push_color ir_black[keyword], 
-                  render_markdown t, pop, pop, newline, newline, newline)
+        label.with(push_font self.header_font, push_color ir_black[keyword]) 
+        self.render_markdown t
+        label.with(pop, pop, newline)
+        self.needs_margin = true
         
       of of CodeSpan():
-        self.with(push_mono, push_color ir_black[number], add_text t.doc, 
-                  render_markdown t, pop, pop)
+        label.with(push_font self.mono_font, push_color ir_black[number],
+                   add_text t.doc)
+        self.render_markdown t
+        label.with(pop, pop)
 
       of of CodeBlock():
-        self.with(push_mono, push_color ir_black[operator],
-                  push_indent 1, add_text t.doc, pop, pop, pop,
-                  newline)
-
+        self.needs_margin = false
+        
+        var editor = self.add_text_edit()
+        editor.text = t.doc[0..^2]
+        editor.visible = true
+        self.container.add_child editor
+        self.add_label()
+   
       of of Paragraph():
         self.render_markdown(t, inline_blocks = inline_blocks)
         if not inline_blocks:
-          self.newline
-          self.newline
+          label.newline
+        self.needs_margin = true
 
       of of OL():
-        self.with(push_indent 2, render_markdown(t, 1), pop)
+        label.push_indent 2
+        self.render_markdown(t, 1)
+        label.pop
 
       of of UL():
-        self.with(push_indent 2, render_markdown(t), pop)
+        label.push_indent 2
+        self.render_markdown(t)
+        label.pop
 
       of of LI():
-        self.push_mono
+        label.push_font self.mono_font
         if list_position > 0:
-          self.add_text LI(t).marker & ". "
+          label.add_text LI(t).marker & ". "
           inc list_position
         else:
-          self.add_text "• "
-        self.with(pop, render_markdown(t, inline_blocks = true), 
-                  newline, newline)
+          label.add_text "• "
+        label.pop
+        self.render_markdown(t, inline_blocks = true)
+        label.with(newline)
+        self.needs_margin = true
 
       of of Text():
-        self.add_text t.doc
+        label.add_text t.doc
 
       of of SoftBreak():
-        self.newline
+        label.newline
         if inline_blocks:
-          self.with(push_mono, add_text "  ", pop)
+          label.with(push_font self.mono_font, add_text "  ", pop)
       else:
         self.render_markdown(t)
         
   method process(delta: float) =
     if self.markdown != self.old_markdown:
+      for child in self.container.get_children:
+        var child = child.as_object(Node)
+        self.container.remove_child(child)
+        child.queue_free
+
+      self.add_label()
       self.old_markdown = self.markdown
       var root = Document()
-      echo markdown(self.markdown, root=root)
-      when false:
-        for c in colors.Theme:
-          self.push_color ir_black[c]
-          self.add_text $c
-          self.pop
-          self.newline
-        self.newline
+      discard markdown(self.markdown, root=root)
+      self.needs_margin = false
       self.render_markdown(root)
+      self.set_font_sizes()
