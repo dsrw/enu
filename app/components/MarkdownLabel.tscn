@@ -31,23 +31,21 @@ content_margin_left = 20.0
 content_margin_right = 20.0
 content_margin_top = 20.0
 content_margin_bottom = 20.0
-bg_color = Color( 0.0784314, 0.0117647, 0.113725, 1 )
+bg_color = Color( 0.0784314, 0.0117647, 0.113725, 0.839216 )
 
 [sub_resource type="DynamicFont" id=13]
 font_data = ExtResource( 7 )
 
 [sub_resource type="StyleBoxFlat" id=3]
-content_margin_top = 10.0
-content_margin_bottom = 0.0
-bg_color = Color( 0, 0, 0, 0.839216 )
+content_margin_top = 20.0
+bg_color = Color( 0, 0, 0, 0.729412 )
 border_width_top = 1
 border_width_bottom = 1
 border_color = Color( 1, 0.45098, 0.992157, 1 )
 
 [node name="MarkdownLabel" type="ScrollContainer"]
-margin_right = 1920.0
-margin_bottom = 1080.0
-scroll_horizontal_enabled = false
+anchor_right = 1.0
+anchor_bottom = 1.0
 script = ExtResource( 1 )
 markdown = ""
 default_font = SubResource( 7 )
@@ -58,21 +56,26 @@ header_font = SubResource( 11 )
 mono_font = SubResource( 12 )
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
+margin_right = 1920.0
+margin_bottom = 1080.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
 custom_constants/separation = 0
 
 [node name="RichTextLabel" type="RichTextLabel" parent="VBoxContainer"]
 visible = false
-margin_right = 1920.0
 margin_bottom = 69.0
-rect_min_size = Vector2( 1920, 0 )
+rect_clip_content = false
 focus_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 theme = ExtResource( 2 )
 custom_colors/default_color = Color( 1, 1, 1, 1 )
 custom_colors/selection_color = Color( 0.207843, 0, 0.321569, 1 )
 custom_styles/normal = SubResource( 6 )
 tab_size = 2
 fit_content_height = true
+scroll_active = false
 selection_enabled = true
 __meta__ = {
 "_edit_use_anchors_": false
@@ -80,22 +83,18 @@ __meta__ = {
 
 [node name="TextEdit" type="TextEdit" parent="VBoxContainer"]
 visible = false
-margin_right = 1920.0
-rect_min_size = Vector2( 1920, 0 )
 size_flags_vertical = 3
 custom_colors/selection_color = Color( 0.207843, 0, 0.321569, 1 )
 custom_colors/executing_line_color = Color( 0.0392157, 0, 0.168627, 1 )
 custom_colors/font_color_readonly = Color( 0.878431, 0.878431, 0.878431, 1 )
 custom_fonts/font = SubResource( 13 )
 custom_styles/read_only = SubResource( 3 )
-custom_styles/normal = SubResource( 3 )
 indent_using_spaces = true
 indent_size = 2
 readonly = true
 syntax_highlighting = true
 show_line_numbers = true
 smooth_scrolling = true
-wrap_enabled = true
 caret_blink = true
 caret_moving_by_right_click = false
 __meta__ = {

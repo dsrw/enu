@@ -150,11 +150,11 @@ back 20
 # this only happens once, since it isn't in a `times` block.
 
 8.times(side):
-  # It's also possible to see how many times we've already performed the action 
-  # by passing `times` an index variable.
-  # This starts from 0. in this example we're storing the counter in a variable 
-  # called `side`. Because we're doing this 8 times, `side` will be set first to 
-  # 0, then 1, 2, 3, 4, 5, 6, 7.
+  # It's also possible to see how many times we've already performed 
+  # the action by passing `times` an index variable.
+  # This starts from 0. in this example we're storing the counter in 
+  # a variable called `side`. Because we're doing this 8 times, 
+  # `side` will be set first to 0, then 1, 2, 3, 4, 5, 6, 7.
   forward 5
   if side != 4:
     turn right

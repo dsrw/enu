@@ -1,4 +1,4 @@
-import std / lists
+import std / [lists, algorithm]
 import pkg / [godot, markdown, hmatching, print, model_citizen]
 import godotapi / [rich_text_label, scroll_container, text_edit, theme,
                    dynamic_font, dynamic_font_data, style_box]
@@ -16,6 +16,7 @@ gdobj MarkdownLabel of ScrollContainer:
     bold_italic_font* {.gd_export.}: DynamicFont
     header_font* {.gd_export.}: DynamicFont
     mono_font* {.gd_export.}: DynamicFont
+    mono_width* {.gd_export.} = 0
     current_label: RichTextLabel
     container: Node
     og_text_edit: TextEdit
@@ -28,22 +29,38 @@ gdobj MarkdownLabel of ScrollContainer:
     self.current_label.visible = true
 
   proc set_font_sizes = 
-    let config = GameState.active.config
-    self.default_font.size = config.font_size.value
-    self.italic_font.size = config.font_size.value
-    self.bold_font.size = config.font_size.value
-    self.bold_italic_font.size = config.font_size.value
-    self.mono_font.size = config.font_size.value
-    self.header_font.size = config.font_size.value * 2
+    var size = 3
+    if self.mono_width > 0:
+      let size_str = " ".repeat(self.mono_width + 2)
+      self.mono_font.size = size
+      while self.mono_font.get_string_size(size_str).x < self.rect_size.x:
+        inc size
+        self.mono_font.size = size
+      dec size
+    else:
+      size = GameState.active().config.font_size.value
+
+    self.default_font.size = size
+    self.italic_font.size = size
+    self.bold_font.size = size
+    self.bold_italic_font.size = size
+    self.mono_font.size = size
+    self.header_font.size = size * 2
     var first = true
     for child in self.container.get_children:
       var child = child.as_object(Node)
 
       if child of TextEdit:
         var child = TextEdit(child)
-        var height = child.get_line_count * child.get_line_height + 18
+        var height = child.get_line_count * child.get_line_height + 24
+        let lines = dup child.text.split_lines.sorted_by_it(it.len)
+        
         var size = child.rect_min_size
         size.y = float height
+        if lines.len > 0:
+          let str_size = 
+            self.mono_font.get_string_size(" ".repeat(lines.len + 2))
+          size.x = str_size.x
         child.rect_min_size = size
         child.rect_size = size
       elif child of RichTextLabel:
@@ -53,7 +70,7 @@ gdobj MarkdownLabel of ScrollContainer:
 
         if not first:
           stylebox = self.current_label.get_stylebox("normal")
-          stylebox.content_margin_top = float(config.font_size.value + 4)
+          stylebox.content_margin_top = float(size + 4)
           self.current_label.add_stylebox_override("normal", stylebox)
         else:
           first = false
@@ -64,6 +81,7 @@ gdobj MarkdownLabel of ScrollContainer:
     result.add_color_region("#[", "]#", comment_color, false)
     
   method ready() =
+    self.bind_signals(self, "resized")
     self.container = self.get_node("VBoxContainer")
     self.og_text_edit = self.container.get_node("TextEdit") as TextEdit
     self.og_label = self.container.get_node("RichTextLabel") as RichTextLabel
@@ -77,6 +95,9 @@ gdobj MarkdownLabel of ScrollContainer:
     GameState.active.config.font_size.changes:
       if added:
         self.set_font_sizes()
+
+  method on_resized =
+    self.set_font_sizes()
     
   proc render_markdown(token: Token, list_position = 0, inline_blocks = false) =
     var list_position = list_position
@@ -91,6 +112,16 @@ gdobj MarkdownLabel of ScrollContainer:
         self.render_markdown t
         label.with(pop, pop, newline)
         self.needs_margin = true
+
+      of of Em():
+        label.push_font self.italic_font
+        self.render_markdown t
+        label.pop
+
+      of of Strong():
+        label.push_font self.bold_font
+        self.render_markdown t
+        label.pop
         
       of of CodeSpan():
         label.with(push_font self.mono_font, push_color ir_black[number],
@@ -114,34 +145,27 @@ gdobj MarkdownLabel of ScrollContainer:
         self.needs_margin = true
 
       of of OL():
-        label.push_indent 2
         self.render_markdown(t, 1)
-        label.pop
 
       of of UL():
-        label.push_indent 2
         self.render_markdown(t)
-        label.pop
 
       of of LI():
-        label.push_font self.mono_font
+        label.with(push_table 2, push_cell, push_font self.mono_font)
         if list_position > 0:
           label.add_text LI(t).marker & ". "
           inc list_position
         else:
           label.add_text "• "
-        label.pop
+        label.with(pop, pop, push_cell)
         self.render_markdown(t, inline_blocks = true)
-        label.with(newline)
-        self.needs_margin = true
+        label.with(pop, pop, newline)
 
       of of Text():
         label.add_text t.doc
 
       of of SoftBreak():
-        label.newline
-        if inline_blocks:
-          label.with(push_font self.mono_font, add_text "  ", pop)
+        label.add_text " "
       else:
         self.render_markdown(t)
         
