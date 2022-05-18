@@ -11,7 +11,6 @@ let state = GameState.active
 gdobj Editor of TextEdit:
   var
     comment_color* {.gdExport.} = init_color(0.5, 0.5, 0.5)
-    mouse_was_captured = false
     og_bg_color: Color
     dirty = false
     open_script_ctx: ScriptCtx

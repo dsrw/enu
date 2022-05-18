@@ -46,6 +46,8 @@ border_color = Color( 1, 0.45098, 0.992157, 1 )
 [node name="MarkdownLabel" type="ScrollContainer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
 script = ExtResource( 1 )
 markdown = ""
 default_font = SubResource( 7 )

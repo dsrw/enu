@@ -411,3 +411,21 @@ proc go*(unit: Unit) =
 
 proc even*(self: int): bool = self mod 2 == 0
 proc odd*(self: int): bool = not self.even
+
+
+proc md*(
+  self: Unit, markdown: string, width = 1.0, height = 1.0, mono_width = 0,
+  zoomable = true, billboard = false
+): Sign {.discardable.} =
+
+  result = Sign()
+  self.new_markdown_sign_impl(result, markdown, width, height, mono_width,
+                              zoomable, billboard)
+
+template md*(
+  markdown: string, height = 1.0, width = 1.0, mono_width = 0,
+  zoomable = true, billboard = false
+): Sign =
+
+  enu_target.md(markdown, width, height, mono_width, 
+                zoomable, billboard)

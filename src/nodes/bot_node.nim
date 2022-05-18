@@ -8,7 +8,7 @@ import models / [types, bots, units]
 
 gdobj BotNode of KinematicBody:
   var
-    unit*: Bot
+    model*: Bot
     material* {.gdExport.}, highlight_material* {.gdExport.},
       selected_material* {.gdExport.}: Material
     skin: Spatial
@@ -32,50 +32,50 @@ gdobj BotNode of KinematicBody:
     self.set_default_material()
 
   proc track_changes() =
-    self.unit.glow.changes:
+    self.model.glow.changes:
       if added:
         if change.item >= 1.0:
           self.highlight()
         else:
           self.set_default_material()
 
-    self.unit.flags.changes:
+    self.model.flags.changes:
       if Highlight.added:
         self.highlight()
       elif Highlight.removed:
         self.set_default_material()
 
     var velocity_zid: ZID
-    velocity_zid = self.unit.velocity.changes:
+    velocity_zid = self.model.velocity.changes:
       if touched:
-        self.unit.velocity.pause velocity_zid:
-          self.unit.velocity.value = self.move_and_slide(change.item, UP)
+        self.model.velocity.pause velocity_zid:
+          self.model.velocity.value = self.move_and_slide(change.item, UP)
 
-    self.unit.animation.changes:
+    self.model.animation.changes:
       if "".added:
         self.animation_player.stop(true)
       elif added:
         self.animation_player.play(change.item)
 
-    self.unit.scale.changes:
+    self.model.scale.changes:
       if added:
         let scale = change.item
         self.scale = vec3(scale, scale, scale)
-        self.unit.transform.pause(self.transform_zid):
-          self.unit.transform.value = self.transform
+        self.model.transform.pause(self.transform_zid):
+          self.model.transform.value = self.transform
 
-    self.transform_zid = self.unit.transform.changes:
+    self.transform_zid = self.model.transform.changes:
       if added:
         self.transform = change.item
 
-  proc setup*(unit: Bot) =
+  proc setup* =
     self.track_changes
 
   method process(delta: float) =
-    if self.unit:
-      self.unit.frame_delta.touch delta
-      self.unit.transform.pause self.transform_zid:
-        self.unit.transform.value = self.transform
+    if self.model:
+      self.model.frame_delta.touch delta
+      self.model.transform.pause self.transform_zid:
+        self.model.transform.value = self.transform
 
 let bot_scene = load("res://components/BotNode.tscn") as PackedScene
 proc init*(_: type BotNode): BotNode =

@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=2]
+[gd_scene load_steps=16 format=2]
 
 [ext_resource path="res://components/Console.gdns" type="Script" id=1]
 [ext_resource path="res://components/TextEdit.gdns" type="Script" id=2]
@@ -6,6 +6,7 @@
 [ext_resource path="res://components/MarkdownLabel.tscn" type="PackedScene" id=4]
 [ext_resource path="res://textures/reticle.png" type="Texture" id=5]
 [ext_resource path="res://themes/DarkTheme.tres" type="Theme" id=6]
+[ext_resource path="res://components/RightPanel.gdns" type="Script" id=7]
 [ext_resource path="res://themes/SF-Mono-Powerline-Bold.otf" type="DynamicFontData" id=8]
 [ext_resource path="res://scenes/PreviewWorld.tscn" type="PackedScene" id=9]
 [ext_resource path="res://components/PreviewMaker.gdns" type="Script" id=10]
@@ -163,6 +164,7 @@ visible = false
 anchor_left = 0.5
 anchor_right = 1.0
 anchor_bottom = 1.0
+script = ExtResource( 7 )
 
 [node name="MarkdownLabel" parent="RightPanel" instance=ExtResource( 4 )]
 anchor_right = 0.0

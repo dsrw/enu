@@ -4,6 +4,8 @@ import godotapi / [rich_text_label, scroll_container, text_edit, theme,
                    dynamic_font, dynamic_font_data, style_box]
 import core, globals, models / colors
 
+export scroll_container
+
 const comment_color = col"808080"
 
 gdobj MarkdownLabel of ScrollContainer:
@@ -22,6 +24,7 @@ gdobj MarkdownLabel of ScrollContainer:
     og_text_edit: TextEdit
     og_label: RichTextLabel
     needs_margin = false
+    resized = false
 
   proc add_label() =
     self.current_label = self.og_label.duplicate as RichTextLabel
@@ -44,7 +47,7 @@ gdobj MarkdownLabel of ScrollContainer:
     self.italic_font.size = size
     self.bold_font.size = size
     self.bold_italic_font.size = size
-    self.mono_font.size = size
+    self.mono_font.size = size 
     self.header_font.size = size * 2
     var first = true
     for child in self.container.get_children:
@@ -97,7 +100,9 @@ gdobj MarkdownLabel of ScrollContainer:
         self.set_font_sizes()
 
   method on_resized =
-    self.set_font_sizes()
+    if not self.resized:
+      self.set_font_sizes()
+      self.resized = true
     
   proc render_markdown(token: Token, list_position = 0, inline_blocks = false) =
     var list_position = list_position
@@ -106,6 +111,7 @@ gdobj MarkdownLabel of ScrollContainer:
       if self.needs_margin and not (t of CodeBlock):
         label.newline
         self.needs_margin = false
+        
       case t:
       of of Heading():
         label.with(push_font self.header_font, push_color ir_black[keyword]) 
@@ -152,6 +158,7 @@ gdobj MarkdownLabel of ScrollContainer:
 
       of of LI():
         label.with(push_table 2, push_cell, push_font self.mono_font)
+
         if list_position > 0:
           label.add_text LI(t).marker & ". "
           inc list_position
@@ -170,6 +177,7 @@ gdobj MarkdownLabel of ScrollContainer:
         self.render_markdown(t)
         
   method process(delta: float) =
+    self.resized = false
     if self.markdown != self.old_markdown:
       for child in self.container.get_children:
         var child = child.as_object(Node)

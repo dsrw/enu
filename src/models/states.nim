@@ -95,7 +95,8 @@ proc init*(_: type GameState, action_count = 0, action_index = 0): GameState =
       log: Zen.init(seq[string]),
       visible: ZenValue[bool].init(false),
       show_errors: ZenValue[bool].init(false)
-    )
+    ),
+    markdown: Zen.init("")
   )
 
   self.open_unit.changes:

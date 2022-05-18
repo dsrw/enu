@@ -25,6 +25,8 @@ type
 
   Build* = ref object of Unit
 
+  Sign* = ref object of Unit
+
   Colors* = enum
     eraser, blue, red, green, black, white, brown
 

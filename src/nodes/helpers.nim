@@ -1,13 +1,15 @@
 import pkg/godot
 import godotapi/node
-import models/types, bot_node, build_node, ground_node, selection_area
+import models/types, bot_node, build_node, ground_node, selection_area, sign_node
 
 proc model*(self: Object): Model =
   result = if self of SelectionArea:
-    SelectionArea(self).bot.unit
+    SelectionArea(self).bot.model
   elif self of BuildNode:
-    BuildNode(self).unit
+    BuildNode(self).model
   elif self of GroundNode:
     GroundNode(self).model
+  elif self of StaticBody and StaticBody(self).name == "SignBody":
+    SignNode(StaticBody(self).get_parent.get_parent).model
   else:
     nil

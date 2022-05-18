@@ -114,10 +114,13 @@ proc from_json_hook(self: var Bot, json: JsonNode) =
 proc save(units: ZenSeq[Unit]) =
   for unit in units:
     if not unit.clone_of:
-      let data = if unit of Build:
-        Build(unit).to_json.pretty
-      else:
-        Bot(unit).to_json.pretty
+      let data = 
+        if unit of Build:
+          Build(unit).to_json.pretty
+        elif unit of Bot:
+          Bot(unit).to_json.pretty
+        else:
+          continue
       create_dir unit.data_dir
       write_file unit.data_file, data
       unit.units.save

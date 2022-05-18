@@ -32,6 +32,7 @@ gdobj AimTarget of Sprite3D:
       ray.get_collider() as Spatial
     else:
       nil
+
     let unit = ?.collider.model
 
     if unit != self.target_model:
@@ -50,11 +51,8 @@ gdobj AimTarget of Sprite3D:
         local_point: Vector3
       let
         local_collision_point = collider.to_local(ray.get_collision_point())
-        inverse_normal = global_normal.inverse_normalized()
         basis = collider.global_transform.basis
         half = vec3(0.5, 0.5, 0.5)
-        full = vec3(1, 1, 1)
-        fuzzy = vec3(0.05, 0.05, 0.05)
         local_normal = (basis.xform_inv(global_normal) / collider.scale)
                              .snapped(half)
         factor = local_normal.inverse_normalized() * 0.5

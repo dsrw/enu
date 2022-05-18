@@ -2,7 +2,7 @@ import std / [strutils, os, tables]
 import pkg / [model_citizen, print]
 import pkg/godot except print
 import godotapi / [node, spatial]
-import models, nodes / [bot_node, build_node]
+import models, nodes / [bot_node, build_node, sign_node]
 
 type
   NodeController* = ref object
@@ -19,6 +19,7 @@ proc remove_from_scene(unit: Unit) =
         field.untrack_all
   if unit of Build: Build(unit).untrack_all
   elif unit of Bot: Bot(unit).untrack_all
+  elif unit of Sign: Sign(unit).untrack_all
   if unit.script_ctx:
     unit.script_ctx.callback = nil
   if not state.reloading and not unit.clone_of:
@@ -30,9 +31,11 @@ proc remove_from_scene(unit: Unit) =
   unit.node.owner = nil
   parent_node.remove_child(unit.node)
   if unit.node of BuildNode:
-    BuildNode(unit.node).unit = nil
+    BuildNode(unit.node).model = nil
   elif unit.node of BotNode:
-    BotNode(unit.node).unit = nil
+    BotNode(unit.node).model = nil
+  elif unit.node of SignNode:
+    SignNode(unit.node).model = nil
   unit.node.queue_free()
   unit.node = nil
 
@@ -42,11 +45,11 @@ proc add_to_scene(unit: Unit) =
     if node.is_nil:
       node = T.init
     unit.node = node
-    node.unit = unit
+    node.model = unit
     node.transform = unit.start_transform
     parent_node.add_child(unit.node)
     unit.node.owner = parent_node
-    node.setup(unit)
+    node.setup
 
   let parent_node = if Global in unit.flags:
     state.nodes.data
@@ -55,6 +58,7 @@ proc add_to_scene(unit: Unit) =
 
   if unit of Bot: Bot(unit).add(BotNode, parent_node)
   elif unit of Build: Build(unit).add(BuildNode, parent_node)
+  elif unit of Sign: Sign(unit).add(SignNode, parent_node)
 
 proc set_global(unit: Unit, global: bool) =
   var parent_node = unit.node.get_node("..")

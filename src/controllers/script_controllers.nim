@@ -7,7 +7,7 @@ import pkg / compiler / ast except new_node
 import pkg / compiler / [vmdef, lineinfos, astalgo,  renderer, msgs]
 from pkg/compiler/vm {.all.} import stack_trace_aux
 import godotapi / [spatial, ray_cast, voxel_terrain]
-import core, models / [types, states, bots, builds, units, colors],
+import core, models / [types, states, bots, builds, units, colors, signs],
              libs / [interpreters, eval],
              nodes / [helpers, build_node]
 
@@ -283,6 +283,31 @@ proc exit(ctx: ScriptCtx, exit_code: int) =
   ctx.running = false
 
 proc frame_count(): int = state.frame_count
+
+proc drop_transform(unit: Unit): Transform =
+  if unit of Bot:
+    result = Bot(unit).transform.value
+  elif unit of Build:
+    result = Build(unit).draw_transform
+    result.origin = result.origin.snapped(vec3(1, 1, 1))
+    result = result.translated(FORWARD * 0.51)
+    result.origin = result.origin - (FORWARD + LEFT + DOWN) * 0.5
+  else:
+    raise ObjectConversionDefect.init("Unknown unit type")
+
+proc new_markdown_sign_impl(
+  self: ScriptController, unit: Unit, pnode: PNode, markdown: string, 
+  width: float, height: float, mono_width: int, zoomable: bool, 
+  billboard: bool
+): Unit =
+
+  result = Sign.init(
+    markdown, transform = drop_transform(unit), width = width,
+    height = height, mono_width = mono_width, zoomable = zoomable, 
+    billboard = billboard 
+  )
+  self.map_unit(result, pnode)
+  unit.units.add(result)
 
 # Bot bindings
 
@@ -576,20 +601,25 @@ proc init*(T: type ScriptController): ScriptController =
   result = controller
   result.watch_units state.units
 
-  result.bind_procs "base_bridge", register_active, echo_console, new_instance, exec_instance,  hit,
-                    exit, global, `global=`, position,  local_position, rotation, `rotation=`, id,
-                    glow, `glow=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`, active_unit,
-                    color, `color=`, seen, start_position, wake, frame_count, write_stack_trace
+  result.bind_procs "base_bridge",
+    register_active, echo_console, new_instance, exec_instance,  hit, exit, 
+    global, `global=`, position, local_position, rotation, `rotation=`, id, 
+    glow, `glow=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`, 
+    active_unit, color, `color=`, seen, start_position, wake, frame_count, 
+    write_stack_trace
 
-  result.bind_procs "base_bridge_private", link_dependency_impl, action_running, `action_running=`, yield_script, 
-                    begin_turn, begin_move, sleep_impl, `position=impl`
+  result.bind_procs "base_bridge_private",
+    link_dependency_impl, action_running, `action_running=`, yield_script, 
+    begin_turn, begin_move, sleep_impl, `position=impl`, new_markdown_sign_impl
 
-  result.bind_procs "bots", play
+  result.bind_procs "bots",
+    play
 
-  result.bind_procs "builds", drawing, `drawing=`, initial_position,
-                    save, restore, reset
+  result.bind_procs "builds",
+    drawing, `drawing=`, initial_position, save, restore, reset
 
-  result.bind_procs "players", playing, `playing=`
+  result.bind_procs "players",
+    playing, `playing=`
 
 when is_main_module:
   state.config.lib_dir = current_source_path().parent_dir / ".." / ".." / "vmlib"

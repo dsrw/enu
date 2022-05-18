@@ -52,6 +52,7 @@ type
     frame_count*: int
     reloading*: bool
     skip_block_paint*: bool
+    markdown*: ZenValue[string]
 
   Model* = ref object of RootObj
     target_point*: Vector3
@@ -93,6 +94,13 @@ type
   Bot* = ref object of Unit
     animation*: ZenValue[string]
 
+  Sign* = ref object of Unit
+    markdown*: ZenValue[string]
+    width*, height*: float
+    mono_width*: int
+    billboard*: bool
+    zoomable*: bool
+
   VoxelKind* = enum
     Hole, Manual, Computed
 
@@ -111,9 +119,6 @@ type
     save_points*: Table[string, tuple[position: Transform, color: Color, drawing: bool]]
     bounds*: ZenValue[AABB]
     bot_collisions*: bool
-
-  Edit = ref object of RootObj
-    chunk*: Chunk
 
   Config* = ref object
     font_size*: ZenValue[int]
