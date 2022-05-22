@@ -135,7 +135,7 @@ proc hit(unit_a: Unit, unit_b: Unit): Vector3 =
 proc echo_console(msg: string) =
   p msg
   state.console.log += msg & "\n"
-  state.console.visible.value = true
+  state.push_flag ConsoleVisible
 
 proc action_running(self: Unit): bool =
   self.script_ctx.action_running
@@ -249,7 +249,7 @@ proc `rotation=`(self: Unit, degrees: float) =
   self.transform.value = t
 
 proc seen(self: ScriptController, target: Unit, distance: float): bool =
-  if target == state.player and Flying in state.input_flags:
+  if target == state.player and Flying in state.flags:
     return false
   let unit = self.active_unit
   if unit of Build:
@@ -340,17 +340,17 @@ proc reset(self: Build, clear: bool) =
 # Player binding
 
 proc playing(self: Unit): bool =
-  state.playing
+  Playing in state.flags
 
 proc `playing=`*(self:Unit, value: bool) =
-  state.playing = value
+  state.set_flag Playing, value
 
 # End of bindings
 
 proc script_error(self: ScriptController, unit: Unit, e: ref VMQuit) =
   state.logger("err", e.msg)
   unit.ensure_visible
-  state.console.show_errors.value = true
+  state.push_flag ErrorsVisible
 
 proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
   let ctx = unit.script_ctx
@@ -487,8 +487,8 @@ proc change_code(self: ScriptController, unit: Unit, code: string) =
   unit.shared.edits = all_edits
 
   unit.reset()
-  state.console.show_errors.value = false
-  state.console.visible.value = false
+  state.pop_flag ErrorsVisible
+  state.pop_flag ConsoleVisible
 
   if not state.reloading and code.strip == "" and file_exists(unit.script_file):
     remove_file unit.script_file

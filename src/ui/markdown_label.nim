@@ -1,12 +1,16 @@
 import std / [lists, algorithm]
 import pkg / [godot, markdown, hmatching, print, model_citizen]
 import godotapi / [rich_text_label, scroll_container, text_edit, theme,
-                   dynamic_font, dynamic_font_data, style_box]
-import core, globals, models / colors
+                   dynamic_font, dynamic_font_data, style_box_flat]
+import core, globals
+import models / colors except Color
 
 export scroll_container
 
 const comment_color = col"808080"
+
+proc stylebox(self: Control): StyleBoxFlat = 
+  self.get_stylebox("normal").as(StyleBoxFlat)
 
 gdobj MarkdownLabel of ScrollContainer:
   var
@@ -23,32 +27,41 @@ gdobj MarkdownLabel of ScrollContainer:
     container: Node
     og_text_edit: TextEdit
     og_label: RichTextLabel
+    og_text_edit_color: Color
+    og_label_color: Color
     needs_margin = false
     resized = false
+    local_default_font: DynamicFont
+    local_italic_font: DynamicFont
+    local_bold_font: DynamicFont
+    local_bold_italic_font: DynamicFont
+    local_header_font: DynamicFont
+    local_mono_font: DynamicFont
 
   proc add_label() =
     self.current_label = self.og_label.duplicate as RichTextLabel
     self.container.add_child(self.current_label)
     self.current_label.visible = true
 
-  proc set_font_sizes = 
+  proc set_font_sizes =
     var size = 3
     if self.mono_width > 0:
       let size_str = " ".repeat(self.mono_width + 2)
-      self.mono_font.size = size
-      while self.mono_font.get_string_size(size_str).x < self.rect_size.x:
+      self.local_mono_font.size = size
+      while self.local_mono_font.get_string_size(size_str).x < self.rect_size.x:
         inc size
-        self.mono_font.size = size
+        self.local_mono_font.size = size
       dec size
     else:
       size = GameState.active().config.font_size.value
 
-    self.default_font.size = size
-    self.italic_font.size = size
-    self.bold_font.size = size
-    self.bold_italic_font.size = size
-    self.mono_font.size = size 
-    self.header_font.size = size * 2
+    self.local_default_font.size = size
+    self.local_italic_font.size = size
+    self.local_bold_font.size = size
+    self.local_bold_italic_font.size = size
+    self.local_mono_font.size = size 
+    self.local_header_font.size = size * 2
+
     var first = true
     for child in self.container.get_children:
       var child = child.as_object(Node)
@@ -62,27 +75,26 @@ gdobj MarkdownLabel of ScrollContainer:
         size.y = float height
         if lines.len > 0:
           let str_size = 
-            self.mono_font.get_string_size(" ".repeat(lines.len + 2))
+            self.local_mono_font.get_string_size(" ".repeat(lines.len + 2))
           size.x = str_size.x
         child.rect_min_size = size
         child.rect_size = size
       elif child of RichTextLabel:
-        var stylebox = self.current_label.get_stylebox("normal")
+        var stylebox = self.current_label.stylebox
         stylebox.content_margin_bottom = 0
-        self.current_label.add_stylebox_override("normal", stylebox)
-
+        
         if not first:
-          stylebox = self.current_label.get_stylebox("normal")
           stylebox.content_margin_top = float(size + 4)
-          self.current_label.add_stylebox_override("normal", stylebox)
         else:
           first = false
 
   proc add_text_edit(): TextEdit =
     result = self.og_text_edit.duplicate as TextEdit
+    result.add_color_region("\"\"\"", "\"\"\"", ir_black[normal], false)
+    result.add_color_region("\"", "\"", ir_black[text], false)
     result.add_color_region("#", "\n", comment_color, true)
     result.add_color_region("#[", "]#", comment_color, false)
-    
+
   method ready() =
     self.bind_signals(self, "resized")
     self.container = self.get_node("VBoxContainer")
@@ -90,9 +102,21 @@ gdobj MarkdownLabel of ScrollContainer:
     self.og_label = self.container.get_node("RichTextLabel") as RichTextLabel
     self.container.remove_child self.og_text_edit
     self.container.remove_child self.og_label
+    self.og_text_edit_color = self.og_text_edit.stylebox.bg_color
 
-    self.og_text_edit.add_font_override("font", self.mono_font)
-    self.og_label.add_font_override("normal_font", self.default_font)
+    self.og_label_color = self.og_label.stylebox.bg_color
+
+    # clone fonts so they can be resized without impacting other labels
+
+    self.local_default_font = self.default_font.duplicate as DynamicFont
+    self.local_italic_font = self.italic_font.duplicate as DynamicFont
+    self.local_bold_font = self.bold_font.duplicate as DynamicFont
+    self.local_bold_italic_font = self.bold_italic_font.duplicate as DynamicFont
+    self.local_header_font = self.header_font.duplicate as DynamicFont
+    self.local_mono_font = self.mono_font.duplicate as DynamicFont
+
+    self.og_text_edit.add_font_override("font", self.local_mono_font)
+    self.og_label.add_font_override("normal_font", self.local_default_font)
     
     GameState.active.config.font_size.value = 32
     GameState.active.config.font_size.changes:
@@ -114,23 +138,24 @@ gdobj MarkdownLabel of ScrollContainer:
         
       case t:
       of of Heading():
-        label.with(push_font self.header_font, push_color ir_black[keyword]) 
+        label.with(push_font self.local_header_font, 
+          push_color ir_black[keyword]) 
         self.render_markdown t
         label.with(pop, pop, newline)
         self.needs_margin = true
 
       of of Em():
-        label.push_font self.italic_font
+        label.push_font self.local_italic_font
         self.render_markdown t
         label.pop
 
       of of Strong():
-        label.push_font self.bold_font
+        label.push_font self.local_bold_font
         self.render_markdown t
         label.pop
         
       of of CodeSpan():
-        label.with(push_font self.mono_font, push_color ir_black[number],
+        label.with(push_font self.local_mono_font, push_color ir_black[number],
                    add_text t.doc)
         self.render_markdown t
         label.with(pop, pop)
@@ -157,7 +182,7 @@ gdobj MarkdownLabel of ScrollContainer:
         self.render_markdown(t)
 
       of of LI():
-        label.with(push_table 2, push_cell, push_font self.mono_font)
+        label.with(push_table 2, push_cell, push_font self.local_mono_font)
 
         if list_position > 0:
           label.add_text LI(t).marker & ". "

@@ -65,13 +65,6 @@ gdobj Game of Node:
     let vp = self.get_viewport().size
     self.scale_factor = sqrt(config.mega_pixels * 1_000_000.0 / (vp.x * vp.y))
     self.scaled_viewport.size = vp * self.scale_factor
-    var p = self.find_node("LeftPanel") as Control
-
-    assert not p.is_nil
-    var s = p.rect_size
-
-    s.x = vp.x / 2
-    p.rect_size = s
 
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
@@ -202,7 +195,7 @@ gdobj Game of Node:
     self.stats = self.find_node("stats").as(Label)
     self.stats.visible = config.show_stats
 
-    state.target_flags.changes:
+    state.flags.changes:
       if MouseCaptured.added:
         let center = self.get_viewport().get_visible_rect().size * 0.5
         self.saved_mouse_position = self.get_viewport().get_mouse_position()
@@ -212,12 +205,12 @@ gdobj Game of Node:
         set_mouse_mode MOUSE_MODE_VISIBLE
         warp_mouse_position(self.saved_mouse_position)
 
-      if Reticle.added:
+      if ReticleVisible.added:
         self.reticle.visible = true
-      elif Reticle.removed:
+      elif ReticleVisible.removed:
         self.reticle.visible = false
 
-    state.mouse_captured = true
+    state.push_flag MouseCaptured
 
   proc update_action_index*(change: int) =
     state.action_index += change
@@ -244,7 +237,6 @@ gdobj Game of Node:
       self.block_mode(self.last_index)
     else:
       state.tool.value = Code
-      state.reticle = true
       state.action_index = 0
       if update_actionbar:
         self.trigger("update_actionbar", 0)
@@ -252,14 +244,12 @@ gdobj Game of Node:
   proc block_mode*(index: int, update_actionbar = true) =
     self.last_index = index
     state.tool.value = Block
-    state.reticle = false
     state.action_index = index
     if update_actionbar:
       self.trigger("update_actionbar", index)
 
   proc obj_mode*(index: int, update_actionbar = true) =
     state.tool.value = Place
-    state.reticle = false
     state.action_index = index
     if update_actionbar:
       self.trigger("update_actionbar", index)
@@ -287,7 +277,7 @@ gdobj Game of Node:
       self.save_user_config(user_config)
     save_world()
     state.reloading = true
-    state.playing = false
+    state.pop_flag Playing
     state.units.clear
     NodeController.reset_nodes
     self.prepare_to_load_world()
@@ -295,8 +285,7 @@ gdobj Game of Node:
     state.reloading = false
 
   method unhandled_input*(event: InputEvent) =
-
-    if state.editing or state.console.visible.value:
+    if EditorVisible in state.flags or ConsoleVisible in state.flags:
       if event.is_action_pressed("zoom_in"):
         self.set_font_size config.font_size.value + 1
       elif event.is_action_pressed("zoom_out"):
@@ -308,53 +297,55 @@ gdobj Game of Node:
       if event.is_action_pressed("previous"):
        self.prev_action()
         # NOTE: alt+enter isn't being picked up on windows if the editor is open. Needs investigation.
-    if event.is_action_pressed("toggle_fullscreen") or (host_os == "windows" and state.command_mode and
-       state.editing and event of InputEventKey and event.as(InputEventKey).scancode == KEY_ENTER):
+    if event.is_action_pressed("toggle_fullscreen") or (host_os == "windows" and 
+      CommandMode in state.flags and EditorVisible in state.flags and 
+      event of InputEventKey and event.as(InputEventKey).scancode == KEY_ENTER):
+
       set_window_fullscreen not is_window_fullscreen()
     elif event.is_action_pressed("next_world"):    
       self.switch_world(+1)
     elif event.is_action_pressed("prev_world"):
       self.switch_world(-1)
     elif event.is_action_pressed("command_mode"):
-      state.command_mode = true
+      state.push_flag CommandMode
     elif event.is_action_released("command_mode"):
-      state.command_mode = false
+      state.pop_flag CommandMode
     elif event.is_action_pressed("save_and_reload"):
       self.switch_world(0)
       self.get_tree().set_input_as_handled()
-      state.playing = false
+      state.pop_flag Playing
     elif event.is_action_pressed("pause"):
       state.paused = not state.paused
     elif event.is_action_pressed("clear_console"):
       state.console.log.clear()
     elif event.is_action_pressed("toggle_console"):
-      state.console.visible.value = not state.console.visible.value
+      state.set_flag ConsoleVisible, ConsoleVisible notin state.flags
     elif event.is_action_pressed("quit"):
       if host_os != "macosx":
         save_world()
         self.get_tree().quit()
-    elif not state.editing:
+    elif EditorVisible notin state.flags:
       if event.is_action_pressed("toggle_mouse_captured"):
-        state.mouse_captured = not state.mouse_captured
+        state.set_flag MouseCaptured, MouseCaptured notin state.flags
         self.get_tree().set_input_as_handled()
 
-      if event.is_action_pressed("toggle_code_mode"):
-        self.code_mode(restore = true)
-      elif event.is_action_pressed("mode_1"):
-        self.code_mode()
-      elif event.is_action_pressed("mode_2"):
-        self.block_mode(1)
-      elif event.is_action_pressed("mode_3"):
-        self.block_mode(2)
-      elif event.is_action_pressed("mode_4"):
-        self.block_mode(3)
-      elif event.is_action_pressed("mode_5"):
-        self.block_mode(4)
-      elif event.is_action_pressed("mode_6"):
-        self.block_mode(5)
-      elif event.is_action_pressed("mode_7"):
-        self.block_mode(6)
-      elif event.is_action_pressed("mode_8"):
-        self.obj_mode(7)
+    if event.is_action_pressed("toggle_code_mode"):
+      self.code_mode(restore = true)
+    elif event.is_action_pressed("mode_1"):
+      self.code_mode()
+    elif event.is_action_pressed("mode_2"):
+      self.block_mode(1)
+    elif event.is_action_pressed("mode_3"):
+      self.block_mode(2)
+    elif event.is_action_pressed("mode_4"):
+      self.block_mode(3)
+    elif event.is_action_pressed("mode_5"):
+      self.block_mode(4)
+    elif event.is_action_pressed("mode_6"):
+      self.block_mode(5)
+    elif event.is_action_pressed("mode_7"):
+      self.block_mode(6)
+    elif event.is_action_pressed("mode_8"):
+      self.obj_mode(7)
 
 proc get_game*(): Game = Game(state.nodes.game)

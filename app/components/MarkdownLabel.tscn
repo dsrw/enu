@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=2]
+[gd_scene load_steps=18 format=2]
 
 [ext_resource path="res://components/MarkdownLabel.gdns" type="Script" id=1]
 [ext_resource path="res://themes/DarkTheme.tres" type="Theme" id=2]
@@ -27,6 +27,7 @@ font_data = ExtResource( 3 )
 font_data = ExtResource( 7 )
 
 [sub_resource type="StyleBoxFlat" id=6]
+resource_local_to_scene = true
 content_margin_left = 20.0
 content_margin_right = 20.0
 content_margin_top = 20.0
@@ -36,9 +37,14 @@ bg_color = Color( 0.0784314, 0.0117647, 0.113725, 0.839216 )
 [sub_resource type="DynamicFont" id=13]
 font_data = ExtResource( 7 )
 
-[sub_resource type="StyleBoxFlat" id=3]
-content_margin_top = 20.0
-bg_color = Color( 0, 0, 0, 0.729412 )
+[sub_resource type="StyleBoxFlat" id=14]
+bg_color = Color( 0, 0, 0, 0 )
+border_width_top = 1
+border_width_bottom = 1
+border_color = Color( 1, 0.45098, 0.992157, 1 )
+
+[sub_resource type="StyleBoxFlat" id=5]
+bg_color = Color( 0, 0, 0, 0.839216 )
 border_width_top = 1
 border_width_bottom = 1
 border_color = Color( 1, 0.45098, 0.992157, 1 )
@@ -60,6 +66,7 @@ mono_font = SubResource( 12 )
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 margin_right = 1920.0
 margin_bottom = 1080.0
+mouse_filter = 0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_constants/separation = 0
@@ -90,7 +97,8 @@ custom_colors/selection_color = Color( 0.207843, 0, 0.321569, 1 )
 custom_colors/executing_line_color = Color( 0.0392157, 0, 0.168627, 1 )
 custom_colors/font_color_readonly = Color( 0.878431, 0.878431, 0.878431, 1 )
 custom_fonts/font = SubResource( 13 )
-custom_styles/read_only = SubResource( 3 )
+custom_styles/read_only = SubResource( 14 )
+custom_styles/normal = SubResource( 5 )
 indent_using_spaces = true
 indent_size = 2
 readonly = true

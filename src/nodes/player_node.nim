@@ -61,13 +61,10 @@ gdobj PlayerNode of KinematicBody:
     boosted = false
 
   proc flying(): bool =
-    Flying in state.input_flags
+    Flying in state.flags
 
   proc flying(value: bool) =
-    if value:
-      state.input_flags += Flying
-    else:
-      state.input_flags -= Flying
+    state.set_flag Flying, value
 
   proc get_look_direction(): Vector2 =
     vec2(get_action_strength("look_right") - get_action_strength("look_left"),
@@ -122,7 +119,7 @@ gdobj PlayerNode of KinematicBody:
     self.position_start = self.camera_rig.translation
     state.nodes.player = self
 
-    state.target_flags.changes:
+    state.flags.changes:
       if MouseCaptured.removed:
         self.skip_next_mouse_move = true
 
@@ -139,7 +136,7 @@ gdobj PlayerNode of KinematicBody:
         self.velocity = change.item
 
   proc current_raycast*: RayCast =
-    if state.mouse_captured:
+    if MouseCaptured in state.flags:
       self.aim_ray
     else:
       self.world_ray
@@ -147,7 +144,7 @@ gdobj PlayerNode of KinematicBody:
   method process*(delta: float) =
     self.unit.velocity.pause self.velocity_zid:
       self.unit.velocity.value = self.velocity
-    if not state.editing or state.command_mode:
+    if EditorVisible notin state.flags or CommandMode in state.flags:
       var transform = self.camera_rig.global_transform
       transform.origin = self.global_transform.origin + self.position_start
 
@@ -165,7 +162,7 @@ gdobj PlayerNode of KinematicBody:
       self.unit.rotation.pause(self.rotation_zid):
         self.unit.rotation.value = rad_to_deg r.y
       let ray_length = if state.tool.value == Code: 200.0 else: 100.0
-      if not state.mouse_captured:
+      if MouseCaptured notin state.flags:
         let
           mouse_pos = self.get_viewport().
                            get_mouse_position() * float get_game().scale_factor
@@ -179,18 +176,15 @@ gdobj PlayerNode of KinematicBody:
         self.aim_target.update(self.aim_ray)
 
   method physics_process*(delta: float) =
-    for i in 0..(self.get_slide_count() - 1):
-      let collision = self.get_slide_collision(i)
-      let collider = collision.collider
-
-    if state.command_mode and self.command_timer > 0:
+    if CommandMode in state.flags and self.command_timer > 0:
       self.command_timer -= delta
       if self.command_timer <= 0:
-        state.command_mode = false
+        state.pop_flag CommandMode
 
     const forward_rotation = deg_to_rad(-90.0)
-    let process_input = not state.editing or state.command_mode
-    let
+    let 
+      process_input = 
+        EditorVisible notin state.flags or CommandMode in state.flags
       input_direction = if process_input: self.get_input_direction()
                         else: vec3()
       basis   = self.camera_rig.global_transform.basis
@@ -252,20 +246,22 @@ gdobj PlayerNode of KinematicBody:
       if event.axis == JOY_ANALOG_L2 or event.axis == JOY_ANALOG_R2:
         return
 
-    if event of InputEventMouseMotion and state.mouse_captured:
+    if event of InputEventMouseMotion and MouseCaptured in state.flags:
       if not self.skip_next_mouse_move:
         self.input_relative += event.as(InputEventMouseMotion).relative()
       else:
         self.skip_next_mouse_move = false
-    if state.editing and not self.skip_release and (event of InputEventJoypadButton or event of InputEventJoypadMotion):
+    if EditorVisible in state.flags and not self.skip_release and 
+      (event of InputEventJoypadButton or event of InputEventJoypadMotion):
+
       let active_input = self.has_active_input(event.device.int)
-      if state.command_mode and not active_input:
+      if CommandMode in state.flags and not active_input:
         self.command_timer = input_command_timeout
-      elif state.command_mode and active_input:
+      elif CommandMode in state.flags and active_input:
         self.command_timer = 0.0
       elif active_input:
         self.command_timer = 0.0
-        state.command_mode = true
+        state.push_flag CommandMode
 
     if event.is_action_pressed("jump"):
       self.jump_down = true
@@ -275,7 +271,7 @@ gdobj PlayerNode of KinematicBody:
 
       if toggle:
         self.jump_time = nil_time
-        if state.playing:
+        if Playing in state.flags:
           self.flying(false)
         else:
           self.flying(not self.flying)
@@ -313,19 +309,18 @@ gdobj PlayerNode of KinematicBody:
         self.pan_delta = 0
         get_game().prev_action()
 
-    let ray = self.current_raycast
     if event.is_action_pressed("fire"):
-      if not state.editing:
+      if EditorVisible in state.flags:
         self.skip_release = true
-      if not state.playing:
-        state.input_flags += Primary
+      if Playing notin state.flags:
+        state.push_flag PrimaryDown
     elif event.is_action_released("fire"):
       self.skip_release = false
-      state.input_flags -= Primary
+      state.pop_flag PrimaryDown
 
     if event.is_action_pressed("remove"):
-      state.input_flags += Secondary
+      state.push_flag SecondaryDown
     elif event.is_action_released("remove"):
-      state.input_flags -= Secondary
+      state.pop_flag SecondaryDown
 
 proc get_player*(): PlayerNode = PlayerNode(state.nodes.player)

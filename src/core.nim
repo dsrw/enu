@@ -1,12 +1,11 @@
 const enu_version* = static_exec("git describe --tags HEAD")
 
 ### Sugar ###
-from sugar import dup
+from sugar import dup, dump, collect
 import std/with, strformat, strutils, sequtils, sets, tables, times, std/monotimes, print
 export dup, with, strformat, strutils, sequtils, sets, tables, print
 
 ### Debug
-from sugar import dump
 import parseutils
 export dump
 
@@ -44,7 +43,6 @@ proc log_trace*(name = "") =
   section_start_time = now
 
 ### times ###
-import times
 export times
 
 proc seconds*(s: float): TimeInterval {.inline.} =
@@ -144,7 +142,6 @@ proc `z=`*(self: var Basis, value: Vector3) {.inline.} =
   self.elements[1].z = value.y
   self.elements[2].z = value.z
 
-from sugar import collect
 proc surrounding*(point: Vector3): seq[Vector3] =
   collect(new_seq):
     for x in 0..2:

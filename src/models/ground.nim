@@ -26,14 +26,14 @@ proc fire(self: Ground, append = false) =
 proc init*(_: type Ground, node: Spatial): Ground =
   let self = Ground(flags: ZenSet[ModelFlags].init, node: node)
 
-  state.input_flags.changes:
-    if Primary.added and Hover in self.flags:
+  state.flags.changes:
+    if PrimaryDown.added and Hover in self.flags:
       self.fire(append = false)
-    if Primary.removed or Secondary.removed:
+    if PrimaryDown.removed or SecondaryDown.removed:
       state.draw_unit_id = ""
 
   self.flags.changes:
-    if Primary in state.input_flags and state.draw_unit_id == "ground":
+    if PrimaryDown in state.flags and state.draw_unit_id == "ground":
       if change.item == TargetMoved:
         self.fire(append = true)
 

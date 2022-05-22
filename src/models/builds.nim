@@ -200,7 +200,9 @@ proc fire(self: Build) =
     skip_point = self.target_point + self.target_normal
     last_point = self.target_point
     self.draw(point, (Manual, state.selected_color))
-  elif state.tool.value == Place and state.target_block and state.bot_at(global_point).is_nil:
+  elif state.tool.value == Place and EditorVisible in state.flags and 
+    state.bot_at(global_point).is_nil:
+
     let transform = Transform.init(origin = global_point)
     state.units += Bot.init(transform = transform)
   elif state.tool.value == Code:
@@ -342,7 +344,7 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
   self.reset()
   self.flags.changes:
     if Hover.added and state.tool.value == Code:
-      if Playing notin state.target_flags:
+      if Playing notin state.flags:
         let root = self.find_root(true)
         root.walk_tree proc(unit: Unit) = unit.flags += Highlight
     elif Hover.removed:
@@ -355,26 +357,26 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
       elif state.draw_unit_id == self.id and self.target_normal == draw_normal and
           length <= 5 and self.target_point != skip_point:
       
-        if Secondary in state.input_flags:
+        if SecondaryDown in state.flags:
           self.remove
-        elif Primary in state.input_flags:
+        elif PrimaryDown in state.flags:
           self.fire
 
     if change.item in {TargetMoved, Hover} and state.tool.value == Place:
       if self.target_normal == UP:
-        state.target_block = true
+        state.push_flag BlockTargetVisible
       else:
-        state.reticle = true
+        state.pop_flag BlockTargetVisible
 
-  state.input_flags.changes:
+  state.flags.changes:
     if Hover in self.flags:
-      if Primary.added:
+      if PrimaryDown.added:
         state.draw_unit_id = self.id
         self.fire
-      elif Secondary.added:
+      elif SecondaryDown.added:
         state.draw_unit_id = self.id
         self.remove
-    if Primary.removed or Secondary.removed:
+    if PrimaryDown.removed or SecondaryDown.removed:
       state.draw_unit_id = ""
       last_point = vec3()
 

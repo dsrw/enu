@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=2]
+[gd_scene load_steps=15 format=2]
 
 [ext_resource path="res://components/Console.gdns" type="Script" id=1]
 [ext_resource path="res://components/TextEdit.gdns" type="Script" id=2]
@@ -14,15 +14,9 @@
 
 [sub_resource type="ButtonGroup" id=1]
 
-[sub_resource type="StyleBoxFlat" id=2]
-bg_color = Color( 0, 0, 0, 0 )
-corner_radius_top_right = 16
-corner_radius_bottom_right = 16
-
-[sub_resource type="StyleBoxFlat" id=3]
+[sub_resource type="StyleBoxFlat" id=5]
 bg_color = Color( 0, 0, 0, 0.839216 )
-corner_radius_top_right = 16
-corner_radius_bottom_right = 16
+border_color = Color( 1, 0.45098, 0.992157, 1 )
 
 [sub_resource type="DynamicFont" id=4]
 size = 20
@@ -105,19 +99,20 @@ icon = null
 [node name="LeftPanel" type="MarginContainer" parent="."]
 anchor_right = 0.5
 anchor_bottom = 1.0
-margin_right = 192.0
+margin_right = -1.0
 mouse_filter = 2
 theme = ExtResource( 6 )
 
 [node name="ThemeHolder" type="VBoxContainer" parent="LeftPanel"]
-margin_right = 1152.0
+margin_right = 959.0
 margin_bottom = 1080.0
 mouse_filter = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+custom_constants/separation = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="LeftPanel/ThemeHolder"]
-margin_right = 1152.0
+margin_right = 959.0
 margin_bottom = 1080.0
 mouse_filter = 2
 size_flags_horizontal = 3
@@ -126,13 +121,12 @@ size_flags_stretch_ratio = 2.0
 
 [node name="Editor" type="TextEdit" parent="LeftPanel/ThemeHolder/MarginContainer"]
 visible = false
-margin_right = 1152.0
+margin_right = 959.0
 margin_bottom = 1080.0
 size_flags_vertical = 3
 custom_colors/selection_color = Color( 0.184314, 0.0117647, 0.686275, 1 )
 custom_colors/executing_line_color = Color( 0.0392157, 0, 0.168627, 1 )
-custom_styles/read_only = SubResource( 2 )
-custom_styles/normal = SubResource( 3 )
+custom_styles/normal = SubResource( 5 )
 indent_using_spaces = true
 indent_size = 2
 syntax_highlighting = true
@@ -160,17 +154,20 @@ selection_enabled = true
 script = ExtResource( 1 )
 
 [node name="RightPanel" type="MarginContainer" parent="."]
-visible = false
 anchor_left = 0.5
 anchor_right = 1.0
 anchor_bottom = 1.0
+margin_left = 1.0
+mouse_filter = 2
 script = ExtResource( 7 )
 
 [node name="MarkdownLabel" parent="RightPanel" instance=ExtResource( 4 )]
+visible = false
 anchor_right = 0.0
 anchor_bottom = 0.0
-margin_right = 960.0
+margin_right = 959.0
 margin_bottom = 1080.0
+focus_mode = 2
 
 [node name="Reticle" type="Control" parent="."]
 visible = false

@@ -27,7 +27,8 @@ font_data = ExtResource( 6 )
 [sub_resource type="DynamicFont" id=12]
 font_data = ExtResource( 4 )
 
-[sub_resource type="QuadMesh" id=3]
+[sub_resource type="QuadMesh" id=18]
+resource_local_to_scene = true
 
 [sub_resource type="ViewportTexture" id=16]
 flags = 64
@@ -36,6 +37,7 @@ viewport_path = NodePath("Viewport")
 [sub_resource type="SpatialMaterial" id=17]
 resource_local_to_scene = true
 flags_albedo_tex_force_srgb = true
+params_cull_mode = 2
 albedo_color = Color( 0.478431, 0.478431, 0.478431, 1 )
 albedo_texture = SubResource( 16 )
 metallic_specular = 0.0
@@ -47,6 +49,7 @@ emission_operator = 0
 emission_on_uv2 = false
 
 [sub_resource type="ConcavePolygonShape" id=15]
+resource_local_to_scene = true
 data = PoolVector3Array( -0.5, -0.5, 0, -0.5, 0.5, 0, 0.5, 0.5, 0, -0.5, -0.5, 0, 0.5, 0.5, 0, 0.5, -0.5, 0 )
 
 [node name="SignNode" type="Spatial"]
@@ -75,8 +78,8 @@ mono_font = SubResource( 12 )
 mono_width = 22
 
 [node name="MeshInstance" type="MeshInstance" parent="."]
-transform = Transform( -0.95, 0, -8.74228e-08, 0, 0.95, 0, 8.30516e-08, 0, -1, 0, 0, 0 )
-mesh = SubResource( 3 )
+transform = Transform( -1, 0, -1.50996e-07, 0, 1, 0, 1.50996e-07, 0, -1, 0, 0, 0 )
+mesh = SubResource( 18 )
 material/0 = SubResource( 17 )
 
 [node name="SignBody" type="StaticBody" parent="MeshInstance"]

@@ -16,8 +16,8 @@ gdobj Console of RichTextLabel:
         self.visible = true
       state.console.log += &"[b]{level.to_upper}[/b] {msg}\n"
 
-    state.console.visible.changes:
-      if added: self.visible = change.item
+    state.flags.changes:
+      self.visible = ConsoleVisible in state.flags
 
     state.console.log.changes:
       if added:
@@ -28,14 +28,10 @@ gdobj Console of RichTextLabel:
         discard self.append_bbcode(state.console.log.value.join("\n"))
         break
 
-    state.console.show_errors.changes:
-      if added:
-        state.console.visible.value = true
-
     self.default_mouse_filter = self.mouse_filter
 
   method ready*() =
-    GameState.active.target_flags.changes:
+    GameState.active.flags.changes:
       if MouseCaptured.added:
         self.mouse_filter = MOUSE_FILTER_IGNORE
       elif MouseCaptured.removed:

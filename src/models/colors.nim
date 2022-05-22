@@ -14,10 +14,11 @@ type
     eraser, blue, red, green, black, white, brown
 
   Theme* = enum
-    comment, entity, keyword, operator, class, storage, constant,
+    normal, comment, entity, keyword, operator, class, storage, constant,
     text, number, variable, invalid
 
 const ir_black* = [
+  normal: col"F6F3E8",
   comment: col"7C7C7C",
   entity: col"FFD2A7",
   keyword: col"96CBFE",
@@ -40,6 +41,9 @@ const action_colors* = [
   white: col"d9eed8",
   brown: col"3f302b"
 ]
+
+const solid_alpha* = Color(r: 1.0, g: 1.0, b: 1.0, a: 1.0)
+const dimmed_alpha* = Color(r: 1.0, g: 1.0, b: 1.0, a: 0.4)
 
 proc action_index*(self: Color): Colors =
   for key, value in action_colors:

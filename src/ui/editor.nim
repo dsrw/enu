@@ -2,7 +2,7 @@ import std / [strutils, tables]
 import pkg / [godot, model_citizen]
 import pkg / compiler / [lineinfos]
 import godotapi / [text_edit, scene_tree, node, input_event, global_constants,
-                   input_event_key, style_box_flat]
+                   input_event_key, style_box_flat, gd_os]
 import core, globals
 import models except Color
 
@@ -62,14 +62,16 @@ gdobj Editor of TextEdit:
         self.get_tree.set_input_as_handled()
 
   method unhandled_input*(event: InputEvent) =
-    if self.visible:
-      if event.is_action_pressed("ui_cancel"):
-        if not (event of InputEventJoypadButton) or not state.command_mode:
-          state.open_unit.value.code.value = self.text
-          state.open_unit.value = nil
-          self.get_tree().set_input_as_handled()
+    if EditorFocused in state.flags and event.is_action_pressed("ui_cancel"):
+      if not (event of InputEventJoypadButton) or CommandMode notin state.flags:
+        state.open_unit.value.code.value = self.text
+        state.open_unit.value = nil
+        self.get_tree().set_input_as_handled()
 
   proc configure_highlighting =
+    # strings
+    self.add_color_region("\"\"\"", "\"\"\"", ir_black[normal], false)
+    self.add_color_region("\"", "\"", ir_black[text], false)
     # block comments
     self.add_color_region("#[", "]#", self.comment_color, false)
     # line comments
@@ -98,11 +100,13 @@ gdobj Editor of TextEdit:
     var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
     self.og_bg_color = stylebox.bg_color
 
-    state.console.show_errors.changes:
-      if true.added:
+    state.flags.changes:
+      if ErrorsVisible.added:
         self.highlight_errors()
-      elif false.added:
+      elif ErrorsVisible.removed:
         self.clear_errors()
+      elif EditorFocused.added:
+        self.grab_focus
 
     state.open_unit.changes:
       if added:
@@ -117,25 +121,28 @@ gdobj Editor of TextEdit:
           self.visible = true
           self.set_open_script_ctx()
           self.text = state.open_unit.value.code.value
-          self.grab_focus()
+          if CommandMode in state.flags:
+            self.modulate = dimmed_alpha
+          else:
+            self.modulate = solid_alpha
+            self.grab_focus()
           self.clear_errors()
           self.highlight_errors()
 
-    state.target_flags.changes:
+    state.flags.changes:
+      if EditorFocused.added:
+        self.grab_focus
+      if EditorFocused.removed:
+        self.release_focus
       if CommandMode.added:
-        if Editing in state.target_flags:
+        if EditorVisible in state.flags:
           state.open_unit.value.code.value = self.text
-        self.mouse_filter = MOUSE_FILTER_IGNORE
-        self.shortcut_keys_enabled = false
-        self.readonly = true
-        var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
-        stylebox.bg_color = Color(r: 0, g: 0, b: 0, a: 0.4)
-
+          self.modulate = dimmed_alpha
+          self.release_focus
+   
       elif CommandMode.removed:
-        self.mouse_filter = MOUSE_FILTER_STOP
-        self.shortcut_keys_enabled = true
-        self.readonly = false
-        var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
-        stylebox.bg_color = self.og_bg_color
+        if EditorVisible in state.flags:
+          self.modulate = solid_alpha
+          self.grab_focus
 
     self.configure_highlighting()
