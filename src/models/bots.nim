@@ -16,10 +16,10 @@ method on_begin_move*(self: Bot, direction: Vector3, steps: float, moving_mode: 
     moving = -self.transform.basis.z
     finish_time = 1.0 / self.speed * steps
 
-  var velocity = state.gravity * UP
   result = proc(delta: float): bool =
     duration += delta
     if duration >= finish_time:
+      self.velocity.touch(vec3())
       self.transform.origin = self.transform.origin.snapped(vec3(0.1, 0.1, 0.1))
       return false
     else:
@@ -47,7 +47,9 @@ proc bot_at*(state: GameState, position: Vector3): Bot =
 
 method reset*(self: Bot) =
   self.transform.value = self.start_transform
-  self.animation.value = ""
+  self.speed = 1
+  self.animation.value = "auto"
+  self.velocity.value = vec3()
   self.units.clear()
 
 proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init, clone_of: Bot = nil,
@@ -60,7 +62,7 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
     flags: ZenSet[ModelFlags].init,
     code: ZenValue[string].init,
     velocity: ZenValue[Vector3].init,
-    animation: ZenValue[string].init,
+    animation: Zen.init("auto"),
     glow: ZenValue[float].init,
     speed: 1.0,
     clone_of: clone_of,

@@ -50,9 +50,19 @@ gdobj BotNode of KinematicBody:
       if touched:
         self.model.velocity.pause velocity_zid:
           self.model.velocity.value = self.move_and_slide(change.item, UP)
+        if self.model.animation.value == "auto":
+          if change.item.length <= 0.1:
+            self.animation_player.playback_speed = 1
+            self.animation_player.stop(true)
+          elif change.item.length <= 3:
+            self.animation_player.playback_speed = change.item.length / 2
+            self.animation_player.play("walk")
+          else:
+            self.animation_player.playback_speed = change.item.length / 5
+            self.animation_player.play("run")
 
     self.model.animation.changes:
-      if "".added:
+      if "".added or "auto".added:
         self.animation_player.stop(true)
       elif added:
         self.animation_player.play(change.item)

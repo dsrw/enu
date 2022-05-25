@@ -146,7 +146,7 @@ type
     previous_line: TLineInfo
     pause_requested: bool
     module_name*: string
-    file_name: string
+    file_name*: string
     exit_code*: Option[int]
     errors*: seq[tuple[msg: string, info: TLineInfo, location: string]]
     callback*: Callback
