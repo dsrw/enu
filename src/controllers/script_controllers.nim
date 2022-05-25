@@ -489,8 +489,9 @@ proc change_code(self: ScriptController, unit: Unit, code: string) =
   unit.reset()
   state.pop_flag ErrorsVisible
   state.pop_flag ConsoleVisible
-
   if not state.reloading and code.strip == "" and file_exists(unit.script_file):
+    self.interpreter.reset_module(unit.script_ctx.module_name)
+    unit.script_ctx.running = false
     remove_file unit.script_file
     self.module_names.excl unit.script_ctx.module_name
   elif code.strip != "":
