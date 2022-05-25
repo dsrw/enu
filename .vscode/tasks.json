@@ -1,0 +1,33 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build enu",
+      "command": "nimble",
+      "args": ["build", "--debugger:native"],
+      "options": {
+          "cwd": "${workspaceRoot}"
+      },
+      "type": "shell",
+      "group": {
+          "kind": "build",
+          "isDefault": true
+      }
+    },
+    {
+      "label": "Build Current File",
+      "command": "nim",
+      "args": ["c", "--debugger:native", "${relativeFile}"],
+      "options": {
+          "cwd": "${workspaceRoot}"
+      },
+      "type": "shell",
+      "group": {
+          "kind": "build",
+          "isDefault": true
+      }
+    }
+  ]
+}
