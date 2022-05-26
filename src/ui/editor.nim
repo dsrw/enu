@@ -101,9 +101,9 @@ gdobj Editor of TextEdit:
     self.og_bg_color = stylebox.bg_color
 
     state.flags.changes:
-      if ErrorsVisible.added:
+      if ConsoleVisible.added:
         self.highlight_errors()
-      elif ErrorsVisible.removed:
+      elif ConsoleVisible.removed:
         self.clear_errors()
       elif EditorFocused.added:
         self.grab_focus

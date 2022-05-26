@@ -440,7 +440,7 @@ proc `open=`(self: Sign, value: bool) =
 proc script_error(self: ScriptController, unit: Unit, e: ref VMQuit) =
   state.logger("err", e.msg)
   unit.ensure_visible
-  state.push_flag ErrorsVisible
+  state.push_flags ConsoleVisible
 
 proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
   let ctx = unit.script_ctx
@@ -577,7 +577,6 @@ proc change_code(self: ScriptController, unit: Unit, code: string) =
   unit.shared.edits = all_edits
 
   unit.reset()
-  state.pop_flag ErrorsVisible
   state.pop_flag ConsoleVisible
   if not state.reloading and code.strip == "" and file_exists(unit.script_file):
     self.interpreter.reset_module(unit.script_ctx.module_name)

@@ -12,7 +12,7 @@ export Interpreter
 type
 
   StateFlags* = enum
-    CommandMode, EditorVisible, ConsoleVisible, ErrorsVisible, 
+    CommandMode, EditorVisible, ConsoleVisible,
     BlockTargetVisible, ReticleVisible, DocsVisible, MouseCaptured, 
     PrimaryDown, SecondaryDown, EditorFocused, ConsoleFocused, DocsFocused,
     Playing, Flying, Key
