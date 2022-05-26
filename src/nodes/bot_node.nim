@@ -1,10 +1,13 @@
-import std / [tables, sugar, os]
+import std / [tables, sugar, os, math]
 import pkg/godot except print
-import pkg/model_citizen
+import pkg / [model_citizen, chroma]
 import godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
-                   input_event, animation_player, resource_loader, packed_scene]
+                   input_event, animation_player, resource_loader, packed_scene,
+                   spatial_material]
 import globals, core, print
-import models / [types, bots, units]
+import models / [types, bots, units, states, colors]
+
+let state = GameState.active
 
 gdobj BotNode of KinematicBody:
   var
@@ -31,6 +34,33 @@ gdobj BotNode of KinematicBody:
     self.animation_player = self.skin.get_node("AnimationPlayer").as(AnimationPlayer)
     self.set_default_material()
 
+  proc set_color(color: chroma.Color) =
+    var adjusted: chroma.Color
+    if color == action_colors[green]:
+      adjusted = color
+      adjusted.a = 0.015
+    elif color == action_colors[white]:
+      adjusted = color
+      adjusted.a = 0.02
+    else:
+      var dist = (color.distance(action_colors[brown]) + 10).cbrt / 7.5      
+      adjusted = color.saturate(0.2).darken(dist - 0.15)
+      adjusted.a = 0.95 - color.distance(action_colors[black]) / 100
+      
+    SpatialMaterial(self.material).albedo_color = adjusted
+
+  proc set_visibility =
+    var color = SpatialMaterial(self.material).albedo_color
+    if Visible in self.model.flags:
+      self.visible = true
+      self.set_color(color)
+    elif Visible notin self.model.flags and Key in state.flags:
+      self.visible = true
+      color.a = 0.0
+      SpatialMaterial(self.material).albedo_color = color
+    else:
+      self.visible = false
+
   proc track_changes() =
     self.model.glow.changes:
       if added:
@@ -44,6 +74,13 @@ gdobj BotNode of KinematicBody:
         self.highlight()
       elif Highlight.removed:
         self.set_default_material()
+      elif change.item == Visible:
+        self.set_visibility
+        
+    self.model.state_zids.add:
+      state.flags.changes:
+        if change.item == Key:
+          self.set_visibility
 
     var velocity_zid: ZID
     velocity_zid = self.model.velocity.changes:
@@ -52,18 +89,18 @@ gdobj BotNode of KinematicBody:
           self.model.velocity.value = self.move_and_slide(change.item, UP)
         if self.model.animation.value == "auto":
           if change.item.length <= 0.1:
-            self.animation_player.playback_speed = 1
-            self.animation_player.stop(true)
+            self.animation_player.playback_speed = 0.5
+            self.animation_player.play("idle", custom_blend = 0.5)
           elif change.item.length <= 3:
             self.animation_player.playback_speed = change.item.length / 2
-            self.animation_player.play("walk")
+            self.animation_player.play("walk", custom_blend = 0.1)
           else:
-            self.animation_player.playback_speed = change.item.length / 5
-            self.animation_player.play("run")
+            self.animation_player.playback_speed = change.item.length / 10
+            self.animation_player.play("run", custom_blend = 0.1)
 
     self.model.animation.changes:
       if "".added or "auto".added:
-        self.animation_player.stop(true)
+        self.animation_player.play("idle")
       elif added:
         self.animation_player.play(change.item)
 
@@ -74,11 +111,16 @@ gdobj BotNode of KinematicBody:
         self.model.transform.pause(self.transform_zid):
           self.model.transform.value = self.transform
 
+    self.model.color.changes:
+      if added:
+        self.set_color(change.item)
+
     self.transform_zid = self.model.transform.changes:
       if added:
         self.transform = change.item
 
   proc setup* =
+    self.set_color(self.model.color.value)
     self.track_changes
 
   method process(delta: float) =

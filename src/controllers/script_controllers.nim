@@ -68,6 +68,11 @@ proc get_build(self: ScriptController, a: VmArgs, pos: int): Build =
   assert not unit.is_nil and unit of Build
   Build(unit)
 
+proc get_sign(self: ScriptController, a: VmArgs, pos: int): Sign =
+  let unit = self.get_unit(a, pos)
+  assert not unit.is_nil and unit of Sign
+  Sign(unit)
+
 proc to_node(self: ScriptController, unit: Unit): PNode =
   self.node_map[unit]
 
@@ -158,6 +163,15 @@ proc `global=`(self: Unit, global: bool) =
   else:
     self.flags -= Global
 
+proc lock(self: Unit): bool =
+  Lock in self.flags
+
+proc `lock=`(self: Unit, value: bool) =
+  if value:
+    self.flags += Lock
+  else:
+    self.flags -= Lock
+
 proc local_position(self: Unit): Vector3 =
   self.transform.origin
 
@@ -208,10 +222,19 @@ proc `velocity=`(self: Unit, velocity: Vector3) =
   self.velocity.value = velocity
 
 proc color(self: Unit): Colors =
-  action_index self.color
+  action_index self.color.value
 
 proc `color=`(self: Unit, color: Colors) =
-  self.color = action_colors[color]
+  self.color.value = action_colors[color]
+
+proc show(self: Unit): bool =
+  Visible in self.flags
+
+proc `show=`(self: Unit, value: bool) =
+  if value:
+    self.flags += Visible
+  else:
+    self.flags -= Visible
 
 proc rotation(self: Unit): float =
   # TODO: fix this
@@ -284,9 +307,12 @@ proc exit(ctx: ScriptCtx, exit_code: int) =
 
 proc frame_count(): int = state.frame_count
 
+proc frame_created(unit: Unit): int =
+  unit.frame_created
+
 proc drop_transform(unit: Unit): Transform =
   if unit of Bot:
-    result = Bot(unit).transform.value
+    result = Transform.init
   elif unit of Build:
     result = Build(unit).draw_transform
     result.origin = result.origin.snapped(vec3(1, 1, 1))
@@ -295,17 +321,14 @@ proc drop_transform(unit: Unit): Transform =
   else:
     raise ObjectConversionDefect.init("Unknown unit type")
 
-proc new_markdown_sign_impl(
-  self: ScriptController, unit: Unit, pnode: PNode, markdown: string, 
-  width: float, height: float, mono_width: int, zoomable: bool, 
-  billboard: bool
-): Unit =
+proc new_markdown_sign_impl(self: ScriptController,
+  unit: Unit, pnode: PNode, markdown: string, title: string, width: float, 
+  height: float, size: int, zoomable: bool, billboard: bool): Unit =
 
   result = Sign.init(
-    markdown, transform = drop_transform(unit), width = width,
-    height = height, mono_width = mono_width, zoomable = zoomable, 
-    billboard = billboard 
-  )
+    markdown, title = title, transform = drop_transform(unit), width = width,
+    height = height, size = size, zoomable = zoomable, billboard = billboard)
+
   self.map_unit(result, pnode)
   unit.units.add(result)
 
@@ -314,7 +337,25 @@ proc new_markdown_sign_impl(
 proc play(self: Bot, animation_name: string) =
   self.animation.value = animation_name
 
+proc all_units(T: type Unit, self: ScriptController): PNode =
+  var node = ast.new_node(nkBracketExpr)
+  state.units.value.walk_tree proc(unit: Unit) =
+    if unit of T:
+      # objects without scripts won't show up in the node map. Create
+      # a new dummy object
+      if unit notin self.node_map:
+        var node = self.node_map[self.active_unit].copy_tree
+        self.map_unit(unit, node)
+      node.add self.to_node(unit)
+  result = node
+
+proc all_bots(self: ScriptController): PNode =
+  Bot.all_units(self)
+
 # Build bindings
+
+proc all_builds(self: ScriptController): PNode =
+  Build.all_units(self)
 
 proc drawing(self: Build): bool =
   self.drawing
@@ -326,10 +367,10 @@ proc initial_position(self: Build): Vector3 =
   self.initial_position
 
 proc save(self: Build, name: string) =
-  self.save_points[name] = (self.draw_transform, self.color, self.drawing)
+  self.save_points[name] = (self.draw_transform, self.color.value, self.drawing)
 
 proc restore(self: Build, name: string) =
-  (self.draw_transform, self.color, self.drawing) = self.save_points[name]
+  (self.draw_transform, self.color.value, self.drawing) = self.save_points[name]
 
 proc reset(self: Build, clear: bool) =
   if clear:
@@ -342,8 +383,57 @@ proc reset(self: Build, clear: bool) =
 proc playing(self: Unit): bool =
   Playing in state.flags
 
-proc `playing=`*(self:Unit, value: bool) =
+proc `playing=`*(self: Unit, value: bool) =
   state.set_flag Playing, value
+
+proc key(self: Unit): bool =
+  Key in state.flags
+
+proc `key=`*(self: Unit, value: bool) =
+  state.set_flag Key, value
+
+# Sign bindings
+proc title(self: Sign): string = 
+  self.title.value
+
+proc `title=`(self: Sign, value: string) = 
+  self.title.value = value
+
+proc markdown(self: Sign): string = 
+  self.markdown.value
+
+proc `markdown=`(self: Sign, value: string) = 
+  self.markdown.value = value
+
+proc width(self: Sign): float = 
+  self.width
+
+proc `width=`(self: Sign, value: float) =
+  self.width = value
+  self.title.touch self.title.value
+
+proc height(self: Sign): float = 
+  self.height
+
+proc `height=`(self: Sign, value: float) =
+  self.height = value
+  self.title.touch self.title.value
+
+proc size(self: Sign): int = 
+  self.size
+
+proc `size=`(self: Sign, value: int) =
+  self.size = value
+  self.title.touch self.title.value
+
+proc open(self: Sign): bool =
+  state.open_sign.value == self
+
+proc `open=`(self: Sign, value: bool) =
+  if value:
+    state.open_sign.value = self
+  elif not value and self.open:
+    state.open_sign.value = nil
 
 # End of bindings
 
@@ -559,11 +649,6 @@ proc init*(T: type ScriptController): ScriptController =
       else:
         "???"
 
-      if file_name.get_file_info != ctx.file_name.get_file_info:
-        (file_name, info) = extract_file_info msg
-        msg = msg.replace(re"unhandled exception:.*\) Error\: ", "")
-      else:
-        msg = msg.replace(re"(?ms);.*", "")
       var loc = &"{file_name}({int info.line},{int info.col})"
       p "error: ", msg, " from ", ctx.file_name
       ctx.errors.add (msg, info, loc)
@@ -607,20 +692,24 @@ proc init*(T: type ScriptController): ScriptController =
     global, `global=`, position, local_position, rotation, `rotation=`, id, 
     glow, `glow=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`, 
     active_unit, color, `color=`, seen, start_position, wake, frame_count, 
-    write_stack_trace
+    write_stack_trace, show, `show=`, frame_created, lock, `lock=`
 
   result.bind_procs "base_bridge_private",
     link_dependency_impl, action_running, `action_running=`, yield_script, 
     begin_turn, begin_move, sleep_impl, `position=impl`, new_markdown_sign_impl
 
   result.bind_procs "bots",
-    play
+    play, all_bots
 
   result.bind_procs "builds",
-    drawing, `drawing=`, initial_position, save, restore, reset
+    drawing, `drawing=`, initial_position, save, restore, reset, all_builds
+
+  result.bind_procs "signs",
+    markdown, `markdown=`, title, `title=`, height, `height=`, width, `width=`,
+    size, `size=`, open, `open=`
 
   result.bind_procs "players",
-    playing, `playing=`
+    playing, `playing=`, key, `key=`
 
 when is_main_module:
   state.config.lib_dir = current_source_path().parent_dir / ".." / ".." / "vmlib"

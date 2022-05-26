@@ -17,6 +17,9 @@ proc remove_from_scene(unit: Unit) =
     for name, field in self[].field_pairs:
       when field is Zen:
         field.untrack_all
+    for zid in self.state_zids:
+      state.flags.untrack zid
+
   if unit of Build: Build(unit).untrack_all
   elif unit of Bot: Bot(unit).untrack_all
   elif unit of Sign: Sign(unit).untrack_all

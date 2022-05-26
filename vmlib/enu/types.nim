@@ -2,6 +2,9 @@ import std / [strutils, strformat, macros, math, hashes, tables, random]
 
 var global_default* = false
 
+const yes* = true
+const no* = false
+
 type
   Vector3* = tuple
     x, y, z: float

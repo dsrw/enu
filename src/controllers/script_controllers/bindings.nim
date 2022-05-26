@@ -36,6 +36,7 @@ proc to_node(tree: ref tuple|ref object): PNode =
 proc to_result(val: float): BiggestFloat = BiggestFloat(val)
 proc to_result(val: SomeOrdinal or enum or bool): BiggestInt = BiggestInt(val)
 proc to_result(val: Vector3 or string): PNode = val.to_node
+proc to_result(val: PNode): PNode = result = val
 
 macro bind_procs(self: ScriptController, module_name: string, proc_refs: varargs[untyped]): untyped =
   result = new_stmt_list()
@@ -61,7 +62,7 @@ macro bind_procs(self: ScriptController, module_name: string, proc_refs: varargs
           ident"a"
         elif typ == "ScriptCtx":
           quote do: script_controller.active_unit.script_ctx
-        elif typ in ["Unit", "Bot", "Build"]:
+        elif typ in ["Unit", "Bot", "Build", "Sign"]:
           let getter = "get_" & typ
           pos.inc
           new_call(bind_sym(getter), ident"script_controller", ident"a", new_lit(pos))
@@ -72,7 +73,7 @@ macro bind_procs(self: ScriptController, module_name: string, proc_refs: varargs
 
     var call = new_call(proc_ref, args)
     if return_node.kind == nnkSym:
-      if return_node.str_val in ["Unit", "Bot", "Build"]:
+      if return_node.str_val in ["Unit", "Bot", "Build", "Sign"]:
         call = new_call(bind_sym"set_result", ident"a", new_call(bind_sym"to_node", ident"script_controller", call))
       else:
         call = new_call(bind_sym"set_result", ident"a", new_call(bind_sym"to_result", call))

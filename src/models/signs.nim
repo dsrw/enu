@@ -1,17 +1,19 @@
 import std / [sugar]
 import pkg / [model_citizen, print]
 import godotapi / spatial
-import core, types, states, bots, builds
+import core, types, states, bots, builds, models / colors
 
 let state = GameState.active
 
 proc init*(_: type Sign, 
-  markdown: string, transform = Transform.init, width = 1.0, height = 1.0, 
-  mono_width = 22, billboard = false, zoomable = true): Sign =
+  markdown: string, title = "", transform = Transform.init, width = 1.0, 
+  height = 1.0, size = 32, billboard = false, zoomable = true): Sign =
 
+  let title = if title == "": markdown else: title
   let self = Sign(
     flags: ZenSet[ModelFlags].init,
     markdown: Zen.init(markdown),
+    title: Zen.init(title),
     units: Zen.init(seq[Unit]),
     start_transform: transform,
     transform: Zen.init(transform),
@@ -22,14 +24,18 @@ proc init*(_: type Sign,
     scale: Zen.init(1.0),
     width: width,
     height: height,
-    mono_width: mono_width,
+    size: size,
     billboard: billboard,
-    zoomable: zoomable
+    zoomable: zoomable,
+    frame_created: state.frame_count,
+    color: Zen.init(action_colors[black])
   )
 
-  state.flags.changes:
-    if PrimaryDown.added and Hover in self.flags:
-      state.markdown.value = self.markdown.value
+  self.flags += Visible
+  self.state_zids.add:
+    state.flags.changes:
+      if PrimaryDown.added and Hover in self.flags:
+        state.open_sign.value = self
 
   self.flags.changes:
     if Hover.added:

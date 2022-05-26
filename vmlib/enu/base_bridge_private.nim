@@ -10,13 +10,11 @@ proc begin_move*(
 ) = discard
 
 proc begin_turn*(
-  self: Unit, axis: Vector3, steps: float, lean: bool, move_mode: int
-) = discard
+  self: Unit, axis: Vector3, steps: float, lean: bool, move_mode: int) = discard
 
 proc sleep_impl*(seconds = 1.0) = discard
 proc `position=impl`*(self: Unit, position: Vector3) = discard
 
 proc new_markdown_sign_impl*(
-  self: Unit, instance: Sign, markdown: string, width = 1.0, height = 1.0,
-  mono_width = 0, zoomable = true, billboard = false
-) = discard
+  self: Unit, instance: Sign, markdown: string, title = "", width = 1.0,
+  height = 1.0, size = 32, zoomable = true, billboard = false) = discard

@@ -3,12 +3,18 @@ import pkg/godot except print, Color
 import pkg / [print, model_citizen]
 import godotapi / [node, voxel_terrain, voxel_mesher_blocky, voxel_tool, voxel_library, shader_material,
                    resource_loader, packed_scene]
-import models / [types, builds, colors, units], globals
+import models / [types, builds, colors, units, states], globals
 
 const
   highlight_glow = 1.0
   default_glow = 0.0
   empty_zid: ZID = 0
+
+let state = GameState.active
+
+let build_scene = load("res://components/BuildNode.tscn") as PackedScene
+let shader = load("res://shaders/terrain_voxel.shader") as Shader
+let hidden_shader = load("res://shaders/terrain_voxel_hidden.shader") as Shader
 
 gdobj BuildNode of VoxelTerrain:
   var
@@ -76,6 +82,20 @@ gdobj BuildNode of VoxelTerrain:
       self.model.chunks[chunk_id].untrack(zid)
     self.active_chunks.del(chunk_id)
 
+  proc set_visibility =
+    if Visible in self.model.flags:
+      self.visible = true
+
+      for material in self.model.shared.materials:
+        material.shader = shader
+    elif Visible notin self.model.flags and Key in state.flags:
+      self.visible = true
+
+      for material in self.model.shared.materials:
+        material.shader = hidden_shader
+    else:
+      self.visible = false
+
   proc track_changes() =
     self.model.glow.changes:
       if added:
@@ -99,6 +119,13 @@ gdobj BuildNode of VoxelTerrain:
         self.set_glow highlight_glow
       elif Highlight.removed:
         self.set_glow self.model.glow.value
+      elif change.item == Visible:
+        self.set_visibility
+
+    self.model.state_zids.add:
+      state.flags.changes:
+        if change.item == Key:
+          self.set_visibility
 
     self.model.scale.changes:
       if added:
@@ -129,6 +156,5 @@ gdobj BuildNode of VoxelTerrain:
       layer.set_bits(2)
       self.collision_layer = layer
 
-let build_scene = load("res://components/BuildNode.tscn") as PackedScene
 proc init*(_: type BuildNode): BuildNode =
   result = build_scene.instance() as BuildNode

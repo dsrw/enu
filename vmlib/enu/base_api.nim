@@ -1,5 +1,5 @@
 import std / [strutils, math, importutils]
-import random except rand
+import random as rnd except rand
 import types, state_machine, base_bridge, base_bridge_private
 
 export base_bridge
@@ -304,23 +304,24 @@ proc far*(node: Unit, greater_than = 100.0): bool =
 proc height*(self: Vector3): float = self.y
 proc height*(self: Unit): float = self.position.y
 
-import macros, random, tables
-export random, tables
+import macros, tables
+export tables
 
 proc rng(): var Rand =
   private_access Unit
   var unit = active_unit()
   if unit.seed == 0:
     randomize()
-    unit.seed = rand(int.high)
+    unit.seed = rnd. rand(int.high)
     unit.rng = init_rand(unit.seed)
   unit.rng
 
 proc rand*[T: int | float](range: Slice[T]): T =
-  random.rand rng(), if range.a > range.b:
-    range.b..range.a
-  else:
-    range
+  rnd.rand rng(),
+    if range.a > range.b:
+      range.b..range.a
+    else:
+      range
 
 converter int_to_float*(i: int): float =
   result = i.float
@@ -381,8 +382,12 @@ template cycle*[T](args: varargs[T]): T =
 
   args[positions[key]]
 
+proc random*[T](args: varargs[T]): T =
+  let i = rnd.rand(rng(), 0..(args.len - 1))
+  args[i]
+
 proc contains*(max, chance: int): bool =
-  var r = rng().rand(1..max)
+  var r = rnd.rand(rng(), 1..max)
   result = r <= chance
 
 template forever*(body) =
@@ -413,19 +418,17 @@ proc even*(self: int): bool = self mod 2 == 0
 proc odd*(self: int): bool = not self.even
 
 
-proc md*(
-  self: Unit, markdown: string, width = 1.0, height = 1.0, mono_width = 0,
-  zoomable = true, billboard = false
-): Sign {.discardable.} =
+proc md*(self: Unit,
+  markdown: string, title = "", width = 1.0, height = 1.0, size = 32,
+  zoomable = true, billboard = false): Sign {.discardable.} =
 
   result = Sign()
-  self.new_markdown_sign_impl(result, markdown, width, height, mono_width,
-                              zoomable, billboard)
+  self.new_markdown_sign_impl(result, markdown, title, width, height, size, 
+    zoomable, billboard)
 
 template md*(
-  markdown: string, height = 1.0, width = 1.0, mono_width = 0,
+  markdown: string, title = "", height = 1.0, width = 1.0, size = 32,
   zoomable = true, billboard = false
 ): Sign =
 
-  enu_target.md(markdown, width, height, mono_width, 
-                zoomable, billboard)
+  enu_target.md(markdown, title, width, height, size, zoomable, billboard)

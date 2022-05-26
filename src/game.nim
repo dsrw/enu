@@ -3,7 +3,8 @@ import pkg / [godot, model_citizen]
 import godotapi / [input, input_event, gd_os, node, scene_tree,
                    packed_scene, sprite, control, viewport, viewport_texture,
                    performance, label, theme, dynamic_font, resource_loader, main_loop,
-                   project_settings, input_map, input_event_action, input_event_key, global_constants]
+                   project_settings, input_map, input_event_action, input_event_key, global_constants,
+                   scroll_container]
 import core, globals, controllers / [node_controllers, script_controllers], models / serializers
 
 type
@@ -12,6 +13,7 @@ type
     dock_icon_size: Option[float]
     world: Option[string]
     show_stats: Option[bool]
+    key: Option[bool]
     mega_pixels: Option[float]
     start_full_screen: Option[bool]
     semicolon_as_colon: Option[bool]
@@ -135,6 +137,8 @@ gdobj Game of Node:
       start_full_screen = uc.start_full_screen ||= true
       semicolon_as_colon = uc.semicolon_as_colon ||= false
       lib_dir = join_path(get_executable_path().parent_dir(), "..", "..", "..", "vmlib")
+
+    state.set_flag(Key, uc.key ||= false)
 
     self.prepare_to_load_world()
     set_window_fullscreen config.start_full_screen

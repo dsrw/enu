@@ -40,7 +40,7 @@ gdobj AimTarget of Sprite3D:
         self.target_model.flags -= Hover
         state.pop_flag BlockTargetVisible
       self.target_model = unit
-      if unit != nil:
+      if unit != nil and (Key in state.flags or Lock notin unit.flags):
         state.push_flag BlockTargetVisible
         unit.flags += Hover
 

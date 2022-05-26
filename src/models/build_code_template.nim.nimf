@@ -1,7 +1,8 @@
 #? stdtmpl
 #proc build_code_template(file_name, imports: string): string =
-import std / strutils
-import types, class_macros, players, state_machine, base_api, bots, builds, builds_private
+import std / [strutils, strformat]
+import types, class_macros, players, state_machine, base_api, bots, builds, 
+       signs, builds_private
 include overrides
 
 let instance_global_by_default = false

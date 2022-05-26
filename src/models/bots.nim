@@ -48,13 +48,15 @@ proc bot_at*(state: GameState, position: Vector3): Bot =
 method reset*(self: Bot) =
   self.transform.value = self.start_transform
   self.speed = 1
+  self.color.value = self.start_color
   self.animation.value = "auto"
+  self.flags += Visible
   self.velocity.value = vec3()
   self.units.clear()
 
 proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init, clone_of: Bot = nil,
            global = true, parent: Unit = nil): Bot =
-  let self = Bot(
+  var self = Bot(
     id: id,
     units: Zen.init(seq[Unit]),
     start_transform: transform,
@@ -68,11 +70,14 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
     clone_of: clone_of,
     frame_delta: ZenValue[float].init,
     scale: Zen.init(1.0),
+    color: Zen.init(action_colors[black]),
     start_color: action_colors[black],
     shared: if parent: parent.shared else: Shared(),
-    parent: parent
+    parent: parent,
+    frame_created: state.frame_count
   )
   if global: self.flags += Global
+  self.flags += Visible
 
   self.flags.changes:
     if Hover.added:
@@ -85,16 +90,17 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
       root.walk_tree proc(unit: Unit) = unit.flags -= Highlight
       state.pop_flag ReticleVisible
 
-  state.flags.changes:
-    if Hover in self.flags:
-      if PrimaryDown.added and state.tool.value == Code:
-        let root = self.find_root(true)
-        state.open_unit.value = root
-      if SecondaryDown.added and state.tool.value == Place:
-        if self.parent.is_nil:
-          state.units -= self
-        else:
-          self.parent.units -= self
+  self.state_zids.add: 
+    state.flags.changes:
+      if Hover in self.flags:
+        if PrimaryDown.added and state.tool.value == Code:
+          let root = self.find_root(true)
+          state.open_unit.value = root
+        if SecondaryDown.added and state.tool.value == Place:
+          if self.parent.is_nil:
+            state.units -= self
+          else:
+            self.parent.units -= self
 
   result = self
 

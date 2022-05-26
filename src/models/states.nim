@@ -103,7 +103,7 @@ proc init*(_: type GameState, action_count = 0, action_index = 0): GameState =
     tool: Zen.init(Block),
     gravity: -80.0,
     console: ConsoleModel(log: Zen.init(seq[string])),
-    markdown: Zen.init("")
+    open_sign: ZenValue[Sign].init
   )
 
   self.open_unit.changes:

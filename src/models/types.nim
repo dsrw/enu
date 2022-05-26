@@ -15,10 +15,10 @@ type
     CommandMode, EditorVisible, ConsoleVisible, ErrorsVisible, 
     BlockTargetVisible, ReticleVisible, DocsVisible, MouseCaptured, 
     PrimaryDown, SecondaryDown, EditorFocused, ConsoleFocused, DocsFocused,
-    Playing, Flying
+    Playing, Flying, Key
 
   ModelFlags* = enum
-    Hover, TargetMoved, Highlight, Global
+    Hover, TargetMoved, Highlight, Global, Visible, Lock
 
   Tools* = enum
     Code, Block, Place
@@ -50,7 +50,7 @@ type
     frame_count*: int
     reloading*: bool
     skip_block_paint*: bool
-    markdown*: ZenValue[string]
+    open_sign*: ZenValue[Sign]
 
   Model* = ref object of RootObj
     target_point*: Vector3
@@ -82,8 +82,10 @@ type
     frame_delta*: ZenValue[float]
     shared*: Shared
     start_color*: Color
-    color*: Color
+    color*: ZenValue[Color]
     sight_ray*: RayCast
+    frame_created*: int
+    state_zids*: seq[ZID]
 
   Player* = ref object of Unit
     colliders*: HashSet[Model]
@@ -93,11 +95,10 @@ type
     animation*: ZenValue[string]
 
   Sign* = ref object of Unit
-    markdown*: ZenValue[string]
+    markdown*, title*: ZenValue[string]
     width*, height*: float
-    mono_width*: int
-    billboard*: bool
-    zoomable*: bool
+    size*: int
+    billboard*, zoomable*: bool
 
   VoxelKind* = enum
     Hole, Manual, Computed

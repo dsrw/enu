@@ -5,6 +5,10 @@ proc drawing*(self: Build): bool = discard
 proc `drawing=`*(self: Build, drawing: bool) = discard
 proc initial_position(self: Build): Vector3 = discard
 
+proc all_builds(): seq[Build] = discard
+
+proc all*(_: type Build): seq[Build] = all_builds()
+
 proc home*(self: Build) =
   self.rotation = 0
   self.scale = 1

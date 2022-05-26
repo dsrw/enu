@@ -22,7 +22,7 @@ gdobj MarkdownLabel of ScrollContainer:
     bold_italic_font* {.gd_export.}: DynamicFont
     header_font* {.gd_export.}: DynamicFont
     mono_font* {.gd_export.}: DynamicFont
-    mono_width* {.gd_export.} = 0
+    size* {.gd_export.} = 0
     current_label: RichTextLabel
     container: Node
     og_text_edit: TextEdit
@@ -44,16 +44,11 @@ gdobj MarkdownLabel of ScrollContainer:
     self.current_label.visible = true
 
   proc set_font_sizes =
-    var size = 3
-    if self.mono_width > 0:
-      let size_str = " ".repeat(self.mono_width + 2)
-      self.local_mono_font.size = size
-      while self.local_mono_font.get_string_size(size_str).x < self.rect_size.x:
-        inc size
-        self.local_mono_font.size = size
-      dec size
-    else:
-      size = GameState.active().config.font_size.value
+    var size = 
+      if self.size > 0:
+        self.size
+      else:
+        GameState.active().config.font_size.value
 
     self.local_default_font.size = size
     self.local_italic_font.size = size
@@ -200,8 +195,8 @@ gdobj MarkdownLabel of ScrollContainer:
         label.add_text " "
       else:
         self.render_markdown(t)
-        
-  method process(delta: float) =
+
+  proc update*() =
     self.resized = false
     if self.markdown != self.old_markdown:
       for child in self.container.get_children:
@@ -216,3 +211,4 @@ gdobj MarkdownLabel of ScrollContainer:
       self.needs_margin = false
       self.render_markdown(root)
       self.set_font_sizes()
+        

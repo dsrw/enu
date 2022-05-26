@@ -126,7 +126,7 @@ library = SubResource( 9 )
 
 [sub_resource type="ShaderMaterial" id=11]
 shader = ExtResource( 7 )
-shader_param/albedo = Color( 0, 0.403922, 1, 1 )
+shader_param/albedo = Color( 0, 0.403922, 1, 0.0392157 )
 shader_param/specular = 0.5
 shader_param/metallic = 0.0
 shader_param/draw_distance = 230.0
@@ -145,7 +145,7 @@ shader_param/texture_normal = ExtResource( 8 )
 
 [sub_resource type="ShaderMaterial" id=12]
 shader = ExtResource( 7 )
-shader_param/albedo = Color( 0.192157, 0.164706, 0.121569, 1 )
+shader_param/albedo = Color( 0.192157, 0.164706, 0.121569, 0.117647 )
 shader_param/specular = 0.5
 shader_param/metallic = 0.0
 shader_param/draw_distance = 230.0
@@ -164,7 +164,7 @@ shader_param/texture_normal = ExtResource( 8 )
 
 [sub_resource type="ShaderMaterial" id=13]
 shader = ExtResource( 7 )
-shader_param/albedo = Color( 0.0156863, 0.25098, 0.00392157, 1 )
+shader_param/albedo = Color( 0.0156863, 0.25098, 0.00392157, 0.117647 )
 shader_param/specular = 0.5
 shader_param/metallic = 0.0
 shader_param/draw_distance = 230.0
@@ -183,7 +183,7 @@ shader_param/texture_normal = ExtResource( 8 )
 
 [sub_resource type="ShaderMaterial" id=14]
 shader = ExtResource( 7 )
-shader_param/albedo = Color( 0, 0, 0, 1 )
+shader_param/albedo = Color( 0, 0, 0, 0.156863 )
 shader_param/specular = 0.5
 shader_param/metallic = 0.0
 shader_param/draw_distance = 230.0
@@ -202,7 +202,7 @@ shader_param/texture_normal = ExtResource( 8 )
 
 [sub_resource type="ShaderMaterial" id=15]
 shader = ExtResource( 7 )
-shader_param/albedo = Color( 0.447059, 0.447059, 0.447059, 1 )
+shader_param/albedo = Color( 0.447059, 0.447059, 0.447059, 0.117647 )
 shader_param/specular = 0.5
 shader_param/metallic = 0.0
 shader_param/draw_distance = 230.0
@@ -221,7 +221,7 @@ shader_param/texture_normal = ExtResource( 8 )
 
 [sub_resource type="ShaderMaterial" id=16]
 shader = ExtResource( 7 )
-shader_param/albedo = Color( 0.247059, 0.188235, 0.168627, 1 )
+shader_param/albedo = Color( 0.247059, 0.188235, 0.168627, 0.117647 )
 shader_param/specular = 0.5
 shader_param/metallic = 0.0
 shader_param/draw_distance = 230.0
@@ -257,4 +257,4 @@ exclude_parent = false
 collision_mask = 4294967295
 collide_with_areas = true
 debug_shape_custom_color = Color( 0.172549, 1, 0, 1 )
-debug_shape_thickness = 5.0
+debug_shape_thickness = 5

@@ -37,6 +37,7 @@ viewport_path = NodePath("Viewport")
 [sub_resource type="SpatialMaterial" id=17]
 resource_local_to_scene = true
 flags_albedo_tex_force_srgb = true
+params_blend_mode = 1
 params_cull_mode = 2
 albedo_color = Color( 0.478431, 0.478431, 0.478431, 1 )
 albedo_texture = SubResource( 16 )
@@ -75,7 +76,6 @@ bold_font = SubResource( 9 )
 bold_italic_font = SubResource( 10 )
 header_font = SubResource( 11 )
 mono_font = SubResource( 12 )
-mono_width = 22
 
 [node name="MeshInstance" type="MeshInstance" parent="."]
 transform = Transform( -1, 0, -1.50996e-07, 0, 1, 0, 1.50996e-07, 0, -1, 0, 0, 0 )

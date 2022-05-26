@@ -174,7 +174,7 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
 proc drop_block(self: Build) =
   if self.drawing:
     var p = self.draw_transform.origin.snapped(vec3(1, 1, 1))
-    self.draw(p, (Computed, self.color))
+    self.draw(p, (Computed, self.color.value))
 
 proc remove(self: Build) =
   if state.tool.value == Block:
@@ -288,9 +288,10 @@ proc reset_state*(self: Build) =
 
 method reset*(self: Build) =
   self.transform.value = self.start_transform
-  self.color = self.start_color
+  self.color.value = self.start_color
   self.speed = 1
   self.scale.value = 1
+  self.flags += Visible
   self.reset_state()
   let chunks = self.chunks.value
   for chunk_id, chunk in chunks:
@@ -316,14 +317,14 @@ method ensure_visible*(self: Build) =
 
 proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.init, color = default_color,
                           clone_of: Unit = nil, global = true, bot_collisions = true, parent: Unit = nil): Build =
-  let self = Build(
+  var self = Build(
     id: id,
     chunks: ZenTable[Vector3, Chunk].init(track_children = false),
     start_transform: transform,
     transform: Zen.init(transform),
     draw_transform: Transform.init,
     units: ZenSeq[Unit].init,
-    color: color,
+    color: Zen.init(color),
     start_color: color,
     flags: ZenSet[ModelFlags].init,
     code: ZenValue[string].init,
@@ -336,11 +337,13 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
     bot_collisions: bot_collisions,
     frame_delta: ZenValue[float].init,
     scale: Zen.init(1.0),
-    shared: if parent: parent.shared else: Shared()
+    shared: if parent: parent.shared else: Shared(),
+    frame_created: state.frame_count
   )
   if id notin self.shared.edits:
     self.shared.edits[id] = init_table[Vector3, VoxelInfo]()
   if global: self.flags += Global
+  self.flags += Visible
   self.reset()
   self.flags.changes:
     if Hover.added and state.tool.value == Code:
@@ -368,17 +371,18 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
       else:
         state.pop_flag BlockTargetVisible
 
-  state.flags.changes:
-    if Hover in self.flags:
-      if PrimaryDown.added:
-        state.draw_unit_id = self.id
-        self.fire
-      elif SecondaryDown.added:
-        state.draw_unit_id = self.id
-        self.remove
-    if PrimaryDown.removed or SecondaryDown.removed:
-      state.draw_unit_id = ""
-      last_point = vec3()
+  self.state_zids.add:
+    state.flags.changes:
+      if Hover in self.flags:
+        if PrimaryDown.added:
+          state.draw_unit_id = self.id
+          self.fire
+        elif SecondaryDown.added:
+          state.draw_unit_id = self.id
+          self.remove
+      if PrimaryDown.removed or SecondaryDown.removed:
+        state.draw_unit_id = ""
+        last_point = vec3()
 
   result = self
 
