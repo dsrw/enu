@@ -22,10 +22,8 @@ proc handle_collisions(self: Player, collisions: seq[KinematicCollision]) {.inli
     model.off_collision(self)
   self.colliders = colliders
 
-
 let
   state = GameState.active
-  config = state.config
   angle_x_min = -PI / 2.25
   angle_x_max = PI / 2.25
   max_speed = 100.0
@@ -161,7 +159,7 @@ gdobj PlayerNode of KinematicBody:
       self.camera_rig.rotation = r
       self.unit.rotation.pause(self.rotation_zid):
         self.unit.rotation.value = rad_to_deg r.y
-      let ray_length = if state.tool.value == Code: 200.0 else: 100.0
+      let ray_length = if state.tool.value == CodeMode: 200.0 else: 100.0
       if MouseCaptured notin state.flags:
         let
           mouse_pos = self.get_viewport().
@@ -299,7 +297,9 @@ gdobj PlayerNode of KinematicBody:
     elif event.is_action_released("run"):
       self.running = self.always_run
 
-    if event of InputEventPanGesture and state.tool.value == Block:
+    if event of InputEventPanGesture and
+      state.tool.value notin {CodeMode, PlaceBot}:
+
       let pan = event as InputEventPanGesture
       self.pan_delta += pan.delta.y
       if self.pan_delta > 2:

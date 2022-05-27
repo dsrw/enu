@@ -1,5 +1,5 @@
 import std / [monotimes, times, os, jsonutils, json, math]
-import pkg / [godot, model_citizen]
+import pkg / [godot, model_citizen, zippy / ziparchives]
 import godotapi / [input, input_event, gd_os, node, scene_tree,
                    packed_scene, sprite, control, viewport, viewport_texture,
                    performance, label, theme, dynamic_font, resource_loader, main_loop,
@@ -13,7 +13,7 @@ type
     dock_icon_size: Option[float]
     world: Option[string]
     show_stats: Option[bool]
-    key: Option[bool]
+    god_mode: Option[bool]
     mega_pixels: Option[float]
     start_full_screen: Option[bool]
     semicolon_as_colon: Option[bool]
@@ -30,7 +30,7 @@ gdobj Game of Node:
     triggered = false
     saved_mouse_captured_state = false
     stats: Label
-    last_index = 1
+    last_tool = state.tool.value
     saved_mouse_position: Vector2
     scale_factor* = 0.0
     rescale_at = get_mono_time()
@@ -144,7 +144,7 @@ gdobj Game of Node:
       semicolon_as_colon = uc.semicolon_as_colon ||= false
       lib_dir = join_path(get_executable_path().parent_dir(), "..", "..", "..", "vmlib")
 
-    state.set_flag(Key, uc.key ||= false)
+    state.set_flag(God, uc.god_mode ||= false)
 
     self.prepare_to_load_world()
     set_window_fullscreen config.start_full_screen
@@ -223,46 +223,19 @@ gdobj Game of Node:
     state.push_flag MouseCaptured
 
   proc update_action_index*(change: int) =
-    state.action_index += change
-    if state.action_index < 0:
-      state.action_index = state.action_count
-      self.obj_mode(state.action_index)
-    if state.action_index == 0:
-      self.code_mode()
-    elif state.action_index == state.action_count:
-      self.obj_mode(state.action_index)
-    elif state.action_index > state.action_count:
-      self.code_mode()
-    else:
-      self.block_mode(state.action_index)
+    var index = int(state.tool.value) + change
+    if index < 0:
+      index = int Tools.high
+    elif index > int Tools.high:
+      index = int Tools.low
+
+    state.tool.value = Tools(index)
 
   proc next_action*() =
     self.update_action_index(1)
 
   proc prev_action*() =
     self.update_action_index(-1)
-
-  proc code_mode*(update_actionbar = true, restore = false) =
-    if restore and state.action_index == 0:
-      self.block_mode(self.last_index)
-    else:
-      state.tool.value = Code
-      state.action_index = 0
-      if update_actionbar:
-        self.trigger("update_actionbar", 0)
-
-  proc block_mode*(index: int, update_actionbar = true) =
-    self.last_index = index
-    state.tool.value = Block
-    state.action_index = index
-    if update_actionbar:
-      self.trigger("update_actionbar", index)
-
-  proc obj_mode*(index: int, update_actionbar = true) =
-    state.tool.value = Place
-    state.action_index = index
-    if update_actionbar:
-      self.trigger("update_actionbar", index)
 
   method on_size_changed() =
     self.rescale_at = get_mono_time()
@@ -339,22 +312,26 @@ gdobj Game of Node:
         self.get_tree().set_input_as_handled()
 
     if event.is_action_pressed("toggle_code_mode"):
-      self.code_mode(restore = true)
+      if state.tool.value != CodeMode:
+        self.last_tool = state.tool.value
+        state.tool.value = CodeMode
+      else:
+        state.tool.value = self.last_tool
     elif event.is_action_pressed("mode_1"):
-      self.code_mode()
+      state.tool.value = CodeMode
     elif event.is_action_pressed("mode_2"):
-      self.block_mode(1)
+      state.tool.value = BlueBlock
     elif event.is_action_pressed("mode_3"):
-      self.block_mode(2)
+      state.tool.value = RedBlock
     elif event.is_action_pressed("mode_4"):
-      self.block_mode(3)
+      state.tool.value = GreenBlock
     elif event.is_action_pressed("mode_5"):
-      self.block_mode(4)
+      state.tool.value = BlackBlock
     elif event.is_action_pressed("mode_6"):
-      self.block_mode(5)
+      state.tool.value = WhiteBlock
     elif event.is_action_pressed("mode_7"):
-      self.block_mode(6)
+      state.tool.value = BrownBlock
     elif event.is_action_pressed("mode_8"):
-      self.obj_mode(7)
+      state.tool.value = PlaceBot
 
 proc get_game*(): Game = Game(state.nodes.game)

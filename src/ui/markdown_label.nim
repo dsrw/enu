@@ -26,7 +26,7 @@ gdobj MarkdownLabel of ScrollContainer:
     current_label: RichTextLabel
     container: Node
     og_text_edit: TextEdit
-    og_label: RichTextLabel
+    og_label*: RichTextLabel
     og_text_edit_color: Color
     og_label_color: Color
     needs_margin = false

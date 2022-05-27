@@ -9,7 +9,7 @@ proc fire(self: Ground, append = false) =
   state.draw_unit_id = "ground"
   var add_to {.global.}: Build
   let point = (self.target_point - vec3(0.5, 0, 0.5)).trunc
-  if state.tool.value == Block:
+  if state.tool.value notin {CodeMode, PlaceBot}:
     if not append:
       add_to = state.units.find_first(point.surrounding)
     if add_to:
@@ -19,7 +19,7 @@ proc fire(self: Ground, append = false) =
       add_to = Build.init(transform = Transform.init(origin = point), global = true, color = state.selected_color)
       state.units += add_to
 
-  elif state.tool.value == Place and state.bot_at(self.target_point).is_nil:
+  elif state.tool.value == PlaceBot and state.bot_at(self.target_point).is_nil:
     var t = Transform.init(origin = self.target_point)
     state.units += Bot.init(transform = t)
 

@@ -88,7 +88,7 @@ gdobj BuildNode of VoxelTerrain:
 
       for material in self.model.shared.materials:
         material.shader = shader
-    elif Visible notin self.model.flags and Key in state.flags:
+    elif Visible notin self.model.flags and God in state.flags:
       self.visible = true
 
       for material in self.model.shared.materials:
@@ -124,7 +124,7 @@ gdobj BuildNode of VoxelTerrain:
 
     self.model.state_zids.add:
       state.flags.changes:
-        if change.item == Key:
+        if change.item == God:
           self.set_visibility
 
     self.model.scale.changes:

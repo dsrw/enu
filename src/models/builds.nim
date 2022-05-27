@@ -177,7 +177,7 @@ proc drop_block(self: Build) =
     self.draw(p, (Computed, self.color.value))
 
 proc remove(self: Build) =
-  if state.tool.value == Block:
+  if state.tool.value notin {CodeMode, PlaceBot}:
     state.skip_block_paint = true
     draw_normal = self.target_normal
     let point = self.target_point - self.target_normal - (self.target_normal.inverse_normalized * 0.5)
@@ -193,19 +193,19 @@ proc remove(self: Build) =
 
 proc fire(self: Build) =
   let global_point = self.node.to_global(self.target_point)
-  if state.tool.value == Block:
+  if state.tool.value notin {CodeMode, PlaceBot}:
     state.skip_block_paint = true
     draw_normal = self.target_normal
     let point = (self.target_point + (self.target_normal * 0.5)).floor
     skip_point = self.target_point + self.target_normal
     last_point = self.target_point
     self.draw(point, (Manual, state.selected_color))
-  elif state.tool.value == Place and EditorVisible in state.flags and 
+  elif state.tool.value == PlaceBot and EditorVisible in state.flags and 
     state.bot_at(global_point).is_nil:
 
     let transform = Transform.init(origin = global_point)
     state.units += Bot.init(transform = transform)
-  elif state.tool.value == Code:
+  elif state.tool.value == CodeMode:
     let root = self.find_root(true)
     state.open_unit.value = root
 
@@ -346,7 +346,7 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
   self.flags += Visible
   self.reset()
   self.flags.changes:
-    if Hover.added and state.tool.value == Code:
+    if Hover.added and state.tool.value == CodeMode:
       if Playing notin state.flags:
         let root = self.find_root(true)
         root.walk_tree proc(unit: Unit) = unit.flags += Highlight
@@ -365,7 +365,7 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
         elif PrimaryDown in state.flags:
           self.fire
 
-    if change.item in {TargetMoved, Hover} and state.tool.value == Place:
+    if change.item in {TargetMoved, Hover} and state.tool.value == PlaceBot:
       if self.target_normal == UP:
         state.push_flag BlockTargetVisible
       else:

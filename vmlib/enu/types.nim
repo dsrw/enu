@@ -48,6 +48,10 @@ type
     states*: Table[string, NimNode]
     from_states*: seq[(string, NimNode)]
 
+  Tools* = enum
+    CodeMode, BlueBlock, RedBlock, GreenBlock, BlackBlock, WhiteBlock,
+    BrownBlock, PlaceBot
+
 proc vec3*(x, y, z: float): Vector3 {.inline.} = (x:x, y:y, z:z)
 
 const

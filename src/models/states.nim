@@ -18,7 +18,7 @@ proc resolve_flags(self: GameState) =
           result.excl f
     result.incl flag
 
-  if self.tool.value == Code:
+  if self.tool.value == CodeMode:
     for flag in groups[1]:
       result.excl(flag)
     result.incl(ReticleVisible)
@@ -81,7 +81,7 @@ proc `-=`*(self: ZenSet[StateFlags], flag: StateFlags) {.error:
   "Use `push_flag`, `pop_flag` and `replace_flag`".}
 
 proc selected_color*(self: GameState): Color =
-  action_colors[Colors(self.action_index)]
+  action_colors[Colors(ord self.tool.value)]
 
 proc debug*(self: GameState, args: varargs[string, `$`]) =
   self.logger("debug", args.join)
@@ -92,15 +92,13 @@ proc info*(self: GameState, args: varargs[string, `$`]) =
 proc err*(self: GameState, args: varargs[string, `$`]) =
   self.logger "err", args.join
 
-proc init*(_: type GameState, action_count = 0, action_index = 0): GameState =
+proc init*(_: type GameState): GameState =
   let self = GameState(
     flags: Zen.init(set[StateFlags]),
     units: Zen.init(seq[Unit]),
-    action_count: action_count,
-    action_index: action_index,
     open_unit: ZenValue[Unit].init,
     config: Config(font_size: Zen.init(0)),
-    tool: Zen.init(Block),
+    tool: Zen.init(BlueBlock),
     gravity: -80.0,
     console: ConsoleModel(log: Zen.init(seq[string])),
     open_sign: ZenValue[Sign].init
@@ -125,9 +123,9 @@ proc init*(_: type GameState, action_count = 0, action_index = 0): GameState =
   result = self
 
 proc active*(_: type GameState, new_state = false): GameState =
-  var instance {.global.} = GameState.init(action_count = 7, action_index = 1)
+  var instance {.global.} = GameState.init
   if new_state:
-    instance = GameState.init(action_count = 7, action_index = 1)
+    instance = GameState.init
   result = instance
 
 when is_main_module:

@@ -8,6 +8,3 @@ proc save*(name = "default") =
 
 proc restore*(name = "default") =
   Build(active_unit()).restore(name)
-
-proc reset*(clear = false) =
-  Build(active_unit()).reset(clear)

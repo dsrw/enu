@@ -169,7 +169,7 @@ type NegativeNode = ref object
 proc `-`*(node: Unit): NegativeNode =
   NegativeNode(node: node)
 
-proc angle_to(self: Unit, enu_target: Unit): float =
+proc angle_to*(self: Unit, enu_target: Unit): float =
   let
     p1 = self.position
     p2 = enu_target.position
@@ -417,7 +417,6 @@ proc go*(unit: Unit) =
 proc even*(self: int): bool = self mod 2 == 0
 proc odd*(self: int): bool = not self.even
 
-
 proc md*(self: Unit,
   markdown: string, title = "", width = 1.0, height = 1.0, size = 32,
   zoomable = true, billboard = false): Sign {.discardable.} =
@@ -426,9 +425,11 @@ proc md*(self: Unit,
   self.new_markdown_sign_impl(result, markdown, title, width, height, size, 
     zoomable, billboard)
 
-template md*(
-  markdown: string, title = "", height = 1.0, width = 1.0, size = 32,
-  zoomable = true, billboard = false
-): Sign =
+template md*(markdown: string,
+  title = "", height = 1.0, width = 1.0, size = 32, zoomable = true,
+  billboard = false): Sign =
 
   enu_target.md(markdown, title, width, height, size, zoomable, billboard)
+
+template reset*(clear = false) =
+  enu_target.reset(clear)

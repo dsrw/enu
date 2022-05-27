@@ -54,7 +54,7 @@ gdobj BotNode of KinematicBody:
     if Visible in self.model.flags:
       self.visible = true
       self.set_color(color)
-    elif Visible notin self.model.flags and Key in state.flags:
+    elif Visible notin self.model.flags and God in state.flags:
       self.visible = true
       color.a = 0.0
       SpatialMaterial(self.material).albedo_color = color
@@ -79,7 +79,7 @@ gdobj BotNode of KinematicBody:
         
     self.model.state_zids.add:
       state.flags.changes:
-        if change.item == Key:
+        if change.item == God:
           self.set_visibility
 
     var velocity_zid: ZID

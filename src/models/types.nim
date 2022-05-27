@@ -15,13 +15,14 @@ type
     CommandMode, EditorVisible, ConsoleVisible,
     BlockTargetVisible, ReticleVisible, DocsVisible, MouseCaptured, 
     PrimaryDown, SecondaryDown, EditorFocused, ConsoleFocused, DocsFocused,
-    Playing, Flying, Key
+    Playing, Flying, God
+
+  Tools* = enum
+    CodeMode, BlueBlock, RedBlock, GreenBlock, BlackBlock, WhiteBlock,
+    BrownBlock, PlaceBot
 
   ModelFlags* = enum
     Hover, TargetMoved, Highlight, Global, Visible, Lock
-
-  Tools* = enum
-    Code, Block, Place
 
   ConsoleModel* = ref object
     log*: ZenSeq[string]
@@ -31,8 +32,6 @@ type
     wants*: OrderedSet[StateFlags]
     config*: Config
     open_unit*: ZenValue[Unit]
-    action_index*: int
-    action_count*: int
     tool*: ZenValue[Tools]
     gravity*: float
     nodes*: tuple[

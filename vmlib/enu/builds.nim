@@ -26,5 +26,3 @@ proc fill_square*(self: Build, length = 1) =
 proc save*(self: Build, name = "default") = discard
 
 proc restore*(self: Build, name = "default") = discard
-
-proc reset*(self: Build, clear = false) = discard

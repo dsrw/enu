@@ -45,8 +45,11 @@ proc bot_at*(state: GameState, position: Vector3): Bot =
     if unit of Bot and unit.transform.origin == position:
       return Bot(unit)
 
-method reset*(self: Bot) =
+proc reset_state*(self: Bot) =
   self.transform.value = self.start_transform
+
+method reset*(self: Bot) =
+  self.reset_state
   self.speed = 1
   self.color.value = self.start_color
   self.animation.value = "auto"
@@ -82,7 +85,7 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
   self.flags.changes:
     if Hover.added:
       state.push_flag ReticleVisible
-      if state.tool.value != Block:
+      if state.tool.value in {CodeMode, PlaceBot}:
         let root = self.find_root(true)
         root.walk_tree proc(unit: Unit) = unit.flags += Highlight
     elif Hover.removed:
@@ -93,10 +96,10 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
   self.state_zids.add: 
     state.flags.changes:
       if Hover in self.flags:
-        if PrimaryDown.added and state.tool.value == Code:
+        if PrimaryDown.added and state.tool.value == CodeMode:
           let root = self.find_root(true)
           state.open_unit.value = root
-        if SecondaryDown.added and state.tool.value == Place:
+        if SecondaryDown.added and state.tool.value == PlaceBot:
           if self.parent.is_nil:
             state.units -= self
           else:

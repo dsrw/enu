@@ -15,10 +15,10 @@ gdobj Toolbar of HBoxContainer:
     objects = @["bot"]
     preview_result: Option[PreviewResult]
     waiting = false
+    zid: ZID
 
   method ready*() =
     self.bind_signals self, "action_changed"
-    self.bind_signals "update_actionbar"
     self.preview_maker = self.get_node("../PreviewMaker") as PreviewMaker
     assert not self.preview_maker.is_nil
 
@@ -27,6 +27,11 @@ gdobj Toolbar of HBoxContainer:
         self.visible = false
       if Playing.removed:
         self.visible = true
+
+    self.zid = state.tool.changes:
+      if added:
+        let b = self.get_child(int(change.item)) as Button
+        b.set_pressed true
 
   method process*(delta: float) =
     if self.preview_result.is_some:
@@ -50,17 +55,14 @@ gdobj Toolbar of HBoxContainer:
       self.preview_maker.generate_object_preview obj, proc(preview: Image) =
         self.preview_result = some (color: obj, preview: preview)
 
-  method on_update_actionbar(index: int) =
-    let b = self.get_child(index) as Button
-    b.set_pressed true
-
   method on_action_changed*(button_name: string) =
-    case button_name[7..^1]:
-    of "code": get_game().code_mode(update_actionbar = false)
-    of "blue": get_game().block_mode(1, update_actionbar = false)
-    of "red": get_game().block_mode(2, update_actionbar = false)
-    of "green": get_game().block_mode(3, update_actionbar = false)
-    of "black": get_game().block_mode(4, update_actionbar = false)
-    of "white": get_game().block_mode(5, update_actionbar = false)
-    of "brown": get_game().block_mode(6, update_actionbar = false)
-    of "bot": get_game().obj_mode(7, update_actionbar = false)
+    state.tool.pause(self.zid):
+      case button_name[7..^1]:
+      of "code": state.tool.value = CodeMode
+      of "blue": state.tool.value = BlueBlock
+      of "red": state.tool.value = RedBlock
+      of "green": state.tool.value = GreenBlock
+      of "black": state.tool.value = BlackBlock
+      of "white": state.tool.value = WhiteBlock
+      of "brown": state.tool.value = BrownBlock
+      of "bot": state.tool.value = PlaceBot

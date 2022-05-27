@@ -332,6 +332,14 @@ proc new_markdown_sign_impl(self: ScriptController,
   self.map_unit(result, pnode)
   unit.units.add(result)
 
+proc reset(self: Unit, clear: bool) =
+  if clear:
+    if self of Build: Build(self).reset()
+    elif self of Bot: Bot(self).reset()
+  else:
+    if self of Build: Build(self).reset_state()
+    elif self of Bot: Bot(self).reset_state()
+
 # Bot bindings
 
 proc play(self: Bot, animation_name: string) =
@@ -372,12 +380,6 @@ proc save(self: Build, name: string) =
 proc restore(self: Build, name: string) =
   (self.draw_transform, self.color.value, self.drawing) = self.save_points[name]
 
-proc reset(self: Build, clear: bool) =
-  if clear:
-    self.reset()
-  else:
-    self.reset_state()
-
 # Player binding
 
 proc playing(self: Unit): bool =
@@ -386,11 +388,23 @@ proc playing(self: Unit): bool =
 proc `playing=`*(self: Unit, value: bool) =
   state.set_flag Playing, value
 
-proc key(self: Unit): bool =
-  Key in state.flags
+proc god(self: Unit): bool =
+  God in state.flags
 
-proc `key=`*(self: Unit, value: bool) =
-  state.set_flag Key, value
+proc `god=`*(self: Unit, value: bool) =
+  state.set_flag God, value
+
+proc flying(self: Unit): bool =
+  Flying in state.flags
+
+proc `flying=`*(self: Unit, value: bool) =
+  state.set_flag Flying, value
+
+proc tool(self: Unit): int =
+  int(state.tool.value)
+
+proc `tool=`(self: Unit, value: int) =
+  state.tool.value = Tools(value)
 
 # Sign bindings
 proc title(self: Sign): string = 
@@ -691,7 +705,7 @@ proc init*(T: type ScriptController): ScriptController =
     global, `global=`, position, local_position, rotation, `rotation=`, id, 
     glow, `glow=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`, 
     active_unit, color, `color=`, seen, start_position, wake, frame_count, 
-    write_stack_trace, show, `show=`, frame_created, lock, `lock=`
+    write_stack_trace, show, `show=`, frame_created, lock, `lock=`, reset
 
   result.bind_procs "base_bridge_private",
     link_dependency_impl, action_running, `action_running=`, yield_script, 
@@ -701,14 +715,14 @@ proc init*(T: type ScriptController): ScriptController =
     play, all_bots
 
   result.bind_procs "builds",
-    drawing, `drawing=`, initial_position, save, restore, reset, all_builds
+    drawing, `drawing=`, initial_position, save, restore, all_builds
 
   result.bind_procs "signs",
     markdown, `markdown=`, title, `title=`, height, `height=`, width, `width=`,
     size, `size=`, open, `open=`
 
   result.bind_procs "players",
-    playing, `playing=`, key, `key=`
+    playing, `playing=`, god, `god=`, flying, `flying=`, tool, `tool=`
 
 when is_main_module:
   state.config.lib_dir = current_source_path().parent_dir / ".." / ".." / "vmlib"
