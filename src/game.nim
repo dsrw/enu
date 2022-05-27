@@ -108,6 +108,12 @@ gdobj Game of Node:
     config.world_dir = join_path(work_dir, config.world)
     config.data_dir = join_path(config.world_dir, "data")
     config.script_dir = join_path(config.world_dir, "scripts")
+
+    if not file_exists(config.world_dir / "world.json"):
+      for file in walk_dir(config.lib_dir / "projects"):
+        if config.world.ends_with file.path.split_file.name:
+          file.path.extract_all(config.world_dir)
+
     create_dir(state.config.data_dir)
     create_dir(state.config.script_dir)
 
@@ -192,7 +198,7 @@ gdobj Game of Node:
 
     self.script_controller.load_player()
     load_world(self.script_controller)
-    self.get_tree().set_auto_accept_quit(false)
+    self.get_tree().auto_accept_quit = false
     self.set_font_size config.font_size.value
 
     self.reticle = self.find_node("Reticle").as(Control)
@@ -263,9 +269,8 @@ gdobj Game of Node:
 
   proc switch_world(diff: int) =
     if diff != 0:
-
       if config.world_prefix == "":
-        config.world_prefix = "default"
+        config.world_prefix = "tutorial"
 
       var world = config.world
       let prefix = config.world_prefix & "-"

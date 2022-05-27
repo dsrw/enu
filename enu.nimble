@@ -35,7 +35,8 @@ requires "nim >= 1.6.4", "nim < 1.8.0",
          "print#f78c855",
          "chroma",
          "markdown",
-         "https://github.com/haxscramper/hmatching"
+         "https://github.com/haxscramper/hmatching",
+         "zippy"
          
 proc gen: string =
   if generator_path == "":
