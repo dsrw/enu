@@ -14,3 +14,6 @@ proc `flying=`*(self: PlayerType, value: bool) = discard
 
 proc god*(self: PlayerType): bool = discard
 proc `god=`*(self: PlayerType, value: bool) = discard
+
+proc coding*(self: PlayerType): Unit = discard
+proc `coding=`*(self: PlayerType, value: Unit) = discard

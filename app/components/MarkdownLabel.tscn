@@ -30,8 +30,8 @@ font_data = ExtResource( 7 )
 resource_local_to_scene = true
 content_margin_left = 20.0
 content_margin_right = 20.0
-content_margin_top = 20.0
-content_margin_bottom = 20.0
+content_margin_top = 10.0
+content_margin_bottom = 10.0
 bg_color = Color( 0.0784314, 0.0117647, 0.113725, 0.839216 )
 
 [sub_resource type="DynamicFont" id=13]

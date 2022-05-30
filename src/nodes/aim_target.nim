@@ -40,7 +40,10 @@ gdobj AimTarget of Sprite3D:
         self.target_model.flags -= Hover
         state.pop_flag BlockTargetVisible
       self.target_model = unit
-      if unit != nil and (God in state.flags or Lock notin unit.flags):
+      if not (unit == nil or (unit of Sign and not Sign(unit).zoomable) or 
+        (God notin state.flags and (unit of Bot or unit of Build) and
+        Lock in Unit(unit).find_root.flags)):
+
         state.push_flag BlockTargetVisible
         unit.flags += Hover
 

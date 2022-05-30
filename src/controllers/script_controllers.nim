@@ -6,7 +6,7 @@ import pkg / compiler / vm except get_int
 import pkg / compiler / ast except new_node
 import pkg / compiler / [vmdef, lineinfos, astalgo,  renderer, msgs]
 from pkg/compiler/vm {.all.} import stack_trace_aux
-import godotapi / [spatial, ray_cast, voxel_terrain]
+import godotapi / [spatial, ray_cast, voxel_terrain, input, input_event_action]
 import core, models / [types, states, bots, builds, units, colors, signs],
              libs / [interpreters, eval],
              nodes / [helpers, build_node]
@@ -19,6 +19,8 @@ type ScriptController* = ref object
   node_map: Table[Unit, PNode]
   retry_failures*: bool
   failed: seq[tuple[unit: Unit, e: ref VMQuit]]
+  eval_ctx: ScriptCtx
+  eval_mode: bool
 
 include script_controllers/bindings
 
@@ -74,9 +76,15 @@ proc get_sign(self: ScriptController, a: VmArgs, pos: int): Sign =
   Sign(unit)
 
 proc to_node(self: ScriptController, unit: Unit): PNode =
-  self.node_map[unit]
+  if unit:
+    self.node_map[unit]
+  else:
+    ast.new_node(nkNilLit)
 
 # Common bindings
+
+proc press_action(self: ScriptController, name: string) =
+  state.queued_action = name
 
 proc register_active(self: ScriptController, pnode: PNode) =
   assert not self.active_unit.is_nil
@@ -124,12 +132,14 @@ proc begin_move(self: ScriptController, unit: Unit, direction: Vector3, steps: f
 
 proc sleep_impl(ctx: ScriptCtx, seconds: float) =
   var duration = 0.0
-  ctx.callback = proc(delta: float): bool =
+  ctx.callback = proc(delta: float): TaskStates =
     duration += delta
-    if seconds > 0:
-      return duration < seconds
+    if seconds > 0 and duration < seconds:
+      Running
+    elif seconds <= 0 and duration <= 0.5 and ctx.timer > get_mono_time():
+      Running 
     else:
-      return duration <= 0.5 and ctx.timer > get_mono_time()
+      Done
   ctx.pause()
 
 proc hit(unit_a: Unit, unit_b: Unit): Vector3 =
@@ -265,10 +275,10 @@ proc `rotation=`(self: Unit, degrees: float) =
     Player(self).rotation.touch degrees
     t.origin = self.transform.origin
   else:
-    var t = Transform.init
+    t = Transform.init
     var s = self.scale.value
     t = t.rotated(UP, deg_to_rad(degrees)).scaled(vec3(s, s, s))
-    t.origin = self.transform.origin
+    t.origin = self.transform.value.origin
   self.transform.value = t
 
 proc seen(self: ScriptController, target: Unit, distance: float): bool =
@@ -449,6 +459,12 @@ proc `open=`(self: Sign, value: bool) =
   elif not value and self.open:
     state.open_sign.value = nil
 
+proc coding(self: Unit): Unit =
+  state.open_unit.value
+
+proc `coding=`(self: Unit, value: Unit) =
+  state.open_unit.value = value
+
 # End of bindings
 
 proc script_error(self: ScriptController, unit: Unit, e: ref VMQuit) =
@@ -467,10 +483,12 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
     var resume_script = true
     try:
       assert self.active_unit.is_nil
+      var task_state = Done
       while resume_script and not state.paused:
         resume_script = false
 
-        if ctx.callback == nil or (not ctx.callback(delta)):
+        if ctx.callback == nil or 
+          (task_state = ctx.callback(delta); task_state in {Done, NextTask}):
           ctx.timer = MonoTime.high
           ctx.action_running = false
           self.active_unit = unit
@@ -479,11 +497,9 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
           if not ctx.running and not unit.clone_of:
             unit.collect_garbage
             unit.ensure_visible
-          if unit of Build:
-            let unit = Build(unit)
-            if unit.voxels_per_frame > 0 and ctx.running and unit.voxels_remaining_this_frame >= 1:
-              resume_script = true
-
+          if ctx.running and task_state == NextTask:
+            resume_script = true
+     
         elif now >= ctx.timer:
           ctx.timer = now + advance_step
           ctx.saved_callback = ctx.callback
@@ -491,6 +507,7 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
           self.active_unit = unit
           ctx.timeout_at = get_mono_time() + script_timeout
           discard ctx.resume()
+
     except VMQuit as e:
       self.interpreter.reset_module(unit.script_ctx.module_name)
       self.script_error(unit, e)
@@ -645,17 +662,38 @@ proc extract_file_info(msg: string): tuple[name: string, info: TLineInfo] =
   if msg =~ re"unhandled exception: (.*)\((\d+), (\d+)\)":
     result = (matches[0], TLineInfo(line: matches[1].parse_int.uint16, col: matches[2].parse_int.int16))
 
+proc eval*(self: ScriptController, code: string) =
+  let code = "import types, class_macros, players, state_machine, base_api, bots, builds, signs, " & 
+    self.module_names.to_seq.join(", ") & "\n" & code
+      
+  self.eval_mode = true
+  defer: self.eval_mode = false
+
+  echo "Evaluating code: ", code
+
+  echo self.eval_ctx.eval(code)
+
 proc init*(T: type ScriptController): ScriptController =
   private_access ScriptCtx
 
   let interpreter = Interpreter.init(state.config.script_dir, state.config.lib_dir)
   interpreter.config.spell_suggest_max = 0
-  let controller = ScriptController(interpreter: interpreter)
+  
+  let eval_ctx = ScriptCtx(timer: MonoTime.high, interpreter: interpreter, timeout_at: MonoTime.high)
+  eval_ctx.module_name = "script_eval"
+  eval_ctx.file_name = "script_eval.nim"
+  let controller = ScriptController(interpreter: interpreter, eval_ctx: eval_ctx)
 
   interpreter.register_error_hook proc(config, info, msg, severity: auto) {.gcsafe.} =
     var info = info
     var msg = msg
-    let ctx = controller.active_unit.script_ctx
+    var ctx: ScriptCtx
+
+    if not controller.eval_mode:
+      ctx = controller.active_unit.script_ctx
+    else:
+      ctx = controller.eval_ctx
+
     if severity == Severity.Error and config.error_counter >= config.error_max:
       var file_name = if info.file_index.int >= 0:
         config.m.file_infos[info.file_index.int].full_path.string
@@ -670,10 +708,14 @@ proc init*(T: type ScriptController): ScriptController =
 
   interpreter.register_enter_hook proc(c, pc, tos, instr: auto) =
     assert controller
-    assert controller.active_unit
-    assert controller.active_unit.script_ctx
+    var ctx: ScriptCtx
+    if not controller.eval_mode:
+      assert controller.active_unit
+      assert controller.active_unit.script_ctx
+      ctx = controller.active_unit.script_ctx
+    else:
+      ctx = controller.eval_ctx
 
-    let ctx = controller.active_unit.script_ctx
     let info = c.debug[pc]
     let now = get_mono_time()
     if ctx.timeout_at < now:
@@ -705,7 +747,8 @@ proc init*(T: type ScriptController): ScriptController =
     global, `global=`, position, local_position, rotation, `rotation=`, id, 
     glow, `glow=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`, 
     active_unit, color, `color=`, seen, start_position, wake, frame_count, 
-    write_stack_trace, show, `show=`, frame_created, lock, `lock=`, reset
+    write_stack_trace, show, `show=`, frame_created, lock, `lock=`, reset,
+    press_action
 
   result.bind_procs "base_bridge_private",
     link_dependency_impl, action_running, `action_running=`, yield_script, 
@@ -722,7 +765,8 @@ proc init*(T: type ScriptController): ScriptController =
     size, `size=`, open, `open=`
 
   result.bind_procs "players",
-    playing, `playing=`, god, `god=`, flying, `flying=`, tool, `tool=`
+    playing, `playing=`, god, `god=`, flying, `flying=`, tool, `tool=`,
+    coding, `coding=`
 
 when is_main_module:
   state.config.lib_dir = current_source_path().parent_dir / ".." / ".." / "vmlib"

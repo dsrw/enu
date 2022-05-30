@@ -41,7 +41,7 @@ gdobj BotNode of KinematicBody:
       adjusted.a = 0.015
     elif color == action_colors[white]:
       adjusted = color
-      adjusted.a = 0.02
+      adjusted.a = 0.1
     else:
       var dist = (color.distance(action_colors[brown]) + 10).cbrt / 7.5      
       adjusted = color.saturate(0.2).darken(dist - 0.15)
@@ -99,7 +99,7 @@ gdobj BotNode of KinematicBody:
             self.animation_player.play("run", custom_blend = 0.1)
 
     self.model.animation.changes:
-      if "".added or "auto".added:
+      if added or touched and change.item in ["", "auto"]:
         self.animation_player.play("idle")
       elif added:
         self.animation_player.play(change.item)

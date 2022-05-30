@@ -21,6 +21,9 @@ type
     CodeMode, BlueBlock, RedBlock, GreenBlock, BlackBlock, WhiteBlock,
     BrownBlock, PlaceBot
 
+  TaskStates* = enum
+    Running, Done, NextTask
+
   ModelFlags* = enum
     Hover, TargetMoved, Highlight, Global, Visible, Lock
 
@@ -50,6 +53,8 @@ type
     reloading*: bool
     skip_block_paint*: bool
     open_sign*: ZenValue[Sign]
+    timeout_frame_at*: MonoTime
+    queued_action*: string
 
   Model* = ref object of RootObj
     target_point*: Vector3
@@ -168,7 +173,7 @@ type
 
   VMPause* = object of CatchableError
 
-  Callback* = proc(delta: float): bool
+  Callback* = proc(delta: float): TaskStates
 
 # TODO: this shouldn't be here
 proc local_to*(self: Vector3, unit: Unit): Vector3 =

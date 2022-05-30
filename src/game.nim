@@ -39,6 +39,7 @@ gdobj Game of Node:
     script_controller: ScriptController
 
   method process*(delta: float) =
+    state.timeout_frame_at = get_mono_time() + 0.1.seconds
     inc state.frame_count
     let time = get_mono_time()
     if config.show_stats:
@@ -60,6 +61,14 @@ gdobj Game of Node:
     if time > self.save_at:
       self.save_at = time + auto_save_interval
       save_world()
+
+    if state.queued_action != "":
+      var ev = gdnew[InputEventAction]()
+      ev.action = state.queued_action
+      ev.pressed = true
+      state.queued_action = ""
+
+      parse_input_event(ev)
 
     durations.clear()
 
@@ -118,6 +127,7 @@ gdobj Game of Node:
     create_dir(state.config.script_dir)
 
   proc init* =
+    self.process_priority = -100
     state.nodes.game = self
     let
       screen_scale = if host_os == "macos":
@@ -333,5 +343,9 @@ gdobj Game of Node:
       state.tool.value = BrownBlock
     elif event.is_action_pressed("mode_8"):
       state.tool.value = PlaceBot
+
+  method on_meta_clicked(url: string) =
+    if url.starts_with("code://"):
+      self.script_controller.eval(url[7..^1])
 
 proc get_game*(): Game = Game(state.nodes.game)

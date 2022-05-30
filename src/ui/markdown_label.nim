@@ -42,6 +42,7 @@ gdobj MarkdownLabel of ScrollContainer:
     self.current_label = self.og_label.duplicate as RichTextLabel
     self.container.add_child(self.current_label)
     self.current_label.visible = true
+    GameState.active.nodes.game.bind_signals(self.current_label, "meta_clicked")
 
   proc set_font_sizes =
     var size = 
@@ -113,7 +114,6 @@ gdobj MarkdownLabel of ScrollContainer:
     self.og_text_edit.add_font_override("font", self.local_mono_font)
     self.og_label.add_font_override("normal_font", self.local_default_font)
     
-    GameState.active.config.font_size.value = 32
     GameState.active.config.font_size.changes:
       if added:
         self.set_font_sizes()
@@ -187,6 +187,21 @@ gdobj MarkdownLabel of ScrollContainer:
         label.with(pop, pop, push_cell)
         self.render_markdown(t, inline_blocks = true)
         label.with(pop, pop, newline)
+
+      of of Link():
+        let t = Link(t)
+        label.push_color(ir_black[variable])
+        label.push_font self.local_bold_font
+        label.push_meta(t.url.to_variant)
+        label.add_text t.title
+        echo "pushing title: ", t.title
+        echo "doc ", t.doc
+        echo "url ", t.url
+        echo "rest? ", t
+        self.render_markdown(t)
+        label.pop
+        label.pop
+        label.pop
 
       of of Text():
         label.add_text t.doc

@@ -33,6 +33,7 @@ proc frame_created*(self: Unit): int = discard
 proc lock*(self: Unit): bool = discard
 proc `lock=`*(self: Unit, value: bool) = discard
 proc reset*(self: Unit, clear = false) = discard
+proc press_action*(name: string) = discard
 
 # TODO: These should be in base_bridge_private, but are currently needed outside of base_api.
 proc echo_console*(msg: string) = discard

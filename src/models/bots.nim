@@ -16,29 +16,29 @@ method on_begin_move*(self: Bot, direction: Vector3, steps: float, moving_mode: 
     moving = -self.transform.basis.z
     finish_time = 1.0 / self.speed * steps
 
-  result = proc(delta: float): bool =
+  result = proc(delta: float): TaskStates =
     duration += delta
     if duration >= finish_time:
       self.velocity.touch(vec3())
       self.transform.origin = self.transform.origin.snapped(vec3(0.1, 0.1, 0.1))
-      return false
+      return Done
     else:
       self.velocity.touch(moving * self.speed)
-      return true
+      return Running
 
 method on_begin_turn*(self: Bot, axis: Vector3, degrees: float, lean: bool, move_mode: int): Callback =
   # move mode param is ignored
   let degrees = degrees * -axis.x
   var duration = 0.0
   var final_basis = self.transform.basis.rotated(UP, deg_to_rad(degrees))
-  result = proc(delta: float): bool =
+  result = proc(delta: float): TaskStates =
     duration += delta
     self.transform.basis = self.transform.basis.rotated(UP, deg_to_rad(degrees * delta * self.speed))
     if duration <= 1.0 / self.speed:
-      true
+      Running
     else:
       self.transform.basis = final_basis
-      false
+      Done
 
 proc bot_at*(state: GameState, position: Vector3): Bot =
   for unit in state.units:
@@ -52,7 +52,7 @@ method reset*(self: Bot) =
   self.reset_state
   self.speed = 1
   self.color.value = self.start_color
-  self.animation.value = "auto"
+  self.animation.touch "auto"
   self.flags += Visible
   self.velocity.value = vec3()
   self.units.clear()

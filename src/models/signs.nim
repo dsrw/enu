@@ -31,6 +31,8 @@ proc init*(_: type Sign,
     color: Zen.init(action_colors[black])
   )
 
+  echo "zoomable is ", zoomable
+
   self.flags += Visible
   self.state_zids.add:
     state.flags.changes:

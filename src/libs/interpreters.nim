@@ -43,6 +43,19 @@ proc run*(self: ScriptCtx): bool =
     self.exit_code = some(99)
     raise
 
+proc eval*(self: ScriptCtx, code: string): bool =
+  self.exit_code = none(int)
+  self.errors = @[]
+  try:
+    self.interpreter.load_module(self.file_name, code)
+    result = false
+  except VMPause:
+    result = self.exit_code.is_none
+  except:
+    self.running = false
+    self.exit_code = some(99)
+    raise
+
 proc call_proc*(self: ScriptCtx, proc_name: string, args: varargs[PNode, `to_node`]): tuple[paused: bool, result: PNode] =
   let foreign_proc = self.interpreter.select_routine(proc_name, module_name = self.module_name)
   if foreign_proc == nil:

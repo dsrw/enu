@@ -132,8 +132,8 @@ gdobj Editor of TextEdit:
     state.flags.changes:
       if EditorFocused.added:
         self.grab_focus
-      if EditorFocused.removed:
-        self.release_focus
+      #if EditorFocused.removed:
+      #  self.release_focus
       if CommandMode.added:
         if EditorVisible in state.flags:
           state.open_unit.value.code.value = self.text
