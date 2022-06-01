@@ -74,7 +74,10 @@ proc get_sign(self: ScriptController, a: VmArgs, pos: int): Sign =
   Sign(unit)
 
 proc to_node(self: ScriptController, unit: Unit): PNode =
+  if unit:
   self.node_map[unit]
+  else:
+    ast.new_node(nkNilLit)
 
 # Common bindings
 
