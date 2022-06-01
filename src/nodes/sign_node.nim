@@ -62,9 +62,19 @@ gdobj SignNode of Spatial:
 
     self.model.title.changes:
       if added or touched:
-        label.markdown = change.item
+        if change.item == "":
+          label.markdown = self.model.markdown.value
+        else:
+          label.markdown = change.item
         resize()
         label.update
+    
+    self.model.markdown.changes:
+      if added or touched:
+        if self.model.title.value == "":
+          label.markdown = change.item
+          resize()
+          label.update
 
     self.model.glow.changes:
       if added:

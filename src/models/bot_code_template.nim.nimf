@@ -1,6 +1,6 @@
 #? stdtmpl
 #proc bot_code_template(file_name, imports: string): string =
-import std / [strutils, strformat]
+import std / [strutils]
 import types, class_macros, players, state_machine, base_api, bots, builds, 
        signs, bots_private
 include overrides

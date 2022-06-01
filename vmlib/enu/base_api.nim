@@ -1,8 +1,9 @@
-import std / [strutils, math, importutils]
+import std / [strformat, math, importutils, strutils]
 import random as rnd except rand
 import types, state_machine, base_bridge, base_bridge_private
 
 export base_bridge
+template f*(body): untyped = fmt(body)
 
 proc `position=`*(self: Unit, position: Vector3) = self.`position=impl`(position)
 proc `position=`*(self: Unit, unit: Unit) = self.`position=impl`(unit.position)

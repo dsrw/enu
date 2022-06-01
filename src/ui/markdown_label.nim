@@ -218,7 +218,7 @@ gdobj MarkdownLabel of ScrollContainer:
       self.add_label()
       self.old_markdown = self.markdown
       var root = Document()
-      discard markdown(self.markdown, root=root)
+      discard markdown(self.markdown.dedent, root=root)
       self.needs_margin = false
       self.render_markdown(root)
       self.set_font_sizes()
