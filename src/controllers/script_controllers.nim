@@ -614,7 +614,7 @@ proc change_code(self: ScriptController, unit: Unit, code: string) =
     if unit.script_ctx.is_nil:
       unit.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter, timeout_at: MonoTime.high)
 
-    unit.script_ctx.script = unit.script_file
+    unit.script_ctx.script = unit.script_file.expand_filename
     if not state.reloading and not self.retry_failures:
       self.load_script_and_dependants(unit)
     else:
