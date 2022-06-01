@@ -520,7 +520,7 @@ proc load_script(self: ScriptController, unit: Unit, timeout = script_timeout) =
       let code = unit.code_template(imports)
       ctx.timeout_at = get_mono_time() + timeout
       p "loading script: ", ctx.script
-      ctx.load(state.config.script_dir, ctx.script, code, state.config.lib_dir)
+      ctx.load(ctx.script, code)
 
     if not state.paused:
       ctx.timeout_at = get_mono_time() + timeout
@@ -650,6 +650,15 @@ proc load_player*(self: ScriptController) =
 proc extract_file_info(msg: string): tuple[name: string, info: TLineInfo] =
   if msg =~ re"unhandled exception: (.*)\((\d+), (\d+)\)":
     result = (matches[0], TLineInfo(line: matches[1].parse_int.uint16, col: matches[2].parse_int.int16))
+
+proc eval*(self: ScriptController, code: string) =
+  let active = self.active_unit
+  self.active_unit = state.open_sign.value.owner
+  defer:
+    self.active_unit = active
+
+  self.active_unit.script_ctx.timeout_at = get_mono_time() + script_timeout
+  discard self.active_unit.script_ctx.eval(code)
 
 proc init*(T: type ScriptController): ScriptController =
   private_access ScriptCtx

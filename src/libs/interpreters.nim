@@ -1,28 +1,27 @@
 import std / [os, strformat, with, importutils]
 import pkg / compiler / ast except new_node
 import pkg / godot except print
-import pkg / [print], pkg / compiler / [vm, vmdef, options, lineinfos]
+import pkg / [print], pkg / compiler / [vm, vmdef, options, lineinfos, llstream]
 import core, eval
 import models/types
 
 export Interpreter, VmArgs, set_result
 
 const
-  STDLIB_PATHS = [".", "core", "pure", "pure/collections", "pure/concurrency", "std", "fusion"]
-  MAIN_SCRIPT = "scripts/main.nim"
+    STDLIB_PATHS = [".", "core", "pure", "pure/collections", "pure/concurrency", "std", "fusion"]
 
 private_access ScriptCtx
 
 proc init*(_: type Interpreter, script_dir, vmlib: string): Interpreter =
   let std_paths = STDLIB_PATHS.map_it join_path(vmlib, "stdlib", it)
-  let source_paths = std_paths & join_path(vmlib, "enu") & @[parent_dir MAIN_SCRIPT] & @[script_dir]
+  let source_paths = std_paths & join_path(vmlib, "enu") & @[script_dir]
   print source_paths
-  result = create_interpreter(MAIN_SCRIPT, source_paths)
+  result = create_interpreter("base_api.nim", source_paths)
 
 proc pause*(ctx: ScriptCtx) =
   ctx.pause_requested = true
 
-proc load*(self: ScriptCtx, script_dir, file_name, code, vmlib: string) =
+proc load*(self: ScriptCtx, file_name, code: string) =
   self.ctx = nil
   self.pc = 0
   self.tos = nil
@@ -34,7 +33,27 @@ proc run*(self: ScriptCtx): bool =
   self.exit_code = none(int)
   self.errors = @[]
   try:
-    self.interpreter.load_module(self.file_name, self.code)
+    self.interpreter.load_module(self.file_name, self.code, self.pass_context)
+    result = false
+  except VMPause:
+    result = self.exit_code.is_none
+  except:
+    self.running = false
+    self.exit_code = some(99)
+    raise
+
+proc eval*(self: ScriptCtx, code: string): bool =
+  self.exit_code = none(int)
+  self.errors = @[]
+  try:
+    var
+      ctx = self.ctx
+      pc = self.pc
+      tos = self.tos
+    self.interpreter.eval(self.pass_context, self.file_name, code)
+    self.ctx = ctx
+    self.pc = pc
+    self.tos = tos
     result = false
   except VMPause:
     result = self.exit_code.is_none
