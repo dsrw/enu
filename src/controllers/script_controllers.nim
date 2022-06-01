@@ -270,10 +270,10 @@ proc `rotation=`(self: Unit, degrees: float) =
     Player(self).rotation.touch degrees
     t.origin = self.transform.origin
   else:
-    var t = Transform.init
+    t = Transform.init
     var s = self.scale.value
     t = t.rotated(UP, deg_to_rad(degrees)).scaled(vec3(s, s, s))
-    t.origin = self.transform.origin
+    t.origin = self.transform.value.origin
   self.transform.value = t
 
 proc seen(self: ScriptController, target: Unit, distance: float): bool =
