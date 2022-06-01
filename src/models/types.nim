@@ -55,6 +55,7 @@ type
     skip_block_paint*: bool
     open_sign*: ZenValue[Sign]
     timeout_frame_at*: MonoTime
+    queued_action*: string
 
   Model* = ref object of RootObj
     target_point*: Vector3
@@ -103,6 +104,7 @@ type
     width*, height*: float
     size*: int
     billboard*, zoomable*: bool
+    owner*: Unit
 
   VoxelKind* = enum
     Hole, Manual, Computed

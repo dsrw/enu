@@ -52,7 +52,7 @@ method reset*(self: Bot) =
   self.reset_state
   self.speed = 1
   self.color.value = self.start_color
-  self.animation.value = "auto"
+  self.animation.touch "auto"
   self.flags += Visible
   self.velocity.value = vec3()
   self.units.clear()

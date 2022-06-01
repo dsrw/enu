@@ -409,7 +409,9 @@ method clone*(self: Build, clone_to: Unit, id: string): Unit =
     transform = Build(clone_to).draw_transform
     global = false
 
-  let bot_collisions = not (clone_to of Bot)
+  # we need this off for Potato Zombies, but on for the 
+  # tutorials. Make it configurable somehow.
+  let bot_collisions = true #not (clone_to of Bot)
   let clone = Build.init(id = id, transform = transform, clone_of = self, global = global, parent = clone_to,
                          color = self.start_color, bot_collisions = bot_collisions)
 
