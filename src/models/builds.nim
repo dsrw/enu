@@ -215,7 +215,6 @@ proc is_moving(self: Build, move_mode: int): bool =
 method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: int): Callback =
   let move = self.is_moving(move_mode)
   if move:
-    self.voxels_per_frame = 0
     let steps = steps.float
     var duration = 0.0
     let
@@ -223,14 +222,14 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
       finish = self.transform.origin + moving * steps
       finish_time = 1.0 / self.speed * steps
 
-    result = proc(delta: float): bool =
+    result = proc(delta: float): TaskStates =
       duration += delta
       if duration >= finish_time:
         self.transform.origin = finish
-        return false
+        return Done
       else:
         self.transform.origin = self.transform.origin + (moving * self.speed * delta)
-        return true
+        return Running
   else:
     if self.speed == 0:
       self.voxels_per_frame = float.high
@@ -238,12 +237,11 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
       self.voxels_remaining_this_frame = self.speed
       self.voxels_per_frame = self.speed
     var count = 0
-    result = proc(delta: float): bool =
-      var remaining = self.voxels_remaining_this_frame
-      var per_frame = self.voxels_per_frame
-      while count.float < steps and self.voxels_remaining_this_frame >= 1:
-        remaining = self.voxels_remaining_this_frame
-        per_frame = self.voxels_per_frame
+    
+    result = proc(delta: float): TaskStates =
+      while count.float < steps and self.voxels_remaining_this_frame >= 1 and
+        get_mono_time() < state.timeout_frame_at:
+
         if steps < 1:
           self.draw_transform = self.draw_transform.translated(direction * steps)
         else:
@@ -251,7 +249,11 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
         inc count
         self.voxels_remaining_this_frame -= 1
         self.drop_block()
-      result = count.float < steps
+
+      if count.float >= steps:
+        NextTask
+      else:
+        Running
 
 method on_begin_turn*(self: Build, axis: Vector3, degrees: float, lean: bool, move_mode: int): Callback =
   let map = if lean:
@@ -269,14 +271,14 @@ method on_begin_turn*(self: Build, axis: Vector3, degrees: float, lean: bool, mo
     final_transform.basis = final_transform.basis.rotated(axis, deg_to_rad(degrees))
                                            .orthonormalized.scaled(vec3(scale, scale, scale))
 
-    result = proc(delta: float): bool =
+    result = proc(delta: float): TaskStates =
       duration += delta
       self.transform.basis = self.transform.basis.rotated(axis, deg_to_rad(degrees * delta * self.speed))
       if duration <= 1.0 / self.speed:
-        true
+        Running
       else:
         self.transform.value = final_transform
-        false
+        Done
   else:
     let axis = self.draw_transform.basis.xform(axis)
     self.draw_transform.basis = self.draw_transform.basis.rotated(axis, deg_to_rad(degrees))

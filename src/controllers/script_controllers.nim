@@ -124,12 +124,14 @@ proc begin_move(self: ScriptController, unit: Unit, direction: Vector3, steps: f
 
 proc sleep_impl(ctx: ScriptCtx, seconds: float) =
   var duration = 0.0
-  ctx.callback = proc(delta: float): bool =
+  ctx.callback = proc(delta: float): TaskStates =
     duration += delta
-    if seconds > 0:
-      return duration < seconds
+    if seconds > 0 and duration < seconds:
+      Running
+    elif seconds <= 0 and duration <= 0.5 and ctx.timer > get_mono_time():
+      Running 
     else:
-      return duration <= 0.5 and ctx.timer > get_mono_time()
+      Done
   ctx.pause()
 
 proc hit(unit_a: Unit, unit_b: Unit): Vector3 =
@@ -473,10 +475,12 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
     var resume_script = true
     try:
       assert self.active_unit.is_nil
+      var task_state = Done
       while resume_script and not state.paused:
         resume_script = false
 
-        if ctx.callback == nil or (not ctx.callback(delta)):
+        if ctx.callback == nil or 
+          (task_state = ctx.callback(delta); task_state in {Done, NextTask}):
           ctx.timer = MonoTime.high
           ctx.action_running = false
           self.active_unit = unit
@@ -485,9 +489,7 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
           if not ctx.running and not unit.clone_of:
             unit.collect_garbage
             unit.ensure_visible
-          if unit of Build:
-            let unit = Build(unit)
-            if unit.voxels_per_frame > 0 and ctx.running and unit.voxels_remaining_this_frame >= 1:
+          if ctx.running and task_state == NextTask:
               resume_script = true
 
         elif now >= ctx.timer:
@@ -497,6 +499,7 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
           self.active_unit = unit
           ctx.timeout_at = get_mono_time() + script_timeout
           discard ctx.resume()
+
     except VMQuit as e:
       self.interpreter.reset_module(unit.script_ctx.module_name)
       self.script_error(unit, e)

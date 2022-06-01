@@ -39,6 +39,7 @@ gdobj Game of Node:
     script_controller: ScriptController
 
   method process*(delta: float) =
+    state.timeout_frame_at = get_mono_time() + 0.1.seconds
     inc state.frame_count
     let time = get_mono_time()
     if config.show_stats:
@@ -118,6 +119,7 @@ gdobj Game of Node:
     create_dir(state.config.script_dir)
 
   proc init* =
+    self.process_priority = -100
     state.nodes.game = self
     let
       screen_scale = if host_os == "macos":

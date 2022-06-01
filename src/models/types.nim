@@ -3,6 +3,7 @@ import godotapi / [spatial, ray_cast]
 import pkg/model_citizen
 import pkg/core/godotcoretypes except Color
 import pkg / core / [vector3, basis, aabb, godotbase]
+import pkg / compiler / passes {.all.}
 import core, models/colors, libs / [transforms, eval]
 
 export Vector3, Transform, vector3, transforms, basis, AABB, aabb
@@ -20,6 +21,9 @@ type
   Tools* = enum
     CodeMode, BlueBlock, RedBlock, GreenBlock, BlackBlock, WhiteBlock,
     BrownBlock, PlaceBot
+
+  TaskStates* = enum
+    Running, Done, NextTask
 
   ModelFlags* = enum
     Hover, TargetMoved, Highlight, Global, Visible, Lock
@@ -50,6 +54,7 @@ type
     reloading*: bool
     skip_block_paint*: bool
     open_sign*: ZenValue[Sign]
+    timeout_frame_at*: MonoTime
 
   Model* = ref object of RootObj
     target_point*: Vector3
@@ -156,6 +161,7 @@ type
     interpreter*: Interpreter
     code*: string
     dependents*: HashSet[string]
+    pass_context*: TPassContextArray
 
   VMError* = object of CatchableError
   QuitKind* = enum
@@ -168,7 +174,7 @@ type
 
   VMPause* = object of CatchableError
 
-  Callback* = proc(delta: float): bool
+  Callback* = proc(delta: float): TaskStates
 
 # TODO: this shouldn't be here
 proc local_to*(self: Vector3, unit: Unit): Vector3 =
