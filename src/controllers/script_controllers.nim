@@ -334,8 +334,9 @@ proc new_markdown_sign_impl(self: ScriptController,
   height: float, size: int, zoomable: bool, billboard: bool): Unit =
 
   result = Sign.init(
-    markdown, title = title, transform = drop_transform(unit), width = width,
-    height = height, size = size, zoomable = zoomable, billboard = billboard)
+    markdown, title = title, owner = self.active_unit, 
+    transform = drop_transform(unit), width = width, height = height,
+    size = size, zoomable = zoomable, billboard = billboard)
 
   self.map_unit(result, pnode)
   unit.units.add(result)

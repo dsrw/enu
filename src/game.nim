@@ -341,4 +341,10 @@ gdobj Game of Node:
     elif event.is_action_pressed("mode_8"):
       state.tool.value = PlaceBot
 
+  method on_meta_clicked(url: string) =
+    if url.starts_with("nim://"):
+      self.script_controller.eval(url[6..^1])
+    elif shell_open(url) != Error.OK:
+      state.logger("err", &"Unable to open url {url}")
+
 proc get_game*(): Game = Game(state.nodes.game)

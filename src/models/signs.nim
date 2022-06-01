@@ -6,8 +6,9 @@ import core, types, states, bots, builds, models / colors
 let state = GameState.active
 
 proc init*(_: type Sign, 
-  markdown: string, title = "", transform = Transform.init, width = 1.0, 
-  height = 1.0, size = 32, billboard = false, zoomable = true): Sign =
+  markdown: string, title = "", owner: Unit, transform = Transform.init, 
+  width = 1.0, height = 1.0, size = 32, billboard = false, 
+  zoomable = true): Sign =
 
   let title = if title == "": markdown else: title
   let self = Sign(
@@ -28,7 +29,8 @@ proc init*(_: type Sign,
     billboard: billboard,
     zoomable: zoomable,
     frame_created: state.frame_count,
-    color: Zen.init(action_colors[black])
+    color: Zen.init(action_colors[black]),
+    owner: owner
   )
 
   self.flags += Visible
