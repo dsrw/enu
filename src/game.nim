@@ -62,6 +62,14 @@ gdobj Game of Node:
       self.save_at = time + auto_save_interval
       save_world()
 
+    if state.queued_action != "":
+      var ev = gdnew[InputEventAction]()
+      ev.action = state.queued_action
+      ev.pressed = true
+      state.queued_action = ""
+
+      parse_input_event(ev)
+
     durations.clear()
 
   proc rescale*() =

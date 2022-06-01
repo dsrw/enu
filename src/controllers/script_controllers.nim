@@ -78,6 +78,9 @@ proc to_node(self: ScriptController, unit: Unit): PNode =
 
 # Common bindings
 
+proc press_action(self: ScriptController, name: string) =
+  state.queued_action = name
+
 proc register_active(self: ScriptController, pnode: PNode) =
   assert not self.active_unit.is_nil
   self.map_unit(self.active_unit, pnode)
@@ -723,7 +726,8 @@ proc init*(T: type ScriptController): ScriptController =
     global, `global=`, position, local_position, rotation, `rotation=`, id, 
     glow, `glow=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`, 
     active_unit, color, `color=`, seen, start_position, wake, frame_count, 
-    write_stack_trace, show, `show=`, frame_created, lock, `lock=`, reset
+    write_stack_trace, show, `show=`, frame_created, lock, `lock=`, reset,
+    press_action
 
   result.bind_procs "base_bridge_private",
     link_dependency_impl, action_running, `action_running=`, yield_script, 
