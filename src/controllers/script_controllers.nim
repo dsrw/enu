@@ -449,6 +449,12 @@ proc `open=`(self: Sign, value: bool) =
   elif not value and self.open:
     state.open_sign.value = nil
 
+proc coding(self: Unit): Unit =
+  state.open_unit.value
+
+proc `coding=`(self: Unit, value: Unit) =
+  state.open_unit.value = value
+
 # End of bindings
 
 proc script_error(self: ScriptController, unit: Unit, e: ref VMQuit) =
@@ -722,7 +728,8 @@ proc init*(T: type ScriptController): ScriptController =
     size, `size=`, open, `open=`
 
   result.bind_procs "players",
-    playing, `playing=`, god, `god=`, flying, `flying=`, tool, `tool=`
+    playing, `playing=`, god, `god=`, flying, `flying=`, tool, `tool=`,
+    coding, `coding=`
 
 when is_main_module:
   state.config.lib_dir = current_source_path().parent_dir / ".." / ".." / "vmlib"
