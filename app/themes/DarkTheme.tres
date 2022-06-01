@@ -1,6 +1,6 @@
 [gd_resource type="Theme" load_steps=1032 format=2]
 
-[ext_resource path="res://themes/Inconsolata-Bold.ttf" type="DynamicFontData" id=1]
+[ext_resource path="res://themes/text-bold.otf" type="DynamicFontData" id=1]
 
 [sub_resource type="StyleBoxFlat" id=1]
 content_margin_left = 6.0
@@ -102,7 +102,7 @@ flags = 0
 size = Vector2( 16, 16 )
 
 [sub_resource type="DynamicFontData" id=1029]
-font_path = "res://themes/Inconsolata-Regular.ttf"
+font_path = "res://themes/text.otf"
 
 [sub_resource type="DynamicFont" id=1030]
 size = 26

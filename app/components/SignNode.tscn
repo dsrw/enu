@@ -1,31 +1,7 @@
-[gd_scene load_steps=18 format=2]
+[gd_scene load_steps=7 format=2]
 
-[ext_resource path="res://themes/SF-Pro-Text-RegularItalic.otf" type="DynamicFontData" id=1]
-[ext_resource path="res://themes/SF-Pro-Text-Regular.otf" type="DynamicFontData" id=2]
-[ext_resource path="res://themes/SF-Pro-Text-BoldItalic.otf" type="DynamicFontData" id=3]
-[ext_resource path="res://themes/SF-Mono-Powerline-Regular.otf" type="DynamicFontData" id=4]
 [ext_resource path="res://components/MarkdownLabel.tscn" type="PackedScene" id=5]
-[ext_resource path="res://themes/SF-Pro-Text-Bold.otf" type="DynamicFontData" id=6]
 [ext_resource path="res://components/SignNode.gdns" type="Script" id=7]
-
-[sub_resource type="DynamicFont" id=7]
-font_data = ExtResource( 2 )
-
-[sub_resource type="DynamicFont" id=8]
-font_data = ExtResource( 1 )
-
-[sub_resource type="DynamicFont" id=9]
-font_data = ExtResource( 6 )
-
-[sub_resource type="DynamicFont" id=10]
-font_data = ExtResource( 3 )
-
-[sub_resource type="DynamicFont" id=11]
-size = 32
-font_data = ExtResource( 6 )
-
-[sub_resource type="DynamicFont" id=12]
-font_data = ExtResource( 4 )
 
 [sub_resource type="QuadMesh" id=18]
 resource_local_to_scene = true
@@ -69,12 +45,6 @@ size_flags_horizontal = 1
 size_flags_vertical = 1
 scroll_horizontal_enabled = false
 scroll_vertical_enabled = false
-default_font = SubResource( 7 )
-italic_font = SubResource( 8 )
-bold_font = SubResource( 9 )
-bold_italic_font = SubResource( 10 )
-header_font = SubResource( 11 )
-mono_font = SubResource( 12 )
 
 [node name="MeshInstance" type="MeshInstance" parent="."]
 transform = Transform( -1, 0, -1.50996e-07, 0, 1, 0, 1.50996e-07, 0, -1, 0, 0, 0 )

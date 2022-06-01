@@ -171,13 +171,9 @@ gdobj Game of Node:
     user_config.font_size = some(size)
     self.save_user_config(user_config)
 
-    let (theme_holder, theme) = if hostOS == "macosx":
-      (self.find_node("ThemeHolder").as(Container),
-       load("res://themes/AppleTheme.tres").as(Theme))
-    else:
-      let node = self.find_node("LeftPanel").as(Container)
-      (node, node.theme)
     let
+      theme_holder = self.find_node("LeftPanel").as(Container)
+      theme = theme_holder.theme
       font = theme.default_font.as(DynamicFont)
       bold_font = theme.get_font("bold_font", "RichTextLabel")
                         .as(DynamicFont)

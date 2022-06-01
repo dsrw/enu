@@ -68,8 +68,70 @@ proc find_and_copy_dlls(dep_path, dest: string, dlls: varargs[string]) =
   for dep in dlls:
     cp_file dep_path.join_path(dep), join_path(dest, dep)
 
+proc download_fonts =
+  rm_dir "fonts"
+  mk_dir "fonts"
+  with_dir "fonts":
+    when host_os == "macosx":
+      exec "curl -OJL https://devimages-cdn.apple.com/design/resources/download/SF-Pro.dmg"
+      exec "curl -OJL https://devimages-cdn.apple.com/design/resources/download/SF-Mono.dmg"
+      exec "hdiutil attach SF-Mono.dmg"
+      exec "pkgutil --expand-full '/Volumes/SFMonoFonts/SF Mono Fonts.pkg' mono"
+      exec "hdiutil detach /Volumes/SFMonoFonts"
+      with_dir "mono/SFMonoFonts.pkg/Payload/Library/Fonts":
+        let dest = "../../../../../../app/themes"
+        cp_file "SF-Mono-Regular.otf", dest / "mono.otf"
+        cp_file "SF-Mono-RegularItalic.otf", dest / "mono-italic.otf"
+        cp_file "SF-Mono-Bold.otf", dest / "mono-bold.otf"
+        cp_file "SF-Mono-BoldItalic.otf", dest / "mono-bold-italic.otf"
+
+      exec "hdiutil attach SF-Pro.dmg"
+      exec "pkgutil --expand-full '/Volumes/SFProFonts/SF Pro Fonts.pkg' pro"
+      exec "hdiutil detach /Volumes/SFProFonts"
+
+      with_dir "pro/SFProFonts.pkg/Payload/Library/Fonts":
+        let dest = "../../../../../../app/themes"
+        cp_file "SF-Pro-Text-Regular.otf", dest / "text.otf"
+        cp_file "SF-Pro-Text-RegularItalic.otf", dest / "text-italic.otf"
+        cp_file "SF-Pro-Text-Bold.otf", dest / "text-bold.otf"
+        cp_file "SF-Pro-Text-BoldItalic.otf", dest / "text-bold-italic.otf"
+
+        cp_file "SF-Pro-Display-Regular.otf", dest / "display.otf"
+        cp_file "SF-Pro-Display-RegularItalic.otf", dest / "display-italic.otf"
+        cp_file "SF-Pro-Display-Bold.otf", dest / "display-bold.otf"
+        cp_file "SF-Pro-Display-BoldItalic.otf", dest / "display-bold-italic.otf"
+
+    else:
+      exec "curl -OJL 'https://fonts.google.com/download?family=Roboto'"
+      exec "curl -OJL 'https://fonts.google.com/download?family=Roboto%20Mono'"
+      exec "unzip Roboto.zip"
+      exec "unzip -o Roboto_Mono.zip"
+      
+      with_dir "static":
+        let dest = "../../app/themes"
+        cp_file "RobotoMono-Regular.ttf", dest / "mono.otf"
+        cp_file "RobotoMono-Italic.ttf", dest / "mono-italic.otf"
+        cp_file "RobotoMono-Bold.ttf", dest / "mono-bold.otf"
+        cp_file "RobotoMono-BoldItalic.ttf", dest / "mono-bold-italic.otf"
+
+      let dest = "../app/themes"
+      cp_file "Roboto-Regular.ttf", dest / "text.otf"
+      cp_file "Roboto-Italic.ttf", dest / "text-italic.otf"
+      cp_file "Roboto-Bold.ttf", dest / "text-bold.otf"
+      cp_file "Roboto-BoldItalic.ttf", dest / "text-bold-italic.otf"
+
+      # Roboto doesn't have a display version. Consider using something else
+      # here.
+      cp_file "Roboto-Regular.ttf", dest / "display.otf"
+      cp_file "Roboto-Italic.ttf", dest / "display-italic.otf"
+      cp_file "Roboto-Bold.ttf", dest / "display-bold.otf"
+      cp_file "Roboto-BoldItalic.ttf", dest / "display-bold-italic.otf"
+    
+    rm_dir "fonts"
+
 task prereqs, "Generate Godot API binding":
   build_godot_task()
+  download_fonts()
   exec &"{godot_bin} --gdnative-generate-json-api {join_path generated_dir, api_json}"
   exec &"{gen()} generate_api -d={generated_dir} -j={api_json}"
   exec &"{gen()} copy_stdlib -d=vmlib/stdlib"
@@ -116,7 +178,7 @@ task dist_universal_mac, "Build Universal mac distribution":
   rm_dir "dist"
 
   let config = read_file("dist_config.json").parse_json
-  mkdir "dist"
+  mk_dir "dist"
   exec "cp -r installer/Enu.app dist/Enu.app"
   exec &"{gen()} write_info_plist --enu_version {version}"
   exec "mkdir -p dist/Enu.app/Contents/MacOS"
@@ -174,7 +236,7 @@ task dist, "Build distribution":
 
   when host_os == "macosx":
     let config = read_file("dist_config.json").parse_json
-    mkdir "dist"
+    mk_dir "dist"
     exec "cp -r installer/Enu.app dist/Enu.app"
     exec &"{gen()} write_info_plist --enu_version {version}"
     exec "mkdir -p dist/Enu.app/Contents/MacOS"
@@ -206,7 +268,7 @@ task dist, "Build distribution":
 
   elif host_os == "windows":
     let root = &"dist/enu-{version}"
-    mkdir root
+    mk_dir root
     exec "strip " & release_bin
     cp_file release_bin, root & "/enu.exe"
     exec &"rcedit {root}/enu.exe --set-icon media/enu_icon.ico"
@@ -223,8 +285,8 @@ task dist, "Build distribution":
 
   elif host_os == "linux":
     let root = &"dist/enu-{version}"
-    mkdir root & "/bin"
-    mkdir root & "/lib"
+    mk_dir root & "/bin"
+    mk_dir root & "/lib"
     exec "nimble build -d:release -d:dist"
     exec "strip " & release_bin
     cp_file release_bin, root & "/bin/enu"
