@@ -39,8 +39,6 @@ gdobj RightPanel of MarginContainer:
         self.label.visible = true
       elif DocsVisible.removed:
         self.label.visible = false
-      elif DocsFocused.added:
-        self.label.grab_focus
       elif DocsFocused.removed:
         self.label.release_focus
       elif CommandMode.added:
