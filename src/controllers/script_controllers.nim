@@ -75,7 +75,7 @@ proc get_sign(self: ScriptController, a: VmArgs, pos: int): Sign =
 
 proc to_node(self: ScriptController, unit: Unit): PNode =
   if unit:
-  self.node_map[unit]
+    self.node_map[unit]
   else:
     ast.new_node(nkNilLit)
 
@@ -497,7 +497,7 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
             unit.collect_garbage
             unit.ensure_visible
           if ctx.running and task_state == NextTask:
-              resume_script = true
+            resume_script = true
 
         elif now >= ctx.timer:
           ctx.timer = now + advance_step
