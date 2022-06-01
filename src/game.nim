@@ -156,10 +156,7 @@ gdobj Game of Node:
 
     state.set_flag(God, uc.god_mode ||= false)
 
-    self.prepare_to_load_world()
     set_window_fullscreen config.start_full_screen
-    if uc != initial_user_config:
-      self.save_user_config(uc)
 
     self.add_platform_input_actions()
 
@@ -172,8 +169,12 @@ gdobj Game of Node:
       elif host_os == "linux":
         config.lib_dir = join_path(exe_dir.parent_dir, "lib", "vmlib")
 
+    self.prepare_to_load_world()
     self.node_controller = NodeController.init
     self.script_controller = ScriptController.init
+
+    if uc != initial_user_config:
+      self.save_user_config(uc)
 
   proc set_font_size(size: int) =
     var user_config = self.load_user_config()
