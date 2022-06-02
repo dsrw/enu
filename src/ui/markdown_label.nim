@@ -58,8 +58,7 @@ gdobj MarkdownLabel of ScrollContainer:
     self.local_mono_font.size = size 
     self.local_header_font.size = size * 2
 
-    var first = true
-    for child in self.container.get_children:
+    for i, child in self.container.get_children:
       var child = child.as_object(Node)
 
       if child of TextEdit:
@@ -79,10 +78,10 @@ gdobj MarkdownLabel of ScrollContainer:
         var stylebox = self.current_label.stylebox
         stylebox.content_margin_bottom = 0
         
-        if not first:
+        if i > 0:
           stylebox.content_margin_top = float(size + 4)
-        else:
-          first = false
+        if i == self.container.get_children.len - 1:
+          RichTextLabel(child).size_flags_vertical = SIZE_EXPAND_FILL
 
   proc add_text_edit(): TextEdit =
     result = self.og_text_edit.duplicate as TextEdit
@@ -117,6 +116,8 @@ gdobj MarkdownLabel of ScrollContainer:
     GameState.active.config.font_size.changes:
       if added:
         self.set_font_sizes()
+
+    self.update
 
   method on_resized =
     if not self.resized:
