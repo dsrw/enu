@@ -1,6 +1,7 @@
 [gd_resource type="Theme" load_steps=1032 format=2]
 
-[ext_resource path="res://themes/text-bold.otf" type="DynamicFontData" id=1]
+[ext_resource path="res://themes/mono.otf" type="DynamicFontData" id=1]
+[ext_resource path="res://themes/mono-bold.otf" type="DynamicFontData" id=2]
 
 [sub_resource type="StyleBoxFlat" id=1]
 content_margin_left = 6.0
@@ -101,13 +102,10 @@ flags = 0
 flags = 0
 size = Vector2( 16, 16 )
 
-[sub_resource type="DynamicFontData" id=1029]
-font_path = "res://themes/text.otf"
-
 [sub_resource type="DynamicFont" id=1030]
 size = 26
 use_mipmaps = true
-font_data = SubResource( 1029 )
+font_data = ExtResource( 1 )
 
 [sub_resource type="ImageTexture" id=16]
 flags = 0
@@ -6750,7 +6748,7 @@ margin_bottom = 6.0
 
 [sub_resource type="DynamicFont" id=1008]
 size = 26
-font_data = ExtResource( 1 )
+font_data = ExtResource( 2 )
 
 [sub_resource type="StyleBoxEmpty" id=1009]
 
