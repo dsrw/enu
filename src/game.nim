@@ -249,9 +249,6 @@ gdobj Game of Node:
 
   proc switch_world(diff: int) =
     if diff != 0:
-      if config.world_prefix == "":
-        config.world_prefix = "tutorial"
-
       var world = config.world
       let prefix = config.world_prefix & "-"
       world.remove_prefix(prefix)
