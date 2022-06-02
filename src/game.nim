@@ -201,7 +201,6 @@ gdobj Game of Node:
     assert not self.scaled_viewport.is_nil
     if config.mega_pixels >= 1.0:
       self.scaled_viewport.get_texture.flags = FLAG_FILTER
-      self.scaled_viewport.fxaa = true
 
     self.script_controller.load_player()
     load_world(self.script_controller)
