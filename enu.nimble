@@ -102,8 +102,8 @@ proc download_fonts =
         cp_file "SF-Pro-Display-BoldItalic.otf", dest / "display-bold-italic.otf"
 
     else:
-      exec "curl -OJL 'https://fonts.google.com/download?family=Roboto'"
-      exec "curl -OJL 'https://fonts.google.com/download?family=Roboto%20Mono'"
+      exec "curl -OJL \"https://fonts.google.com/download?family=Roboto\""
+      exec "curl -OJL \"https://fonts.google.com/download?family=Roboto%20Mono\""
       exec "unzip Roboto.zip"
       exec "unzip -o Roboto_Mono.zip"
       
