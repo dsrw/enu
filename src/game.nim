@@ -143,11 +143,11 @@ gdobj Game of Node:
     assert not state.is_nil
     assert not state.config.is_nil
 
-    state.config.font_size.value = uc.font_size ||= (14 * screen_scale).int
+    state.config.font_size.value = uc.font_size ||= (20 * screen_scale).int
     with state.config:
-      dock_icon_size = uc.dock_icon_size ||= 50 * screen_scale
-      world = uc.world ||= "default-1"
-      world_prefix = uc.world_prefix ||= "default"
+      dock_icon_size = uc.dock_icon_size ||= 100 * screen_scale
+      world_prefix = uc.world_prefix ||= "tutorial"
+      world = uc.world ||= state.config.world_prefix & "-1"
       show_stats = uc.show_stats ||= false
       mega_pixels = uc.mega_pixels ||= 2.0
       start_full_screen = uc.start_full_screen ||= true
