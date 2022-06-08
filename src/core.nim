@@ -184,6 +184,4 @@ when true: # do something here for tests. Godot print crashes without godot.
 
   proc p*(args: varargs[string, `$`]) =
     let msg = args.join
-    echo msg
     godot.print msg
-

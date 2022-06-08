@@ -154,6 +154,7 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
       self.add_voxel(position, voxel)
 
   else:
+    state.dirty_units.incl self.find_root
     if self.id notin self.shared.edits:
       self.shared.edits[self.id] = init_table[Vector3, VoxelInfo]()
     var voxel = voxel
@@ -342,6 +343,10 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
     shared: if parent: parent.shared else: Shared(),
     frame_created: state.frame_count
   )
+  
+  if clone_of == nil:
+    state.dirty_units.incl self
+
   if id notin self.shared.edits:
     self.shared.edits[id] = init_table[Vector3, VoxelInfo]()
   if global: self.flags += Global

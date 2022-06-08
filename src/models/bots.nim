@@ -79,6 +79,9 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
     parent: parent,
     frame_created: state.frame_count
   )
+  if clone_of == nil:
+    state.dirty_units.incl self
+    
   if global: self.flags += Global
   self.flags += Visible
 

@@ -1,15 +1,16 @@
-import std / os
-import std / [macros, sugar, sets, strutils, times, monotimes, sequtils, importutils, tables,
-              options, math, re]
+import std / 
+  [os, macros, sugar, sets, strutils, times, monotimes, sequtils, importutils,
+  tables, options, math, re]
 import pkg / [print, model_citizen, godot]
 import pkg / compiler / vm except get_int
 import pkg / compiler / ast except new_node
 import pkg / compiler / [vmdef, lineinfos, astalgo,  renderer, msgs]
-from pkg/compiler/vm {.all.} import stack_trace_aux
 import godotapi / [spatial, ray_cast, voxel_terrain]
-import core, models / [types, states, bots, builds, units, colors, signs],
-             libs / [interpreters, eval],
-             nodes / [helpers, build_node]
+import core, models / 
+  [types, states, bots, builds, units, colors, signs, serializers]
+import libs / [interpreters, eval]
+import nodes / [helpers, build_node]
+from pkg/compiler/vm {.all.} import stack_trace_aux
 
 type ScriptController* = ref object
   interpreter: Interpreter
@@ -566,6 +567,9 @@ proc load_script_and_dependants(self: ScriptController, unit: Unit) =
   var previous: HashSet[Unit]
   var units_by_module: Table[string, Unit]
   var units_to_reload: HashSet[Unit]
+
+  save_world()
+
   units_to_reload.incl unit
   state.reloading = true
   self.retry_failures = true
@@ -595,6 +599,7 @@ proc load_script_and_dependants(self: ScriptController, unit: Unit) =
   self.retry_failed_scripts()
   self.retry_failures = false
   state.reloading = false
+  state.dirty_units.clear
 
 proc change_code(self: ScriptController, unit: Unit, code: string) =
   if unit.script_ctx and unit.script_ctx.running and not unit.clone_of:

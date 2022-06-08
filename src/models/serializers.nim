@@ -1,6 +1,9 @@
 import system except write_file
 import std / [json, jsonutils, sugar, tables, strutils, os]
 import pkg / print
+
+proc save_world*()
+
 import core, models, controllers / script_controllers
 
 let state = GameState.active
@@ -111,24 +114,28 @@ proc from_json_hook(self: var Bot, json: JsonNode) =
   if not load_chunks:
     self.shared.edits.from_json(json["edits"])
 
-proc save(units: ZenSeq[Unit]) =
-  for unit in units:
-    if not unit.clone_of:
-      let data = 
-        if unit of Build:
-          Build(unit).to_json.pretty
-        elif unit of Bot:
-          Bot(unit).to_json.pretty
-        else:
-          continue
-      create_dir unit.data_dir
-      write_file unit.data_file, data
-      unit.units.save
+proc save*(unit: Unit) =
+  if not unit.clone_of:
+    let data = 
+      if unit of Build:
+        Build(unit).to_json.pretty
+      elif unit of Bot:
+        Bot(unit).to_json.pretty
+      else:
+        return
+    create_dir unit.data_dir
+    write_file unit.data_file, data
+
+    for unit in unit.units:
+      unit.save
 
 proc save_world*() =
   let world = WorldInfo(enu_version: enu_version, format_version: "v0.9.1")
   write_file state.config.world_dir / "world.json", world.to_json.pretty
-  state.units.save
+  p "Saving ", state.dirty_units.len, " units"
+  for unit in state.dirty_units:
+    unit.save
+  state.dirty_units.clear
 
 proc load_units(parent: Unit) =
   let opts = JOptions(allow_missing_keys: true)
@@ -167,3 +174,4 @@ proc load_world*(controller: ScriptController) =
   controller.retry_failed_scripts()
   controller.retry_failures = false
   dont_join = false
+  state.dirty_units.clear

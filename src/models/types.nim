@@ -36,6 +36,7 @@ type
     wants*: OrderedSet[StateFlags]
     config*: Config
     open_unit*: ZenValue[Unit]
+    dirty_units*: HashSet[Unit]
     tool*: ZenValue[Tools]
     gravity*: float
     nodes*: tuple[
