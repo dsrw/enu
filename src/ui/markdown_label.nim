@@ -1,7 +1,7 @@
-import std / [lists, algorithm]
+import std / [lists, algorithm, tables]
 import pkg / [godot, markdown, hmatching, print, model_citizen]
 import godotapi / [rich_text_label, scroll_container, text_edit, theme,
-                   dynamic_font, dynamic_font_data, style_box_flat]
+                   dynamic_font, dynamic_font_data, style_box_flat, main_loop]
 import core, globals
 import models / colors except Color
 
@@ -37,6 +37,7 @@ gdobj MarkdownLabel of ScrollContainer:
     local_bold_italic_font: DynamicFont
     local_header_font: DynamicFont
     local_mono_font: DynamicFont
+    zid: ZID
 
   proc add_label() =
     self.current_label = self.og_label.duplicate as RichTextLabel
@@ -113,7 +114,7 @@ gdobj MarkdownLabel of ScrollContainer:
     self.og_text_edit.add_font_override("font", self.local_mono_font)
     self.og_label.add_font_override("normal_font", self.local_default_font)
     
-    GameState.active.config.font_size.changes:
+    self.zid = GameState.active.config.font_size.changes:
       if added:
         self.set_font_sizes()
 
@@ -208,6 +209,10 @@ gdobj MarkdownLabel of ScrollContainer:
       else:
         self.render_markdown(t)
 
+  method notification*(what: int) =
+    if what == main_loop.NOTIFICATION_PREDELETE:
+      GameState.active.config.font_size.untrack(self.zid)
+
   proc update*() =
     self.resized = false
     if self.markdown != self.old_markdown:
@@ -223,4 +228,3 @@ gdobj MarkdownLabel of ScrollContainer:
       self.needs_margin = false
       self.render_markdown(root)
       self.set_font_sizes()
-        
