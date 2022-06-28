@@ -1,11 +1,11 @@
 import std / [tables, sugar, os, math]
 import pkg/godot except print
-import pkg / [model_citizen, chroma]
+import pkg / [chroma]
 import godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
                    input_event, animation_player, resource_loader, packed_scene,
                    spatial_material]
 import globals, core, print
-import models / [types, bots, units, states, colors]
+import core, models / [bots, units, states, colors]
 
 let state = GameState.active
 
@@ -43,10 +43,10 @@ gdobj BotNode of KinematicBody:
       adjusted = color
       adjusted.a = 0.1
     else:
-      var dist = (color.distance(action_colors[brown]) + 10).cbrt / 7.5      
+      var dist = (color.distance(action_colors[brown]) + 10).cbrt / 7.5
       adjusted = color.saturate(0.2).darken(dist - 0.15)
       adjusted.a = 0.95 - color.distance(action_colors[black]) / 100
-      
+
     SpatialMaterial(self.material).albedo_color = adjusted
 
   proc set_visibility =
@@ -76,7 +76,7 @@ gdobj BotNode of KinematicBody:
         self.set_default_material()
       elif change.item == Visible:
         self.set_visibility
-        
+
     self.model.state_zids.add:
       state.flags.changes:
         if change.item == God:
@@ -124,7 +124,7 @@ gdobj BotNode of KinematicBody:
     self.track_changes
 
   method process(delta: float) =
-    if self.model:
+    if ?self.model:
       self.model.frame_delta.touch delta
       self.model.transform.pause self.transform_zid:
         self.model.transform.value = self.transform

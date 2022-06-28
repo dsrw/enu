@@ -1,3 +1,6 @@
+import types
+export types
+
 const enu_version* = static_exec("git describe --tags HEAD")
 
 ### Sugar ###
@@ -62,15 +65,15 @@ proc `+`*(time: MonoTime, interval: TimeInterval): MonoTime =
 proc `-`*(time: MonoTime, interval: TimeInterval): MonoTime =
   time - interval.to_duration
 
-### ref ###
-converter to_bool*(self: ref): bool = not self.is_nil
-
 ### options ###
 import options
 export options
 
-# converter to_option*[T](val: T): Option[T] =
-#   some(val)
+proc `?`*(self: ref): bool = not self.is_nil
+proc `?`*[T](option: Option[T]): bool = option.is_some
+proc `?`*(self: SomeNumber): bool = self > 0
+proc `?`*(self: string): bool = self != ""
+proc `?`*[T](self: open_array[T]): bool = self.len > 0
 
 proc `||=`*[T](opt: var Option[T], val: T): T {.discardable.} =
   if not opt.is_some:
@@ -81,9 +84,6 @@ proc `||=`*[T](opt: var Option[T], val: T): T {.discardable.} =
 
 converter from_option*[T](val: Option[T]): T =
   val.get()
-
-converter to_bool*[T](option: Option[T]): bool =
-  option.is_some
 
 proc optional_get*[T](self: var HashSet[T], key: T): Option[T] =
   if key in self:
@@ -185,3 +185,47 @@ when true: # do something here for tests. Godot print crashes without godot.
   proc p*(args: varargs[string, `$`]) =
     let msg = args.join
     godot.print msg
+
+# misc
+import pkg / core / transforms
+export transforms
+
+import godotapi / [spatial]
+import pkg / model_citizen
+export model_citizen except `%`
+
+proc local_to*(self: Vector3, unit: Unit): Vector3 =
+  result = self
+  var unit = unit
+  while unit != nil:
+    result -= unit.node.transform.origin
+    unit = unit.parent
+
+proc global_from*(self: Vector3, unit: Unit): Vector3 =
+  result = -self.local_to(unit)
+
+proc init*(_: type Transform, origin = vec3()): Transform =
+  result = init_transform()
+  result.origin = origin
+
+proc `+=`*(self: ZenValue[string], str: string) =
+  self.value = self.value & str
+
+proc origin*(self: ZenValue[Transform]): Vector3 =
+  self.value.origin
+
+proc `origin=`*(self: ZenValue[Transform], value: Vector3) =
+  var transform = self.value
+  transform.origin = value
+  self.value = transform
+
+proc basis*(self: ZenValue[Transform]): Basis =
+  self.value.basis
+
+proc `basis=`*(self: ZenValue[Transform], value: Basis) =
+  var transform = self.value
+  transform.basis = value
+  self.value = transform
+
+proc init*(_: type Basis): Basis = init_basis()
+

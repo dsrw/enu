@@ -1,5 +1,5 @@
 import std / [lists, algorithm, tables]
-import pkg / [godot, markdown, hmatching, print, model_citizen]
+import pkg / [godot, markdown, hmatching, print]
 import godotapi / [rich_text_label, scroll_container, text_edit, theme,
                    dynamic_font, dynamic_font_data, style_box_flat, main_loop]
 import core, globals
@@ -9,7 +9,7 @@ export scroll_container
 
 const comment_color = col"808080"
 
-proc stylebox(self: Control): StyleBoxFlat = 
+proc stylebox(self: Control): StyleBoxFlat =
   self.get_stylebox("normal").as(StyleBoxFlat)
 
 gdobj MarkdownLabel of ScrollContainer:
@@ -46,7 +46,7 @@ gdobj MarkdownLabel of ScrollContainer:
     GameState.active.nodes.game.bind_signals(self.current_label, "meta_clicked")
 
   proc set_font_sizes =
-    var size = 
+    var size =
       if self.size > 0:
         self.size
       else:
@@ -56,7 +56,7 @@ gdobj MarkdownLabel of ScrollContainer:
     self.local_italic_font.size = size
     self.local_bold_font.size = size
     self.local_bold_italic_font.size = size
-    self.local_mono_font.size = size 
+    self.local_mono_font.size = size
     self.local_header_font.size = size * 2
 
     for i, child in self.container.get_children:
@@ -66,11 +66,11 @@ gdobj MarkdownLabel of ScrollContainer:
         var child = TextEdit(child)
         var height = child.get_line_count * child.get_line_height + 24
         let lines = dup child.text.split_lines.sorted_by_it(it.len)
-        
+
         var size = child.rect_min_size
         size.y = float height
         if lines.len > 0:
-          let str_size = 
+          let str_size =
             self.local_mono_font.get_string_size(" ".repeat(lines.len + 2))
           size.x = str_size.x
         child.rect_min_size = size
@@ -78,7 +78,7 @@ gdobj MarkdownLabel of ScrollContainer:
       elif child of RichTextLabel:
         var stylebox = self.current_label.stylebox
         stylebox.content_margin_bottom = 0
-        
+
         if i > 0:
           stylebox.content_margin_top = float(size + 4)
         if i == self.container.get_children.len - 1:
@@ -113,7 +113,7 @@ gdobj MarkdownLabel of ScrollContainer:
 
     self.og_text_edit.add_font_override("font", self.local_mono_font)
     self.og_label.add_font_override("normal_font", self.local_default_font)
-    
+
     self.zid = GameState.active.config.font_size.changes:
       if added:
         self.set_font_sizes()
@@ -124,7 +124,7 @@ gdobj MarkdownLabel of ScrollContainer:
     if not self.resized:
       self.set_font_sizes()
       self.resized = true
-    
+
   proc render_markdown(token: Token, list_position = 0, inline_blocks = false) =
     var list_position = list_position
     for t in token.children:
@@ -132,11 +132,11 @@ gdobj MarkdownLabel of ScrollContainer:
       if self.needs_margin and not (t of CodeBlock):
         label.newline
         self.needs_margin = false
-        
+
       case t:
       of of Heading():
-        label.with(push_font self.local_header_font, 
-          push_color ir_black[keyword]) 
+        label.with(push_font self.local_header_font,
+          push_color ir_black[keyword])
         self.render_markdown t
         label.with(pop, pop, newline)
         self.needs_margin = true
@@ -150,7 +150,7 @@ gdobj MarkdownLabel of ScrollContainer:
         label.push_font self.local_bold_font
         self.render_markdown t
         label.pop
-        
+
       of of CodeSpan():
         label.with(push_font self.local_mono_font, push_color ir_black[number],
                    add_text t.doc)
@@ -159,13 +159,13 @@ gdobj MarkdownLabel of ScrollContainer:
 
       of of CodeBlock():
         self.needs_margin = false
-        
+
         var editor = self.add_text_edit()
         editor.text = t.doc[0..^2]
         editor.visible = true
         self.container.add_child editor
         self.add_label()
-   
+
       of of Paragraph():
         self.render_markdown(t, inline_blocks = inline_blocks)
         if not inline_blocks:

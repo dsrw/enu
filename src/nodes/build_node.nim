@@ -1,9 +1,9 @@
 import std / [tables, bitops]
 import pkg/godot except print, Color
-import pkg / [print, model_citizen]
+import pkg / [print]
 import godotapi / [node, voxel_terrain, voxel_mesher_blocky, voxel_tool, voxel_library, shader_material,
                    resource_loader, packed_scene]
-import models / [types, builds, colors, units, states], globals
+import core, models / [builds, colors, units, states], globals
 
 const
   highlight_glow = 1.0
@@ -140,7 +140,7 @@ gdobj BuildNode of VoxelTerrain:
         self.transform = change.item
 
   method process(delta: float) =
-    if self.model:
+    if ?self.model:
       self.model.frame_delta.touch delta
       self.model.transform.pause self.transform_zid:
         self.model.transform.value = self.transform

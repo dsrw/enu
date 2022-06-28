@@ -3,7 +3,6 @@ import pkg / compiler / ast except new_node
 import pkg / godot except print
 import pkg / [print], pkg / compiler / [vm, vmdef, options, lineinfos, llstream]
 import core, eval
-import models/types
 
 export Interpreter, VmArgs, set_result
 
@@ -30,12 +29,14 @@ proc load*(self: ScriptCtx, file_name, code: string) =
   self.file_name = file_name
 
 proc run*(self: ScriptCtx): bool =
+  private_access ScriptCtx
   self.exit_code = none(int)
   self.errors = @[]
   try:
     self.interpreter.load_module(self.file_name, self.code, self.pass_context)
     result = false
   except VMPause:
+    private_access ScriptCtx
     result = self.exit_code.is_none
   except:
     self.running = false

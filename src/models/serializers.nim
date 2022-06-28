@@ -1,10 +1,8 @@
 import system except write_file
 import std / [json, jsonutils, sugar, tables, strutils, os]
 import pkg / print
-
-proc save_world*()
-
-import core, models, controllers / script_controllers
+import core, models
+import controllers / script_controllers
 
 let state = GameState.active
 var load_chunks = false
@@ -115,8 +113,8 @@ proc from_json_hook(self: var Bot, json: JsonNode) =
     self.shared.edits.from_json(json["edits"])
 
 proc save*(unit: Unit) =
-  if not unit.clone_of:
-    let data = 
+  if not ?unit.clone_of:
+    let data =
       if unit of Build:
         Build(unit).to_json.pretty
       elif unit of Bot:
@@ -139,10 +137,11 @@ proc save_world*() =
 
 proc load_units(parent: Unit) =
   let opts = JOptions(allow_missing_keys: true)
-  let path = if parent:
-    parent.data_dir
-  else:
-    state.config.data_dir
+  let path =
+    if ?parent:
+      parent.data_dir
+    else:
+      state.config.data_dir
   for dir in walk_dirs(path / "*"):
     let unit_id = dir.split_path.tail
     let data_file = read_file(dir / unit_id & ".json").parse_json

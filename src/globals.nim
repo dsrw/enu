@@ -1,7 +1,7 @@
 import std / [strformat, tables]
-import pkg / [godot, model_citizen]
+import pkg / [godot]
 import godotapi / [node, scene_tree, voxel_buffer]
-import core, models / [states, types]
+import core, models / [states]
 export strformat.`&`, states, types
 
 type

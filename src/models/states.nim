@@ -1,6 +1,6 @@
 import std / [tables, strutils, sequtils, algorithm, sets, sugar]
-import pkg / [model_citizen, print]
-import models / [types, colors]
+import pkg / [print]
+import core, models / [colors]
 
 # only one flag from the group is active at a time
 const groups = @[
@@ -25,7 +25,7 @@ proc resolve_flags(self: GameState) =
 
   if not groups[1].any_it(it in result):
     result.incl ReticleVisible
-    
+
   if CommandMode in result:
     result.incl(MouseCaptured)
     for flag in groups[0]:
@@ -36,7 +36,7 @@ proc resolve_flags(self: GameState) =
 
   if MouseCaptured notin result:
     result.excl(ReticleVisible)
-  
+
   self.flags.value = result
 
 proc replace_flags*(self: GameState, flags: varargs[StateFlags]) =
@@ -55,7 +55,7 @@ proc push_flags*(self: GameState, flags: varargs[StateFlags]) =
   for flag in flags:
     self.wants.incl flag
   self.resolve_flags
-  
+
 proc push_flag*(self: GameState, flag: StateFlags) =
   self.push_flags flag
 
@@ -74,10 +74,10 @@ proc set_flag*(self: GameState, flag: StateFlags, value: bool) =
   else:
     self.pop_flag flag
 
-proc `+=`*(self: ZenSet[StateFlags], flag: StateFlags) {.error: 
+proc `+=`*(self: ZenSet[StateFlags], flag: StateFlags) {.error:
   "Use `push_flag`, `pop_flag` and `replace_flag`".}
 
-proc `-=`*(self: ZenSet[StateFlags], flag: StateFlags) {.error: 
+proc `-=`*(self: ZenSet[StateFlags], flag: StateFlags) {.error:
   "Use `push_flag`, `pop_flag` and `replace_flag`".}
 
 proc selected_color*(self: GameState): Color =

@@ -1,13 +1,13 @@
 import std / [sugar]
-import pkg / [model_citizen, print]
+import pkg / [print]
 import godotapi / spatial
-import core, types, states, bots, builds, models / colors
+import core, states, bots, builds, models / colors
 
 let state = GameState.active
 
-proc init*(_: type Sign, 
-  markdown: string, title = "", owner: Unit, transform = Transform.init, 
-  width = 1.0, height = 1.0, size = 32, billboard = false, 
+proc init*(_: type Sign,
+  markdown: string, title = "", owner: Unit, transform = Transform.init,
+  width = 1.0, height = 1.0, size = 32, billboard = false,
   zoomable = true): Sign =
 
   let title = if title == "": markdown else: title

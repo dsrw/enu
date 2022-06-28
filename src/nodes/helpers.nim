@@ -1,6 +1,6 @@
 import pkg/godot
 import godotapi/node
-import models/types, bot_node, build_node, ground_node, selection_area, sign_node
+import core, bot_node, build_node, ground_node, selection_area, sign_node
 
 proc model*(self: Object): Model =
   result = if self of SelectionArea:

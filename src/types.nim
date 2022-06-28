@@ -1,12 +1,13 @@
-import std / [tables, monotimes, sets]
+import std / [tables, monotimes, sets, options]
 import godotapi / [spatial, ray_cast]
-import pkg/model_citizen
 import pkg/core/godotcoretypes except Color
 import pkg / core / [vector3, basis, aabb, godotbase]
 import pkg / compiler / passes {.all.}
-import core, models/colors, libs / [transforms, eval]
+import pkg / compiler / ast
+import pkg / model_citizen
+import models/colors, libs / [eval]
 
-export Vector3, Transform, vector3, transforms, basis, AABB, aabb
+export Vector3, Transform, vector3, basis, AABB, aabb
 export godotbase except print
 export Interpreter
 
@@ -14,7 +15,7 @@ type
 
   StateFlags* = enum
     CommandMode, EditorVisible, ConsoleVisible,
-    BlockTargetVisible, ReticleVisible, DocsVisible, MouseCaptured, 
+    BlockTargetVisible, ReticleVisible, DocsVisible, MouseCaptured,
     PrimaryDown, SecondaryDown, EditorFocused, ConsoleFocused, DocsFocused,
     Playing, Flying, God
 
@@ -179,38 +180,13 @@ type
 
   Callback* = proc(delta: float): TaskStates
 
-# TODO: this shouldn't be here
-proc local_to*(self: Vector3, unit: Unit): Vector3 =
-  result = self
-  var unit = unit
-  while unit:
-    result -= unit.node.transform.origin
-    unit = unit.parent
+  ScriptController* = ref object
+    retry_failures*: bool
+    interpreter: Interpreter
+    module_names: HashSet[string]
+    active_unit: Unit
+    unit_map: Table[PNode, Unit]
+    node_map: Table[Unit, PNode]
+    failed: seq[tuple[unit: Unit, e: ref VMQuit]]
 
-proc global_from*(self: Vector3, unit: Unit): Vector3 =
-  result = -self.local_to(unit)
-
-proc init*(_: type Transform, origin = vec3()): Transform =
-  result = init_transform()
-  result.origin = origin
-
-proc `+=`*(self: ZenValue[string], str: string) =
-  self.value = self.value & str
-
-proc origin*(self: ZenValue[Transform]): Vector3 =
-  self.value.origin
-
-proc `origin=`*(self: ZenValue[Transform], value: Vector3) =
-  var transform = self.value
-  transform.origin = value
-  self.value = transform
-
-proc basis*(self: ZenValue[Transform]): Basis =
-  self.value.basis
-
-proc `basis=`*(self: ZenValue[Transform], value: Basis) =
-  var transform = self.value
-  transform.basis = value
-  self.value = transform
-
-proc init*(_: type Basis): Basis = init_basis()
+  NodeController* = ref object

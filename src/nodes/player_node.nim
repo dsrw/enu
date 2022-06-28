@@ -1,6 +1,5 @@
 import std / [math, sugar]
 import pkg / godot except print
-import pkg / model_citizen
 import godotapi / [kinematic_body, spatial, input, input_event,
                    input_event_mouse_motion, input_event_joypad_motion,
                    ray_cast, scene_tree, input_event_pan_gesture, viewport, camera, global_constants,
@@ -86,7 +85,7 @@ gdobj PlayerNode of KinematicBody:
     var speed = vec3(move_speed)
     if running: speed *= vec3(2)
     if flying: speed *= vec3(3, 2, 3)
-  
+
     result = move_direction * delta * speed
     if result.length() > max_speed:
       result = result.normalized() * max_speed
@@ -96,7 +95,7 @@ gdobj PlayerNode of KinematicBody:
         float_time + float_time
       else:
         float_time
-      let floating = self.jump_down and self.jump_time and self.jump_time.get + float_time > now()
+      let floating = self.jump_down and ?self.jump_time and self.jump_time.get + float_time > now()
       let gravity = if floating:
         state.gravity / 4
       else:
@@ -159,7 +158,7 @@ gdobj PlayerNode of KinematicBody:
       self.camera_rig.rotation = r
       self.unit.rotation.pause(self.rotation_zid):
         self.unit.rotation.value = rad_to_deg r.y
-        
+
     let ray_length = if state.tool.value == CodeMode: 200.0 else: 100.0
     if MouseCaptured notin state.flags:
       let
@@ -181,8 +180,8 @@ gdobj PlayerNode of KinematicBody:
         state.pop_flag CommandMode
 
     const forward_rotation = deg_to_rad(-90.0)
-    let 
-      process_input = 
+    let
+      process_input =
         EditorVisible notin state.flags or CommandMode in state.flags
       input_direction = if process_input: self.get_input_direction()
                         else: vec3()
@@ -250,7 +249,7 @@ gdobj PlayerNode of KinematicBody:
         self.input_relative += event.as(InputEventMouseMotion).relative()
       else:
         self.skip_next_mouse_move = false
-    if EditorVisible in state.flags and not self.skip_release and 
+    if EditorVisible in state.flags and not self.skip_release and
       (event of InputEventJoypadButton or event of InputEventJoypadMotion):
 
       let active_input = self.has_active_input(event.device.int)
@@ -266,7 +265,7 @@ gdobj PlayerNode of KinematicBody:
       self.jump_down = true
       let
         time = now()
-        toggle = self.jump_time and time < self.jump_time.get + fly_toggle
+        toggle = ?self.jump_time and time < self.jump_time.get + fly_toggle
 
       if toggle:
         self.jump_time = nil_time
@@ -287,7 +286,7 @@ gdobj PlayerNode of KinematicBody:
     if event.is_action_pressed("run"):
       let
         time = now()
-        toggle = self.run_time and time < self.run_time.get + run_toggle
+        toggle = ?self.run_time and time < self.run_time.get + run_toggle
 
       if toggle:
         self.run_time = nil_time

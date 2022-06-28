@@ -1,11 +1,11 @@
 import std / [monotimes, times, os, jsonutils, json, math]
-import pkg / [godot, model_citizen, zippy / ziparchives]
+import pkg / [godot, zippy / ziparchives]
 import godotapi / [input, input_event, gd_os, node, scene_tree,
                    packed_scene, sprite, control, viewport, viewport_texture,
                    performance, label, theme, dynamic_font, resource_loader, main_loop,
                    project_settings, input_map, input_event_action, input_event_key, global_constants,
                    scroll_container]
-import core, globals, controllers / [node_controllers, script_controllers], models / serializers
+import core, types, globals, controllers / [node_controllers, script_controllers], models / serializers
 
 type
   UserConfig = object
@@ -282,12 +282,12 @@ gdobj Game of Node:
       if event.is_action_pressed("previous"):
        self.prev_action()
         # NOTE: alt+enter isn't being picked up on windows if the editor is open. Needs investigation.
-    if event.is_action_pressed("toggle_fullscreen") or (host_os == "windows" and 
-      CommandMode in state.flags and EditorVisible in state.flags and 
+    if event.is_action_pressed("toggle_fullscreen") or (host_os == "windows" and
+      CommandMode in state.flags and EditorVisible in state.flags and
       event of InputEventKey and event.as(InputEventKey).scancode == KEY_ENTER):
 
       set_window_fullscreen not is_window_fullscreen()
-    elif event.is_action_pressed("next_world"):    
+    elif event.is_action_pressed("next_world"):
       self.switch_world(+1)
     elif event.is_action_pressed("prev_world"):
       self.switch_world(-1)

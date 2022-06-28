@@ -1,4 +1,4 @@
-import pkg / [godot, model_citizen]
+import pkg / [godot]
 import godotapi / [area, control]
 import core, globals, nodes/bot_node
 

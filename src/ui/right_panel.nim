@@ -1,7 +1,7 @@
-import pkg / [godot, model_citizen]
+import pkg / [godot]
 import godotapi / [margin_container, input_event, scene_tree]
 import ui / markdown_label
-import models / [types, states, colors]
+import core, models / [states, colors]
 
 let state = GameState.active
 
@@ -19,7 +19,7 @@ gdobj RightPanel of MarginContainer:
 
   method ready* =
     self.label = self.find_node("MarkdownLabel") as MarkdownLabel
-    
+
     state.open_sign.changes:
       if added and change.item != nil:
         state.push_flags DocsVisible, DocsFocused
@@ -33,7 +33,7 @@ gdobj RightPanel of MarginContainer:
       if removed and change.item != nil:
         change.item.markdown.untrack(self.zid)
         state.pop_flags DocsFocused, DocsVisible
-    
+
     state.flags.changes:
       if DocsVisible.added:
         self.label.visible = true
@@ -45,12 +45,12 @@ gdobj RightPanel of MarginContainer:
         self.modulate = dimmed_alpha
       elif CommandMode.removed:
         self.modulate = solid_alpha
-  
+
   method unhandled_input*(event: InputEvent) =
     if DocsFocused in state.flags and event.is_action_pressed("ui_cancel"):
       if not (event of InputEventJoypadButton) or CommandMode notin state.flags:
         state.open_sign.value = nil
         self.get_tree().set_input_as_handled()
 
-      
+
 

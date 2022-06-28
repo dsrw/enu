@@ -1,5 +1,5 @@
 import std / [strutils, wrapnils]
-import pkg / [godot, model_citizen]
+import pkg / [godot]
 import godotapi / [sprite_3d, ray_cast, spatial]
 import globals, core, nodes/helpers, models
 
@@ -40,7 +40,7 @@ gdobj AimTarget of Sprite3D:
         self.target_model.flags -= Hover
         state.pop_flag BlockTargetVisible
       self.target_model = unit
-      if not (unit == nil or (unit of Sign and not Sign(unit).zoomable) or 
+      if not (unit == nil or (unit of Sign and not Sign(unit).zoomable) or
         (God notin state.flags and (unit of Bot or unit of Build) and
         Lock in Unit(unit).find_root.flags)):
 
@@ -73,7 +73,7 @@ gdobj AimTarget of Sprite3D:
       let align_normal = self.transform.origin + global_normal
       self.look_at(align_normal, self.transform.basis.x)
 
-      if unit:
+      if ?unit:
         if (unit.target_point, unit.target_normal) != (local_point, local_normal):
           unit.target_point = local_point
           unit.target_normal = local_normal

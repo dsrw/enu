@@ -1,7 +1,6 @@
 import std / [math, sugar, monotimes]
-import pkg / model_citizen
 import godotapi / spatial
-import core, models / [types, states, units, colors]
+import core, models / [states, units, colors]
 include "bot_code_template.nim.nimf"
 
 let state = GameState.active
@@ -75,13 +74,13 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
     scale: Zen.init(1.0),
     color: Zen.init(action_colors[black]),
     start_color: action_colors[black],
-    shared: if parent: parent.shared else: Shared(),
+    shared: if ?parent: parent.shared else: Shared(),
     parent: parent,
     frame_created: state.frame_count
   )
   if clone_of == nil:
     state.dirty_units.incl self
-    
+
   if global: self.flags += Global
   self.flags += Visible
 
@@ -96,7 +95,7 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
       root.walk_tree proc(unit: Unit) = unit.flags -= Highlight
       state.pop_flag ReticleVisible
 
-  self.state_zids.add: 
+  self.state_zids.add:
     state.flags.changes:
       if Hover in self.flags:
         if PrimaryDown.added and state.tool.value == CodeMode:

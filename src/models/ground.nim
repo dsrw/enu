@@ -1,7 +1,7 @@
 import std / [sugar]
-import pkg / [model_citizen, print]
+import pkg / [print]
 import godotapi / spatial
-import core, types, states, bots, builds
+import core, states, bots, builds
 
 let state = GameState.active
 
@@ -12,7 +12,7 @@ proc fire(self: Ground, append = false) =
   if state.tool.value notin {CodeMode, PlaceBot}:
     if not append:
       add_to = state.units.find_first(point.surrounding)
-    if add_to:
+    if ?add_to:
       let local = point.local_to(add_to)
       add_to.draw(local, (Manual, state.selected_color))
     else:

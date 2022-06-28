@@ -1,7 +1,7 @@
 import std / [hashes, tables, sets, options, sequtils, math, wrapnils, monotimes, sugar, deques]
-import pkg / [model_citizen, print]
+import pkg / [print]
 import godotapi / spatial
-import core, models / [types, states, bots, colors, units]
+import core, models / [states, bots, colors, units]
 const ChunkSize = vec3(16, 16, 16)
 
 include "build_code_template.nim.nimf"
@@ -50,7 +50,7 @@ proc find_first*(units: ZenSeq[Unit], positions: open_array[Vector3]): Build =
           if info.kind != Hole and info.color != action_colors[eraser]:
             return unit
       let first = unit.units.find_first(positions)
-      if first:
+      if ?first:
         return first
 
 proc add_build(self, source: Build) =
@@ -72,7 +72,7 @@ proc maybe_join_previous_build(self: Build, position: Vector3, voxel: VoxelInfo)
     previous_build = current_build
     current_build = self
 
-  if previous_build and previous_build != self:
+  if ?previous_build and previous_build != self:
     var partner = previous_build
     let root = previous_build.find_root
     if root of Build:
@@ -89,7 +89,7 @@ proc maybe_join_previous_build(self: Build, position: Vector3, voxel: VoxelInfo)
             source = self
             dest = partner
 
-          if source and dest:
+          if ?source and ?dest:
             dest.add_build(source)
             current_build = dest
             return
@@ -147,7 +147,7 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
         return
       elif edit.kind == Manual and edit.color == voxel.color:
         self.shared.edits[self.id].del position
-    elif self.clone_of and position in self.clone_of.shared.edits[self.clone_of.id] and
+    elif ?self.clone_of and position in self.clone_of.shared.edits[self.clone_of.id] and
          self.clone_of.shared.edits[self.clone_of.id][position].kind == Hole:
       return
     else:
@@ -201,7 +201,7 @@ proc fire(self: Build) =
     skip_point = self.target_point + self.target_normal
     last_point = self.target_point
     self.draw(point, (Manual, state.selected_color))
-  elif state.tool.value == PlaceBot and EditorVisible in state.flags and 
+  elif state.tool.value == PlaceBot and EditorVisible in state.flags and
     state.bot_at(global_point).is_nil:
 
     let transform = Transform.init(origin = global_point)
@@ -238,7 +238,7 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
       self.voxels_remaining_this_frame = self.speed
       self.voxels_per_frame = self.speed
     var count = 0
-    
+
     result = proc(delta: float): TaskStates =
       while count.float < steps and self.voxels_remaining_this_frame >= 1 and
         get_mono_time() < state.timeout_frame_at:
@@ -340,10 +340,10 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
     bot_collisions: bot_collisions,
     frame_delta: ZenValue[float].init,
     scale: Zen.init(1.0),
-    shared: if parent: parent.shared else: Shared(),
+    shared: if ?parent: parent.shared else: Shared(),
     frame_created: state.frame_count
   )
-  
+
   if clone_of == nil:
     state.dirty_units.incl self
 
@@ -361,12 +361,12 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
       let root = self.find_root(true)
       root.walk_tree proc(unit: Unit) = unit.flags -= Highlight
     if TargetMoved.touched:
-      let length = (self.target_point * self.target_normal - last_point * self.target_normal).length 
+      let length = (self.target_point * self.target_normal - last_point * self.target_normal).length
       if state.skip_block_paint:
         state.skip_block_paint = false
       elif state.draw_unit_id == self.id and self.target_normal == draw_normal and
           length <= 5 and self.target_point != skip_point:
-      
+
         if SecondaryDown in state.flags:
           self.remove
         elif PrimaryDown in state.flags:
@@ -395,7 +395,7 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
 
 method on_collision*(self: Build, partner: Model, normal: Vector3) =
   self.collisions.add (partner, normal)
-  if self.script_ctx:
+  if ?self.script_ctx:
     self.script_ctx.timer = get_mono_time()
 
 method off_collision*(self: Build, partner: Model) =
@@ -404,7 +404,7 @@ method off_collision*(self: Build, partner: Model) =
       if collision.model != partner:
         collision
 
-  if self.script_ctx:
+  if ?self.script_ctx:
     self.script_ctx.timer = get_mono_time()
 
 method clone*(self: Build, clone_to: Unit, id: string): Unit =
@@ -414,7 +414,7 @@ method clone*(self: Build, clone_to: Unit, id: string): Unit =
     transform = Build(clone_to).draw_transform
     global = false
 
-  # we need this off for Potato Zombies, but on for the 
+  # we need this off for Potato Zombies, but on for the
   # tutorials. Make it configurable somehow.
   let bot_collisions = true #not (clone_to of Bot)
   let clone = Build.init(id = id, transform = transform, clone_of = self, global = global, parent = clone_to,

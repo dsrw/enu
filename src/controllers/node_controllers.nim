@@ -1,11 +1,8 @@
 import std / [strutils, os, tables]
-import pkg / [model_citizen, print]
+import pkg / [print]
 import pkg/godot except print
 import godotapi / [node, spatial]
-import models, nodes / [bot_node, build_node, sign_node]
-
-type
-  NodeController* = ref object
+import core, models, nodes / [bot_node, build_node, sign_node]
 
 let state = GameState.active
 
@@ -23,9 +20,9 @@ proc remove_from_scene(unit: Unit) =
   if unit of Build: Build(unit).untrack_all
   elif unit of Bot: Bot(unit).untrack_all
   elif unit of Sign: Sign(unit).untrack_all
-  if unit.script_ctx:
+  if ?unit.script_ctx:
     unit.script_ctx.callback = nil
-  if not state.reloading and not unit.clone_of:
+  if not state.reloading and not ?unit.clone_of:
     remove_file unit.script_file
     remove_dir unit.data_dir
   for child in unit.units:

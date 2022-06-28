@@ -1,25 +1,21 @@
-import std / 
+import std /
   [os, macros, sugar, sets, strutils, times, monotimes, sequtils, importutils,
   tables, options, math, re]
-import pkg / [print, model_citizen, godot]
+import pkg / [print, godot]
 import pkg / compiler / vm except get_int
 import pkg / compiler / ast except new_node
 import pkg / compiler / [vmdef, lineinfos, astalgo,  renderer, msgs]
 import godotapi / [spatial, ray_cast, voxel_terrain]
-import core, models / 
-  [types, states, bots, builds, units, colors, signs, serializers]
+import core, models /
+  [states, bots, builds, units, colors, signs]
 import libs / [interpreters, eval]
-import nodes / [helpers, build_node]
+import nodes / [build_node]
+
 from pkg/compiler/vm {.all.} import stack_trace_aux
 
-type ScriptController* = ref object
-  interpreter: Interpreter
-  module_names: HashSet[string]
-  active_unit: Unit
-  unit_map: Table[PNode, Unit]
-  node_map: Table[Unit, PNode]
-  retry_failures*: bool
-  failed: seq[tuple[unit: Unit, e: ref VMQuit]]
+proc retry_failed_scripts*(self: ScriptController)
+
+import models / serializers
 
 include script_controllers/bindings
 
@@ -29,6 +25,9 @@ const
   script_timeout = 5.0.seconds
 
 let state = GameState.active
+
+private_access ScriptController
+private_access ScriptCtx
 
 proc map_unit(self: ScriptController, unit: Unit, pnode: PNode) =
   self.unit_map[pnode] = unit
@@ -50,7 +49,6 @@ template info: untyped =
   instantiationInfo(-2, fullPaths = true)
 
 proc write_stack_trace(self: ScriptController) =
-  private_access ScriptCtx
   let ctx = self.active_unit.script_ctx
   msg_writeln(ctx.ctx.config, "stack trace: (most recent call last)", {msgNoUnitSep})
   stack_trace_aux(ctx.ctx, ctx.tos, ctx.pc)
@@ -75,7 +73,7 @@ proc get_sign(self: ScriptController, a: VmArgs, pos: int): Sign =
   Sign(unit)
 
 proc to_node(self: ScriptController, unit: Unit): PNode =
-  if unit:
+  if ?unit:
     self.node_map[unit]
   else:
     ast.new_node(nkNilLit)
@@ -136,7 +134,7 @@ proc sleep_impl(ctx: ScriptCtx, seconds: float) =
     if seconds > 0 and duration < seconds:
       Running
     elif seconds <= 0 and duration <= 0.5 and ctx.timer > get_mono_time():
-      Running 
+      Running
     else:
       Done
   ctx.pause()
@@ -331,11 +329,11 @@ proc drop_transform(unit: Unit): Transform =
     raise ObjectConversionDefect.init("Unknown unit type")
 
 proc new_markdown_sign_impl(self: ScriptController,
-  unit: Unit, pnode: PNode, markdown: string, title: string, width: float, 
+  unit: Unit, pnode: PNode, markdown: string, title: string, width: float,
   height: float, size: int, zoomable: bool, billboard: bool): Unit =
 
   result = Sign.init(
-    markdown, title = title, owner = self.active_unit, 
+    markdown, title = title, owner = self.active_unit,
     transform = drop_transform(unit), width = width, height = height,
     size = size, zoomable = zoomable, billboard = billboard)
 
@@ -417,33 +415,33 @@ proc `tool=`(self: Unit, value: int) =
   state.tool.value = Tools(value)
 
 # Sign bindings
-proc title(self: Sign): string = 
+proc title(self: Sign): string =
   self.title.value
 
-proc `title=`(self: Sign, value: string) = 
+proc `title=`(self: Sign, value: string) =
   self.title.value = value
 
-proc markdown(self: Sign): string = 
+proc markdown(self: Sign): string =
   self.markdown.value
 
-proc `markdown=`(self: Sign, value: string) = 
+proc `markdown=`(self: Sign, value: string) =
   self.markdown.value = value
 
-proc width(self: Sign): float = 
+proc width(self: Sign): float =
   self.width
 
 proc `width=`(self: Sign, value: float) =
   self.width = value
   self.title.touch self.title.value
 
-proc height(self: Sign): float = 
+proc height(self: Sign): float =
   self.height
 
 proc `height=`(self: Sign, value: float) =
   self.height = value
   self.title.touch self.title.value
 
-proc size(self: Sign): int = 
+proc size(self: Sign): int =
   self.size
 
 proc `size=`(self: Sign, value: int) =
@@ -474,7 +472,7 @@ proc script_error(self: ScriptController, unit: Unit, e: ref VMQuit) =
 
 proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
   let ctx = unit.script_ctx
-  if ctx and ctx.running:
+  if ?ctx and ctx.running:
     let now = get_mono_time()
 
     if unit of Build:
@@ -487,14 +485,14 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
       while resume_script and not state.paused:
         resume_script = false
 
-        if ctx.callback == nil or 
+        if ctx.callback == nil or
           (task_state = ctx.callback(delta); task_state in {Done, NextTask}):
           ctx.timer = MonoTime.high
           ctx.action_running = false
           self.active_unit = unit
           ctx.timeout_at = get_mono_time() + script_timeout
           ctx.running = ctx.resume()
-          if not ctx.running and not unit.clone_of:
+          if not ctx.running and not ?unit.clone_of:
             unit.collect_garbage
             unit.ensure_visible
           if ctx.running and task_state == NextTask:
@@ -536,7 +534,7 @@ proc load_script(self: ScriptController, unit: Unit, timeout = script_timeout) =
     if not state.paused:
       ctx.timeout_at = get_mono_time() + timeout
       ctx.running = ctx.run()
-      if not ctx.running and not unit.clone_of:
+      if not ctx.running and not ?unit.clone_of:
         unit.collect_garbage
         unit.ensure_visible
 
@@ -575,7 +573,7 @@ proc load_script_and_dependants(self: ScriptController, unit: Unit) =
   self.retry_failures = true
 
   for other in state.units.value:
-    if other.script_ctx:
+    if ?other.script_ctx:
       units_by_module[other.script_ctx.module_name] = other
 
   while units_to_reload != previous:
@@ -602,7 +600,7 @@ proc load_script_and_dependants(self: ScriptController, unit: Unit) =
   state.dirty_units.clear
 
 proc change_code(self: ScriptController, unit: Unit, code: string) =
-  if unit.script_ctx and unit.script_ctx.running and not unit.clone_of:
+  if ?unit.script_ctx and unit.script_ctx.running and not ?unit.clone_of:
     unit.collect_garbage
 
   var all_edits = unit.shared.edits
@@ -645,11 +643,11 @@ proc watch_units(self: ScriptController, units: ZenSeq[Unit]) =
       self.watch_code unit
       self.watch_units unit.units
 
-      if not unit.clone_of and file_exists(unit.script_file):
+      if not ?unit.clone_of and file_exists(unit.script_file):
         unit.code.value = read_file(unit.script_file)
     if removed:
       self.unmap_unit(unit)
-      if not unit.clone_of and unit.script_ctx:
+      if not ?unit.clone_of and ?unit.script_ctx:
         self.module_names.excl unit.script_ctx.module_name
 
 proc load_player*(self: ScriptController) =
@@ -677,6 +675,7 @@ proc eval*(self: ScriptController, code: string) =
 
 proc init*(T: type ScriptController): ScriptController =
   private_access ScriptCtx
+  private_access ScriptController
 
   let interpreter = Interpreter.init(state.config.script_dir, state.config.lib_dir)
   interpreter.config.spell_suggest_max = 0
@@ -699,9 +698,9 @@ proc init*(T: type ScriptController): ScriptController =
       raise (ref VMQuit)(info: info, msg: msg, location: loc)
 
   interpreter.register_enter_hook proc(c, pc, tos, instr: auto) =
-    assert controller
-    assert controller.active_unit
-    assert controller.active_unit.script_ctx
+    assert ?controller
+    assert ?controller.active_unit
+    assert ?controller.active_unit.script_ctx
 
     let ctx = controller.active_unit.script_ctx
     let info = c.debug[pc]
@@ -731,15 +730,15 @@ proc init*(T: type ScriptController): ScriptController =
   result.watch_units state.units
 
   result.bind_procs "base_bridge",
-    register_active, echo_console, new_instance, exec_instance,  hit, exit, 
-    global, `global=`, position, local_position, rotation, `rotation=`, id, 
-    glow, `glow=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`, 
-    active_unit, color, `color=`, seen, start_position, wake, frame_count, 
+    register_active, echo_console, new_instance, exec_instance,  hit, exit,
+    global, `global=`, position, local_position, rotation, `rotation=`, id,
+    glow, `glow=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`,
+    active_unit, color, `color=`, seen, start_position, wake, frame_count,
     write_stack_trace, show, `show=`, frame_created, lock, `lock=`, reset,
     press_action
 
   result.bind_procs "base_bridge_private",
-    link_dependency_impl, action_running, `action_running=`, yield_script, 
+    link_dependency_impl, action_running, `action_running=`, yield_script,
     begin_turn, begin_move, sleep_impl, `position=impl`, new_markdown_sign_impl
 
   result.bind_procs "bots",

@@ -1,8 +1,8 @@
-import pkg / [godot, model_citizen]
+import pkg / [godot]
 import godotapi / [spatial, resource_loader, packed_scene, collision_shape,
                    mesh_instance, quad_mesh, spatial_material, viewport,
                    style_box_flat]
-import ui / markdown_label, models / [types, signs]
+import ui / markdown_label, models / [signs]
 import core, models / [states]
 
 let state = GameState.active
@@ -35,7 +35,7 @@ gdobj SignNode of Spatial:
       var
         ratio = self.model.width / self.model.height
         size = vec2(viewport.size.x, viewport.size.x / ratio)
- 
+
       quad.size = vec2(self.model.width, self.model.height)
       shape.scale = vec3(self.model.width, self.model.height, 1)
       var t = mesh.transform
@@ -68,7 +68,7 @@ gdobj SignNode of Spatial:
           label.markdown = change.item
         resize()
         label.update
-    
+
     self.model.markdown.changes:
       if added or touched:
         if self.model.title.value == "":
@@ -89,8 +89,8 @@ gdobj SignNode of Spatial:
       if change.item == Visible:
         self.set_visibility
 
-    
-    self.model.state_zids.add: 
+
+    self.model.state_zids.add:
       state.flags.changes:
         if God.removed:
           self.set_visibility

@@ -1,6 +1,6 @@
 import godotapi / [text_edit, scene_tree, node, input_event, input_event_key,
                          rich_text_label, global_constants]
-import godot, model_citizen
+import godot
 import std / strutils
 import globals, core
 

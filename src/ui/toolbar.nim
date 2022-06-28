@@ -1,7 +1,7 @@
 import godotapi / [h_box_container, scene_tree, button, image_texture]
-import pkg / [godot, model_citizen]
-import models / [types, states]
-import ".." / [core, globals, game, ui/preview_maker]
+import pkg / [godot]
+import core, models / [states]
+import globals, ui/preview_maker
 
 type
   PreviewResult = tuple[color: string, preview: Image]

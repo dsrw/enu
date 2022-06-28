@@ -1,8 +1,7 @@
 import std / [os, sugar]
-import pkg / model_citizen
 import godotapi / spatial
 from pkg/core/godotcoretypes import Basis
-import core, models / [types, states, colors], libs / interpreters
+import core, models / [states, colors], libs / interpreters
 
 proc find_root*(self: Unit, all_clones = false): Unit =
   result = self
@@ -11,7 +10,7 @@ proc find_root*(self: Unit, all_clones = false): Unit =
   while parent != nil:
     result = parent
 
-    if (all_clones and not parent.clone_of) or (not all_clones and Global in parent.flags):
+    if (all_clones and not ?parent.clone_of) or (not all_clones and Global in parent.flags):
       parent = nil
     else:
       parent = parent.parent

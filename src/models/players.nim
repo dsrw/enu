@@ -1,7 +1,5 @@
 import std / math
-import pkg / model_citizen
 import godotapi / spatial
-import models / [types]
 import core
 
 proc init*(_: type Player, node: Spatial): Player =

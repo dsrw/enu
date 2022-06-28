@@ -1,5 +1,5 @@
 import std / [strutils, tables]
-import pkg / [godot, model_citizen]
+import pkg / [godot]
 import pkg / compiler / [lineinfos]
 import godotapi / [text_edit, scene_tree, node, input_event, global_constants,
                    input_event_key, style_box_flat, gd_os]
@@ -18,15 +18,15 @@ gdobj Editor of TextEdit:
   proc set_open_script_ctx() =
     # TODO: yuck
     var current = self.open_script_ctx
-    if not state.open_unit.value.is_nil and state.open_unit.value.script_ctx:
+    if ?state.open_unit.value and ?state.open_unit.value.script_ctx:
       current = state.open_unit.value.script_ctx
     if self.open_script_ctx != current:
-      if self.open_script_ctx:
+      if ?self.open_script_ctx:
         self.open_script_ctx.line_changed = nil
 
     if not state.open_unit.value.is_nil and not state.open_unit.value.script_ctx.is_nil:
       self.open_script_ctx = state.open_unit.value.script_ctx
-      if self.open_script_ctx:
+      if ?self.open_script_ctx:
         self.executing_line = int self.open_script_ctx.current_line.line - 1
         self.open_script_ctx.line_changed = proc(current: TLineInfo, previous: TLineInfo) =
           self.executing_line = int current.line - 1
@@ -114,7 +114,7 @@ gdobj Editor of TextEdit:
         if unit.is_nil:
           self.release_focus()
           self.visible = false
-          if self.open_script_ctx:
+          if ?self.open_script_ctx:
             self.open_script_ctx.line_changed = nil
             self.open_script_ctx = nil
         else:
@@ -137,7 +137,7 @@ gdobj Editor of TextEdit:
           state.open_unit.value.code.value = self.text
           self.modulate = dimmed_alpha
           self.release_focus
-   
+
       elif CommandMode.removed:
         if EditorVisible in state.flags:
           self.modulate = solid_alpha
