@@ -1,0 +1,41 @@
+name: Build on macOS
+on: push
+
+jobs:
+  build:
+    runs-on: macos-12
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install Nim and build deps
+        run: brew install nim scons yasm
+      - name: Update path
+        run: echo "$HOME/.nimble/bin" >> $GITHUB_PATH
+      - name: Install Nimble 0.14
+        run: |
+          nimble install -y nimble@#head
+      - name: Install nimble deps
+        run: nimble setup
+      - name: Save SHAs of submodules
+        run: 'git submodule status > .submodules.tmp'
+      - name: Prep dist config
+        run: cp dist_config.example.json dist_config.json
+      - name: prereq cache
+        id: prereq-cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            vendor/godot/bin
+            fonts
+          key: ${{ runner.os }}-prereq-cache-v1-${{ hashFiles('.submodules.tmp') }}
+      - name: build prereqs
+        run: nimble dist_prereqs
+        if: steps.prereq-cache.outputs.cache-hit != 'true'
+      - name: Dist
+        run: nimble dist_package
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Enu macOS Universal
+          path: dist/*.dmg

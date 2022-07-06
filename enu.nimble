@@ -37,7 +37,7 @@ requires "nim >= 1.6.4", "nim < 1.8.0",
          "markdown",
          "https://github.com/haxscramper/hmatching",
          "zippy"
-         
+
 proc gen: string =
   if generator_path == "":
     exec &"nimble c -d:ssl {generator}"
@@ -45,7 +45,6 @@ proc gen: string =
   generator_path
 
 task build_godot, "Build godot":
-  mk_dir generated_dir
   exec "git submodule update --init"
   let
     scons = find_exe "scons"
@@ -68,52 +67,35 @@ proc find_and_copy_dlls(dep_path, dest: string, dlls: varargs[string]) =
   for dep in dlls:
     cp_file dep_path.join_path(dep), join_path(dest, dep)
 
-proc download_fonts =
-  rm_dir "fonts"
-  mk_dir "fonts"
-  with_dir "fonts":
-    when host_os == "macosx":
-      exec "curl -OJL https://devimages-cdn.apple.com/design/resources/download/SF-Pro.dmg"
-      exec "curl -OJL https://devimages-cdn.apple.com/design/resources/download/SF-Mono.dmg"
-      exec "hdiutil attach SF-Mono.dmg"
-      exec "pkgutil --expand-full '/Volumes/SFMonoFonts/SF Mono Fonts.pkg' mono"
-      exec "hdiutil detach /Volumes/SFMonoFonts"
-      with_dir "mono/SFMonoFonts.pkg/Payload/Library/Fonts":
-        let dest = "../../../../../../app/themes"
-        cp_file "SF-Mono-Regular.otf", dest / "mono.otf"
-        cp_file "SF-Mono-RegularItalic.otf", dest / "mono-italic.otf"
-        cp_file "SF-Mono-Bold.otf", dest / "mono-bold.otf"
-        cp_file "SF-Mono-BoldItalic.otf", dest / "mono-bold-italic.otf"
+proc copy_fonts =
+  when host_os == "macosx":
+    with_dir "fonts/mono/SFMonoFonts.pkg/Payload/Library/Fonts":
+      let dest = "../../../../../../app/themes"
+      cp_file "SF-Mono-Regular.otf", dest / "mono.otf"
+      cp_file "SF-Mono-RegularItalic.otf", dest / "mono-italic.otf"
+      cp_file "SF-Mono-Bold.otf", dest / "mono-bold.otf"
+      cp_file "SF-Mono-BoldItalic.otf", dest / "mono-bold-italic.otf"
 
-      exec "hdiutil attach SF-Pro.dmg"
-      exec "pkgutil --expand-full '/Volumes/SFProFonts/SF Pro Fonts.pkg' pro"
-      exec "hdiutil detach /Volumes/SFProFonts"
+    with_dir "fonts/pro/SFProFonts.pkg/Payload/Library/Fonts":
+      let dest = "../../../../../../app/themes"
+      cp_file "SF-Pro-Text-Regular.otf", dest / "text.otf"
+      cp_file "SF-Pro-Text-RegularItalic.otf", dest / "text-italic.otf"
+      cp_file "SF-Pro-Text-Bold.otf", dest / "text-bold.otf"
+      cp_file "SF-Pro-Text-BoldItalic.otf", dest / "text-bold-italic.otf"
 
-      with_dir "pro/SFProFonts.pkg/Payload/Library/Fonts":
-        let dest = "../../../../../../app/themes"
-        cp_file "SF-Pro-Text-Regular.otf", dest / "text.otf"
-        cp_file "SF-Pro-Text-RegularItalic.otf", dest / "text-italic.otf"
-        cp_file "SF-Pro-Text-Bold.otf", dest / "text-bold.otf"
-        cp_file "SF-Pro-Text-BoldItalic.otf", dest / "text-bold-italic.otf"
+      cp_file "SF-Pro-Display-Regular.otf", dest / "display.otf"
+      cp_file "SF-Pro-Display-RegularItalic.otf", dest / "display-italic.otf"
+      cp_file "SF-Pro-Display-Bold.otf", dest / "display-bold.otf"
+      cp_file "SF-Pro-Display-BoldItalic.otf", dest / "display-bold-italic.otf"
+  else:
+    with_dir "fonts/static":
+      let dest = "../../app/themes"
+      cp_file "RobotoMono-Regular.ttf", dest / "mono.otf"
+      cp_file "RobotoMono-Italic.ttf", dest / "mono-italic.otf"
+      cp_file "RobotoMono-Bold.ttf", dest / "mono-bold.otf"
+      cp_file "RobotoMono-BoldItalic.ttf", dest / "mono-bold-italic.otf"
 
-        cp_file "SF-Pro-Display-Regular.otf", dest / "display.otf"
-        cp_file "SF-Pro-Display-RegularItalic.otf", dest / "display-italic.otf"
-        cp_file "SF-Pro-Display-Bold.otf", dest / "display-bold.otf"
-        cp_file "SF-Pro-Display-BoldItalic.otf", dest / "display-bold-italic.otf"
-
-    else:
-      exec "curl -OJL \"https://fonts.google.com/download?family=Roboto\""
-      exec "curl -OJL \"https://fonts.google.com/download?family=Roboto%20Mono\""
-      exec "unzip Roboto.zip"
-      exec "unzip -o Roboto_Mono.zip"
-      
-      with_dir "static":
-        let dest = "../../app/themes"
-        cp_file "RobotoMono-Regular.ttf", dest / "mono.otf"
-        cp_file "RobotoMono-Italic.ttf", dest / "mono-italic.otf"
-        cp_file "RobotoMono-Bold.ttf", dest / "mono-bold.otf"
-        cp_file "RobotoMono-BoldItalic.ttf", dest / "mono-bold-italic.otf"
-
+    with_dir "fonts":
       let dest = "../app/themes"
       cp_file "Roboto-Regular.ttf", dest / "text.otf"
       cp_file "Roboto-Italic.ttf", dest / "text-italic.otf"
@@ -126,12 +108,30 @@ proc download_fonts =
       cp_file "Roboto-Italic.ttf", dest / "display-italic.otf"
       cp_file "Roboto-Bold.ttf", dest / "display-bold.otf"
       cp_file "Roboto-BoldItalic.ttf", dest / "display-bold-italic.otf"
-    
-    rm_dir "fonts"
 
-task prereqs, "Generate Godot API binding":
-  build_godot_task()
-  download_fonts()
+proc download_fonts =
+  rm_dir "fonts"
+  mk_dir "fonts"
+  with_dir "fonts":
+    when host_os == "macosx":
+      exec "curl -OJL https://devimages-cdn.apple.com/design/resources/download/SF-Pro.dmg"
+      exec "curl -OJL https://devimages-cdn.apple.com/design/resources/download/SF-Mono.dmg"
+      exec "hdiutil attach SF-Mono.dmg"
+      exec "pkgutil --expand-full '/Volumes/SFMonoFonts/SF Mono Fonts.pkg' mono"
+      exec "hdiutil detach /Volumes/SFMonoFonts"
+
+      exec "hdiutil attach SF-Pro.dmg"
+      exec "pkgutil --expand-full '/Volumes/SFProFonts/SF Pro Fonts.pkg' pro"
+      exec "hdiutil detach /Volumes/SFProFonts"
+
+    else:
+      exec "curl -OJL \"https://fonts.google.com/download?family=Roboto\""
+      exec "curl -OJL \"https://fonts.google.com/download?family=Roboto%20Mono\""
+      exec "unzip Roboto.zip"
+      exec "unzip -o Roboto_Mono.zip"
+
+proc gen_binding_and_copy_stdlib =
+  mk_dir generated_dir
   exec &"{godot_bin} --gdnative-generate-json-api {join_path generated_dir, api_json}"
   exec &"{gen()} generate_api -d={generated_dir} -j={api_json}"
   exec &"{gen()} copy_stdlib -d=vmlib/stdlib"
@@ -139,6 +139,13 @@ task prereqs, "Generate Godot API binding":
     # Assumes mingw
     #  find_and_copy_dlls find_exe("gcc").parent_dir, join_path("app", "_dlls"), gcc_dlls
     find_and_copy_dlls get_current_compiler_exe().parent_dir, join_path("vendor", "godot", "bin"), nim_dlls
+
+
+task prereqs, "Generate Godot API binding":
+  build_godot_task()
+  download_fonts()
+  copy_fonts()
+  gen_binding_and_copy_stdlib()
 
 task import_assets, "Import Godot assets. Only required if you're not using the Godot editor":
   exec godot_bin & " app/project.godot --editor --quit"
@@ -164,46 +171,56 @@ task gen, "Generate build_helpers":
 proc code_sign(id, path: string) =
   exec &"codesign -s '{id}' -v --timestamp --options runtime {path}"
 
-# NOTE! this is hacky and specific to my system. Will be fixed.
-task dist_universal_mac, "Build Universal mac distribution":
-  lib_ext = ".dylib.x86"
-  cpu = "64"
-  exec "rm ../Nim"
-  exec "ln -s NimRosetta ../Nim"
-  var release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
-  prereqs_task()
-  exec &"{gen()} write_export_presets --enu_version {version}"
-  godot_opts = "target=release tools=no"
+task dist_prereqs, "Build godot debug and release versions, and download fonts":
   build_godot_task()
-  rm_dir "dist"
+  download_fonts()
 
-  let config = read_file("dist_config.json").parse_json
+  godot_opts = "target=release tools=no"
+
+  cpu = "64"
+  build_godot_task()
+
+  cpu = "arm64"
+  build_godot_task()
+
+task dist_package, "Build Universal mac distribution":
+  proc nim_build(target, cpu: string) =
+    rm_dir ".nim_cache"
+    let cmd =  &"nim c --cpu:{cpu} -l:'-target {target}-apple-macos11' " &
+      &"-t:'-target {target}-apple-macos11' -d:release -d:dist " &
+      &"-o:dist/Enu.app/Contents/Frameworks/enu.dylib.{target} src/enu.nim"
+    exec cmd
+
+  copy_fonts()
+  gen_binding_and_copy_stdlib()
+
+  rm_dir "dist"
   mk_dir "dist"
   exec "cp -r installer/Enu.app dist/Enu.app"
-  exec &"{gen()} write_info_plist --enu_version {version}"
   exec "mkdir -p dist/Enu.app/Contents/MacOS"
   exec "mkdir -p dist/Enu.app/Contents/Frameworks"
-  exec &"cp {release_bin} dist/Enu.app/Contents/MacOS/Enu.x86"
+  exec &"{gen()} write_export_presets --enu_version {version}"
+  exec &"{gen()} write_info_plist --enu_version {version}"
+
+  cpu = "64"
+  var release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
+  exec &"cp {release_bin} dist/Enu.app/Contents/MacOS/Enu.x86_64"
+  nim_build "x86_64", "amd64"
+
+  cpu = "arm64"
+  release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
+  exec &"cp {release_bin} dist/Enu.app/Contents/MacOS/Enu.arm64"
+  nim_build "arm64", "arm64"
+
+  let config = read_file("dist_config.json").parse_json
   let pck_path = this_dir() & "/dist/Enu.app/Contents/Resources/Enu.pck"
+
   exec &"{godot_bin} --path app --export-pack \"mac\" " & pck_path
 
-  exec "nimble build -d:release -d:dist"
-  exec "cp app/_dlls/enu.dylib dist/Enu.app/Contents/Frameworks/enu.dylib.x86"
-
-  lib_ext = ".dylib.arm64"
-  cpu = "arm64"
-  exec "rm ../Nim"
-  exec "ln -s NimNative ../Nim"
-  release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
-  build_godot_task()
-  exec &"cp {release_bin} dist/Enu.app/Contents/MacOS/Enu.arm64"
-  exec "nimble build -d:release -d:dist"
-  exec "cp app/_dlls/enu.dylib dist/Enu.app/Contents/Frameworks/enu.dylib.arm64"
-
-  exec "lipo -create dist/Enu.app/Contents/Frameworks/enu.dylib.x86 dist/Enu.app/Contents/Frameworks/enu.dylib.arm64 -output dist/Enu.app/Contents/Frameworks/enu.dylib"
+  exec "lipo -create dist/Enu.app/Contents/Frameworks/enu.dylib.x86_64 dist/Enu.app/Contents/Frameworks/enu.dylib.arm64 -output dist/Enu.app/Contents/Frameworks/enu.dylib"
   exec "rm dist/Enu.app/Contents/Frameworks/enu.dylib.*"
 
-  exec "lipo -create dist/Enu.app/Contents/MacOS/Enu.x86 dist/Enu.app/Contents/MacOS/Enu.arm64 -output dist/Enu.app/Contents/MacOS/Enu"
+  exec "lipo -create dist/Enu.app/Contents/MacOS/Enu.x86_64 dist/Enu.app/Contents/MacOS/Enu.arm64 -output dist/Enu.app/Contents/MacOS/Enu"
   exec "rm dist/Enu.app/Contents/MacOS/Enu.*"
 
   exec "cp -r vmlib dist/Enu.app/Contents/Resources/vmlib"
@@ -213,7 +230,8 @@ task dist_universal_mac, "Build Universal mac distribution":
     code_sign(id, "dist/Enu.app/Contents/Frameworks/enu.dylib")
     code_sign(id, "dist/Enu.app")
 
-  let package_name = &"enu-{version}.dmg"
+  let git_version = static_exec("git describe --tags HEAD")
+  let package_name = &"enu-{git_version}.dmg"
   if config["package"].get_bool:
 
     exec &"hdiutil create {package_name} -ov -volname Enu -fs HFS+ -srcfolder dist"
@@ -225,6 +243,10 @@ task dist_universal_mac, "Build Universal mac distribution":
       password = config["notarize-password"].get_str
 
     exec &"xcrun altool --notarize-app --primary-bundle-id 'ca.dsrw.enu'  --username '{username}' --password '{password}' --file dist/{package_name}"
+
+task dist_universal_mac, "Build Universal mac distribution":
+  dist_prereqs_task()
+  dist_package_task()
 
 task dist, "Build distribution":
   let release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"

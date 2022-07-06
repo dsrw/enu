@@ -1,6 +1,6 @@
 {
   "sign": false,
-  "package": false,
+  "package": true,
   "notarize": false,
   "id": "Your developer id cert name here. Required for signing",
   "notarize-username": "Apple id for notarization",

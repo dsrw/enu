@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "packages": {
+    "print": {
+      "version": "1.0.2",
+      "vcsRevision": "f78c8550cbe247f5ecf4f9d47a556b7d67e48a56",
+      "url": "https://github.com/treeform/print",
+      "downloadMethod": "git",
+      "dependencies": [],
+      "checksums": {
+        "sha1": "3b2b25e5ef5aadbadd7cabc7cc7f6729c1a43e6b"
+      }
+    },
+    "cligen": {
+      "version": "1.5.19",
+      "vcsRevision": "b962cf8bc0be847cbc1b4f77952775de765e9689",
+      "url": "https://github.com/c-blake/cligen.git",
+      "downloadMethod": "git",
+      "dependencies": [],
+      "checksums": {
+        "sha1": "bfe4f99a16ace2164fe40d40866e4951bed51820"
+      }
+    },
+    "compiler": {
+      "version": "1.6.6",
+      "vcsRevision": "a6d502f63cd82dda1f69ded81f5784df51b34144",
+      "url": "https://github.com/dsrw/Nim",
+      "downloadMethod": "git",
+      "dependencies": [],
+      "checksums": {
+        "sha1": "79086f6af1c1695e93e85c13fb019f6c7849e862"
+      }
+    },
+    "godot": {
+      "version": "0.8.5",
+      "vcsRevision": "982ab52349c6181a0ee20811bbc480c88c082123",
+      "url": "https://github.com/pragmagic/godot-nim",
+      "downloadMethod": "git",
+      "dependencies": [
+        "compiler"
+      ],
+      "checksums": {
+        "sha1": "a652fa65b5242541918b0cd0bf5a006bd041e46e"
+      }
+    },
+    "model_citizen": {
+      "version": "0.7.1",
+      "vcsRevision": "9e8ee9bf8ef47375f9dd23d26a4bc05a71afddb8",
+      "url": "https://github.com/dsrw/model_citizen",
+      "downloadMethod": "git",
+      "dependencies": [
+        "print"
+      ],
+      "checksums": {
+        "sha1": "25d8efc61ad1d9ae9b667b72bd9408b02a2c059b"
+      }
+    },
+    "markdown": {
+      "version": "0.8.5",
+      "vcsRevision": "46d5905dd02fe381cad31f0a18dc1fcf4af8dfe6",
+      "url": "https://github.com/soasme/nim-markdown",
+      "downloadMethod": "git",
+      "dependencies": [],
+      "checksums": {
+        "sha1": "4aad73e9a15bd58a9254833afb983950ed568578"
+      }
+    },
+    "hmatching": {
+      "version": "0.1.1",
+      "vcsRevision": "0edbae59c25304c5b818980357774fea5a3ff31f",
+      "url": "https://github.com/haxscramper/hmatching",
+      "downloadMethod": "git",
+      "dependencies": [],
+      "checksums": {
+        "sha1": "779587cd1e7a66b592d69a56f56d57056eb4b217"
+      }
+    },
+    "zippy": {
+      "version": "0.10.2",
+      "vcsRevision": "a4eb6cb9b49049d70528ffb88a32469badf493ad",
+      "url": "https://github.com/guzba/zippy",
+      "downloadMethod": "git",
+      "dependencies": [],
+      "checksums": {
+        "sha1": "22f9155857b1c09d692e8a43fa19311e8f2da4a9"
+      }
+    },
+    "nanoid": {
+      "version": "0.2.1",
+      "vcsRevision": "bbbf8f5ac6e1ee7fa088d648cc29ade859c0bc05",
+      "url": "https://github.com/dsrw/nanoid.nim",
+      "downloadMethod": "git",
+      "dependencies": [],
+      "checksums": {
+        "sha1": "c57bbe7a154c4dbaddc88fb973799a97d9a5e058"
+      }
+    },
+    "chroma": {
+      "version": "0.2.5",
+      "vcsRevision": "640f26142f47fea023a87bfd684a3fa770a785ae",
+      "url": "https://github.com/treeform/chroma",
+      "downloadMethod": "git",
+      "dependencies": [],
+      "checksums": {
+        "sha1": "d3f5044e0441ad8918ed2d4cbc3de3986f94172d"
+      }
+    }
+  }
+}
