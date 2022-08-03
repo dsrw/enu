@@ -1,4 +1,4 @@
-import strformat, strutils, os, json
+import strformat, strutils, strscans, os, json
 
 var
   (target, lib_ext, exe_ext) = case host_os
@@ -130,16 +130,26 @@ proc download_fonts =
       exec "unzip Roboto.zip"
       exec "unzip -o Roboto_Mono.zip"
 
+
+proc mingw_path: string = 
+  var pre, match: string
+  let shim_help = gorge_ex("gcc --shimgen-help")
+  # chocolatey uses shim exes, so we need to parse shimgen-help to find the real
+  # gcc path
+  if shim_help.exit_code < 1 and shim_help.output.scanf("$+Target: '$+'", pre, match):
+    match.parent_dir
+  else:
+    find_exe("gcc").parent_dir
+
 proc gen_binding_and_copy_stdlib =
-  mk_dir generated_dir
-  exec &"{godot_bin} --gdnative-generate-json-api {join_path generated_dir, api_json}"
-  exec &"{gen()} generate_api -d={generated_dir} -j={api_json}"
-  exec &"{gen()} copy_stdlib -d=vmlib/stdlib"
   if host_os == "windows":
     # Assumes mingw
-    #  find_and_copy_dlls find_exe("gcc").parent_dir, join_path("app", "_dlls"), gcc_dlls
+    find_and_copy_dlls mingw_path(), join_path("app", "_dlls"), gcc_dlls
     find_and_copy_dlls get_current_compiler_exe().parent_dir, join_path("vendor", "godot", "bin"), nim_dlls
-
+  mk_dir generated_dir
+  exec &"{godot_bin} --verbose --gdnative-generate-json-api {join_path generated_dir, api_json}"
+  exec &"{gen()} generate_api -d={generated_dir} -j={api_json}"
+  exec &"{gen()} copy_stdlib -d=vmlib/stdlib"
 
 task prereqs, "Generate Godot API binding":
   build_godot_task()
@@ -179,70 +189,92 @@ task dist_prereqs, "Build godot debug and release versions, and download fonts":
 
   cpu = "64"
   build_godot_task()
+  when host_os == "macosx":
+    cpu = "arm64"
+    build_godot_task()
 
-  cpu = "arm64"
-  build_godot_task()
-
-task dist_package, "Build Universal mac distribution":
-  proc nim_build(target, cpu: string) =
-    rm_dir ".nim_cache"
-    let cmd =  &"nim c --cpu:{cpu} -l:'-target {target}-apple-macos11' " &
-      &"-t:'-target {target}-apple-macos11' -d:release -d:dist " &
-      &"-o:dist/Enu.app/Contents/Frameworks/enu.dylib.{target} src/enu.nim"
-    exec cmd
-
+task dist_package, "Build distribution binaries":
+  let git_version = static_exec("git describe --tags HEAD").strip
   copy_fonts()
   gen_binding_and_copy_stdlib()
-
   rm_dir "dist"
   mk_dir "dist"
-  exec "cp -r installer/Enu.app dist/Enu.app"
-  exec "mkdir -p dist/Enu.app/Contents/MacOS"
-  exec "mkdir -p dist/Enu.app/Contents/Frameworks"
-  exec &"{gen()} write_export_presets --enu_version {version}"
-  exec &"{gen()} write_info_plist --enu_version {version}"
 
-  cpu = "64"
-  var release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
-  exec &"cp {release_bin} dist/Enu.app/Contents/MacOS/Enu.x86_64"
-  nim_build "x86_64", "amd64"
+  when host_os == "windows":
+    let release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
+    let root = &"dist/enu-{git_version}"
+    mk_dir root
+    exec "strip " & release_bin
+    cp_file release_bin, root & "/enu.exe"
+    exec &"rcedit {root}/enu.exe --set-icon media/enu_icon.ico"
+    exec &"{gen()} write_export_presets --enu_version {version}"
+    
+    let pck_path = &"{this_dir()}/{root}/enu.pck"
+    exec &"{godot_bin} --verbose --path app --export-pack \"win\" " & pck_path
+    
+    exec "nimble build -d:release -d:dist"
+    cp_file "app/_dlls/enu.dll", root & "/enu.dll"
+    find_and_copy_dlls mingw_path(), root, gcc_dlls
+    find_and_copy_dlls get_current_compiler_exe().parent_dir, root, nim_dlls
+    cp_dir "vmlib", root & "/vmlib"
+    exec &"iscc /DVersion={git_version} installer/enu.iss"
+    with_dir "dist":
+      exec &"zip -r enu-{git_version}-windows-x64.zip enu-{git_version}"
 
-  cpu = "arm64"
-  release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
-  exec &"cp {release_bin} dist/Enu.app/Contents/MacOS/Enu.arm64"
-  nim_build "arm64", "arm64"
+  elif host_os == "macosx":
+    proc nim_build(target, cpu: string) =
+      rm_dir ".nim_cache"
+      let cmd =  &"nim c --cpu:{cpu} -l:'-target {target}-apple-macos11' " &
+        &"-t:'-target {target}-apple-macos11' -d:release -d:dist " &
+        &"-o:dist/Enu.app/Contents/Frameworks/enu.dylib.{target} src/enu.nim"
+      exec cmd
 
-  let config = read_file("dist_config.json").parse_json
-  let pck_path = this_dir() & "/dist/Enu.app/Contents/Resources/Enu.pck"
+    exec "cp -r installer/Enu.app dist/Enu.app"
+    exec "mkdir -p dist/Enu.app/Contents/MacOS"
+    exec "mkdir -p dist/Enu.app/Contents/Frameworks"
+    exec &"{gen()} write_export_presets --enu_version {version}"
+    exec &"{gen()} write_info_plist --enu_version {version}"
 
-  exec &"{godot_bin} --path app --export-pack \"mac\" " & pck_path
+    cpu = "64"
+    var release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
+    exec &"cp {release_bin} dist/Enu.app/Contents/MacOS/Enu.x86_64"
+    nim_build "x86_64", "amd64"
 
-  exec "lipo -create dist/Enu.app/Contents/Frameworks/enu.dylib.x86_64 dist/Enu.app/Contents/Frameworks/enu.dylib.arm64 -output dist/Enu.app/Contents/Frameworks/enu.dylib"
-  exec "rm dist/Enu.app/Contents/Frameworks/enu.dylib.*"
+    cpu = "arm64"
+    release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
+    exec &"cp {release_bin} dist/Enu.app/Contents/MacOS/Enu.arm64"
+    nim_build "arm64", "arm64"
 
-  exec "lipo -create dist/Enu.app/Contents/MacOS/Enu.x86_64 dist/Enu.app/Contents/MacOS/Enu.arm64 -output dist/Enu.app/Contents/MacOS/Enu"
-  exec "rm dist/Enu.app/Contents/MacOS/Enu.*"
+    let config = read_file("dist_config.json").parse_json
+    let pck_path = this_dir() & "/dist/Enu.app/Contents/Resources/Enu.pck"
 
-  exec "cp -r vmlib dist/Enu.app/Contents/Resources/vmlib"
+    exec &"{godot_bin} --path app --export-pack \"mac\" " & pck_path
 
-  if config["sign"].get_bool:
-    let id = config["id"].get_str
-    code_sign(id, "dist/Enu.app/Contents/Frameworks/enu.dylib")
-    code_sign(id, "dist/Enu.app")
+    exec "lipo -create dist/Enu.app/Contents/Frameworks/enu.dylib.x86_64 dist/Enu.app/Contents/Frameworks/enu.dylib.arm64 -output dist/Enu.app/Contents/Frameworks/enu.dylib"
+    exec "rm dist/Enu.app/Contents/Frameworks/enu.dylib.*"
 
-  let git_version = static_exec("git describe --tags HEAD")
-  let package_name = &"enu-{git_version}.dmg"
-  if config["package"].get_bool:
+    exec "lipo -create dist/Enu.app/Contents/MacOS/Enu.x86_64 dist/Enu.app/Contents/MacOS/Enu.arm64 -output dist/Enu.app/Contents/MacOS/Enu"
+    exec "rm dist/Enu.app/Contents/MacOS/Enu.*"
 
-    exec &"hdiutil create {package_name} -ov -volname Enu -fs HFS+ -srcfolder dist"
-    exec &"mv {package_name} dist"
+    exec "cp -r vmlib dist/Enu.app/Contents/Resources/vmlib"
 
-  if config["notarize"].get_bool:
-    let
-      username = config["notarize-username"].get_str
-      password = config["notarize-password"].get_str
+    if config["sign"].get_bool:
+      let id = config["id"].get_str
+      code_sign(id, "dist/Enu.app/Contents/Frameworks/enu.dylib")
+      code_sign(id, "dist/Enu.app")
 
-    exec &"xcrun altool --notarize-app --primary-bundle-id 'ca.dsrw.enu'  --username '{username}' --password '{password}' --file dist/{package_name}"
+    let package_name = &"enu-{git_version}.dmg"
+    if config["package"].get_bool:
+
+      exec &"hdiutil create {package_name} -ov -volname Enu -fs HFS+ -srcfolder dist"
+      exec &"mv {package_name} dist"
+
+    if config["notarize"].get_bool:
+      let
+        username = config["notarize-username"].get_str
+        password = config["notarize-password"].get_str
+
+      exec &"xcrun altool --notarize-app --primary-bundle-id 'ca.dsrw.enu'  --username '{username}' --password '{password}' --file dist/{package_name}"
 
 task dist_universal_mac, "Build Universal mac distribution":
   dist_prereqs_task()
@@ -298,7 +330,7 @@ task dist, "Build distribution":
     exec &"{godot_bin} --path app --export-pack \"win\" " & pck_path
     exec "nimble build -d:release -d:danger -d:dist"
     cp_file "app/_dlls/enu.dll", root & "/enu.dll"
-    #find_and_copy_dlls find_exe("gcc").parent_dir, root, gcc_dlls
+    find_and_copy_dlls mingw_path(), root, gcc_dlls
     find_and_copy_dlls get_current_compiler_exe().parent_dir, root, nim_dlls
     cp_dir "vmlib", root & "/vmlib"
     exec &"iscc /DVersion={version} installer/enu.iss"

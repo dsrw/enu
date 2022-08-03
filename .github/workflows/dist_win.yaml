@@ -1,0 +1,67 @@
+name: Build on Windows
+on: push
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install Nim and build deps
+        run: choco install nim yasm innosetup rcedit zip
+      - name: Refresh path
+        run: refreshenv
+      - name: Install scons
+        run: python -m pip install scons
+      - name: Install mesa
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          release: false
+          install: mingw-w64-x86_64-mesa
+      - name: Update path
+        run: echo "${HOME}/.nimble/bin;C:\tools\Nim\nim-1.6.6\bin;C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Install Nimble 0.14
+        run: |
+          nimble install -y nimble@#head
+      - name: Install nimble deps
+        run: nimble setup
+      - name: Save SHAs of submodules
+        run: 'git submodule status > .submodules.tmp'
+      - name: Prep dist config
+        run: cp dist_config.example.json dist_config.json
+
+      - name: prereq cache
+        id: prereq-cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            vendor/godot/bin
+            fonts
+          key: ${{ runner.os }}-prereq-cache-v1-${{ hashFiles('.submodules.tmp') }}
+      - name: build prereqs
+        run: nimble dist_prereqs
+        if: steps.prereq-cache.outputs.cache-hit != 'true'
+      
+      - name: Copy mesa
+        run: copy c:\msys64\mingw64\bin\opengl32.dll vendor\godot\bin\opengl32.dll
+      # Godot crashes on exit when exporting the pck in CI.
+      # Seems to be a godot bug, possibly triggered by using
+      # mesa rather than normal opengl drivers.
+      # Will fail twice, then succeed on the 3rd attempt.
+      # God knows why. 
+      
+      - name: Dist
+        uses: nick-fields/retry@v2
+        with:
+          timeout_minutes: 60
+          max_attempts: 3
+          command: nimble dist_package
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Enu Windows Distribution
+          path: |
+            dist/*.exe
+            dist/*.zip

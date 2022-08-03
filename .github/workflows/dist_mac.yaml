@@ -37,5 +37,5 @@ jobs:
         run: nimble dist_package
       - uses: actions/upload-artifact@v3
         with:
-          name: Enu macOS Universal
+          name: Enu macOS Distribution
           path: dist/*.dmg
