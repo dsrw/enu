@@ -44,21 +44,10 @@ jobs:
       - name: build prereqs
         run: nimble dist_prereqs
         if: steps.prereq-cache.outputs.cache-hit != 'true'
-      
       - name: Copy mesa
-        run: copy c:\msys64\mingw64\bin\opengl32.dll vendor\godot\bin\opengl32.dll
-      # Godot crashes on exit when exporting the pck in CI.
-      # Seems to be a godot bug, possibly triggered by using
-      # mesa rather than normal opengl drivers.
-      # Will fail twice, then succeed on the 3rd attempt.
-      # God knows why. 
-      
+        run: copy c:\msys64\mingw64\bin\opengl32.dll vendor\godot\bin\opengl32.dll      
       - name: Dist
-        uses: nick-fields/retry@v2
-        with:
-          timeout_minutes: 60
-          max_attempts: 3
-          command: nimble dist_package
+        run: nimble dist_package
       - uses: actions/upload-artifact@v3
         with:
           name: Enu Windows Distribution
