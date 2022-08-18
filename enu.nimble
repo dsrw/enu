@@ -130,8 +130,7 @@ proc download_fonts =
       exec "unzip Roboto.zip"
       exec "unzip -o Roboto_Mono.zip"
 
-
-proc mingw_path: string = 
+proc mingw_path: string =
   var pre, match: string
   let shim_help = gorge_ex("gcc --shimgen-help")
   # chocolatey uses shim exes, so we need to parse shimgen-help to find the real
@@ -182,7 +181,13 @@ proc code_sign(id, path: string) =
   exec &"codesign -s '{id}' -v --timestamp --options runtime {path}"
 
 task dist_prereqs, "Build godot debug and release versions, and download fonts":
-  build_godot_task()
+  if target == "x11":
+    target = "server"
+    build_godot_task()
+    target ="x11"
+    exec &"mv {godot_bin.replace(\"godot.x11\", \"godot_server.x11\")} {godot_bin}"
+  else:
+    build_godot_task()
   download_fonts()
 
   godot_opts = "target=release tools=no"
@@ -207,11 +212,11 @@ task dist_package, "Build distribution binaries":
     exec "strip " & release_bin
     cp_file release_bin, root & "/enu.exe"
     exec &"rcedit {root}/enu.exe --set-icon media/enu_icon.ico"
-    exec &"{gen()} write_export_presets --enu_version {version}"
-    
+    exec &"{gen()} write_export_presets --enu_version {git_version}"
+
     let pck_path = &"{this_dir()}/{root}/enu.pck"
     exec &"{godot_bin} --verbose --path app --export-pack \"win\" " & pck_path
-    
+
     exec "nimble build -d:release -d:dist"
     cp_file "app/_dlls/enu.dll", root & "/enu.dll"
     find_and_copy_dlls mingw_path(), root, gcc_dlls
@@ -232,8 +237,8 @@ task dist_package, "Build distribution binaries":
     exec "cp -r installer/Enu.app dist/Enu.app"
     exec "mkdir -p dist/Enu.app/Contents/MacOS"
     exec "mkdir -p dist/Enu.app/Contents/Frameworks"
-    exec &"{gen()} write_export_presets --enu_version {version}"
-    exec &"{gen()} write_info_plist --enu_version {version}"
+    exec &"{gen()} write_export_presets --enu_version {git_version}"
+    exec &"{gen()} write_info_plist --enu_version {git_version}"
 
     cpu = "64"
     var release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
@@ -275,70 +280,10 @@ task dist_package, "Build distribution binaries":
         password = config["notarize-password"].get_str
 
       exec &"xcrun altool --notarize-app --primary-bundle-id 'ca.dsrw.enu'  --username '{username}' --password '{password}' --file dist/{package_name}"
-
-task dist_universal_mac, "Build Universal mac distribution":
-  dist_prereqs_task()
-  dist_package_task()
-
-task dist, "Build distribution":
-  let release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
-  prereqs_task()
-  exec &"{gen()} write_export_presets --enu_version {version}"
-  godot_opts = "target=release tools=no"
-  build_godot_task()
-  rm_dir "dist"
-
-  when host_os == "macosx":
-    let config = read_file("dist_config.json").parse_json
-    mk_dir "dist"
-    exec "cp -r installer/Enu.app dist/Enu.app"
-    exec &"{gen()} write_info_plist --enu_version {version}"
-    exec "mkdir -p dist/Enu.app/Contents/MacOS"
-    exec "mkdir -p dist/Enu.app/Contents/Frameworks"
-    exec &"cp {release_bin} dist/Enu.app/Contents/MacOS/Enu"
-    let pck_path = this_dir() & "/dist/Enu.app/Contents/Resources/Enu.pck"
-    exec &"{godot_bin} --path app --export-pack \"mac\" " & pck_path
-    exec "nimble build -d:release -d:danger -d:dist"
-    exec "cp app/_dlls/enu.dylib dist/Enu.app/Contents/Frameworks"
-    exec "cp -r vmlib dist/Enu.app/Contents/Resources/vmlib"
-
-    if config["sign"].get_bool:
-      let id = config["id"].get_str
-      code_sign(id, "dist/Enu.app/Contents/Frameworks/enu.dylib")
-      code_sign(id, "dist/Enu.app")
-
-    let package_name = &"enu-{version}.dmg"
-    if config["package"].get_bool:
-
-      exec &"hdiutil create {package_name} -ov -volname Enu -fs HFS+ -srcfolder dist"
-      exec &"mv {package_name} dist"
-
-    if config["notarize"].get_bool:
-      let
-        username = config["notarize-username"].get_str
-        password = config["notarize-password"].get_str
-
-      exec &"xcrun altool --notarize-app --primary-bundle-id 'ca.dsrw.enu'  --username '{username}' --password '{password}' --file dist/{package_name}"
-
-  elif host_os == "windows":
-    let root = &"dist/enu-{version}"
-    mk_dir root
-    exec "strip " & release_bin
-    cp_file release_bin, root & "/enu.exe"
-    exec &"rcedit {root}/enu.exe --set-icon media/enu_icon.ico"
-    let pck_path = &"{this_dir()}/{root}/enu.pck"
-    exec &"{godot_bin} --path app --export-pack \"win\" " & pck_path
-    exec "nimble build -d:release -d:danger -d:dist"
-    cp_file "app/_dlls/enu.dll", root & "/enu.dll"
-    find_and_copy_dlls mingw_path(), root, gcc_dlls
-    find_and_copy_dlls get_current_compiler_exe().parent_dir, root, nim_dlls
-    cp_dir "vmlib", root & "/vmlib"
-    exec &"iscc /DVersion={version} installer/enu.iss"
-    with_dir "dist":
-      exec &"zip -r enu-{version}-windows-x64.zip enu-{version}"
-
+  
   elif host_os == "linux":
-    let root = &"dist/enu-{version}"
+    let release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
+    let root = &"dist/enu-{git_version}"
     mk_dir root & "/bin"
     mk_dir root & "/lib"
     exec "nimble build -d:release -d:dist"
@@ -347,10 +292,15 @@ task dist, "Build distribution":
     cp_file "app/_dlls/enu.so", root & "/lib/enu.so"
     cp_dir "vmlib", root & "/lib/vmlib"
     exec "chmod +x " & root & "/bin/enu"
+    exec &"{gen()} write_export_presets --enu_version {git_version}"
     let pck_path = this_dir() & "/" & root & "/enu.pck"
-    exec &"{godot_bin} --path app --export-pack \"x11\" " & pck_path
+    exec &"{godot_bin} --verbose --path app --export-pack \"x11\" " & pck_path
     with_dir "dist":
-      exec &"tar -czvf enu-{version}-linux-x64.tar.gz enu-{version}"
-
+      exec &"tar -czvf enu-{git_version}-linux-x64.tar.gz enu-{git_version}"
+  
   else:
     quit &"dist is currently unsupported on {host_os}"
+
+task dist, "Build distribution":
+  dist_prereqs_task()
+  dist_package_task()
