@@ -1,4 +1,4 @@
-import strformat, strutils, strscans, os, json
+import std / [strformat, strutils, strscans, os, json, os]
 
 var
   (target, lib_ext, exe_ext) = case host_os
@@ -26,17 +26,17 @@ bin_dir       = "app/_dlls"
 src_dir       = "src"
 bin           = @["enu" & lib_ext]
 
-requires "nim >= 1.6.4", "nim < 1.8.0",
-         "https://github.com/pragmagic/godot-nim#982ab52",
-         "https://github.com/dsrw/Nim#a6d502f",
-         "https://github.com/dsrw/model_citizen 0.7.1",
-         "https://github.com/dsrw/nanoid.nim 0.2.1",
-         "cligen 1.5.19",
-         "print#f78c855",
-         "chroma",
-         "markdown",
-         "https://github.com/haxscramper/hmatching",
-         "zippy"
+requires "nim >= 1.6.4",
+  "https://github.com/pragmagic/godot-nim#982ab52",
+  "https://github.com/dsrw/Nim#a6d502f",
+  "https://github.com/dsrw/model_citizen 0.7.1",
+  "https://github.com/dsrw/nanoid.nim 0.2.1",
+  "cligen 1.5.19",
+  "print#f78c855",
+  "chroma",
+  "markdown",
+  "https://github.com/haxscramper/hmatching",
+  "zippy"
 
 proc gen: string =
   if generator_path == "":
@@ -44,7 +44,20 @@ proc gen: string =
     generator_path = find_exe generator
   generator_path
 
+proc p(msg: varargs[string, `$`]) =
+  let msg = msg.join
+  let underline = "=".repeat(msg.len)
+  echo ""
+  if host_os == "windows":
+    echo msg
+    echo underline
+  else:
+    echo "\e[1;34m" & msg
+    echo underline & "\e[00m"
+  echo ""
+
 task build_godot, "Build godot":
+  p "Building Godot..."
   exec "git submodule update --init"
   let
     scons = find_exe "scons"
@@ -68,6 +81,7 @@ proc find_and_copy_dlls(dep_path, dest: string, dlls: varargs[string]) =
     cp_file dep_path.join_path(dep), join_path(dest, dep)
 
 proc copy_fonts =
+  p "Coping fonts..."
   when host_os == "macosx":
     with_dir "fonts/mono/SFMonoFonts.pkg/Payload/Library/Fonts":
       let dest = "../../../../../../app/themes"
@@ -110,6 +124,7 @@ proc copy_fonts =
       cp_file "Roboto-BoldItalic.ttf", dest / "display-bold-italic.otf"
 
 proc download_fonts =
+  p "Downloading fonts..."
   rm_dir "fonts"
   mk_dir "fonts"
   with_dir "fonts":
@@ -150,13 +165,14 @@ proc gen_binding_and_copy_stdlib =
   exec &"{gen()} generate_api -d={generated_dir} -j={api_json}"
   exec &"{gen()} copy_stdlib -d=vmlib/stdlib"
 
-task prereqs, "Generate Godot API binding":
+task prereqs, "Build godot, download fonts, generate binding and stdlib":
   build_godot_task()
   download_fonts()
   copy_fonts()
   gen_binding_and_copy_stdlib()
 
 task import_assets, "Import Godot assets. Only required if you're not using the Godot editor":
+  p "Importing assets..."
   exec godot_bin & " app/project.godot --editor --quit"
 
 task clean, "Remove files produced by build":
@@ -181,6 +197,7 @@ proc code_sign(id, path: string) =
   exec &"codesign -s '{id}' -v --timestamp --options runtime {path}"
 
 task dist_prereqs, "Build godot debug and release versions, and download fonts":
+  p "Buiding distribution prereqs..."
   if target == "x11":
     target = "server"
     build_godot_task()
@@ -199,6 +216,7 @@ task dist_prereqs, "Build godot debug and release versions, and download fonts":
     build_godot_task()
 
 task dist_package, "Build distribution binaries":
+  p "Packaging distribution..."
   let git_version = static_exec("git describe --tags HEAD").strip
   copy_fonts()
   gen_binding_and_copy_stdlib()
@@ -280,7 +298,7 @@ task dist_package, "Build distribution binaries":
         password = config["notarize-password"].get_str
 
       exec &"xcrun altool --notarize-app --primary-bundle-id 'ca.dsrw.enu'  --username '{username}' --password '{password}' --file dist/{package_name}"
-  
+
   elif host_os == "linux":
     let release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
     let root = &"dist/enu-{git_version}"
@@ -297,7 +315,7 @@ task dist_package, "Build distribution binaries":
     exec &"{godot_bin} --verbose --path app --export-pack \"x11\" " & pck_path
     with_dir "dist":
       exec &"tar -czvf enu-{git_version}-linux-x64.tar.gz enu-{git_version}"
-  
+
   else:
     quit &"dist is currently unsupported on {host_os}"
 
