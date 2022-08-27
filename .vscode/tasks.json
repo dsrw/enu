@@ -19,7 +19,7 @@
     {
       "label": "Build Current File",
       "command": "nim",
-      "args": ["c", "--debugger:native", "${relativeFile}"],
+      "args": ["c", "--debugger:native", "--out:${relativeFileDirname}/${fileBasenameNoExtension}.out", "${relativeFile}"],
       "options": {
           "cwd": "${workspaceRoot}"
       },
