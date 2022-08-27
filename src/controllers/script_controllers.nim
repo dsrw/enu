@@ -9,7 +9,6 @@ import godotapi / [spatial, ray_cast, voxel_terrain]
 import core, models /
   [states, bots, builds, units, colors, signs]
 import libs / [interpreters, eval]
-import nodes / [build_node]
 
 from pkg/compiler/vm {.all.} import stack_trace_aux
 
@@ -284,7 +283,7 @@ proc seen(self: ScriptController, target: Unit, distance: float): bool =
   let unit = self.active_unit
   if unit of Build:
     let ray = Build(unit).sight_ray
-    let node = BuildNode(Build(unit).node)
+    let node = VoxelTerrain(Build(unit).node)
     let target_position = unit.node.to_local(target.position)
     let angle = target_position - ray.transform.origin
     if angle.length <= distance and angle.normalized.z <= -0.3:
@@ -759,3 +758,4 @@ when is_main_module:
   state.config.lib_dir = current_source_path().parent_dir / ".." / ".." / "vmlib"
   var b = Bot.init
   let c = ScriptController.init
+  state.units.add b

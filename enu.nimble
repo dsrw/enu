@@ -5,30 +5,29 @@ var
     of "windows": ("windows", ".dll", ".exe")
     of "macosx" : ("osx", ".dylib", "")
     else        : ("x11", ".so", "")
-  cpu             = if host_cpu == "arm64": "arm64"
-                    else: "64"
-  generated_dir   = "generated/godotapi"
-  api_json        = "api.json"
-  generator       = "tools/build_helpers"
-  godot_bin       = this_dir() & &"/vendor/godot/bin/godot.{target}.opt.tools.{cpu}{exe_ext}"
+  cpu = if host_cpu == "arm64": "arm64" else: "64"
+  generated_dir = "generated/godotapi"
+  api_json = "api.json"
+  generator = "tools/build_helpers"
+  godot_bin = this_dir() & &"/vendor/godot/bin/godot.{target}.opt.tools.{cpu}{exe_ext}"
   godot_build_url = "https://docs.godotengine.org/en/stable/development/compiling/index.html"
-  gcc_dlls        = ["libgcc_s_seh-1.dll", "libwinpthread-1.dll"]
-  nim_dlls        = ["pcre64.dll"]
-  godot_opts      = "target=release_debug"
+  gcc_dlls = ["libgcc_s_seh-1.dll", "libwinpthread-1.dll"]
+  nim_dlls = ["pcre64.dll"]
+  godot_opts = "target=release_debug"
   generator_path  = ""
 
-version       = "0.1.99"
-author        = "Scott Wadden"
-description   = "Logo-like DSL for Godot"
-license       = "MIT"
+version = "0.1.99"
+author = "Scott Wadden"
+description = "Logo-like DSL for Godot"
+license = "MIT"
 install_files = @["enu.nim"]
-bin_dir       = "app/_dlls"
-src_dir       = "src"
-bin           = @["enu" & lib_ext]
+bin_dir = "app/_dlls"
+src_dir = "src"
+bin = @["enu" & lib_ext]
 
 requires "nim >= 1.6.4",
-  "https://github.com/pragmagic/godot-nim#982ab52",
   "https://github.com/dsrw/Nim#a6d502f",
+  "https://github.com/dsrw/godot-nim#9c89334",
   "https://github.com/dsrw/model_citizen 0.7.1",
   "https://github.com/dsrw/nanoid.nim 0.2.1",
   "cligen 1.5.19",
@@ -36,7 +35,8 @@ requires "nim >= 1.6.4",
   "chroma",
   "markdown",
   "https://github.com/haxscramper/hmatching",
-  "zippy"
+  "zippy",
+  "https://github.com/dsrw/Nim#a6d502f"
 
 proc gen: string =
   if generator_path == "":

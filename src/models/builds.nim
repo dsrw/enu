@@ -431,12 +431,12 @@ when is_main_module:
   import unittest, states
   type Node = ref object of RootObj
 
-  var b = Build.init(root = true)
+  var b = Build.init
 
   b.draw vec3(1, 1, 1), (Computed, Color())
-  check vec3(1, 1, 1) in b.voxels[vec3(0, 0, 0)]
+  check vec3(1, 1, 1) in b.chunks[vec3(0, 0, 0)]
   b.draw vec3(17, 17, 17), (Computed, Color())
-  check vec3(17, 17, 17) in b.voxels[vec3(1, 1, 1)]
+  check vec3(17, 17, 17) in b.chunks[vec3(1, 1, 1)]
   var c = Build.init(transform = Transform(origin: vec3(5, 5, 5)))
   c.parent = b
 
