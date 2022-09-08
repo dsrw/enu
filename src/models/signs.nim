@@ -34,11 +34,11 @@ proc init*(_: type Sign,
   )
 
   self.flags += Visible
-  self.track state.flags:
+  state.flags.watch:
     if PrimaryDown.added and Hover in self.flags:
       state.open_sign.value = self
 
-  self.flags.changes:
+  self.flags.watch:
     if Hover.added:
       self.glow.value = 1
       state.push_flag ReticleVisible

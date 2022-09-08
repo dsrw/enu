@@ -93,7 +93,7 @@ type
     color*: ZenValue[Color]
     sight_ray*: RayCast
     frame_created*: int
-    state_zids*: seq[ZID]
+    zids*: seq[ZID]
 
   Player* = ref object of Unit
     colliders*: HashSet[Model]

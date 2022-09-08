@@ -63,7 +63,7 @@ gdobj BuildNode of VoxelTerrain:
   proc track_chunk(chunk_id: Vector3) =
     if chunk_id in self.model.chunks:
       self.draw_block(self.model.chunks[chunk_id])
-      self.active_chunks[chunk_id] = self.model.chunks[chunk_id].changes:
+      self.active_chunks[chunk_id] = self.model.chunks[chunk_id].watch:
         # `and not modified` isn't required, but the block will be replaced on the next iteration anyway.
         if removed and not modified:
           self.draw(change.item.key, action_colors[eraser])
@@ -97,16 +97,16 @@ gdobj BuildNode of VoxelTerrain:
       self.visible = false
 
   proc track_changes() =
-    self.model.glow.changes:
+    self.model.glow.watch:
       if added:
         self.set_glow(change.item)
 
     self.bounds = self.model.bounds.value
-    self.model.bounds.changes:
+    self.model.bounds.watch:
       if added:
         self.bounds = change.item
 
-    self.model.chunks.changes:
+    self.model.chunks.watch:
       let id = change.item.key
       if id in self.active_chunks:
         if added:
@@ -114,7 +114,7 @@ gdobj BuildNode of VoxelTerrain:
         elif removed:
           self.active_chunks[id] = empty_zid
 
-    self.model.flags.changes:
+    self.model.flags.watch:
       if Highlight.added:
         self.set_glow highlight_glow
       elif Highlight.removed:
@@ -122,11 +122,11 @@ gdobj BuildNode of VoxelTerrain:
       elif change.item == Visible:
         self.set_visibility
 
-    self.model.track state.flags:
+    state.flags.watch:
       if change.item == God:
         self.set_visibility
 
-    self.model.scale.changes:
+    self.model.scale.watch:
       if added:
         let scale = change.item
         self.scale = vec3(scale, scale, scale)
@@ -134,7 +134,7 @@ gdobj BuildNode of VoxelTerrain:
           self.model.transform.value = self.transform
         self.max_view_distance = int(self.default_view_distance.float / scale)
 
-    self.transform_zid = self.model.transform.changes:
+    self.transform_zid = self.model.transform.watch:
       if added:
         self.transform = change.item
 

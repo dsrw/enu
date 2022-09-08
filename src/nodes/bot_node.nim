@@ -62,14 +62,14 @@ gdobj BotNode of KinematicBody:
       self.visible = false
 
   proc track_changes() =
-    self.model.glow.changes:
+    self.model.glow.watch:
       if added:
         if change.item >= 1.0:
           self.highlight()
         else:
           self.set_default_material()
 
-    self.model.flags.changes:
+    self.model.flags.watch:
       if Highlight.added:
         self.highlight()
       elif Highlight.removed:
@@ -77,12 +77,12 @@ gdobj BotNode of KinematicBody:
       elif change.item == Visible:
         self.set_visibility
 
-    self.model.track state.flags:
+    state.flags.watch:
       if change.item == God:
         self.set_visibility
 
     var velocity_zid: ZID
-    velocity_zid = self.model.velocity.changes:
+    velocity_zid = self.model.velocity.watch:
       if touched:
         self.model.velocity.pause velocity_zid:
           self.model.velocity.value = self.move_and_slide(change.item, UP)
@@ -97,24 +97,24 @@ gdobj BotNode of KinematicBody:
             self.animation_player.playback_speed = change.item.length / 10
             self.animation_player.play("run", custom_blend = 0.1)
 
-    self.model.animation.changes:
+    self.model.animation.watch:
       if added or touched and change.item in ["", "auto"]:
         self.animation_player.play("idle")
       elif added:
         self.animation_player.play(change.item)
 
-    self.model.scale.changes:
+    self.model.scale.watch:
       if added:
         let scale = change.item
         self.scale = vec3(scale, scale, scale)
         self.model.transform.pause(self.transform_zid):
           self.model.transform.value = self.transform
 
-    self.model.color.changes:
+    self.model.color.watch:
       if added:
         self.set_color(change.item)
 
-    self.transform_zid = self.model.transform.changes:
+    self.transform_zid = self.model.transform.watch:
       if added:
         self.transform = change.item
 

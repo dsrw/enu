@@ -243,12 +243,23 @@ proc update_action_index*(state: GameState, change: int) =
 
   state.tool.value = Tools(index)
 
-proc make_discardable*[T](self: T): T {.discardable.} =
-  self
+# Workaround for templates not supporting {.discardable.}
+proc maybe_discard*[T](self: T): T {.discardable, inline.} = self
 
-template track*[T](self: T, zen: Zen, body: untyped) =
-  let zid = zen.changes:
-    body
-  self.state_zids.add(zid)
-  zid.make_discardable
+template watch*(zen: Zen, unit: untyped, body: untyped) =
+  when unit is Unit:
+    let zid = zen.changes:
+      body
+    unit.zids.add(zid)
+    maybe_discard(zid)
+  else:
+    {. error:
+      "Watch needs a Unit object to bind its lifetime to. The Unit " &
+      "can be passed explicitly, or found implicitly by evaluating " &
+      "`self.model`, then `self`." .}
 
+template watch*(zen: Zen, body: untyped) =
+  when compiles(self.model):
+    watch(zen, self.model, body)
+  else:
+    watch(zen, self, body)

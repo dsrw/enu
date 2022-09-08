@@ -76,7 +76,7 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
   if global: self.flags += Global
   self.flags += Visible
 
-  self.flags.changes:
+  self.flags.watch:
     if Hover.added:
       state.push_flag ReticleVisible
       if state.tool.value in {CodeMode, PlaceBot}:
@@ -87,7 +87,7 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
       root.walk_tree proc(unit: Unit) = unit.flags -= Highlight
       state.pop_flag ReticleVisible
 
-  self.track state.flags:
+  state.flags.watch:
     if Hover in self.flags:
       if PrimaryDown.added and state.tool.value == CodeMode:
         let root = self.find_root(true)

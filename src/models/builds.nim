@@ -343,7 +343,7 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
   if global: self.flags += Global
   self.flags += Visible
   self.reset()
-  self.flags.changes:
+  self.flags.watch:
     if Hover.added and state.tool.value == CodeMode:
       if Playing notin state.flags:
         let root = self.find_root(true)
@@ -369,7 +369,7 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
       else:
         state.pop_flag BlockTargetVisible
 
-  self.track state.flags:
+  state.flags.watch:
     if Hover in self.flags:
       if PrimaryDown.added:
         state.draw_unit_id = self.id

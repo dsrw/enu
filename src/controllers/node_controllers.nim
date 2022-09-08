@@ -10,17 +10,10 @@ proc remove_from_scene(unit: Unit) =
   if unit == previous_build: previous_build = nil
   if unit == current_build: current_build = nil
   let parent_node = unit.node.get_node("..")
-  proc untrack_all(self: auto) =
-    for name, field in self[].field_pairs:
-      when field is Zen:
-        field.untrack_all
-    for zid in self.state_zids:
-      Zen.untrack zid
 
-  if unit of Build: Build(unit).untrack_all
-  elif unit of Bot: Bot(unit).untrack_all
-  elif unit of Sign: Sign(unit).untrack_all
-  elif unit of Player: Player(unit).untrack_all
+  for zid in unit.zids:
+    Zen.untrack zid
+
   if ?unit.script_ctx:
     unit.script_ctx.callback = nil
   if not state.reloading and not ?unit.clone_of:
@@ -94,7 +87,7 @@ proc find_nested_changes(parent: Change[Unit]) =
         elif Removed in change.changes:
           parent.item.set_global(false)
 
-proc watch*(f: NodeController, state: GameState) =
+proc watch*(self: NodeController, state: GameState) =
   state.units.changes:
     if added():
       change.item.add_to_scene()
