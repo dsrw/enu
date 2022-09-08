@@ -89,11 +89,9 @@ gdobj SignNode of Spatial:
       if change.item == Visible:
         self.set_visibility
 
-
-    self.model.state_zids.add:
-      state.flags.changes:
-        if God.removed:
-          self.set_visibility
+    self.model.track state.flags:
+      if God.removed:
+        self.set_visibility
 
 let sign_scene = load("res://components/SignNode.tscn") as PackedScene
 proc init*(_: type SignNode): SignNode =

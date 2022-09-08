@@ -11,6 +11,18 @@
         "sha1": "b2d54fa3fa47a11a42c94f9d05f1057fc5ff16a3"
       }
     },
+    "model_citizen": {
+      "version": "0.7.3",
+      "vcsRevision": "49839f9b0528031e6ea61bab71fda68314d438f6",
+      "url": "https://github.com/dsrw/model_citizen",
+      "downloadMethod": "git",
+      "dependencies": [
+        "print"
+      ],
+      "checksums": {
+        "sha1": "0a09da56b6c19b532f4ea5176d99ddb8774bae08"
+      }
+    },
     "zippy": {
       "version": "0.10.4",
       "vcsRevision": "17e23253693cf8e09683cd6088b18ebd2789245b",
@@ -19,6 +31,28 @@
       "dependencies": [],
       "checksums": {
         "sha1": "be5f12785ba8e7f8b193de5abcc2707e534fbc54"
+      }
+    },
+    "compiler": {
+      "version": "1.6.6",
+      "vcsRevision": "a6d502f63cd82dda1f69ded81f5784df51b34144",
+      "url": "https://github.com/dsrw/Nim",
+      "downloadMethod": "git",
+      "dependencies": [],
+      "checksums": {
+        "sha1": "79086f6af1c1695e93e85c13fb019f6c7849e862"
+      }
+    },
+    "godot": {
+      "version": "0.8.5",
+      "vcsRevision": "655408fbb5d475376322bd6ec878a755d6e08517",
+      "url": "https://github.com/dsrw/godot-nim",
+      "downloadMethod": "git",
+      "dependencies": [
+        "compiler"
+      ],
+      "checksums": {
+        "sha1": "d2eee0df397f2b3d1e6e74e02f957af7b4eef436"
       }
     },
     "markdown": {
@@ -51,28 +85,6 @@
         "sha1": "c57bbe7a154c4dbaddc88fb973799a97d9a5e058"
       }
     },
-    "compiler": {
-      "version": "1.6.6",
-      "vcsRevision": "a6d502f63cd82dda1f69ded81f5784df51b34144",
-      "url": "https://github.com/dsrw/Nim",
-      "downloadMethod": "git",
-      "dependencies": [],
-      "checksums": {
-        "sha1": "79086f6af1c1695e93e85c13fb019f6c7849e862"
-      }
-    },
-    "godot": {
-      "version": "0.8.5",
-      "vcsRevision": "9c89334a26a49572b8e8046f24b389c056f9bee0",
-      "url": "https://github.com/dsrw/godot-nim",
-      "downloadMethod": "git",
-      "dependencies": [
-        "compiler"
-      ],
-      "checksums": {
-        "sha1": "41390ecd4d1242145a51eba7e69fd418ace455ee"
-      }
-    },
     "hmatching": {
       "version": "0.1.1",
       "vcsRevision": "0edbae59c25304c5b818980357774fea5a3ff31f",
@@ -81,18 +93,6 @@
       "dependencies": [],
       "checksums": {
         "sha1": "779587cd1e7a66b592d69a56f56d57056eb4b217"
-      }
-    },
-    "model_citizen": {
-      "version": "0.7.1",
-      "vcsRevision": "9e8ee9bf8ef47375f9dd23d26a4bc05a71afddb8",
-      "url": "https://github.com/dsrw/model_citizen",
-      "downloadMethod": "git",
-      "dependencies": [
-        "print"
-      ],
-      "checksums": {
-        "sha1": "25d8efc61ad1d9ae9b667b72bd9408b02a2c059b"
       }
     },
     "cligen": {

@@ -34,10 +34,9 @@ proc init*(_: type Sign,
   )
 
   self.flags += Visible
-  self.state_zids.add:
-    state.flags.changes:
-      if PrimaryDown.added and Hover in self.flags:
-        state.open_sign.value = self
+  self.track state.flags:
+    if PrimaryDown.added and Hover in self.flags:
+      state.open_sign.value = self
 
   self.flags.changes:
     if Hover.added:

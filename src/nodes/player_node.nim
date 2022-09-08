@@ -3,8 +3,8 @@ import pkg / godot except print
 import godotapi / [kinematic_body, spatial, input, input_event,
                    input_event_mouse_motion, input_event_joypad_motion,
                    ray_cast, scene_tree, input_event_pan_gesture, viewport, camera, global_constants,
-                   collision_shape, kinematic_collision]
-import core, globals, game, nodes / helpers
+                   collision_shape, kinematic_collision, packed_scene, resource_loader]
+import core, globals, nodes / helpers
 import aim_target, models
 
 proc handle_collisions(self: Player, collisions: seq[KinematicCollision]) {.inline.} =
@@ -35,6 +35,7 @@ let
   sensitivity_mouse = vec2(0.005, -0.005)
   nil_time = none(DateTime)
   input_command_timeout = 0.25
+  scene = load("res://components/Player.tscn") as PackedScene
 
 # NOTE: Most of this needs to be moved into player model
 gdobj PlayerNode of KinematicBody:
@@ -53,7 +54,7 @@ gdobj PlayerNode of KinematicBody:
     index = 0
     collision_shape: CollisionShape
     command_timer = 0.0
-    unit*: Player
+    model*: Player
     velocity_zid, rotation_zid: ZID
     boosted = false
 
@@ -103,12 +104,10 @@ gdobj PlayerNode of KinematicBody:
       result.y = velocity_current.y + gravity * delta
 
   method ready*() =
-    self.unit = Player.init(self)
-    state.player = self.unit
     self.camera_rig = self.get_node("CameraRig") as Spatial
     self.collision_shape = self.get_node("CollisionShape") as CollisionShape
     self.camera = self.camera_rig.get_node("Camera") as Camera
-    self.aim_ray  = self.camera_rig.get_node("Camera/AimRay") as RayCast
+    self.aim_ray = self.camera_rig.get_node("Camera/AimRay") as RayCast
     self.world_ray = state.nodes.game.get_node("WorldRay") as RayCast
     self.down_ray = self.find_node("DownRay") as RayCast
     self.aim_target = self.camera_rig.get_node("AimTarget") as AimTarget
@@ -116,19 +115,19 @@ gdobj PlayerNode of KinematicBody:
     self.position_start = self.camera_rig.translation
     state.nodes.player = self
 
-    state.flags.changes:
+    self.model.track state.flags:
       if MouseCaptured.removed:
         self.skip_next_mouse_move = true
 
-    self.unit.transform.changes:
+    self.model.track self.model.transform:
       if added:
         self.transform = change.item
 
-    self.rotation_zid = self.unit.rotation.changes:
+    self.rotation_zid = self.model.track(self.model.rotation):
       if added or touched:
         self.camera_rig.rotation = vec3(0, deg_to_rad change.item, 0)
 
-    self.velocity_zid = self.unit.velocity.changes:
+    self.velocity_zid = self.model.track(self.model.velocity):
       if added:
         self.velocity = change.item
 
@@ -139,8 +138,8 @@ gdobj PlayerNode of KinematicBody:
       self.world_ray
 
   method process*(delta: float) =
-    self.unit.velocity.pause self.velocity_zid:
-      self.unit.velocity.value = self.velocity
+    self.model.velocity.pause self.velocity_zid:
+      self.model.velocity.value = self.velocity
     if EditorVisible notin state.flags or CommandMode in state.flags:
       var transform = self.camera_rig.global_transform
       transform.origin = self.global_transform.origin + self.position_start
@@ -156,14 +155,14 @@ gdobj PlayerNode of KinematicBody:
       var r = self.camera_rig.rotation
       r.y = wrap(r.y, -PI, PI)
       self.camera_rig.rotation = r
-      self.unit.rotation.pause(self.rotation_zid):
-        self.unit.rotation.value = rad_to_deg r.y
+      self.model.rotation.pause(self.rotation_zid):
+        self.model.rotation.value = rad_to_deg r.y
 
     let ray_length = if state.tool.value == CodeMode: 200.0 else: 100.0
     if MouseCaptured notin state.flags:
       let
-        mouse_pos = self.get_viewport().
-                          get_mouse_position() * float get_game().scale_factor
+        mouse_pos = self.get_viewport().get_mouse_position() *
+          float state.scale_factor
         cast_from = self.camera.project_ray_origin(mouse_pos)
         cast_to = self.aim_ray.translation + self.camera.project_ray_normal(mouse_pos) * ray_length
       self.world_ray.cast_to = cast_to
@@ -203,13 +202,13 @@ gdobj PlayerNode of KinematicBody:
 
     self.velocity = self.move_and_slide(velocity, UP)
 
-    self.unit.transform.value = self.transform
+    self.model.transform.value = self.transform
 
     let collisions = collect:
       for i in 0..(self.get_slide_count - 1):
         self.get_slide_collision(i)
 
-    handle_collisions(self.unit, collisions)
+    handle_collisions(self.model, collisions)
 
     if process_input:
       if self.is_on_floor:
@@ -304,10 +303,10 @@ gdobj PlayerNode of KinematicBody:
       self.pan_delta += pan.delta.y
       if self.pan_delta > 2:
         self.pan_delta = 0
-        get_game().next_action()
+        state.update_action_index(1)
       elif self.pan_delta < -2:
         self.pan_delta = 0
-        get_game().prev_action()
+        state.update_action_index(-1)
 
     if event.is_action_pressed("fire"):
       if EditorVisible in state.flags:
@@ -324,3 +323,6 @@ gdobj PlayerNode of KinematicBody:
       state.pop_flag SecondaryDown
 
 proc get_player*(): PlayerNode = PlayerNode(state.nodes.player)
+
+proc init*(_: type PlayerNode): PlayerNode =
+  result = scene.instance() as PlayerNode

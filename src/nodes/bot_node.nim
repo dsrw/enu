@@ -77,10 +77,9 @@ gdobj BotNode of KinematicBody:
       elif change.item == Visible:
         self.set_visibility
 
-    self.model.state_zids.add:
-      state.flags.changes:
-        if change.item == God:
-          self.set_visibility
+    self.model.track state.flags:
+      if change.item == God:
+        self.set_visibility
 
     var velocity_zid: ZID
     velocity_zid = self.model.velocity.changes:

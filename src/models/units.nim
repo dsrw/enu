@@ -1,7 +1,19 @@
-import std / [os, sugar]
+import std / [os, sugar, with]
 import godotapi / spatial
 from pkg/core/godotcoretypes import Basis
 import core, models / [states, colors], libs / interpreters
+
+proc init_unit*(self: Unit) =
+  with self:
+    units = Zen.init(seq[Unit])
+    transform = Zen.init(self.start_transform)
+    flags = ZenSet[ModelFlags].init
+    code = ZenValue[string].init
+    velocity = ZenValue[Vector3].init
+    frame_delta = ZenValue[float].init
+    scale = Zen.init(1.0)
+    glow = ZenValue[float].init
+    color = Zen.init(self.start_color)
 
 proc find_root*(self: Unit, all_clones = false): Unit =
   result = self
@@ -29,12 +41,6 @@ proc data_dir*(self: Unit): string =
   else:
     self.parent.data_dir / self.id
 
-proc script_file*(self: Unit): string =
-  if self.clone_of != nil:
-    self.clone_of.script_file
-  else:
-    GameState.active.config.script_dir / self.id & ".nim"
-
 proc data_file*(self: Unit): string =
   self.data_dir / self.id & ".json"
 
@@ -57,7 +63,7 @@ method load_vars*(self: Unit) {.base.} =
   quit "override me"
 
 method reset*(self: Unit) {.base.} =
-  quit "override me"
+  discard
 
 method collect_garbage*(self: Unit) {.base.} =
   var edits = self.shared.edits

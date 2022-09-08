@@ -11,6 +11,8 @@
 if project_name() == "enu":
   --app:lib
   --noMain
+else:
+  --define:nogodot
 
 switch("warning", "GcUnsafe2:off")
 switch("warning", "LockLevel:off")

@@ -12,13 +12,13 @@ gdobj AimTarget of Sprite3D:
     self.set_as_top_level(true)
     self.bind_signals "collider_exiting"
 
-    state.flags.changes:
+    state.player.track state.flags:
       if BlockTargetVisible.added:
         self.visible = true
       elif BlockTargetVisible.removed:
         self.visible = false
 
-    state.tool.track proc(changes: auto) =
+    state.player.track state.tool:
       # tool changed. Retarget.
       if self.target_model != nil:
         self.target_model.flags -= Hover

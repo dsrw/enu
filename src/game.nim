@@ -5,7 +5,7 @@ import godotapi / [input, input_event, gd_os, node, scene_tree,
                    performance, label, theme, dynamic_font, resource_loader, main_loop,
                    project_settings, input_map, input_event_action, input_event_key, global_constants,
                    scroll_container]
-import core, types, globals, controllers / [node_controllers, script_controllers], models / serializers
+import core, types, globals, controllers, models / serializers
 
 type
   UserConfig = object
@@ -32,7 +32,6 @@ gdobj Game of Node:
     stats: Label
     last_tool = state.tool.value
     saved_mouse_position: Vector2
-    scale_factor* = 0.0
     rescale_at = get_mono_time()
     save_at = get_mono_time() + auto_save_interval
     node_controller: NodeController
@@ -53,7 +52,7 @@ gdobj Game of Node:
         total += dur
 
       let vram = get_monitor(RENDER_VIDEO_MEM_USED)
-      self.stats.text = &"FPS: {fps}\nUser: {total}\n{highest.name}: {highest.duration}\nscale_factor: {self.scale_factor}\nvram: {vram}"
+      self.stats.text = &"FPS: {fps}\nUser: {total}\n{highest.name}: {highest.duration}\nscale_factor: {state.scale_factor}\nvram: {vram}"
 
     if time > self.rescale_at:
       self.rescale_at = MonoTime.high
@@ -74,8 +73,8 @@ gdobj Game of Node:
 
   proc rescale*() =
     let vp = self.get_viewport().size
-    self.scale_factor = sqrt(config.mega_pixels * 1_000_000.0 / (vp.x * vp.y))
-    self.scaled_viewport.size = vp * self.scale_factor
+    state.scale_factor = sqrt(config.mega_pixels * 1_000_000.0 / (vp.x * vp.y))
+    self.scaled_viewport.size = vp * state.scale_factor
 
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
@@ -228,21 +227,6 @@ gdobj Game of Node:
 
     state.push_flag MouseCaptured
 
-  proc update_action_index*(change: int) =
-    var index = int(state.tool.value) + change
-    if index < 0:
-      index = int Tools.high
-    elif index > int Tools.high:
-      index = int Tools.low
-
-    state.tool.value = Tools(index)
-
-  proc next_action*() =
-    self.update_action_index(1)
-
-  proc prev_action*() =
-    self.update_action_index(-1)
-
   method on_size_changed() =
     self.rescale_at = get_mono_time()
 
@@ -266,7 +250,8 @@ gdobj Game of Node:
     state.units.clear
     NodeController.reset_nodes
     self.prepare_to_load_world()
-    load_world(self.script_controller)
+    self.script_controller.load_player()
+    self.script_controller.load_world()
     state.reloading = false
 
   method unhandled_input*(event: InputEvent) =
@@ -277,10 +262,10 @@ gdobj Game of Node:
         self.set_font_size config.font_size.value - 1
     else:
       if event.is_action_pressed("next"):
-        self.next_action()
+        state.update_action_index(1)
 
       if event.is_action_pressed("previous"):
-       self.prev_action()
+        state.update_action_index(-1)
         # NOTE: alt+enter isn't being picked up on windows if the editor is open. Needs investigation.
     if event.is_action_pressed("toggle_fullscreen") or (host_os == "windows" and
       CommandMode in state.flags and EditorVisible in state.flags and
@@ -342,5 +327,3 @@ gdobj Game of Node:
       self.script_controller.eval(url[6..^1])
     elif shell_open(url) != Error.OK:
       state.logger("err", &"Unable to open url {url}")
-
-proc get_game*(): Game = Game(state.nodes.game)

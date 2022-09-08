@@ -7,7 +7,7 @@ import pkg / compiler / ast except new_node
 import pkg / compiler / [vmdef, lineinfos, astalgo,  renderer, msgs]
 import godotapi / [spatial, ray_cast, voxel_terrain]
 import core, models /
-  [states, bots, builds, units, colors, signs]
+  [states, bots, builds, units, colors, signs, players]
 import libs / [interpreters, eval]
 
 from pkg/compiler/vm {.all.} import stack_trace_aux
@@ -598,36 +598,46 @@ proc load_script_and_dependants(self: ScriptController, unit: Unit) =
   state.reloading = false
   state.dirty_units.clear
 
+proc script_file_for(self: Unit): string =
+  if self.id == "player":
+    state.config.lib_dir & "/enu/players.nim"
+  elif not ?self.clone_of:
+    state.config.script_dir / self.id & ".nim"
+  else:
+    ""
+
 proc change_code(self: ScriptController, unit: Unit, code: string) =
   if ?unit.script_ctx and unit.script_ctx.running and not ?unit.clone_of:
     unit.collect_garbage
 
-  var all_edits = unit.shared.edits
-  for id, edits in unit.shared.edits:
-    if id != unit.id and edits.len == 0:
-      all_edits.del id
-  unit.shared.edits = all_edits
+  if ?unit.shared:
+    var all_edits = unit.shared.edits
+    for id, edits in unit.shared.edits:
+      if id != unit.id and edits.len == 0:
+        all_edits.del id
+    unit.shared.edits = all_edits
 
   unit.reset()
   state.pop_flag ConsoleVisible
-  if not state.reloading and code.strip == "" and file_exists(unit.script_file):
+  if not state.reloading and code.strip == "":
     self.interpreter.reset_module(unit.script_ctx.module_name)
     unit.script_ctx.running = false
-    remove_file unit.script_file
+    remove_file unit.script_ctx.script
     self.module_names.excl unit.script_ctx.module_name
+    unit.script_ctx.script = ""
   elif code.strip != "":
-    write_file(unit.script_file, code)
-    if unit.script_ctx.is_nil:
-      unit.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter, timeout_at: MonoTime.high)
-
-    unit.script_ctx.script = unit.script_file.expand_filename
+    unit.script_ctx.script = script_file_for unit
+    p "loading ", unit.id
     if not state.reloading and not self.retry_failures:
+      write_file(unit.script_ctx.script, code)
       self.load_script_and_dependants(unit)
     else:
-      p "loading ", unit.id
       self.load_script(unit)
 
 proc watch_code(self: ScriptController, unit: Unit) =
+  if unit.script_ctx.is_nil:
+    unit.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter, timeout_at: MonoTime.high)
+
   unit.code.changes:
     if added or touched:
       self.change_code(unit, change.item)
@@ -642,22 +652,16 @@ proc watch_units(self: ScriptController, units: ZenSeq[Unit]) =
       self.watch_code unit
       self.watch_units unit.units
 
-      if not ?unit.clone_of and file_exists(unit.script_file):
-        unit.code.value = read_file(unit.script_file)
+      if not ?unit.clone_of and file_exists(unit.script_ctx.script):
+        unit.code.value = read_file(unit.script_ctx.script)
     if removed:
       self.unmap_unit(unit)
       if not ?unit.clone_of and ?unit.script_ctx:
         self.module_names.excl unit.script_ctx.module_name
 
 proc load_player*(self: ScriptController) =
-  let unit = state.player
-  self.active_unit = unit
-  defer:
-    self.active_unit = nil
-
-  unit.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter, timeout_at: MonoTime.high)
-  unit.script_ctx.script = state.config.lib_dir & "/enu/players.nim"
-  self.load_script(unit, timeout = 30.seconds)
+  state.player = Player.init
+  state.units.add state.player
 
 proc extract_file_info(msg: string): tuple[name: string, info: TLineInfo] =
   if msg =~ re"unhandled exception: (.*)\((\d+), (\d+)\)":
@@ -755,7 +759,12 @@ proc init*(T: type ScriptController): ScriptController =
     coding, `coding=`
 
 when is_main_module:
-  state.config.lib_dir = current_source_path().parent_dir / ".." / ".." / "vmlib"
-  var b = Bot.init
-  let c = ScriptController.init
-  state.units.add b
+  proc main =
+    state.config.lib_dir = current_source_path().parent_dir / ".." / ".." / "vmlib"
+    var b = Bot.init
+    let c = ScriptController.init
+    state.units.add b
+    b.code.value = dedent """
+      forward 1
+    """
+  main()

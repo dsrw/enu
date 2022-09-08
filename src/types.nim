@@ -58,6 +58,7 @@ type
     open_sign*: ZenValue[Sign]
     timeout_frame_at*: MonoTime
     queued_action*: string
+    scale_factor*: float
 
   Model* = ref object of RootObj
     target_point*: Vector3

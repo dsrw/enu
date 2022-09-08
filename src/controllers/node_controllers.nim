@@ -2,7 +2,7 @@ import std / [strutils, os, tables]
 import pkg / [print]
 import pkg/godot except print
 import godotapi / [node, spatial]
-import core, models, nodes / [bot_node, build_node, sign_node]
+import core, models, nodes / [bot_node, build_node, sign_node, player_node]
 
 let state = GameState.active
 
@@ -15,15 +15,16 @@ proc remove_from_scene(unit: Unit) =
       when field is Zen:
         field.untrack_all
     for zid in self.state_zids:
-      state.flags.untrack zid
+      Zen.untrack zid
 
   if unit of Build: Build(unit).untrack_all
   elif unit of Bot: Bot(unit).untrack_all
   elif unit of Sign: Sign(unit).untrack_all
+  elif unit of Player: Player(unit).untrack_all
   if ?unit.script_ctx:
     unit.script_ctx.callback = nil
   if not state.reloading and not ?unit.clone_of:
-    remove_file unit.script_file
+    remove_file unit.script_ctx.script
     remove_dir unit.data_dir
   for child in unit.units:
     child.remove_from_scene()
@@ -49,7 +50,8 @@ proc add_to_scene(unit: Unit) =
     node.transform = unit.start_transform
     parent_node.add_child(unit.node)
     unit.node.owner = parent_node
-    node.setup
+    when compiles(node.setup):
+      node.setup
 
   let parent_node = if Global in unit.flags:
     state.nodes.data
@@ -59,6 +61,7 @@ proc add_to_scene(unit: Unit) =
   if unit of Bot: Bot(unit).add(BotNode, parent_node)
   elif unit of Build: Build(unit).add(BuildNode, parent_node)
   elif unit of Sign: Sign(unit).add(SignNode, parent_node)
+  elif unit of Player: Player(unit).add(PlayerNode, parent_node)
 
 proc set_global(unit: Unit, global: bool) =
   var parent_node = unit.node.get_node("..")

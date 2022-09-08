@@ -20,7 +20,7 @@ var
 proc draw*(self: Build, position: Vector3, voxel: VoxelInfo)
 
 method code_template*(self: Build, imports: string): string =
-  result = build_code_template(self.script_file, imports)
+  result = build_code_template(self.script_ctx.script, imports)
 
 proc buffer(position: Vector3): Vector3 = (position / ChunkSize).floor
 
@@ -324,26 +324,17 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
     id: id,
     chunks: ZenTable[Vector3, Chunk].init(track_children = false),
     start_transform: transform,
-    transform: Zen.init(transform),
     draw_transform: Transform.init,
-    units: ZenSeq[Unit].init,
-    color: Zen.init(color),
     start_color: color,
-    flags: ZenSet[ModelFlags].init,
-    code: ZenValue[string].init,
-    velocity: ZenValue[Vector3].init,
-    glow: ZenValue[float].init,
     drawing: true,
     bounds: Zen.init(init_aabb(vec3(), vec3(-1, -1, -1))),
     speed: 1.0,
     clone_of: clone_of,
     bot_collisions: bot_collisions,
-    frame_delta: ZenValue[float].init,
-    scale: Zen.init(1.0),
     shared: if ?parent: parent.shared else: Shared(),
     frame_created: state.frame_count
   )
-
+  self.init_unit
   if clone_of == nil:
     state.dirty_units.incl self
 
@@ -378,18 +369,17 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
       else:
         state.pop_flag BlockTargetVisible
 
-  self.state_zids.add:
-    state.flags.changes:
-      if Hover in self.flags:
-        if PrimaryDown.added:
-          state.draw_unit_id = self.id
-          self.fire
-        elif SecondaryDown.added:
-          state.draw_unit_id = self.id
-          self.remove
-      if PrimaryDown.removed or SecondaryDown.removed:
-        state.draw_unit_id = ""
-        last_point = vec3()
+  self.track state.flags:
+    if Hover in self.flags:
+      if PrimaryDown.added:
+        state.draw_unit_id = self.id
+        self.fire
+      elif SecondaryDown.added:
+        state.draw_unit_id = self.id
+        self.remove
+    if PrimaryDown.removed or SecondaryDown.removed:
+      state.draw_unit_id = ""
+      last_point = vec3()
 
   result = self
 

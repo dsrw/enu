@@ -179,7 +179,12 @@ proc init*[T: Exception](kind: type[T], message: string, parent: ref Exception =
   (ref kind)(msg: message, parent: parent)
 
 # output
-when true: # do something here for tests. Godot print crashes without godot.
+when defined(nogodot):
+  proc p*(args: varargs[string, `$`]) =
+    let msg = args.join
+    echo msg
+
+else:
   import pkg / godot
 
   proc p*(args: varargs[string, `$`]) =
@@ -228,4 +233,22 @@ proc `basis=`*(self: ZenValue[Transform], value: Basis) =
   self.value = transform
 
 proc init*(_: type Basis): Basis = init_basis()
+
+proc update_action_index*(state: GameState, change: int) =
+  var index = int(state.tool.value) + change
+  if index < 0:
+    index = int Tools.high
+  elif index > int Tools.high:
+    index = int Tools.low
+
+  state.tool.value = Tools(index)
+
+proc make_discardable*[T](self: T): T {.discardable.} =
+  self
+
+template track*[T](self: T, zen: Zen, body: untyped) =
+  let zid = zen.changes:
+    body
+  self.state_zids.add(zid)
+  zid.make_discardable
 

@@ -1,16 +1,14 @@
 import std / math
 import godotapi / spatial
-import core
+import core, models / units
 
-proc init*(_: type Player, node: Spatial): Player =
+proc init*(_: type Player): Player =
   result = Player(
-    flags: ZenSet[ModelFlags].init,
-    node: node,
-    velocity: ZenValue[Vector3].init,
-    transform: ZenValue[Transform].init,
-    scale: Zen.init(1.0),
-    rotation: Zen.init(0.0)
+    id: "player",
+    rotation: Zen.init(0.0),
+    start_transform: Transform.init(origin = vec3(0, 1, 0))
   )
+  result.init_unit
   result.flags += Global
 
 method on_begin_turn*(self: Player, direction: Vector3, degrees: float, lean: bool, move_mode: int): Callback =

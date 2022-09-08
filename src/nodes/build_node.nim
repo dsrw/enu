@@ -122,10 +122,9 @@ gdobj BuildNode of VoxelTerrain:
       elif change.item == Visible:
         self.set_visibility
 
-    self.model.state_zids.add:
-      state.flags.changes:
-        if change.item == God:
-          self.set_visibility
+    self.model.track state.flags:
+      if change.item == God:
+        self.set_visibility
 
     self.model.scale.changes:
       if added:

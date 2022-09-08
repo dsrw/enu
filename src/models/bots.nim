@@ -6,7 +6,7 @@ include "bot_code_template.nim.nimf"
 let state = GameState.active
 
 method code_template*(self: Bot, imports: string): string =
-  result = bot_code_template(self.script_file, imports)
+  result = bot_code_template(self.script_ctx.script, imports)
 
 method on_begin_move*(self: Bot, direction: Vector3, steps: float, moving_mode: int): Callback =
   # move_mode param is ignored
@@ -60,24 +60,16 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
            global = true, parent: Unit = nil): Bot =
   var self = Bot(
     id: id,
-    units: Zen.init(seq[Unit]),
     start_transform: transform,
-    transform: Zen.init(transform),
-    flags: ZenSet[ModelFlags].init,
-    code: ZenValue[string].init,
-    velocity: ZenValue[Vector3].init,
     animation: Zen.init("auto"),
-    glow: ZenValue[float].init,
     speed: 1.0,
     clone_of: clone_of,
-    frame_delta: ZenValue[float].init,
-    scale: Zen.init(1.0),
-    color: Zen.init(action_colors[black]),
     start_color: action_colors[black],
     shared: if ?parent: parent.shared else: Shared(),
     parent: parent,
     frame_created: state.frame_count
   )
+  self.init_unit
   if clone_of == nil:
     state.dirty_units.incl self
 
@@ -95,17 +87,16 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
       root.walk_tree proc(unit: Unit) = unit.flags -= Highlight
       state.pop_flag ReticleVisible
 
-  self.state_zids.add:
-    state.flags.changes:
-      if Hover in self.flags:
-        if PrimaryDown.added and state.tool.value == CodeMode:
-          let root = self.find_root(true)
-          state.open_unit.value = root
-        if SecondaryDown.added and state.tool.value == PlaceBot:
-          if self.parent.is_nil:
-            state.units -= self
-          else:
-            self.parent.units -= self
+  self.track state.flags:
+    if Hover in self.flags:
+      if PrimaryDown.added and state.tool.value == CodeMode:
+        let root = self.find_root(true)
+        state.open_unit.value = root
+      if SecondaryDown.added and state.tool.value == PlaceBot:
+        if self.parent.is_nil:
+          state.units -= self
+        else:
+          self.parent.units -= self
 
   result = self
 
