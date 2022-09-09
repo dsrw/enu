@@ -626,7 +626,6 @@ proc change_code(self: ScriptController, unit: Unit, code: string) =
     self.module_names.excl unit.script_ctx.module_name
     unit.script_ctx.script = ""
   elif code.strip != "":
-    unit.script_ctx.script = script_file_for unit
     p "loading ", unit.id
     if not state.reloading and not self.retry_failures:
       write_file(unit.script_ctx.script, code)
@@ -652,8 +651,10 @@ proc watch_units(self: ScriptController, units: ZenSeq[Unit]) =
       self.watch_code unit
       self.watch_units unit.units
 
-      if not ?unit.clone_of and file_exists(unit.script_ctx.script):
-        unit.code.value = read_file(unit.script_ctx.script)
+      if not ?unit.clone_of:
+        unit.script_ctx.script = script_file_for unit
+        if file_exists(unit.script_ctx.script):
+          unit.code.value = read_file(unit.script_ctx.script)
     if removed:
       self.unmap_unit(unit)
       if not ?unit.clone_of and ?unit.script_ctx:

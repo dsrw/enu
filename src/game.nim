@@ -202,7 +202,7 @@ gdobj Game of Node:
       self.scaled_viewport.get_texture.flags = FLAG_FILTER
 
     self.script_controller.load_player()
-    load_world(self.script_controller)
+    self.script_controller.load_world()
     self.get_tree().auto_accept_quit = false
     self.set_font_size config.font_size.value
 
