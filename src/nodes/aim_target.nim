@@ -8,9 +8,10 @@ let state = GameState.active
 gdobj AimTarget of Sprite3D:
   var target_model: Model
 
-  method ready*() {.gdExport.} =
+  method ready*() =
     self.set_as_top_level(true)
     self.bind_signals "collider_exiting"
+    self.visible = BlockTargetVisible in state.flags
 
     state.flags.watch(state.player):
       if BlockTargetVisible.added:
