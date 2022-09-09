@@ -560,7 +560,7 @@ proc retry_failed_scripts*(self: ScriptController) =
     self.script_error(f.unit, f.e)
   self.failed = @[]
 
-proc load_script_and_dependants(self: ScriptController, unit: Unit) =
+proc load_script_and_dependents(self: ScriptController, unit: Unit) =
   var previous: HashSet[Unit]
   var units_by_module: Table[string, Unit]
   var units_to_reload: HashSet[Unit]
@@ -630,7 +630,7 @@ proc change_code(self: ScriptController, unit: Unit, code: string) =
     p "loading ", unit.id
     if not state.reloading and not self.retry_failures:
       write_file(unit.script_ctx.script, code)
-      self.load_script_and_dependants(unit)
+      self.load_script_and_dependents(unit)
     else:
       self.load_script(unit)
 
