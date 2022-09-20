@@ -1,38 +1,6 @@
 {
   "version": 1,
   "packages": {
-    "print": {
-      "version": "1.0.2",
-      "vcsRevision": "fb09637d6ebd6416b322a2b9bb95dd513040dea7",
-      "url": "https://github.com/treeform/print",
-      "downloadMethod": "git",
-      "dependencies": [],
-      "checksums": {
-        "sha1": "b2d54fa3fa47a11a42c94f9d05f1057fc5ff16a3"
-      }
-    },
-    "model_citizen": {
-      "version": "0.7.3",
-      "vcsRevision": "49839f9b0528031e6ea61bab71fda68314d438f6",
-      "url": "https://github.com/dsrw/model_citizen",
-      "downloadMethod": "git",
-      "dependencies": [
-        "print"
-      ],
-      "checksums": {
-        "sha1": "0a09da56b6c19b532f4ea5176d99ddb8774bae08"
-      }
-    },
-    "zippy": {
-      "version": "0.10.4",
-      "vcsRevision": "17e23253693cf8e09683cd6088b18ebd2789245b",
-      "url": "https://github.com/guzba/zippy",
-      "downloadMethod": "git",
-      "dependencies": [],
-      "checksums": {
-        "sha1": "be5f12785ba8e7f8b193de5abcc2707e534fbc54"
-      }
-    },
     "compiler": {
       "version": "1.6.6",
       "vcsRevision": "a6d502f63cd82dda1f69ded81f5784df51b34144",
@@ -45,14 +13,34 @@
     },
     "godot": {
       "version": "0.8.5",
-      "vcsRevision": "655408fbb5d475376322bd6ec878a755d6e08517",
+      "vcsRevision": "125732b3605f5ac4cc027d64bdf78d5808e5b2b6",
       "url": "https://github.com/dsrw/godot-nim",
       "downloadMethod": "git",
       "dependencies": [
         "compiler"
       ],
       "checksums": {
-        "sha1": "d2eee0df397f2b3d1e6e74e02f957af7b4eef436"
+        "sha1": "d548565ca7de765a432f82520b304ca8a9837578"
+      }
+    },
+    "print": {
+      "version": "1.0.2",
+      "vcsRevision": "fb09637d6ebd6416b322a2b9bb95dd513040dea7",
+      "url": "https://github.com/treeform/print",
+      "downloadMethod": "git",
+      "dependencies": [],
+      "checksums": {
+        "sha1": "b2d54fa3fa47a11a42c94f9d05f1057fc5ff16a3"
+      }
+    },
+    "zippy": {
+      "version": "0.10.4",
+      "vcsRevision": "17e23253693cf8e09683cd6088b18ebd2789245b",
+      "url": "https://github.com/guzba/zippy",
+      "downloadMethod": "git",
+      "dependencies": [],
+      "checksums": {
+        "sha1": "be5f12785ba8e7f8b193de5abcc2707e534fbc54"
       }
     },
     "markdown": {
@@ -93,6 +81,29 @@
       "dependencies": [],
       "checksums": {
         "sha1": "779587cd1e7a66b592d69a56f56d57056eb4b217"
+      }
+    },
+    "threading": {
+      "version": "0.1.0",
+      "vcsRevision": "49562fa0d393e765823b2ea96ca14fbb9889a566",
+      "url": "https://github.com/nim-lang/threading",
+      "downloadMethod": "git",
+      "dependencies": [],
+      "checksums": {
+        "sha1": "d04764ce15e97a1e89bb92151405439900bf73bf"
+      }
+    },
+    "model_citizen": {
+      "version": "0.7.4",
+      "vcsRevision": "ea3b4c59f277d658d1e880b8bb21915c17e9e8bd",
+      "url": "https://github.com/dsrw/model_citizen",
+      "downloadMethod": "git",
+      "dependencies": [
+        "print",
+        "threading"
+      ],
+      "checksums": {
+        "sha1": "c8a567b8bf4357420ed64672e4152fff5c66e582"
       }
     },
     "cligen": {

@@ -1,4 +1,3 @@
---define:useRealtimeGC
 --define:vmExecHooks
 --threads:on
 --tlsEmulation:off
@@ -6,6 +5,7 @@
 --define:nimPreviewHashRef
 --experimental:dynamicBindSym
 --experimental:caseStmtMacros
+--mm:orc
 #--define:nimLeakDetector
 
 if project_name() == "enu":

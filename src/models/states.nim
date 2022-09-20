@@ -122,11 +122,12 @@ proc init*(_: type GameState): GameState =
 
   result = self
 
+var active_state: GameState = nil
+
 proc active*(_: type GameState, new_state = false): GameState =
-  var instance {.global.} = GameState.init
-  if new_state:
-    instance = GameState.init
-  result = instance
+  if active_state == nil or new_state:
+    active_state = GameState.init
+  result = active_state
 
 when is_main_module:
   import pkg / print
