@@ -61,7 +61,7 @@ gdobj SignNode of Spatial:
     label.update
 
     self.model.title.watch:
-      if added or touched:
+      if added() or touched():
         if change.item == "":
           label.markdown = self.model.markdown.value
         else:
@@ -70,19 +70,19 @@ gdobj SignNode of Spatial:
         label.update
 
     self.model.markdown.watch:
-      if added or touched:
+      if added() or touched():
         if self.model.title.value == "":
           label.markdown = change.item
           resize()
           label.update
 
     self.model.glow.watch:
-      if added:
+      if added():
         self.material.emission_energy = change.item
 
     self.transform = self.model.transform.value
     self.model.transform.watch:
-      if added:
+      if added():
         self.transform = change.item
 
     self.model.flags.watch:

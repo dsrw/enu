@@ -120,15 +120,15 @@ gdobj PlayerNode of KinematicBody:
         self.skip_next_mouse_move = true
 
     self.model.transform.watch:
-      if added:
+      if added():
         self.transform = change.item
 
     self.rotation_zid = self.model.rotation.watch:
-      if added or touched:
+      if added() or touched():
         self.camera_rig.rotation = vec3(0, deg_to_rad change.item, 0)
 
     self.velocity_zid = self.model.velocity.watch:
-      if added:
+      if added():
         self.velocity = change.item
 
   proc current_raycast*: RayCast =

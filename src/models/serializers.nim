@@ -131,7 +131,9 @@ proc save_world*() =
   let world = WorldInfo(enu_version: enu_version, format_version: "v0.9.1")
   write_file state.config.world_dir / "world.json", world.to_json.pretty
   p "Saving ", state.dirty_units.len, " units"
-  for unit in state.dirty_units:
+  let units = state.dirty_units
+  state.dirty_units.clear
+  for unit in units:
     unit.save
   state.dirty_units.clear
 

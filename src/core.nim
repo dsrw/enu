@@ -1,7 +1,11 @@
 import types
 export types
 
+### Globals ###
 const enu_version* = static_exec("git describe --tags HEAD")
+var thread_name* {.threadvar.}: string
+var worker_thread_id*: int
+var main_thread_id*: int
 
 ### Sugar ###
 from sugar import dup, dump, collect
@@ -246,9 +250,10 @@ proc update_action_index*(state: GameState, change: int) =
 # Workaround for templates not supporting {.discardable.}
 proc maybe_discard*[T](self: T): T {.discardable, inline.} = self
 
-template watch*(zen: Zen, unit: untyped, body: untyped) =
-  when unit is Unit:
-    let zid = zen.changes:
+template watch*(zen: Zen, unit, thread_id, body: untyped) =
+  when unit is Unit and thread_id is int:
+    let zid = zen.changes(thread_id):
+      assert change != nil
       body
     unit.zids.add(zid)
     maybe_discard(zid)
@@ -258,8 +263,20 @@ template watch*(zen: Zen, unit: untyped, body: untyped) =
       "can be passed explicitly, or found implicitly by evaluating " &
       "`self.model`, then `self`." .}
 
-template watch*(zen: Zen, body: untyped) =
-  when compiles(self.model):
-    watch(zen, self.model, body)
+template watch*(zen: Zen, param: untyped, body: untyped) =
+  when param is Unit:
+    static: echo "A"
+    watch(zen, param, get_thread_id(), body)
+  elif param is int:
+    when compiles(self.model):
+      static: echo "B"
+      watch(zen, self.model, param, body)
+    else:
+      static: echo "C"
+      watch(zen, self, param, body)
   else:
-    watch(zen, self, body)
+    {. error:
+      "Watch takes a unit or thread_id." .}
+
+template watch*(zen: Zen, body: untyped) =
+  watch(zen, get_thread_id(), body)

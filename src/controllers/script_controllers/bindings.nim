@@ -41,7 +41,7 @@ proc to_result(val: PNode): PNode = result = val
 macro bind_procs(self: ScriptController, module_name: string, proc_refs: varargs[untyped]): untyped =
   result = new_stmt_list()
   result.add quote do:
-    when not declared(script_controller):
+    when not declared_in_scope(script_controller):
       let script_controller {.inject.} = `self`
 
   for proc_ref in proc_refs:

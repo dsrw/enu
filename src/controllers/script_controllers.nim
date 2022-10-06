@@ -1,6 +1,7 @@
 import std /
   [os, macros, sugar, sets, strutils, times, monotimes, sequtils, importutils,
   tables, options, math, re]
+import locks except Lock
 import pkg / [print, godot]
 import pkg / compiler / vm except get_int
 import pkg / compiler / ast except new_node
@@ -24,6 +25,13 @@ const
   script_timeout = 5.0.seconds
 
 let state = GameState.active
+
+var worker_thread: system.Thread[ScriptController]
+
+var boot_lock: locks.Lock
+var boot_cond: locks.Cond
+boot_lock.init_lock
+boot_cond.init_cond
 
 private_access ScriptController
 private_access ScriptCtx
@@ -481,11 +489,11 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
     try:
       assert self.active_unit.is_nil
       var task_state = Done
+
       while resume_script and not state.paused:
         resume_script = false
 
-        if ctx.callback == nil or
-          (task_state = ctx.callback(delta); task_state in {Done, NextTask}):
+        if ctx.callback == nil:
           ctx.timer = MonoTime.high
           ctx.action_running = false
           self.active_unit = unit
@@ -494,8 +502,6 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
           if not ctx.running and not ?unit.clone_of:
             unit.collect_garbage
             unit.ensure_visible
-          if ctx.running and task_state == NextTask:
-            resume_script = true
 
         elif now >= ctx.timer:
           ctx.timer = now + advance_step
@@ -512,11 +518,18 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
       self.active_unit = nil
 
 proc load_script(self: ScriptController, unit: Unit, timeout = script_timeout) =
+  if thread_name != "worker":
+    write_stack_trace()
+    p "wrong thread"
+    quit 1
   let ctx = unit.script_ctx
+
+  p "loading ", ctx.script.split_file.name
   try:
     self.active_unit = unit
 
     if not state.paused:
+      p "not paused"
       let module_name = ctx.script.split_file.name
       var others = self.module_names
       self.module_names.incl module_name
@@ -607,6 +620,7 @@ proc script_file_for(self: Unit): string =
     ""
 
 proc change_code(self: ScriptController, unit: Unit, code: string) =
+  p "code change"
   if ?unit.script_ctx and unit.script_ctx.running and not ?unit.clone_of:
     unit.collect_garbage
 
@@ -634,20 +648,33 @@ proc change_code(self: ScriptController, unit: Unit, code: string) =
       self.load_script(unit)
 
 proc watch_code(self: ScriptController, unit: Unit) =
+  if thread_name != "worker":
+    write_stack_trace()
+    p "wrong thread 2"
+    quit 1
+
   if unit.script_ctx.is_nil:
     unit.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter, timeout_at: MonoTime.high)
 
   unit.code.changes:
-    if added or touched:
+    p "in changes"
+    if added() or touched():
+      p "changed"
       self.change_code(unit, change.item)
 
 proc watch_units(self: ScriptController, units: ZenSeq[Unit]) =
-  units.changes:
+  units.changes(worker_thread_id):
     let unit = change.item
     if added:
       unit.frame_delta.changes:
-        if touched:
+        if touched():
           self.advance_unit(unit, change.item)
+      unit.frame_delta.changes(main_thread_id):
+        if touched() and unit.script_ctx.callback != nil:
+          let task_state = unit.script_ctx.callback(change.item)
+          if task_state in {Done, NextTask}:
+            unit.script_ctx.callback = nil
+      p "watching ", unit.id
       self.watch_code unit
       self.watch_units unit.units
 
@@ -664,6 +691,22 @@ proc load_player*(self: ScriptController) =
   state.player = Player.init
   state.units.add state.player
 
+proc init_interpreter[T](self: ScriptController, _: T)
+
+proc worker(self: ScriptController) =
+  thread_name = "worker"
+  worker_thread_id = get_thread_id()
+  boot_lock.acquire
+  {.cast(gcsafe).}:
+    self.init_interpreter("")
+    self.watch_units state.units
+    self.load_player()
+    boot_cond.signal
+    boot_lock.release
+    while true:
+      sleep(1)
+      Zen.flush()
+
 proc extract_file_info(msg: string): tuple[name: string, info: TLineInfo] =
   if msg =~ re"unhandled exception: (.*)\((\d+), (\d+)\)":
     result = (matches[0], TLineInfo(line: matches[1].parse_int.uint16, col: matches[2].parse_int.int16))
@@ -678,12 +721,21 @@ proc eval*(self: ScriptController, code: string) =
   discard self.active_unit.script_ctx.eval(code)
 
 proc init*(T: type ScriptController): ScriptController =
+  result = ScriptController()
+  boot_lock.acquire
+  worker_thread.create_thread(worker, result)
+  boot_cond.wait(boot_lock)
+  boot_lock.release
+
+proc init_interpreter[T](self: ScriptController, _: T) =
   private_access ScriptCtx
   private_access ScriptController
 
-  let interpreter = Interpreter.init(state.config.script_dir, state.config.lib_dir)
+  var interpreter = Interpreter.init(state.config.script_dir, state.config.lib_dir)
+  let controller = self
+
+  self.interpreter = interpreter
   interpreter.config.spell_suggest_max = 0
-  let controller = ScriptController(interpreter: interpreter)
 
   interpreter.register_error_hook proc(config, info, msg, severity: auto) {.gcsafe.} =
     var info = info
@@ -730,8 +782,7 @@ proc init*(T: type ScriptController): ScriptController =
       ctx.pause_requested = false
       raise new_exception(VMPause, "vm paused")
 
-  result = controller
-  result.watch_units state.units
+  var result = controller
 
   result.bind_procs "base_bridge",
     register_active, echo_console, new_instance, exec_instance,  hit, exit,

@@ -70,6 +70,7 @@ gdobj Game of Node:
       parse_input_event(ev)
 
     durations.clear()
+    Zen.flush()
 
   proc rescale*() =
     let vp = self.get_viewport().size
@@ -193,6 +194,8 @@ gdobj Game of Node:
     theme_holder.theme = theme
 
   method ready* =
+    thread_name = "main"
+    main_thread_id = get_thread_id()
     state.nodes.data = state.nodes.game.find_node("Level").get_node("data")
     assert not state.nodes.data.is_nil
     self.scaled_viewport = self.get_node("ViewportContainer/Viewport") as Viewport
@@ -201,7 +204,6 @@ gdobj Game of Node:
     if config.mega_pixels >= 1.0:
       self.scaled_viewport.get_texture.flags = FLAG_FILTER
 
-    self.script_controller.load_player()
     self.script_controller.load_world()
     self.get_tree().auto_accept_quit = false
     self.set_font_size config.font_size.value

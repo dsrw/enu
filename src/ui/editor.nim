@@ -63,8 +63,11 @@ gdobj Editor of TextEdit:
 
   method unhandled_input*(event: InputEvent) =
     if EditorFocused in state.flags and event.is_action_pressed("ui_cancel"):
+      p "EditorFocused"
       if not (event of InputEventJoypadButton) or CommandMode notin state.flags:
+        p "setting code to ", self.text
         state.open_unit.value.code.value = self.text
+        p "set code to ", state.open_unit.value.code.value
         state.open_unit.value = nil
         self.get_tree().set_input_as_handled()
 

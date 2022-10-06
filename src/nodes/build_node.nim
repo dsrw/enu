@@ -65,10 +65,12 @@ gdobj BuildNode of VoxelTerrain:
       self.draw_block(self.model.chunks[chunk_id])
       self.active_chunks[chunk_id] = self.model.chunks[chunk_id].watch:
         # `and not modified` isn't required, but the block will be replaced on the next iteration anyway.
-        if removed and not modified:
+        assert thread_name == "main"
+        if removed() and not modified():
           self.draw(change.item.key, action_colors[eraser])
-        elif added:
+        elif added():
           self.draw(change.item.key, change.item.value.color)
+
       self.draw_block(self.model.chunks[chunk_id])
     else:
       self.active_chunks[chunk_id] = empty_zid
@@ -98,23 +100,27 @@ gdobj BuildNode of VoxelTerrain:
 
   proc track_changes() =
     self.model.glow.watch:
-      if added:
+      assert thread_name == "main"
+      if added():
         self.set_glow(change.item)
 
     self.bounds = self.model.bounds.value
     self.model.bounds.watch:
-      if added:
+      assert thread_name == "main"
+      if added():
         self.bounds = change.item
 
     self.model.chunks.watch:
+      assert thread_name == "main"
       let id = change.item.key
       if id in self.active_chunks:
-        if added:
+        if added():
           self.track_chunk(change.item.key)
         elif removed:
           self.active_chunks[id] = empty_zid
 
     self.model.flags.watch:
+      assert thread_name == "main"
       if Highlight.added:
         self.set_glow highlight_glow
       elif Highlight.removed:
@@ -123,19 +129,23 @@ gdobj BuildNode of VoxelTerrain:
         self.set_visibility
 
     state.flags.watch:
+      assert thread_name == "main"
       if change.item == God:
         self.set_visibility
 
     self.model.scale.watch:
-      if added:
+      assert thread_name == "main"
+      if added():
         let scale = change.item
         self.scale = vec3(scale, scale, scale)
         self.model.transform.pause self.transform_zid:
           self.model.transform.value = self.transform
         self.max_view_distance = int(self.default_view_distance.float / scale)
 
+
     self.transform_zid = self.model.transform.watch:
-      if added:
+      assert thread_name == "main"
+      if added():
         self.transform = change.item
 
   method process(delta: float) =

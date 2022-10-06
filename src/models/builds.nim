@@ -1,4 +1,5 @@
-import std / [hashes, tables, sets, options, sequtils, math, wrapnils, monotimes, sugar, deques]
+import std / [hashes, tables, sets, options, sequtils, math, wrapnils,
+  monotimes, sugar, deques, macros]
 import pkg / [print]
 import godotapi / spatial
 import core, models / [states, bots, colors, units]
@@ -343,7 +344,9 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
   if global: self.flags += Global
   self.flags += Visible
   self.reset()
-  self.flags.watch:
+  self.flags.watch(worker_thread_id):
+    assert thread_name == "worker"
+
     if Hover.added and state.tool.value == CodeMode:
       if Playing notin state.flags:
         let root = self.find_root(true)
@@ -369,7 +372,10 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
       else:
         state.pop_flag BlockTargetVisible
 
-  state.flags.watch:
+  static: echo "HERE!!!"
+  state.flags.watch(worker_thread_id):
+    assert thread_name == "worker"
+
     if Hover in self.flags:
       if PrimaryDown.added:
         state.draw_unit_id = self.id

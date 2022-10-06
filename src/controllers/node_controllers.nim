@@ -69,7 +69,12 @@ proc set_global(unit: Unit, global: bool) =
     unit.transform.origin = unit.transform.origin - unit.start_transform.origin
 
 proc find_nested_changes(parent: Change[Unit]) =
+  let l = parent.triggered_by.len
   for change in parent.triggered_by:
+    if parent.triggered_by.len != l:
+      write_stack_trace()
+      p "Length changed"
+      quit 1
     if change.type_name == $Change[Unit]:
       let change = Change[Unit](change)
       if Modified in change.changes:
@@ -89,6 +94,7 @@ proc find_nested_changes(parent: Change[Unit]) =
 
 proc watch*(self: NodeController, state: GameState) =
   state.units.changes:
+    assert thread_name == "main"
     if added():
       change.item.add_to_scene()
     elif modified():

@@ -63,13 +63,15 @@ gdobj BotNode of KinematicBody:
 
   proc track_changes() =
     self.model.glow.watch:
-      if added:
+      if added():
         if change.item >= 1.0:
           self.highlight()
         else:
           self.set_default_material()
+      assert thread_name == "main"
 
     self.model.flags.watch:
+      assert thread_name == "main"
       if Highlight.added:
         self.highlight()
       elif Highlight.removed:
@@ -78,12 +80,13 @@ gdobj BotNode of KinematicBody:
         self.set_visibility
 
     state.flags.watch:
+      assert thread_name == "main"
       if change.item == God:
         self.set_visibility
 
     var velocity_zid: ZID
     velocity_zid = self.model.velocity.watch:
-      if touched:
+      if touched():
         self.model.velocity.pause velocity_zid:
           self.model.velocity.value = self.move_and_slide(change.item, UP)
         if self.model.animation.value == "auto":
@@ -96,26 +99,31 @@ gdobj BotNode of KinematicBody:
           else:
             self.animation_player.playback_speed = change.item.length / 10
             self.animation_player.play("run", custom_blend = 0.1)
+      assert thread_name == "main"
 
     self.model.animation.watch:
-      if added or touched and change.item in ["", "auto"]:
+      assert thread_name == "main"
+      if added() or touched() and change.item in ["", "auto"]:
         self.animation_player.play("idle")
-      elif added:
+      elif added():
         self.animation_player.play(change.item)
 
     self.model.scale.watch:
-      if added:
+      assert thread_name == "main"
+      if added():
         let scale = change.item
         self.scale = vec3(scale, scale, scale)
         self.model.transform.pause(self.transform_zid):
           self.model.transform.value = self.transform
 
     self.model.color.watch:
-      if added:
+      assert thread_name == "main"
+      if added():
         self.set_color(change.item)
 
     self.transform_zid = self.model.transform.watch:
-      if added:
+      assert thread_name == "main"
+      if added():
         self.transform = change.item
 
   proc setup* =
