@@ -212,4 +212,3 @@ when is_main_module:
 
   state.push_flag CommandMode
   check MouseCaptured in state.flags
-

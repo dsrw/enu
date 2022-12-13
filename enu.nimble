@@ -25,10 +25,10 @@ bin_dir = "app/_dlls"
 src_dir = "src"
 bin = @["enu" & lib_ext]
 
-requires "nim >= 1.6.4",
+requires "nim >= 1.6.10",
   "https://github.com/dsrw/Nim#a6d502f",
   "https://github.com/dsrw/godot-nim#125732b",
-  "https://github.com/dsrw/model_citizen 0.7.4",
+  "https://github.com/dsrw/model_citizen 0.8.2",
   "https://github.com/dsrw/nanoid.nim 0.2.1",
   "cligen 1.5.19",
   "print#f78c855",

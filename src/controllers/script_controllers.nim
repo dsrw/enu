@@ -44,9 +44,6 @@ proc link_dependency_impl(self: ScriptController, dep: Unit) =
   p &"**reloading {dep.script_ctx.module_name} will reload {active.script_ctx.module_name}"
   dep.script_ctx.dependents.incl active.script_ctx.module_name
 
-template info: untyped =
-  instantiationInfo(-2, fullPaths = true)
-
 proc write_stack_trace(self: ScriptController) =
   let ctx = self.active_unit.script_ctx
   msg_writeln(ctx.ctx.config, "stack trace: (most recent call last)", {msgNoUnitSep})
@@ -481,11 +478,11 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
     try:
       assert self.active_unit.is_nil
       var task_state = Done
+
       while resume_script and not state.paused:
         resume_script = false
 
-        if ctx.callback == nil or
-          (task_state = ctx.callback(delta); task_state in {Done, NextTask}):
+        if ctx.callback == nil:
           ctx.timer = MonoTime.high
           ctx.action_running = false
           self.active_unit = unit
@@ -494,8 +491,6 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
           if not ctx.running and not ?unit.clone_of:
             unit.collect_garbage
             unit.ensure_visible
-          if ctx.running and task_state == NextTask:
-            resume_script = true
 
         elif now >= ctx.timer:
           ctx.timer = now + advance_step
@@ -648,6 +643,11 @@ proc watch_units(self: ScriptController, units: ZenSeq[Unit]) =
       unit.frame_delta.changes:
         if touched:
           self.advance_unit(unit, change.item)
+      unit.frame_delta.changes:
+        if touched and unit.script_ctx.callback != nil:
+          let task_state = unit.script_ctx.callback(change.item)
+          if task_state in {Done, NextTask}:
+            unit.script_ctx.callback = nil
       self.watch_code unit
       self.watch_units unit.units
 

@@ -6,6 +6,7 @@
 --experimental:dynamicBindSym
 --experimental:caseStmtMacros
 --mm:orc
+--deepcopy:on
 #--define:nimLeakDetector
 
 if project_name() == "enu":

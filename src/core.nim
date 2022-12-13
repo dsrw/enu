@@ -1,6 +1,7 @@
 import types
 export types
 
+### Globals ###
 const enu_version* = static_exec("git describe --tags HEAD")
 
 ### Sugar ###

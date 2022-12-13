@@ -12,7 +12,7 @@ proc remove_from_scene(unit: Unit) =
   let parent_node = unit.node.get_node("..")
 
   for zid in unit.zids:
-    Zen.untrack zid
+    Zen.thread_ctx.untrack zid
 
   if ?unit.script_ctx:
     unit.script_ctx.callback = nil
