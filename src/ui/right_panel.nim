@@ -3,15 +3,12 @@ import godotapi / [margin_container, input_event, scene_tree]
 import ui / markdown_label
 import core, models / [states, colors]
 
-let state = GameState.active
-
 proc set_filter(self: Control, filter: int64) =
   self.mouse_filter = filter
   for child in self.get_children:
     let child = child.as_object(Node)
     if child of Control:
       set_filter(Control(child), filter)
-
 
 gdobj RightPanel of MarginContainer:
   var label: MarkdownLabel

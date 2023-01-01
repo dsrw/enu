@@ -2,9 +2,7 @@ import godotapi / [text_edit, scene_tree, node, input_event, input_event_key,
                          rich_text_label, global_constants]
 import godot
 import std / strutils
-import globals, core
-
-let state = GameState.active
+import core, models / states
 
 gdobj Console of RichTextLabel:
   var
@@ -31,7 +29,7 @@ gdobj Console of RichTextLabel:
     self.default_mouse_filter = self.mouse_filter
 
   method ready*() =
-    GameState.active.flags.changes:
+    state.flags.changes:
       if MouseCaptured.added:
         self.mouse_filter = MOUSE_FILTER_IGNORE
       elif MouseCaptured.removed:

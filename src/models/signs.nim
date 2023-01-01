@@ -3,8 +3,6 @@ import pkg / [print]
 import godotapi / spatial
 import core, states, bots, builds, models / colors
 
-let state = GameState.active
-
 proc init*(_: type Sign,
   markdown: string, title = "", owner: Unit, transform = Transform.init,
   width = 1.0, height = 1.0, size = 32, billboard = false,

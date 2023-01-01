@@ -4,8 +4,6 @@ import pkg/godot except print
 import godotapi / [node, spatial]
 import core, models, nodes / [bot_node, build_node, sign_node, player_node]
 
-let state = GameState.active
-
 proc remove_from_scene(unit: Unit) =
   if unit == previous_build: previous_build = nil
   if unit == current_build: current_build = nil
@@ -41,10 +39,15 @@ proc add_to_scene(unit: Unit) =
     unit.node = node
     node.model = unit
     node.transform = unit.start_transform
-    parent_node.add_child(unit.node)
-    unit.node.owner = parent_node
-    when compiles(node.setup):
-      node.setup
+    if node.owner != nil:
+      echo "node shouldn't be owned"
+    if parent_node != nil and unit.node != nil:
+      parent_node.add_child(unit.node)
+      unit.node.owner = parent_node
+      when compiles(node.setup):
+        node.setup
+    else:
+      assert false, "shouldn't be here"
 
   let parent_node = if Global in unit.flags:
     state.nodes.data
@@ -89,11 +92,11 @@ proc find_nested_changes(parent: Change[Unit]) =
 
 proc watch*(self: NodeController, state: GameState) =
   state.units.changes:
-    if added():
+    if added:
       change.item.add_to_scene()
-    elif modified():
+    elif modified:
       find_nested_changes(change)
-    elif removed():
+    elif removed:
       change.item.remove_from_scene()
 
 proc reset_nodes*(_: type NodeController) =

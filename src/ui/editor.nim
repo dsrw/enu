@@ -6,8 +6,6 @@ import godotapi / [text_edit, scene_tree, node, input_event, global_constants,
 import core, globals
 import models except Color
 
-let state = GameState.active
-
 gdobj Editor of TextEdit:
   var
     comment_color* {.gdExport.} = init_color(0.5, 0.5, 0.5)

@@ -6,8 +6,6 @@ import globals, ui/preview_maker
 type
   PreviewResult = tuple[color: string, preview: Image]
 
-let state = GameState.active
-
 gdobj Toolbar of HBoxContainer:
   var
     preview_maker: PreviewMaker

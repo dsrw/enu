@@ -22,7 +22,6 @@ proc handle_collisions(self: Player, collisions: seq[KinematicCollision]) {.inli
   self.colliders = colliders
 
 let
-  state = GameState.active
   angle_x_min = -PI / 2.25
   angle_x_max = PI / 2.25
   max_speed = 100.0
@@ -102,6 +101,8 @@ gdobj PlayerNode of KinematicBody:
       else:
         state.gravity
       result.y = velocity_current.y + gravity * delta
+
+
 
   method ready*() =
     self.camera_rig = self.get_node("CameraRig") as Spatial

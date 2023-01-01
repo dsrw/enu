@@ -3,8 +3,6 @@ import pkg / [print]
 import godotapi / spatial
 import core, states, bots, builds
 
-let state = GameState.active
-
 proc fire(self: Ground, append = false) =
   state.draw_unit_id = "ground"
   var add_to {.global.}: Build

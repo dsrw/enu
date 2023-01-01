@@ -37,7 +37,7 @@ proc walk_tree*(root: Unit, callback: proc(unit: Unit)) =
 
 proc data_dir*(self: Unit): string =
   if self.parent.is_nil:
-    GameState.active.config.data_dir / self.id
+    state.config.data_dir / self.id
   else:
     self.parent.data_dir / self.id
 

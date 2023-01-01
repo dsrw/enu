@@ -5,8 +5,6 @@ import godotapi / [spatial, resource_loader, packed_scene, collision_shape,
 import ui / markdown_label, models / [signs]
 import core, models / [states]
 
-let state = GameState.active
-
 gdobj SignNode of Spatial:
   var model*: Sign
   var zid: ZID

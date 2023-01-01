@@ -3,8 +3,6 @@ import godotapi / spatial
 import core, models / [states, units, colors]
 include "bot_code_template.nim.nimf"
 
-let state = GameState.active
-
 method code_template*(self: Bot, imports: string): string =
   result = bot_code_template(self.script_ctx.script, imports)
 

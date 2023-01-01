@@ -38,11 +38,11 @@ proc to_result(val: SomeOrdinal or enum or bool): BiggestInt = BiggestInt(val)
 proc to_result(val: Vector3 or string): PNode = val.to_node
 proc to_result(val: PNode): PNode = result = val
 
-macro bind_procs(self: ScriptController, module_name: string, proc_refs: varargs[untyped]): untyped =
+macro bind_procs(self: ScriptEngine, module_name: string, proc_refs: varargs[untyped]): untyped =
   result = new_stmt_list()
   result.add quote do:
-    when not declared_in_scope(script_controller):
-      let script_controller {.inject.} = `self`
+    when not declared_in_scope(script_engine):
+      let script_engine {.inject.} = `self`
 
   for proc_ref in proc_refs:
     let
@@ -56,16 +56,16 @@ macro bind_procs(self: ScriptController, module_name: string, proc_refs: varargs
       var pos = -1
       for ident_def in arg_nodes:
         let typ = ident_def[1].str_val
-        if typ == $ScriptController.type:
-          ident"script_controller"
+        if typ == $ScriptEngine.type:
+          ident"script_engine"
         elif typ == "VmArgs":
           ident"a"
         elif typ == "ScriptCtx":
-          quote do: script_controller.active_unit.script_ctx
+          quote do: script_engine.active_unit.script_ctx
         elif typ in ["Unit", "Bot", "Build", "Sign"]:
           let getter = "get_" & typ
           pos.inc
-          new_call(bind_sym(getter), ident"script_controller", ident"a", new_lit(pos))
+          new_call(bind_sym(getter), ident"script_engine", ident"a", new_lit(pos))
         else:
           let getter = "get_" & typ
           pos.inc
@@ -74,7 +74,7 @@ macro bind_procs(self: ScriptController, module_name: string, proc_refs: varargs
     var call = new_call(proc_ref, args)
     if return_node.kind == nnkSym:
       if return_node.str_val in ["Unit", "Bot", "Build", "Sign"]:
-        call = new_call(bind_sym"set_result", ident"a", new_call(bind_sym"to_node", ident"script_controller", call))
+        call = new_call(bind_sym"set_result", ident"a", new_call(bind_sym"to_node", ident"script_engine", call))
       else:
         call = new_call(bind_sym"set_result", ident"a", new_call(bind_sym"to_result", call))
 

@@ -9,7 +9,6 @@ include "build_code_template.nim.nimf"
 
 const default_color = action_colors[blue]
 
-let state = GameState.active
 var
   current_build*: Build
   previous_build*: Build

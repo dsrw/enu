@@ -8,4 +8,4 @@ gdobj GroundNode of MeshInstance:
 
   method ready() =
     self.model = Ground.init(self)
-    GameState.active.ground = self.model
+    state.ground = self.model

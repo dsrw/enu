@@ -45,7 +45,7 @@ type
       data: Node,
       player: Node
     ]
-    player*: Player
+    player*: ZenValue[Player]
     logger*: proc(level, msg: string)
     units*: ZenSeq[Unit]
     ground*: Ground
@@ -124,7 +124,8 @@ type
     voxels_per_frame*: float
     voxels_remaining_this_frame*: float
     drawing*: bool
-    save_points*: Table[string, tuple[position: Transform, color: Color, drawing: bool]]
+    save_points*:
+      Table[string, tuple[position: Transform, color: Color, drawing: bool]]
     bounds*: ZenValue[AABB]
     bot_collisions*: bool
 
@@ -182,12 +183,5 @@ type
   Callback* = proc(delta: float): TaskStates
 
   ScriptController* = ref object
-    retry_failures*: bool
-    interpreter: Interpreter
-    module_names: HashSet[string]
-    active_unit: Unit
-    unit_map: Table[PNode, Unit]
-    node_map: Table[Unit, PNode]
-    failed: seq[tuple[unit: Unit, e: ref VMQuit]]
 
   NodeController* = ref object

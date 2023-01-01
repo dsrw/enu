@@ -10,8 +10,6 @@ const
   default_glow = 0.0
   empty_zid: ZID = 0
 
-let state = GameState.active
-
 let build_scene = load("res://components/BuildNode.tscn") as PackedScene
 let shader = load("res://shaders/terrain_voxel.shader") as Shader
 let hidden_shader = load("res://shaders/terrain_voxel_hidden.shader") as Shader

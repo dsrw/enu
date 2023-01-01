@@ -7,8 +7,6 @@ import godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
 import globals, core, print
 import core, models / [bots, units, states, colors]
 
-let state = GameState.active
-
 gdobj BotNode of KinematicBody:
   var
     model*: Bot

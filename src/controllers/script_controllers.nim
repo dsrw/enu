@@ -1,7 +1,9 @@
 import std /
   [os, macros, sugar, sets, strutils, times, monotimes, sequtils, importutils,
   tables, options, math, re]
-import pkg / [print, godot]
+import locks except Lock
+import pkg / godot except print
+import pkg / print
 import pkg / compiler / vm except get_int
 import pkg / compiler / ast except new_node
 import pkg / compiler / [vmdef, lineinfos, astalgo,  renderer, msgs]
@@ -16,6 +18,16 @@ proc retry_failed_scripts*(self: ScriptController)
 
 import models / serializers
 
+type
+  ScriptEngine = ref object
+    retry_failures: bool
+    interpreter: Interpreter
+    module_names: HashSet[string]
+    active_unit: Unit
+    unit_map: Table[PNode, Unit]
+    node_map: Table[Unit, PNode]
+    failed: seq[tuple[unit: Unit, e: ref VMQuit]]
+
 include script_controllers/bindings
 
 const
@@ -23,52 +35,58 @@ const
   error_code = some(99)
   script_timeout = 5.0.seconds
 
-let state = GameState.active
+#var state {.thread_var.}: GameState
+#state = GameState.active
 
-private_access ScriptController
+var
+  retry_failures* = false
+  worker_thread: system.Thread[tuple[ctx: ZenContext, state: GameState]]
+
+var engine: ScriptEngine
+
 private_access ScriptCtx
 
-proc map_unit(self: ScriptController, unit: Unit, pnode: PNode) =
+proc map_unit(self: ScriptEngine, unit: Unit, pnode: PNode) =
   self.unit_map[pnode] = unit
   self.node_map[unit] = pnode
 
-proc unmap_unit(self: ScriptController, unit: Unit) =
+proc unmap_unit(self: ScriptEngine, unit: Unit) =
   if unit in self.node_map:
     self.unit_map.del self.node_map[unit]
     self.node_map.del unit
 
-proc link_dependency_impl(self: ScriptController, dep: Unit) =
+proc link_dependency_impl(self: ScriptEngine, dep: Unit) =
   let dep = dep.find_root
   let active = self.active_unit.find_root
   p "id: ", dep.id
   p &"**reloading {dep.script_ctx.module_name} will reload {active.script_ctx.module_name}"
   dep.script_ctx.dependents.incl active.script_ctx.module_name
 
-proc write_stack_trace(self: ScriptController) =
+proc write_stack_trace(self: ScriptEngine) =
   let ctx = self.active_unit.script_ctx
   msg_writeln(ctx.ctx.config, "stack trace: (most recent call last)", {msgNoUnitSep})
   stack_trace_aux(ctx.ctx, ctx.tos, ctx.pc)
 
-proc get_unit(self: ScriptController, a: VmArgs, pos: int): Unit =
+proc get_unit(self: ScriptEngine, a: VmArgs, pos: int): Unit =
   let pnode = a.get_node(pos)
   result = self.unit_map[pnode]
 
-proc get_bot(self: ScriptController, a: VmArgs, pos: int): Bot =
+proc get_bot(self: ScriptEngine, a: VmArgs, pos: int): Bot =
   let unit = self.get_unit(a, pos)
   assert not unit.is_nil and unit of Bot
   Bot(unit)
 
-proc get_build(self: ScriptController, a: VmArgs, pos: int): Build =
+proc get_build(self: ScriptEngine, a: VmArgs, pos: int): Build =
   let unit = self.get_unit(a, pos)
   assert not unit.is_nil and unit of Build
   Build(unit)
 
-proc get_sign(self: ScriptController, a: VmArgs, pos: int): Sign =
+proc get_sign(self: ScriptEngine, a: VmArgs, pos: int): Sign =
   let unit = self.get_unit(a, pos)
   assert not unit.is_nil and unit of Sign
   Sign(unit)
 
-proc to_node(self: ScriptController, unit: Unit): PNode =
+proc to_node(self: ScriptEngine, unit: Unit): PNode =
   if ?unit:
     self.node_map[unit]
   else:
@@ -76,14 +94,14 @@ proc to_node(self: ScriptController, unit: Unit): PNode =
 
 # Common bindings
 
-proc press_action(self: ScriptController, name: string) =
+proc press_action(self: ScriptEngine, name: string) =
   state.queued_action = name
 
-proc register_active(self: ScriptController, pnode: PNode) =
+proc register_active(self: ScriptEngine, pnode: PNode) =
   assert not self.active_unit.is_nil
   self.map_unit(self.active_unit, pnode)
 
-proc new_instance(self: ScriptController, src: Unit, dest: PNode) =
+proc new_instance(self: ScriptEngine, src: Unit, dest: PNode) =
   let id = src.id & "_" & self.active_unit.id & "_instance_" & $(self.active_unit.units.len + 1)
   var clone = src.clone(self.active_unit, id)
   assert not clone.is_nil
@@ -93,7 +111,7 @@ proc new_instance(self: ScriptController, src: Unit, dest: PNode) =
   self.active_unit.units.add(clone)
   clone.reset
 
-proc exec_instance(self: ScriptController, unit: Unit) =
+proc exec_instance(self: ScriptEngine, unit: Unit) =
   let active = self.active_unit
   let ctx = unit.script_ctx
   self.active_unit = unit
@@ -102,9 +120,9 @@ proc exec_instance(self: ScriptController, unit: Unit) =
   ctx.timeout_at = get_mono_time() + script_timeout
   ctx.running = ctx.call_proc("run_script", self.node_map[unit], true).paused
 
-proc active_unit(self: ScriptController): Unit = self.active_unit
+proc active_unit(self: ScriptEngine): Unit = self.active_unit
 
-proc begin_turn(self: ScriptController, unit: Unit, direction: Vector3, degrees: float, lean: bool, move_mode: int): string =
+proc begin_turn(self: ScriptEngine, unit: Unit, direction: Vector3, degrees: float, lean: bool, move_mode: int): string =
   assert not degrees.is_nan
   var degrees = floor_mod(degrees, 360)
   let ctx = self.active_unit.script_ctx
@@ -112,7 +130,7 @@ proc begin_turn(self: ScriptController, unit: Unit, direction: Vector3, degrees:
   if not ctx.callback.is_nil:
     ctx.pause()
 
-proc begin_move(self: ScriptController, unit: Unit, direction: Vector3, steps: float, move_mode: int) =
+proc begin_move(self: ScriptEngine, unit: Unit, direction: Vector3, steps: float, move_mode: int) =
   var steps = steps
   var direction = direction
   let ctx = self.active_unit.script_ctx
@@ -274,8 +292,8 @@ proc `rotation=`(self: Unit, degrees: float) =
     t.origin = self.transform.value.origin
   self.transform.value = t
 
-proc seen(self: ScriptController, target: Unit, distance: float): bool =
-  if target == state.player and Flying in state.flags:
+proc seen(self: ScriptEngine, target: Unit, distance: float): bool =
+  if target == state.player.value and Flying in state.flags:
     return false
   let unit = self.active_unit
   if unit of Build:
@@ -297,7 +315,7 @@ proc seen(self: ScriptController, target: Unit, distance: float): bool =
 proc wake(self: Unit) =
   self.script_ctx.timer = get_mono_time()
 
-proc yield_script(self: ScriptController, unit: Unit) =
+proc yield_script(self: ScriptEngine, unit: Unit) =
   let ctx = unit.script_ctx
   ctx.callback = ctx.saved_callback
   ctx.saved_callback = nil
@@ -324,7 +342,7 @@ proc drop_transform(unit: Unit): Transform =
   else:
     raise ObjectConversionDefect.init("Unknown unit type")
 
-proc new_markdown_sign_impl(self: ScriptController,
+proc new_markdown_sign_impl(self: ScriptEngine,
   unit: Unit, pnode: PNode, markdown: string, title: string, width: float,
   height: float, size: int, zoomable: bool, billboard: bool): Unit =
 
@@ -349,7 +367,7 @@ proc reset(self: Unit, clear: bool) =
 proc play(self: Bot, animation_name: string) =
   self.animation.value = animation_name
 
-proc all_units(T: type Unit, self: ScriptController): PNode =
+proc all_units(T: type Unit, self: ScriptEngine): PNode =
   var node = ast.new_node(nkBracketExpr)
   state.units.value.walk_tree proc(unit: Unit) =
     if unit of T:
@@ -361,12 +379,12 @@ proc all_units(T: type Unit, self: ScriptController): PNode =
       node.add self.to_node(unit)
   result = node
 
-proc all_bots(self: ScriptController): PNode =
+proc all_bots(self: ScriptEngine): PNode =
   Bot.all_units(self)
 
 # Build bindings
 
-proc all_builds(self: ScriptController): PNode =
+proc all_builds(self: ScriptEngine): PNode =
   Build.all_units(self)
 
 proc drawing(self: Build): bool =
@@ -461,12 +479,12 @@ proc `coding=`(self: Unit, value: Unit) =
 
 # End of bindings
 
-proc script_error(self: ScriptController, unit: Unit, e: ref VMQuit) =
+proc script_error(self: ScriptEngine, unit: Unit, e: ref VMQuit) =
   state.logger("err", e.msg)
   unit.ensure_visible
   state.push_flags ConsoleVisible
 
-proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
+proc advance_unit(self: ScriptEngine, unit: Unit, delta: float) =
   let ctx = unit.script_ctx
   if ?ctx and ctx.running:
     let now = get_mono_time()
@@ -506,7 +524,7 @@ proc advance_unit(self: ScriptController, unit: Unit, delta: float) =
     finally:
       self.active_unit = nil
 
-proc load_script(self: ScriptController, unit: Unit, timeout = script_timeout) =
+proc load_script(self: ScriptEngine, unit: Unit, timeout = script_timeout) =
   let ctx = unit.script_ctx
   try:
     self.active_unit = unit
@@ -535,14 +553,14 @@ proc load_script(self: ScriptController, unit: Unit, timeout = script_timeout) =
   except VMQuit as e:
     ctx.running = false
     self.interpreter.reset_module(unit.script_ctx.module_name)
-    if self.retry_failures and e.kind != Timeout:
+    if retry_failures and e.kind != Timeout:
       self.failed.add (unit, e)
     else:
       self.script_error(unit, e)
   finally:
     self.active_unit = nil
 
-proc retry_failed_scripts*(self: ScriptController) =
+proc retry_failed_scripts(self: ScriptEngine) =
   var prev_failed: self.failed.type = @[]
   while prev_failed.len != self.failed.len:
     prev_failed = self.failed
@@ -555,12 +573,15 @@ proc retry_failed_scripts*(self: ScriptController) =
     self.script_error(f.unit, f.e)
   self.failed = @[]
 
-proc load_script_and_dependents(self: ScriptController, unit: Unit) =
+proc retry_failed_scripts*(self: ScriptController) =
+  discard
+
+proc load_script_and_dependents(self: ScriptEngine, unit: Unit) =
   var previous: HashSet[Unit]
   var units_by_module: Table[string, Unit]
   var units_to_reload: HashSet[Unit]
 
-  save_world()
+  #save_world()
 
   units_to_reload.incl unit
   state.reloading = true
@@ -601,7 +622,7 @@ proc script_file_for(self: Unit): string =
   else:
     ""
 
-proc change_code(self: ScriptController, unit: Unit, code: string) =
+proc change_code(self: ScriptEngine, unit: Unit, code: string) =
   if ?unit.script_ctx and unit.script_ctx.running and not ?unit.clone_of:
     unit.collect_garbage
 
@@ -628,7 +649,7 @@ proc change_code(self: ScriptController, unit: Unit, code: string) =
     else:
       self.load_script(unit)
 
-proc watch_code(self: ScriptController, unit: Unit) =
+proc watch_code(self: ScriptEngine, unit: Unit) =
   if unit.script_ctx.is_nil:
     unit.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter, timeout_at: MonoTime.high)
 
@@ -636,7 +657,7 @@ proc watch_code(self: ScriptController, unit: Unit) =
     if added or touched:
       self.change_code(unit, change.item)
 
-proc watch_units(self: ScriptController, units: ZenSeq[Unit]) =
+proc watch_units(self: ScriptEngine, units: ZenSeq[Unit]) =
   units.changes:
     let unit = change.item
     if added:
@@ -660,15 +681,78 @@ proc watch_units(self: ScriptController, units: ZenSeq[Unit]) =
       if not ?unit.clone_of and ?unit.script_ctx:
         self.module_names.excl unit.script_ctx.module_name
 
+proc load_player*(self: ScriptEngine) =
+  state.player.value = Player.init
+  state.units.add state.player.value
+
 proc load_player*(self: ScriptController) =
-  state.player = Player.init
-  state.units.add state.player
+  engine.load_player
+
+proc init_interpreter[T](self: ScriptEngine, _: T)
+
+proc worker_iter(params: (ZenContext, GameState)): iterator() =
+  return iterator() =
+    let (ctx, main_thread_state) = params
+
+    Zen.thread_ctx = ZenContext.init(name = "worker")
+    ctx.subscribe(Zen.thread_ctx)
+    Zen.thread_ctx.subscribe(ctx)
+    Zen.thread_ctx.recv
+    assert Zen.thread_ctx.len == ctx.len
+
+    worker_state = GameState.init_from(state)
+    worker_state.config = Config()
+    worker_state.config[] = state.config[]
+    worker_state.config.font_size = Zen.thread_ctx[state.config.font_size]
+    engine = ScriptEngine()
+    engine.init_interpreter("")
+    state = worker_state
+    engine.load_player()
+
+    engine.watch_units state.units
+
+    while true:
+      Zen.thread_ctx.recv()
+      yield
+
+#[
+proc worker(params: (ZenContext, GameState)) =
+  {.cast(gcsafe).}:
+    let (ctx, main_thread_state) = params
+    var first = true
+    worker_lock.acquire
+    Zen.thread_ctx = ZenContext.init(name = "worker")
+    ctx.subscribe(Zen.thread_ctx)
+    Zen.thread_ctx.subscribe(ctx)
+    Zen.thread_ctx.recv
+    assert Zen.thread_ctx.len == ctx.len
+    state = GameState.init_from(main_thread_state)
+    state.config = Config.init_from(main_thread_state.config)
+    state.config = Config()
+    state.config[] = main_thread_state.config[]
+    state.config.font_size = Zen.thread_ctx[state.config.font_size]
+    var engine = ScriptEngine()
+
+    engine.init_interpreter("")
+    engine.watch_units state.units
+    engine.load_player()
+    work_done.signal
+    worker_lock.release
+    while true:
+      if first:
+        first = false
+      else:
+        worker_lock.acquire
+      Zen.thread_ctx.recv()
+      work_done.signal
+      worker_lock.release
+]#
 
 proc extract_file_info(msg: string): tuple[name: string, info: TLineInfo] =
   if msg =~ re"unhandled exception: (.*)\((\d+), (\d+)\)":
     result = (matches[0], TLineInfo(line: matches[1].parse_int.uint16, col: matches[2].parse_int.int16))
 
-proc eval*(self: ScriptController, code: string) =
+proc eval*(self: ScriptEngine, code: string) =
   let active = self.active_unit
   self.active_unit = state.open_sign.value.owner
   defer:
@@ -678,12 +762,23 @@ proc eval*(self: ScriptController, code: string) =
   discard self.active_unit.script_ctx.eval(code)
 
 proc init*(T: type ScriptController): ScriptController =
-  private_access ScriptCtx
-  private_access ScriptController
+  result = ScriptController()
+  var my_ctx = Zen.thread_ctx
+  work_i = worker_iter((Zen.thread_ctx, state))
+  work_i()
 
-  let interpreter = Interpreter.init(state.config.script_dir, state.config.lib_dir)
+  state = main_state
+  worker_ctx = Zen.thread_ctx
+  Zen.thread_ctx = my_ctx
+
+proc init_interpreter[T](self: ScriptEngine, _: T) =
+  private_access ScriptCtx
+
+  var interpreter = Interpreter.init(state.config.script_dir, state.config.lib_dir)
+  let controller = self
+
+  self.interpreter = interpreter
   interpreter.config.spell_suggest_max = 0
-  let controller = ScriptController(interpreter: interpreter)
 
   interpreter.register_error_hook proc(config, info, msg, severity: auto) {.gcsafe.} =
     var info = info
@@ -730,8 +825,8 @@ proc init*(T: type ScriptController): ScriptController =
       ctx.pause_requested = false
       raise new_exception(VMPause, "vm paused")
 
-  result = controller
-  result.watch_units state.units
+  # binding.nim is expecting a var called `result`. Fix this.
+  var result = controller
 
   result.bind_procs "base_bridge",
     register_active, echo_console, new_instance, exec_instance,  hit, exit,

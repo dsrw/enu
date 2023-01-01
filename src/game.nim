@@ -1,4 +1,4 @@
-import std / [monotimes, times, os, jsonutils, json, math]
+import std / [monotimes, times, os, jsonutils, json, math, locks]
 import pkg / [godot, zippy / ziparchives]
 import godotapi / [input, input_event, gd_os, node, scene_tree,
                    packed_scene, sprite, control, viewport, viewport_texture,
@@ -20,7 +20,6 @@ type
     world_prefix: Option[string]
 
 const auto_save_interval = 30.seconds
-let state = GameState.active
 let config = state.config
 
 gdobj Game of Node:
@@ -38,6 +37,15 @@ gdobj Game of Node:
     script_controller: ScriptController
 
   method process*(delta: float) =
+    let my_ctx = Zen.thread_ctx
+    state = worker_state
+    Zen.thread_ctx = worker_ctx
+    try:
+      work_i()
+    finally:
+      state = main_state
+      Zen.thread_ctx = my_ctx
+      Zen.thread_ctx.recv
     state.timeout_frame_at = get_mono_time() + 0.1.seconds
     inc state.frame_count
     let time = get_mono_time()
@@ -201,7 +209,6 @@ gdobj Game of Node:
     if config.mega_pixels >= 1.0:
       self.scaled_viewport.get_texture.flags = FLAG_FILTER
 
-    self.script_controller.load_player()
     self.script_controller.load_world()
     self.get_tree().auto_accept_quit = false
     self.set_font_size config.font_size.value
@@ -324,6 +331,7 @@ gdobj Game of Node:
 
   method on_meta_clicked(url: string) =
     if url.starts_with("nim://"):
-      self.script_controller.eval(url[6..^1])
+      discard
+      #self.script_controller.eval(url[6..^1])
     elif shell_open(url) != Error.OK:
       state.logger("err", &"Unable to open url {url}")

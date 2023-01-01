@@ -4,7 +4,6 @@ import pkg / print
 import core, models
 import controllers / script_controllers
 
-let state = GameState.active
 var load_chunks = false
 
 type WorldInfo = object
@@ -169,10 +168,10 @@ proc load_world*(controller: ScriptController) =
     let world = read_file(state.config.world_dir / "world.json").parse_json.json_to(WorldInfo)
     load_chunks = world.format_version == "v0.9"
 
-  dont_join = true
-  controller.retry_failures = true
+  #dont_join = true
+  #retry_failures = true
   load_units(nil)
-  controller.retry_failed_scripts()
-  controller.retry_failures = false
-  dont_join = false
+  #controller.retry_failed_scripts()
+  #retry_failures = false
+  #dont_join = false
   state.dirty_units.clear

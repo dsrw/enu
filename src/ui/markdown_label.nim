@@ -43,14 +43,14 @@ gdobj MarkdownLabel of ScrollContainer:
     self.current_label = self.og_label.duplicate as RichTextLabel
     self.container.add_child(self.current_label)
     self.current_label.visible = true
-    GameState.active.nodes.game.bind_signals(self.current_label, "meta_clicked")
+    state.nodes.game.bind_signals(self.current_label, "meta_clicked")
 
   proc set_font_sizes =
     var size =
       if self.size > 0:
         self.size
       else:
-        GameState.active().config.font_size.value
+        state.config.font_size.value
 
     self.local_default_font.size = size
     self.local_italic_font.size = size
@@ -114,7 +114,7 @@ gdobj MarkdownLabel of ScrollContainer:
     self.og_text_edit.add_font_override("font", self.local_mono_font)
     self.og_label.add_font_override("normal_font", self.local_default_font)
 
-    self.zid = GameState.active.config.font_size.changes:
+    self.zid = state.config.font_size.changes:
       if added:
         self.set_font_sizes()
 
@@ -211,7 +211,7 @@ gdobj MarkdownLabel of ScrollContainer:
 
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_PREDELETE:
-      GameState.active.config.font_size.untrack(self.zid)
+      state.config.font_size.untrack(self.zid)
 
   proc update*() =
     self.resized = false

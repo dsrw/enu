@@ -3,8 +3,6 @@ import pkg / [godot]
 import godotapi / [sprite_3d, ray_cast, spatial]
 import globals, core, nodes/helpers, models
 
-let state = GameState.active
-
 gdobj AimTarget of Sprite3D:
   var target_model: Model
 
@@ -13,13 +11,14 @@ gdobj AimTarget of Sprite3D:
     self.bind_signals "collider_exiting"
     self.visible = BlockTargetVisible in state.flags
 
-    state.flags.watch(state.player):
+    state.flags.watch(state.player.value):
       if BlockTargetVisible.added:
         self.visible = true
       elif BlockTargetVisible.removed:
         self.visible = false
 
-    state.tool.watch(state.player):
+
+    state.tool.watch(state.player.value):
       # tool changed. Retarget.
       if self.target_model != nil:
         self.target_model.flags -= Hover

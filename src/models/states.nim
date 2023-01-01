@@ -94,6 +94,7 @@ proc err*(self: GameState, args: varargs[string, `$`]) =
 
 proc init*(_: type GameState): GameState =
   let self = GameState(
+    player: ZenValue[Player].init,
     flags: Zen.init(set[StateFlags]),
     units: Zen.init(seq[Unit]),
     open_unit: ZenValue[Unit].init,
@@ -103,7 +104,7 @@ proc init*(_: type GameState): GameState =
     console: ConsoleModel(log: Zen.init(seq[string])),
     open_sign: ZenValue[Sign].init
   )
-
+  result = self
   self.open_unit.changes:
     if added and change.item != nil:
       self.push_flag EditorVisible
@@ -122,12 +123,11 @@ proc init*(_: type GameState): GameState =
 
   result = self
 
-var active_state: GameState = nil
+let main_state*: GameState = GameState.init
+var state* = main_state
+var worker_state*: GameState
 
-proc active*(_: type GameState, new_state = false): GameState =
-  if active_state == nil or new_state:
-    active_state = GameState.init
-  result = active_state
+print main_state.is_nil
 
 when is_main_module:
   import pkg / print

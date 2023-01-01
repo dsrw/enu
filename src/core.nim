@@ -264,3 +264,14 @@ template watch*(zen: Zen, body: untyped) =
     watch(zen, self.model, body)
   else:
     watch(zen, self, body)
+
+import std / locks
+
+var
+  worker_lock*: locks.Lock
+  work_done*: locks.Cond
+  work_i*: iterator()
+  worker_ctx*: ZenContext
+
+worker_lock.init_lock
+work_done.init_cond

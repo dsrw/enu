@@ -4,14 +4,9 @@ import godotapi / [node, scene_tree, voxel_buffer]
 import core, models / [states]
 export strformat.`&`, states, types
 
-type
-  VoxData* = tuple[index: int, keep: bool]
-  Vox* = tuple[location: Vector3, data: VoxData]
-  VoxTable* = Table[Vector3, VoxData]
-
 proc bind_signals*(receiver, sender: Node, signals: varargs[string]) =
   let send_node = if sender == nil:
-    GameState.active.nodes.game
+    state.nodes.game
   else:
     sender
 
@@ -30,4 +25,4 @@ proc trigger*(node: Object, signal: string, args: varargs[Variant, `new_variant`
   node.emit_signal(signal, args)
 
 proc trigger*(signal: string, args: varargs[Variant]) =
-  trigger(GameState.active.nodes.game, signal, args)
+  trigger(state.nodes.game, signal, args)
