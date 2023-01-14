@@ -7,7 +7,7 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug Enu",
+      "name": "Build and Debug Enu",
       "program": "${workspaceFolder}/vendor/godot/bin/godot.osx.opt.tools.arm64",
       "windows": {
         "program": "${workspaceFolder}/vendor/godot/bin/godot.windows.opt.tools.64"
@@ -15,6 +15,21 @@
       "args": [],
       "cwd": "${workspaceFolder}/app",
       "preLaunchTask": "Build enu",
+      "initCommands": ["command source ${workspaceRoot}/.lldbinit"],
+      "presentation": {
+        "clear": true                        // <-- this line
+      }
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug Enu",
+      "program": "${workspaceFolder}/vendor/godot/bin/godot.osx.opt.tools.arm64",
+      "windows": {
+        "program": "${workspaceFolder}/vendor/godot/bin/godot.windows.opt.tools.64"
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}/app",
       "initCommands": ["command source ${workspaceRoot}/.lldbinit"],
       "presentation": {
         "clear": true                        // <-- this line
