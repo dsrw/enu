@@ -20,7 +20,7 @@ type
     world_prefix: Option[string]
 
 const auto_save_interval = 30.seconds
-let config = state.config
+state = GameState.init
 
 gdobj Game of Node:
   var
@@ -37,37 +37,22 @@ gdobj Game of Node:
     script_controller: ScriptController
 
   method process*(delta: float) =
-    let my_ctx = Zen.thread_ctx
-    state = worker_state
-    Zen.thread_ctx = worker_ctx
-    try:
-      work_i()
-    finally:
-      state = main_state
-      Zen.thread_ctx = my_ctx
-      Zen.thread_ctx.recv
+    Zen.thread_ctx.recv
     state.timeout_frame_at = get_mono_time() + 0.1.seconds
     inc state.frame_count
     let time = get_mono_time()
-    if config.show_stats:
+    if state.config.show_stats:
       let fps = get_monitor(TIME_FPS)
-      var
-        total: times.Duration
-        highest: tuple[name: string, duration: times.Duration]
-      for name, dur in durations:
-        if dur > highest.duration:
-          highest = (name, dur)
-        total += dur
 
       let vram = get_monitor(RENDER_VIDEO_MEM_USED)
-      self.stats.text = &"FPS: {fps}\nUser: {total}\n{highest.name}: {highest.duration}\nscale_factor: {state.scale_factor}\nvram: {vram}"
+      self.stats.text = &"FPS: {fps}\nscale_factor: {state.scale_factor}\nvram: {vram}"
 
     if time > self.rescale_at:
       self.rescale_at = MonoTime.high
       self.rescale()
     if time > self.save_at:
       self.save_at = time + auto_save_interval
-      save_world()
+      #save_world()
 
     if state.queued_action != "":
       var ev = gdnew[InputEventAction]()
@@ -77,16 +62,14 @@ gdobj Game of Node:
 
       parse_input_event(ev)
 
-    durations.clear()
-
   proc rescale*() =
     let vp = self.get_viewport().size
-    state.scale_factor = sqrt(config.mega_pixels * 1_000_000.0 / (vp.x * vp.y))
+    state.scale_factor = sqrt(state.config.mega_pixels * 1_000_000.0 / (vp.x * vp.y))
     self.scaled_viewport.size = vp * state.scale_factor
 
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
-      save_world()
+      #save_world()
       self.get_tree().quit()
     if what == main_loop.NOTIFICATION_WM_ABOUT:
       alert(&"Enu {enu_version}\n\n© 2022 Scott Wadden", "Enu")
@@ -117,18 +100,18 @@ gdobj Game of Node:
     let
       work_dir = get_user_data_dir()
       config_file = join_path(work_dir, "config.json")
-    write_file(config_file, config.to_json.pretty)
+    write_file(config_file, jsonutils.to_json(config).pretty)
 
   proc prepare_to_load_world() =
     let work_dir = get_user_data_dir()
-    config.world_dir = join_path(work_dir, config.world)
-    config.data_dir = join_path(config.world_dir, "data")
-    config.script_dir = join_path(config.world_dir, "scripts")
+    state.config.world_dir = join_path(work_dir, state.config.world)
+    state.config.data_dir = join_path(state.config.world_dir, "data")
+    state.config.script_dir = join_path(state.config.world_dir, "scripts")
 
-    if not file_exists(config.world_dir / "world.json"):
-      for file in walk_dir(config.lib_dir / "projects"):
-        if config.world.ends_with file.path.split_file.name:
-          file.path.extract_all(config.world_dir)
+    if not file_exists(state.config.world_dir / "world.json"):
+      for file in walk_dir(state.config.lib_dir / "projects"):
+        if state.config.world.ends_with file.path.split_file.name:
+          file.path.extract_all(state.config.world_dir)
 
     create_dir(state.config.data_dir)
     create_dir(state.config.script_dir)
@@ -163,18 +146,18 @@ gdobj Game of Node:
 
     state.set_flag(God, uc.god_mode ||= false)
 
-    set_window_fullscreen config.start_full_screen
+    set_window_fullscreen state.config.start_full_screen
 
     self.add_platform_input_actions()
 
     when defined(dist):
       let exe_dir = parent_dir get_executable_path()
       if host_os == "macosx":
-        config.lib_dir = join_path(exe_dir.parent_dir, "Resources", "vmlib")
+        state.config.lib_dir = join_path(exe_dir.parent_dir, "Resources", "vmlib")
       elif host_os == "windows":
-        config.lib_dir = join_path(exe_dir, "vmlib")
+        state.config.lib_dir = join_path(exe_dir, "vmlib")
       elif host_os == "linux":
-        config.lib_dir = join_path(exe_dir.parent_dir, "lib", "vmlib")
+        state.config.lib_dir = join_path(exe_dir.parent_dir, "lib", "vmlib")
 
     self.prepare_to_load_world()
     self.node_controller = NodeController.init
@@ -185,7 +168,7 @@ gdobj Game of Node:
 
   proc set_font_size(size: int) =
     var user_config = self.load_user_config()
-    config.font_size.value = size
+    state.config.font_size.value = size
     user_config.font_size = some(size)
     self.save_user_config(user_config)
 
@@ -206,16 +189,15 @@ gdobj Game of Node:
     self.scaled_viewport = self.get_node("ViewportContainer/Viewport") as Viewport
     self.bind_signals(self.get_viewport(), "size_changed")
     assert not self.scaled_viewport.is_nil
-    if config.mega_pixels >= 1.0:
+    if state.config.mega_pixels >= 1.0:
       self.scaled_viewport.get_texture.flags = FLAG_FILTER
 
-    self.script_controller.load_world()
     self.get_tree().auto_accept_quit = false
-    self.set_font_size config.font_size.value
+    self.set_font_size state.config.font_size.value
 
     self.reticle = self.find_node("Reticle").as(Control)
     self.stats = self.find_node("stats").as(Label)
-    self.stats.visible = config.show_stats
+    self.stats.visible = state.config.show_stats
 
     state.flags.changes:
       if MouseCaptured.added:
@@ -239,8 +221,8 @@ gdobj Game of Node:
 
   proc switch_world(diff: int) =
     if diff != 0:
-      var world = config.world
-      let prefix = config.world_prefix & "-"
+      var world = state.config.world
+      let prefix = state.config.world_prefix & "-"
       world.remove_prefix(prefix)
       var num = try:
         world.parse_int
@@ -248,25 +230,25 @@ gdobj Game of Node:
         1
       num += diff
       var user_config = self.load_user_config()
-      config.world = prefix & $num
-      user_config.world = some(config.world)
+      state.config.world = prefix & $num
+      user_config.world = some(state.config.world)
       self.save_user_config(user_config)
-    save_world()
+    #save_world()
     state.reloading = true
     state.pop_flag Playing
     state.units.clear
     NodeController.reset_nodes
     self.prepare_to_load_world()
-    self.script_controller.load_player()
-    self.script_controller.load_world()
+    #self.script_controller.load_player()
+    #self.script_controller.load_world()
     state.reloading = false
 
   method unhandled_input*(event: InputEvent) =
     if EditorVisible in state.flags or ConsoleVisible in state.flags:
       if event.is_action_pressed("zoom_in"):
-        self.set_font_size config.font_size.value + 1
+        self.set_font_size state.config.font_size.value + 1
       elif event.is_action_pressed("zoom_out"):
-        self.set_font_size config.font_size.value - 1
+        self.set_font_size state.config.font_size.value - 1
     else:
       if event.is_action_pressed("next"):
         state.update_action_index(1)
@@ -299,7 +281,7 @@ gdobj Game of Node:
       state.set_flag ConsoleVisible, ConsoleVisible notin state.flags
     elif event.is_action_pressed("quit"):
       if host_os != "macosx":
-        save_world()
+        #save_world()
         self.get_tree().quit()
     elif EditorVisible notin state.flags:
       if event.is_action_pressed("toggle_mouse_captured"):
@@ -333,5 +315,5 @@ gdobj Game of Node:
     if url.starts_with("nim://"):
       discard
       #self.script_controller.eval(url[6..^1])
-    elif shell_open(url) != Error.OK:
+    elif shell_open(url) != godotcoretypes.Error.OK:
       state.logger("err", &"Unable to open url {url}")

@@ -1,18 +1,18 @@
 import std / [tables, bitops]
 import pkg/godot except print, Color
 import pkg / [print]
-import godotapi / [node, voxel_terrain, voxel_mesher_blocky, voxel_tool, voxel_library, shader_material,
-                   resource_loader, packed_scene]
-import core, models / [builds, colors, units, states], globals
+import godotapi / [node, voxel_terrain, voxel_mesher_blocky, voxel_tool,
+       voxel_library, shader_material,resource_loader, packed_scene]
+import core, models / [builds, colors, states], globals
 
 const
   highlight_glow = 1.0
   default_glow = 0.0
   empty_zid: ZID = 0
 
-let build_scene = load("res://components/BuildNode.tscn") as PackedScene
-let shader = load("res://shaders/terrain_voxel.shader") as Shader
-let hidden_shader = load("res://shaders/terrain_voxel_hidden.shader") as Shader
+var build_scene {.threadvar.}: PackedScene
+var shader {.threadvar.}: Shader
+var hidden_shader {.threadvar.}: Shader
 
 gdobj BuildNode of VoxelTerrain:
   var
@@ -26,7 +26,7 @@ gdobj BuildNode of VoxelTerrain:
     self.default_view_distance = self.max_view_distance.int
 
   proc prepare_materials =
-    if self.model.shared.materials.len == 0:
+    if self.model.shared.value.materials.len == 0:
       # generate our own copy of the library materials, so we can manipulate them without impacting other builds.
       for i in 0..int.high:
         let m = self.get_material(i)
@@ -35,9 +35,9 @@ gdobj BuildNode of VoxelTerrain:
         else:
           let m = m.duplicate.as(ShaderMaterial)
           m.set_shader_param("emission_energy", default_glow.to_variant)
-          self.model.shared.materials.add(m)
+          self.model.shared.value.materials.add(m)
 
-    for i, material in self.model.shared.materials:
+    for i, material in self.model.shared.value.materials:
       self.set_material(i, material)
 
   method ready() =
@@ -84,12 +84,12 @@ gdobj BuildNode of VoxelTerrain:
     if Visible in self.model.flags:
       self.visible = true
 
-      for material in self.model.shared.materials:
+      for material in self.model.shared.value.materials:
         material.shader = shader
     elif Visible notin self.model.flags and God in state.flags:
       self.visible = true
 
-      for material in self.model.shared.materials:
+      for material in self.model.shared.value.materials:
         material.shader = hidden_shader
     else:
       self.visible = false
@@ -140,11 +140,12 @@ gdobj BuildNode of VoxelTerrain:
     if ?self.model:
       self.model.frame_delta.touch delta
       self.model.transform.pause self.transform_zid:
-        self.model.transform.value = self.transform
+       self.model.transform.value = self.transform
 
   proc setup* =
     let was_skipping_join = dont_join
     dont_join = true
+
     self.track_changes
 
     dont_join = was_skipping_join
@@ -154,4 +155,8 @@ gdobj BuildNode of VoxelTerrain:
       self.collision_layer = layer
 
 proc init*(_: type BuildNode): BuildNode =
+  if build_scene.is_nil:
+    build_scene = load("res://components/BuildNode.tscn") as PackedScene
+    shader = load("res://shaders/terrain_voxel.shader") as Shader
+    hidden_shader = load("res://shaders/terrain_voxel_hidden.shader") as Shader
   result = build_scene.instance() as BuildNode

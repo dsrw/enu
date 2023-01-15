@@ -7,7 +7,7 @@ import godotapi / [kinematic_body, spatial, input, input_event,
 import core, globals, nodes / helpers
 import aim_target, models
 
-proc handle_collisions(self: Player, collisions: seq[KinematicCollision]) {.inline.} =
+proc handle_collisions(self: Player, collisions: seq[KinematicCollision]) {.inline, gcsafe.} =
   var colliders: HashSet[Model]
   for collision in collisions:
     let collider = collision.collider
@@ -34,7 +34,6 @@ let
   sensitivity_mouse = vec2(0.005, -0.005)
   nil_time = none(DateTime)
   input_command_timeout = 0.25
-  scene = load("res://components/Player.tscn") as PackedScene
 
 # NOTE: Most of this needs to be moved into player model
 gdobj PlayerNode of KinematicBody:
@@ -115,7 +114,6 @@ gdobj PlayerNode of KinematicBody:
 
     self.position_start = self.camera_rig.translation
     state.nodes.player = self
-
     state.flags.watch:
       if MouseCaptured.removed:
         self.skip_next_mouse_move = true
@@ -124,6 +122,7 @@ gdobj PlayerNode of KinematicBody:
       if added:
         self.transform = change.item
 
+    assert not self.model.rotation.is_nil, "Rotation is nil"
     self.rotation_zid = self.model.rotation.watch:
       if added or touched:
         self.camera_rig.rotation = vec3(0, deg_to_rad change.item, 0)
@@ -156,8 +155,9 @@ gdobj PlayerNode of KinematicBody:
       var r = self.camera_rig.rotation
       r.y = wrap(r.y, -PI, PI)
       self.camera_rig.rotation = r
+
       self.model.rotation.pause(self.rotation_zid):
-        self.model.rotation.value = rad_to_deg r.y
+       self.model.rotation.value = rad_to_deg r.y
 
     let ray_length = if state.tool.value == CodeMode: 200.0 else: 100.0
     if MouseCaptured notin state.flags:
@@ -325,5 +325,8 @@ gdobj PlayerNode of KinematicBody:
 
 proc get_player*(): PlayerNode = PlayerNode(state.nodes.player)
 
+var scene {.threadvar.}: PackedScene
 proc init*(_: type PlayerNode): PlayerNode =
+  if scene.is_nil:
+    scene = load("res://components/Player.tscn") as PackedScene
   result = scene.instance() as PlayerNode

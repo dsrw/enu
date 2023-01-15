@@ -46,7 +46,7 @@ type
       player: Node
     ]
     player*: ZenValue[Player]
-    logger*: proc(level, msg: string)
+    logger*: proc(level, msg: string) {.gcsafe.}
     units*: ZenSeq[Unit]
     ground*: Ground
     draw_unit_id*: string
@@ -68,9 +68,10 @@ type
 
   Ground* = ref object of Model
 
-  Shared* = ref object
+  Shared* = ref object of RootObj
+    id*: string
     materials*: seq[ShaderMaterial]
-    edits*: Table[string, Table[Vector3, VoxelInfo]]
+    edits*: ZenTable[string, Table[Vector3, VoxelInfo]]
 
   Unit* = ref object of Model
     id*: string
@@ -88,7 +89,7 @@ type
     clone_of*: Unit
     collisions*: seq[tuple[model: Model, normal: Vector3]]
     frame_delta*: ZenValue[float]
-    shared*: Shared
+    shared*: ZenValue[Shared]
     start_color*: Color
     color*: ZenValue[Color]
     sight_ray*: RayCast
@@ -148,11 +149,11 @@ type
     script*: string
     timer*: MonoTime
     timeout_at*: MonoTime
-    load_vars*: proc()
+    load_vars*: proc() {.gcsafe.}
     ctx: PCtx
     pc: int
     tos: PStackFrame
-    line_changed*: proc(current, previous: TLineInfo)
+    line_changed*: proc(current, previous: TLineInfo) {.gcsafe.}
     current_line*: TLineInfo
     previous_line: TLineInfo
     pause_requested: bool
@@ -180,8 +181,10 @@ type
 
   VMPause* = object of CatchableError
 
-  Callback* = proc(delta: float): TaskStates
+  Callback* = proc(delta: float): TaskStates {.gcsafe.}
 
   ScriptController* = ref object
+    worker_thread*: system.Thread[tuple[ctx: ZenContext, state: GameState]]
+
 
   NodeController* = ref object

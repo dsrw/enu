@@ -126,6 +126,8 @@ gdobj BotNode of KinematicBody:
       self.model.transform.pause self.transform_zid:
         self.model.transform.value = self.transform
 
-let bot_scene = load("res://components/BotNode.tscn") as PackedScene
+var bot_scene {.threadvar.}: PackedScene
 proc init*(_: type BotNode): BotNode =
+  if bot_scene.is_nil:
+    bot_scene = load("res://components/BotNode.tscn") as PackedScene
   result = bot_scene.instance() as BotNode

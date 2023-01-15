@@ -10,14 +10,14 @@ include "build_code_template.nim.nimf"
 const default_color = action_colors[blue]
 
 var
-  current_build*: Build
-  previous_build*: Build
-  dont_join* = false
+  current_build* {.threadvar.}: Build
+  previous_build* {.threadvar.}: Build
+  dont_join* {.threadvar.}: bool
   skip_point = vec3()
   last_point: Vector3
   draw_normal = vec3()
 
-proc draw*(self: Build, position: Vector3, voxel: VoxelInfo)
+proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) {.gcsafe.}
 
 method code_template*(self: Build, imports: string): string =
   result = build_code_template(self.script_ctx.script, imports)
@@ -123,8 +123,8 @@ proc del_voxel(self: Build, position: Vector3) =
   self.chunks[buffer].del position
 
 proc restore_edits*(self: Build) =
-  if self.id in self.shared.edits:
-    for loc, info in self.shared.edits[self.id]:
+  if self.id in self.shared.value.edits:
+    for loc, info in self.shared.value.edits[self.id]:
       assert info.kind in [Manual, Hole]
       if info.kind != Hole:
         self.add_voxel(loc, info)
@@ -133,34 +133,42 @@ proc restore_edits*(self: Build) =
         if buffer in self.chunks and loc in self.chunks[buffer]:
           var info = info
           info.color = self.chunks[buffer][loc].color
-          self.shared.edits[self.id][loc] = info
+          var locations = self.shared.value.edits[self.id]
+          locations[loc] = info
+          self.shared.value.edits[self.id] = locations
           self.chunks[buffer].del loc
 
-proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) =
+proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) {.gcsafe.} =
   if voxel.kind == Computed:
-    if position in self.shared.edits[self.id]:
-      var edit = self.shared.edits[self.id][position]
+    if position in self.shared.value.edits[self.id]:
+      var edit = self.shared.value.edits[self.id][position]
       if edit.kind == Hole:
         # We're using color as a flag to indicate that the hole is active
         edit.color = voxel.color
-        self.shared.edits[self.id][position] = edit
+        var locations = self.shared.value.edits[self.id]
+        locations[position] = edit
+        self.shared.value.edits[self.id] = locations
         return
       elif edit.kind == Manual and edit.color == voxel.color:
-        self.shared.edits[self.id].del position
-    elif ?self.clone_of and position in self.clone_of.shared.edits[self.clone_of.id] and
-         self.clone_of.shared.edits[self.clone_of.id][position].kind == Hole:
+        var locations = self.shared.value.edits[self.id]
+        locations.del position
+        self.shared.value.edits[self.id] = locations
+    elif ?self.clone_of and position in self.clone_of.shared.value.edits[self.clone_of.id] and
+         self.clone_of.shared.value.edits[self.clone_of.id][position].kind == Hole:
       return
     else:
       self.add_voxel(position, voxel)
 
   else:
     state.dirty_units.incl self.find_root
-    if self.id notin self.shared.edits:
-      self.shared.edits[self.id] = init_table[Vector3, VoxelInfo]()
+    if self.id notin self.shared.value.edits:
+      self.shared.value.edits[self.id] = init_table[Vector3, VoxelInfo]()
     var voxel = voxel
     if voxel.kind == Hole and position in self:
       voxel.color = self.voxel_info(position).color
-    self.shared.edits[self.id][position] = voxel
+    var locations = self.shared.value.edits[self.id]
+    locations[position] = voxel
+    self.shared.value.edits[self.id] = locations
     if voxel.kind != Hole:
       self.add_voxel(position, voxel)
     else:
@@ -290,6 +298,7 @@ proc reset_state*(self: Build) =
   self.transform.value = self.start_transform
 
 method reset*(self: Build) =
+  debug "resetting build", id = self.id
   self.transform.value = self.start_transform
   self.color.value = self.start_color
   self.speed = 1
@@ -308,8 +317,8 @@ method reset*(self: Build) =
   self.draw(vec3(), (Computed, self.start_color))
 
 method ensure_visible*(self: Build) =
-  # It's possible for a build to have no blocks of its own if has childern with blocks. However, if the script
-  # fails or is changed to remove its childern, the unit will still exist but will have no presence in the world,
+  # It's possible for a build to have no blocks of its own if has children with blocks. However, if the script
+  # fails or is changed to remove its children, the unit will still exist but will have no presence in the world,
   # and is therefor impossible to select or modify. In that case we want to draw a single block.
   if self.units.len == 0 and not self.chunks.any_it(it.value.any_it(it.value.color != action_colors[eraser])):
     let color = if self.start_color == action_colors[eraser]:
@@ -318,8 +327,11 @@ method ensure_visible*(self: Build) =
       self.start_color
     self.draw(vec3(), (Computed, color))
 
-proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.init, color = default_color,
-                          clone_of: Unit = nil, global = true, bot_collisions = true, parent: Unit = nil): Build =
+proc init*(_: type Build,
+    id = "build_" & generate_id(), transform = Transform.init,
+    color = default_color, clone_of: Unit = nil, global = true,
+    bot_collisions = true, parent: Unit = nil): Build =
+
   var self = Build(
     id: id,
     chunks: ZenTable[Vector3, Chunk].init(track_children = false),
@@ -331,15 +343,13 @@ proc init*(_: type Build, id = "build_" & generate_id(), transform = Transform.i
     speed: 1.0,
     clone_of: clone_of,
     bot_collisions: bot_collisions,
-    shared: if ?parent: parent.shared else: Shared(),
     frame_created: state.frame_count
   )
+
   self.init_unit
   if clone_of == nil:
     state.dirty_units.incl self
 
-  if id notin self.shared.edits:
-    self.shared.edits[id] = init_table[Vector3, VoxelInfo]()
   if global: self.flags += Global
   self.flags += Visible
   self.reset()
@@ -410,8 +420,8 @@ method clone*(self: Build, clone_to: Unit, id: string): Unit =
   let clone = Build.init(id = id, transform = transform, clone_of = self, global = global, parent = clone_to,
                          color = self.start_color, bot_collisions = bot_collisions)
 
-  for loc, info in self.shared.edits[self.id]:
-    if info.kind != Hole and loc notin clone.shared.edits[clone.id]:
+  for loc, info in self.shared.value.edits[self.id]:
+    if info.kind != Hole and loc notin clone.shared.value.edits[clone.id]:
       clone.add_voxel(loc, info)
 
   clone.restore_edits

@@ -13,38 +13,10 @@ export dup, with, strformat, strutils, sequtils, sets, tables, print
 import parseutils
 export dump
 
-var
-  durations*: Table[string, Duration]
-  trace_start_time: MonoTime
-  section_start_time: MonoTime
-  current_proc: string
+import pkg / chronicles
+export chronicles
 
 template nim_filename*: string = instantiation_info(full_paths = true).filename
-
-template trace*(body: untyped): untyped =
-  # https://github.com/nim-lang/Nim/issues/8212#issuecomment-657202258
-  when not declaredInScope(internalCProcName):
-    var internalCProcName {.exportc:"__the_name_should_not_be_used", inject.}: cstring
-    {.emit: "__the_name_should_not_be_used = __func__;".}
-    var realProcNameButShouldnotBeUsed {.inject.}: string
-    discard parseUntil($internalCProcName, realProcNameButShouldnotBeUsed, "__")
-  #/
-  var proc_name = realProcNameButShouldnotBeUsed
-  let module = instantiation_info().filename[0..^3]
-  trace_start_time = get_mono_time()
-  section_start_time = trace_start_time
-
-  body
-  let
-    current_proc = module & "." & proc_name
-    duration = get_mono_time() - trace_start_time
-  durations[current_proc] = durations.get_or_default(current_proc) + duration
-
-proc log_trace*(name = "") =
-  let now = get_mono_time()
-  if name != "":
-    echo &"{current_proc}#{name} took {now - section_start_time}"
-  section_start_time = now
 
 ### times ###
 export times
@@ -180,17 +152,13 @@ proc init*[T: Exception](kind: type[T], message: string, parent: ref Exception =
   (ref kind)(msg: message, parent: parent)
 
 # output
-when defined(nogodot):
-  proc p*(args: varargs[string, `$`]) =
-    let msg = args.join
-    echo msg
 
-else:
+when not defined(no_godot):
   import pkg / godot
 
-  proc p*(args: varargs[string, `$`]) =
-    let msg = args.join
-    godot.print msg
+  default_chronicles_stream.output.writer =
+    proc (logLevel: LogLevel, msg: LogOutputStr) {.gcsafe.} =
+      godot.print msg
 
 # misc
 import pkg / core / transforms
@@ -199,6 +167,12 @@ export transforms
 import godotapi / [spatial]
 import pkg / model_citizen
 export model_citizen except `%`
+
+Zen.register_type(Player)
+Zen.register_type(Build)
+Zen.register_type(Sign)
+Zen.register_type(Bot)
+Zen.register_type(Shared)
 
 proc local_to*(self: Vector3, unit: Unit): Vector3 =
   result = self
@@ -264,14 +238,3 @@ template watch*(zen: Zen, body: untyped) =
     watch(zen, self.model, body)
   else:
     watch(zen, self, body)
-
-import std / locks
-
-var
-  worker_lock*: locks.Lock
-  work_done*: locks.Cond
-  work_i*: iterator()
-  worker_ctx*: ZenContext
-
-worker_lock.init_lock
-work_done.init_cond

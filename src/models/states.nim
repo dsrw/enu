@@ -123,11 +123,7 @@ proc init*(_: type GameState): GameState =
 
   result = self
 
-let main_state*: GameState = GameState.init
-var state* = main_state
-var worker_state*: GameState
-
-print main_state.is_nil
+var state* {.threadvar.}: GameState
 
 when is_main_module:
   import pkg / print

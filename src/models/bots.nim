@@ -63,10 +63,10 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
     speed: 1.0,
     clone_of: clone_of,
     start_color: action_colors[black],
-    shared: if ?parent: parent.shared else: Shared(),
     parent: parent,
     frame_created: state.frame_count
   )
+
   self.init_unit
   if clone_of == nil:
     state.dirty_units.incl self

@@ -1,4 +1,4 @@
-import std / [strutils, os, tables]
+import std / [strutils, os, tables, typetraits]
 import pkg / [print]
 import pkg/godot except print
 import godotapi / [node, spatial]
@@ -40,7 +40,7 @@ proc add_to_scene(unit: Unit) =
     node.model = unit
     node.transform = unit.start_transform
     if node.owner != nil:
-      echo "node shouldn't be owned"
+      error "node shouldn't be owned", typ = T.name
     if parent_node != nil and unit.node != nil:
       parent_node.add_child(unit.node)
       unit.node.owner = parent_node

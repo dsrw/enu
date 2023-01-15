@@ -91,6 +91,8 @@ gdobj SignNode of Spatial:
       if God.removed:
         self.set_visibility
 
-let sign_scene = load("res://components/SignNode.tscn") as PackedScene
+var sign_scene {.threadvar.}: PackedScene
 proc init*(_: type SignNode): SignNode =
+  if sign_scene.is_nil:
+    sign_scene = load("res://components/SignNode.tscn") as PackedScene
   result = sign_scene.instance() as SignNode

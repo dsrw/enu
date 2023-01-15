@@ -8,19 +8,19 @@ var load_chunks = false
 
 type WorldInfo = object
   enu_version, format_version: string
-
+#[
 proc write_file(path, text: string) =
   let tmp = path & ".tmp"
   let previous = path & ".previous"
   system.write_file(tmp, text)
-  p "wrote tmp file ", tmp
+  debug "wrote tmp file", tmp
   if path.file_exists:
     if previous.file_exists:
       previous.remove_file
     move_file path, previous
-    p "moved ", path, " to ", previous
+    debug "moved", src = path, dest = previous
   move_file tmp, path
-  p "moved ", tmp, " to ", path
+  debug "moved", src = tmp, dest = path
 
 proc to_json_hook(self: Color): JsonNode =
   if self == action_colors[eraser]:
@@ -36,7 +36,7 @@ proc from_json_hook(self: var Color, json: JsonNode) =
     hex.parse_html_hex
 
 proc to_json_hook(self: VoxelInfo): JsonNode =
-  %* [self.kind.ord, self.color.to_json]
+  %* [self.kind.ord, jsonutils.to_json(self.color)]
 
 proc from_json_hook(self: var VoxelInfo, json: JsonNode) =
   self.kind = VoxelKind(json[0].get_int)
@@ -59,7 +59,7 @@ proc to_json_hook(shared_edits: Table[string, Table[Vector3, VoxelInfo]]): JsonN
             (loc, info)
         {id: edit}
 
-  result = edits.to_json
+  result = jsonutils.to_json(edits)
 
 proc from_json_hook(self: var Table[Vector3, VoxelInfo], json: JsonNode) =
   assert load_chunks
@@ -82,9 +82,9 @@ proc from_json_hook(self: var Table[string, Table[Vector3, VoxelInfo]], json: Js
 proc to_json_hook(self: Build): JsonNode =
   %* {
     "id": self.id,
-    "start_transform": self.start_transform.to_json,
-    "start_color": self.start_color.to_json,
-    "edits": self.shared.edits.to_json
+    "start_transform": jsonutils.to_json(self.start_transform),
+    "start_color": jsonutils.to_json(self.start_color),
+    "edits": jsonutils.to_json(self.shared.value.edits)
   }
 
 proc from_json_hook(self: var Build, json: JsonNode) =
@@ -94,30 +94,30 @@ proc from_json_hook(self: var Build, json: JsonNode) =
   if load_chunks:
     var edit = init_table[Vector3, VoxelInfo]()
     edit.from_json(json["chunks"])
-    self.shared.edits[self.id] = edit
+    self.shared.value.edits[self.id] = edit
   else:
-    self.shared.edits.from_json(json["edits"])
+    self.shared.value.edits.from_json(json["edits"])
 
 proc to_json_hook(self: Bot): JsonNode =
   %* {
     "id": self.id,
-    "start_transform": self.start_transform.to_json,
-    "start_color": self.start_color.to_json,
-    "edits": self.shared.edits.to_json
+    "start_transform": jsonutils.to_json(self.start_transform),
+    "start_color": jsonutils.to_json(self.start_color),
+    "edits": jsonutils.to_json(self.shared.value.edits)
   }
 
 proc from_json_hook(self: var Bot, json: JsonNode) =
   self = Bot.init(id = json["id"].json_to(string), transform = json["start_transform"].json_to(Transform))
   if not load_chunks:
-    self.shared.edits.from_json(json["edits"])
+    self.shared.value.edits.from_json(json["edits"])
 
 proc save*(unit: Unit) =
   if not ?unit.clone_of:
     let data =
       if unit of Build:
-        Build(unit).to_json.pretty
+        jsonutils.to_json(Build(unit)).pretty
       elif unit of Bot:
-        Bot(unit).to_json.pretty
+        jsonutils.to_json(Bot(unit)).pretty
       else:
         return
     create_dir unit.data_dir
@@ -126,17 +126,17 @@ proc save*(unit: Unit) =
     for unit in unit.units:
       unit.save
 
-proc save_world*() =
+proc save_worldd*() =
   let world = WorldInfo(enu_version: enu_version, format_version: "v0.9.1")
-  write_file state.config.world_dir / "world.json", world.to_json.pretty
-  p "Saving ", state.dirty_units.len, " units"
+  write_file state.config.world_dir / "world.json", jsonutils.to_json(world).pretty
+  debug "Saving", unit_count = state.dirty_units.len
   let units = state.dirty_units
   state.dirty_units.clear
   for unit in units:
     unit.save
   state.dirty_units.clear
 
-proc load_units(parent: Unit) =
+proc load_unitss(parent: Unit) =
   let opts = JOptions(allow_missing_keys: true)
   let path =
     if ?parent:
@@ -161,16 +161,19 @@ proc load_units(parent: Unit) =
       Build(unit).reset_bounds
       Build(unit).restore_edits
     load_units(unit)
+]#
 
-proc load_world*(controller: ScriptController) =
-  echo "loading ", state.config.world_dir / "world.json"
-  if file_exists state.config.world_dir / "world.json":
-    let world = read_file(state.config.world_dir / "world.json").parse_json.json_to(WorldInfo)
-    load_chunks = world.format_version == "v0.9"
+proc load_world*() =
+  let world_file = state.config.world_dir / "world.json"
+  debug "loading ", world_file
+  #if file_exists(world_file):
+    #let world_json = read_file(world_file)
+    #let world = world_json.parse_json.json_to(WorldInfo)
+    #load_chunks = world.format_version == "v0.9"
 
   #dont_join = true
   #retry_failures = true
-  load_units(nil)
+  #load_units(nil)
   #controller.retry_failed_scripts()
   #retry_failures = false
   #dont_join = false

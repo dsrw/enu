@@ -1,21 +1,26 @@
---define:vmExecHooks
+--define:vm_exec_hooks
 --threads:on
---tlsEmulation:off
---threadAnalysis:off
---define:nimPreviewHashRef
---experimental:dynamicBindSym
---experimental:caseStmtMacros
+--define:nim_preview_hash_ref
+--define:nim_type_names
+--experimental:dynamic_bind_sym
 --mm:orc
 --deepcopy:on
-#--define:nimLeakDetector
+--panics:on
+--warning:"LockLevel:off"
+#--define:use_malloc
+
+--define:"chronicles_enabled=on"
+--define:"chronicles_disabled_topics=model_citizen"
+--define:"chronicles_sinks=textblocks[dynamic]"
+
+if defined(release):
+  --define:"chronicles_colors=None"
 
 if project_name() == "enu":
   --app:lib
-  --noMain
+  --no_main
 else:
-  --define:nogodot
+  --define:no_godot
 
-switch("warning", "GcUnsafe2:off")
-switch("warning", "LockLevel:off")
 switch("path", this_dir())
 switch("path", this_dir() & "/../generated")

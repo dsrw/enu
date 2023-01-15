@@ -19,7 +19,6 @@ gdobj Console of RichTextLabel:
 
     state.console.log.changes:
       if added:
-        echo change.item
         discard self.append_bbcode(change.item)
       elif removed:
         self.clear()

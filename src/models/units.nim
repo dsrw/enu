@@ -1,11 +1,12 @@
-import std / [os, sugar, with]
+import std / [os, sugar, with, tables]
 import godotapi / spatial
 from pkg/core/godotcoretypes import Basis
 import core, models / [states, colors], libs / interpreters
 
-proc init_unit*(self: Unit) =
+proc init_unit*[T: Unit](self: T) =
+  let units = Zen.init(seq[Unit])
   with self:
-    units = Zen.init(seq[Unit])
+    units = units
     transform = Zen.init(self.start_transform)
     flags = ZenSet[ModelFlags].init
     code = ZenValue[string].init
@@ -14,6 +15,18 @@ proc init_unit*(self: Unit) =
     scale = Zen.init(1.0)
     glow = ZenValue[float].init
     color = Zen.init(self.start_color)
+
+  if ?self.parent:
+    self.shared = self.parent.shared
+  else:
+    self.shared.init
+    var shared = Shared(id: self.id)
+    shared.init_zen_fields
+    self.shared.value = shared
+
+  if self.id notin self.shared.value.edits:
+    let table = init_table[Vector3, VoxelInfo]()
+    self.shared.value.edits[self.id] = table
 
 proc find_root*(self: Unit, all_clones = false): Unit =
   result = self
@@ -27,12 +40,12 @@ proc find_root*(self: Unit, all_clones = false): Unit =
     else:
       parent = parent.parent
 
-proc walk_tree*(units: seq[Unit], callback: proc(unit: Unit)) =
+proc walk_tree*(units: seq[Unit], callback: proc(unit: Unit) {.gcsafe.}) =
   for unit in units:
     callback(unit)
     walk_tree(unit.units.value, callback)
 
-proc walk_tree*(root: Unit, callback: proc(unit: Unit)) =
+proc walk_tree*(root: Unit, callback: proc(unit: Unit) {.gcsafe.}) =
   walk_tree(@[root], callback)
 
 proc data_dir*(self: Unit): string =
@@ -44,45 +57,50 @@ proc data_dir*(self: Unit): string =
 proc data_file*(self: Unit): string =
   self.data_dir / self.id & ".json"
 
-method on_begin_move*(self: Unit, direction: Vector3, steps: float, move_mode: int): Callback {.base.} =
-  quit "override me"
 
-method on_begin_turn*(self: Unit, direction: Vector3, degrees: float, lean: bool, move_mode: int): Callback {.base.} =
-  quit "override me"
 
-method clone*(self: Unit, clone_to: Unit, id: string): Unit {.base.} =
-  quit "override me"
+method on_begin_move*(self: Unit, direction: Vector3, steps: float, move_mode: int): Callback {.base, gcsafe.} =
+  raise_assert "override me"
 
-method code_template*(self: Unit, imports: string): string {.base.} =
+method on_begin_turn*(self: Unit, direction: Vector3, degrees: float, lean: bool, move_mode: int): Callback {.base, gcsafe.} =
+  raise_assert "override me"
+
+method clone*(self: Unit, clone_to: Unit, id: string): Unit {.base, gcsafe.} =
+  raise_assert "override me"
+
+method code_template*(self: Unit, imports: string): string {.base, gcsafe.} =
   read_file self.script_ctx.script
 
 method on_script_loaded*(self: Unit) {.base.} =
-  quit "override me"
+  raise_assert "override me"
 
 method load_vars*(self: Unit) {.base.} =
-  quit "override me"
+  raise_assert "override me"
 
-method reset*(self: Unit) {.base.} =
+method reset*(self: Unit) {.base, gcsafe.} =
   discard
 
-method collect_garbage*(self: Unit) {.base.} =
-  var edits = self.shared.edits
-  for id, edit in self.shared.edits:
-    var junk: seq[Vector3]
+method collect_garbage*(self: Unit) {.base, gcsafe.} =
+  var edits = self.shared.value.edits
+  for id, edit in self.shared.value.edits:
     for loc, voxel in edit:
       if voxel.kind == Hole and voxel.color == action_colors[eraser]:
-        edits[id].del loc
+        var locations = edits[id]
+        locations.del(loc)
+        edits[id] = locations
       elif voxel.kind == Hole:
         var voxel = voxel
         voxel.color = action_colors[eraser]
-        edits[id][loc] = voxel
-  self.shared.edits = edits
+        var locations = edits[id]
+        locations[loc] = voxel
+        edits[id] = locations
+  self.shared.value.edits = edits
 
-method ensure_visible*(self: Unit) {.base.} =
+method ensure_visible*(self: Unit) {.base, gcsafe.} =
   discard
 
-method on_collision*(self: Model, partner: Model, normal: Vector3) {.base.} =
+method on_collision*(self: Model, partner: Model, normal: Vector3) {.base, gcsafe.} =
   discard
 
-method off_collision*(self: Model, partner: Model) {.base.} =
+method off_collision*(self: Model, partner: Model) {.base, gcsafe.} =
   discard

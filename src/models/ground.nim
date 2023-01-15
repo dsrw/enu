@@ -3,9 +3,9 @@ import pkg / [print]
 import godotapi / spatial
 import core, states, bots, builds
 
-proc fire(self: Ground, append = false) =
+var add_to {.threadvar.}: Build
+proc fire(self: Ground, append = false) {.gcsafe.} =
   state.draw_unit_id = "ground"
-  var add_to {.global.}: Build
   let point = (self.target_point - vec3(0.5, 0, 0.5)).trunc
   if state.tool.value notin {CodeMode, PlaceBot}:
     if not append:

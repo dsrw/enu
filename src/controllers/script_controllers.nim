@@ -19,7 +19,7 @@ proc retry_failed_scripts*(self: ScriptController)
 import models / serializers
 
 type
-  ScriptEngine = ref object
+  Worker = ref object
     retry_failures: bool
     interpreter: Interpreter
     module_names: HashSet[string]
@@ -35,58 +35,61 @@ const
   error_code = some(99)
   script_timeout = 5.0.seconds
 
-#var state {.thread_var.}: GameState
-#state = GameState.active
 
 var
-  retry_failures* = false
-  worker_thread: system.Thread[tuple[ctx: ZenContext, state: GameState]]
+  worker_lock*: locks.Lock
+  work_done*: locks.Cond
 
-var engine: ScriptEngine
+worker_lock.init_lock
+work_done.init_cond
+
+var
+  retry_failures* {.threadvar.}: bool
 
 private_access ScriptCtx
 
-proc map_unit(self: ScriptEngine, unit: Unit, pnode: PNode) =
+proc map_unit(self: Worker, unit: Unit, pnode: PNode) =
   self.unit_map[pnode] = unit
   self.node_map[unit] = pnode
 
-proc unmap_unit(self: ScriptEngine, unit: Unit) =
+proc unmap_unit(self: Worker, unit: Unit) =
   if unit in self.node_map:
     self.unit_map.del self.node_map[unit]
     self.node_map.del unit
 
-proc link_dependency_impl(self: ScriptEngine, dep: Unit) =
+proc link_dependency_impl(self: Worker, dep: Unit) =
   let dep = dep.find_root
   let active = self.active_unit.find_root
-  p "id: ", dep.id
-  p &"**reloading {dep.script_ctx.module_name} will reload {active.script_ctx.module_name}"
+  debug &"**reloading {dep.script_ctx.module_name} will reload {active.script_ctx.module_name}"
   dep.script_ctx.dependents.incl active.script_ctx.module_name
 
-proc write_stack_trace(self: ScriptEngine) =
+proc write_stack_trace(self: Worker) =
   let ctx = self.active_unit.script_ctx
-  msg_writeln(ctx.ctx.config, "stack trace: (most recent call last)", {msgNoUnitSep})
-  stack_trace_aux(ctx.ctx, ctx.tos, ctx.pc)
+  {.cast(gcsafe).}:
+    msg_writeln(ctx.ctx.config, "stack trace: (most recent call last)", {msgNoUnitSep})
+    stack_trace_aux(ctx.ctx, ctx.tos, ctx.pc)
 
-proc get_unit(self: ScriptEngine, a: VmArgs, pos: int): Unit =
+proc get_unit(self: Worker, a: VmArgs, pos: int): Unit =
   let pnode = a.get_node(pos)
-  result = self.unit_map[pnode]
+  {.cast(gcsafe).}:
+    result = self.unit_map[pnode]
 
-proc get_bot(self: ScriptEngine, a: VmArgs, pos: int): Bot =
+proc get_bot(self: Worker, a: VmArgs, pos: int): Bot =
   let unit = self.get_unit(a, pos)
   assert not unit.is_nil and unit of Bot
   Bot(unit)
 
-proc get_build(self: ScriptEngine, a: VmArgs, pos: int): Build =
+proc get_build(self: Worker, a: VmArgs, pos: int): Build =
   let unit = self.get_unit(a, pos)
   assert not unit.is_nil and unit of Build
   Build(unit)
 
-proc get_sign(self: ScriptEngine, a: VmArgs, pos: int): Sign =
+proc get_sign(self: Worker, a: VmArgs, pos: int): Sign =
   let unit = self.get_unit(a, pos)
   assert not unit.is_nil and unit of Sign
   Sign(unit)
 
-proc to_node(self: ScriptEngine, unit: Unit): PNode =
+proc to_node(self: Worker, unit: Unit): PNode =
   if ?unit:
     self.node_map[unit]
   else:
@@ -94,14 +97,14 @@ proc to_node(self: ScriptEngine, unit: Unit): PNode =
 
 # Common bindings
 
-proc press_action(self: ScriptEngine, name: string) =
+proc press_action(self: Worker, name: string) =
   state.queued_action = name
 
-proc register_active(self: ScriptEngine, pnode: PNode) =
+proc register_active(self: Worker, pnode: PNode) =
   assert not self.active_unit.is_nil
   self.map_unit(self.active_unit, pnode)
 
-proc new_instance(self: ScriptEngine, src: Unit, dest: PNode) =
+proc new_instance(self: Worker, src: Unit, dest: PNode) =
   let id = src.id & "_" & self.active_unit.id & "_instance_" & $(self.active_unit.units.len + 1)
   var clone = src.clone(self.active_unit, id)
   assert not clone.is_nil
@@ -111,7 +114,7 @@ proc new_instance(self: ScriptEngine, src: Unit, dest: PNode) =
   self.active_unit.units.add(clone)
   clone.reset
 
-proc exec_instance(self: ScriptEngine, unit: Unit) =
+proc exec_instance(self: Worker, unit: Unit) =
   let active = self.active_unit
   let ctx = unit.script_ctx
   self.active_unit = unit
@@ -120,9 +123,11 @@ proc exec_instance(self: ScriptEngine, unit: Unit) =
   ctx.timeout_at = get_mono_time() + script_timeout
   ctx.running = ctx.call_proc("run_script", self.node_map[unit], true).paused
 
-proc active_unit(self: ScriptEngine): Unit = self.active_unit
+proc active_unit(self: Worker): Unit = self.active_unit
 
-proc begin_turn(self: ScriptEngine, unit: Unit, direction: Vector3, degrees: float, lean: bool, move_mode: int): string =
+proc begin_turn(self: Worker, unit: Unit, direction: Vector3, degrees: float,
+    lean: bool, move_mode: int): string =
+
   assert not degrees.is_nan
   var degrees = floor_mod(degrees, 360)
   let ctx = self.active_unit.script_ctx
@@ -130,7 +135,7 @@ proc begin_turn(self: ScriptEngine, unit: Unit, direction: Vector3, degrees: flo
   if not ctx.callback.is_nil:
     ctx.pause()
 
-proc begin_move(self: ScriptEngine, unit: Unit, direction: Vector3, steps: float, move_mode: int) =
+proc begin_move(self: Worker, unit: Unit, direction: Vector3, steps: float, move_mode: int) =
   var steps = steps
   var direction = direction
   let ctx = self.active_unit.script_ctx
@@ -159,8 +164,8 @@ proc hit(unit_a: Unit, unit_b: Unit): Vector3 =
       return collision.normal.snapped(vec3(1, 1, 1))
 
 proc echo_console(msg: string) =
-  p msg
-  state.console.log += msg & "\n"
+  debug msg
+  #state.console.log += msg & "\n"
   state.push_flag ConsoleVisible
 
 proc action_running(self: Unit): bool =
@@ -292,7 +297,7 @@ proc `rotation=`(self: Unit, degrees: float) =
     t.origin = self.transform.value.origin
   self.transform.value = t
 
-proc seen(self: ScriptEngine, target: Unit, distance: float): bool =
+proc seen(self: Worker, target: Unit, distance: float): bool =
   if target == state.player.value and Flying in state.flags:
     return false
   let unit = self.active_unit
@@ -315,7 +320,7 @@ proc seen(self: ScriptEngine, target: Unit, distance: float): bool =
 proc wake(self: Unit) =
   self.script_ctx.timer = get_mono_time()
 
-proc yield_script(self: ScriptEngine, unit: Unit) =
+proc yield_script(self: Worker, unit: Unit) =
   let ctx = unit.script_ctx
   ctx.callback = ctx.saved_callback
   ctx.saved_callback = nil
@@ -342,7 +347,7 @@ proc drop_transform(unit: Unit): Transform =
   else:
     raise ObjectConversionDefect.init("Unknown unit type")
 
-proc new_markdown_sign_impl(self: ScriptEngine,
+proc new_markdown_sign_impl(self: Worker,
   unit: Unit, pnode: PNode, markdown: string, title: string, width: float,
   height: float, size: int, zoomable: bool, billboard: bool): Unit =
 
@@ -367,7 +372,7 @@ proc reset(self: Unit, clear: bool) =
 proc play(self: Bot, animation_name: string) =
   self.animation.value = animation_name
 
-proc all_units(T: type Unit, self: ScriptEngine): PNode =
+proc all_units(T: type Unit, self: Worker): PNode =
   var node = ast.new_node(nkBracketExpr)
   state.units.value.walk_tree proc(unit: Unit) =
     if unit of T:
@@ -379,12 +384,12 @@ proc all_units(T: type Unit, self: ScriptEngine): PNode =
       node.add self.to_node(unit)
   result = node
 
-proc all_bots(self: ScriptEngine): PNode =
+proc all_bots(self: Worker): PNode =
   Bot.all_units(self)
 
 # Build bindings
 
-proc all_builds(self: ScriptEngine): PNode =
+proc all_builds(self: Worker): PNode =
   Build.all_units(self)
 
 proc drawing(self: Build): bool =
@@ -479,12 +484,12 @@ proc `coding=`(self: Unit, value: Unit) =
 
 # End of bindings
 
-proc script_error(self: ScriptEngine, unit: Unit, e: ref VMQuit) =
+proc script_error(self: Worker, unit: Unit, e: ref VMQuit) =
   state.logger("err", e.msg)
   unit.ensure_visible
   state.push_flags ConsoleVisible
 
-proc advance_unit(self: ScriptEngine, unit: Unit, delta: float) =
+proc advance_unit(self: Worker, unit: Unit, delta: float) =
   let ctx = unit.script_ctx
   if ?ctx and ctx.running:
     let now = get_mono_time()
@@ -519,12 +524,13 @@ proc advance_unit(self: ScriptEngine, unit: Unit, delta: float) =
           discard ctx.resume()
 
     except VMQuit as e:
-      self.interpreter.reset_module(unit.script_ctx.module_name)
-      self.script_error(unit, e)
+      debug "skipping"
+      #self.interpreter.reset_module(unit.script_ctx.module_name)
+      #self.script_error(unit, e)
     finally:
       self.active_unit = nil
 
-proc load_script(self: ScriptEngine, unit: Unit, timeout = script_timeout) =
+proc load_script(self: Worker, unit: Unit, timeout = script_timeout) =
   let ctx = unit.script_ctx
   try:
     self.active_unit = unit
@@ -540,7 +546,7 @@ proc load_script(self: ScriptEngine, unit: Unit, timeout = script_timeout) =
         ""
       let code = unit.code_template(imports)
       ctx.timeout_at = get_mono_time() + timeout
-      p "loading script: ", ctx.script
+      debug "loading script", script = ctx.script
       ctx.load(ctx.script, code)
 
     if not state.paused:
@@ -552,21 +558,21 @@ proc load_script(self: ScriptEngine, unit: Unit, timeout = script_timeout) =
 
   except VMQuit as e:
     ctx.running = false
-    self.interpreter.reset_module(unit.script_ctx.module_name)
-    if retry_failures and e.kind != Timeout:
-      self.failed.add (unit, e)
-    else:
-      self.script_error(unit, e)
+    # self.interpreter.reset_module(unit.script_ctx.module_name)
+    # if retry_failures and e.kind != Timeout:
+    #   self.failed.add (unit, e)
+    # else:
+    #   self.script_error(unit, e)
   finally:
     self.active_unit = nil
 
-proc retry_failed_scripts(self: ScriptEngine) =
+proc retry_failed_scripts(self: Worker) =
   var prev_failed: self.failed.type = @[]
   while prev_failed.len != self.failed.len:
     prev_failed = self.failed
     self.failed = @[]
     for f in prev_failed:
-      p "retrying: ", f.unit.script_ctx.script
+      debug "retrying", script = f.unit.script_ctx.script
       self.load_script(f.unit)
 
   for f in prev_failed:
@@ -576,7 +582,7 @@ proc retry_failed_scripts(self: ScriptEngine) =
 proc retry_failed_scripts*(self: ScriptController) =
   discard
 
-proc load_script_and_dependents(self: ScriptEngine, unit: Unit) =
+proc load_script_and_dependents(self: Worker, unit: Unit) =
   var previous: HashSet[Unit]
   var units_by_module: Table[string, Unit]
   var units_to_reload: HashSet[Unit]
@@ -599,10 +605,10 @@ proc load_script_and_dependents(self: ScriptEngine, unit: Unit) =
 
   for other in units_to_reload:
     if other != unit:
-      p "resetting: ", other.script_ctx.module_name
+      debug "resetting", module = other.script_ctx.module_name
       self.interpreter.reset_module(other.script_ctx.module_name)
 
-  p "loading ", unit.id
+  debug "loading unit", unit_id = unit.id
   self.load_script(unit)
 
   for other in units_to_reload:
@@ -622,16 +628,16 @@ proc script_file_for(self: Unit): string =
   else:
     ""
 
-proc change_code(self: ScriptEngine, unit: Unit, code: string) =
+proc change_code(self: Worker, unit: Unit, code: string) =
   if ?unit.script_ctx and unit.script_ctx.running and not ?unit.clone_of:
     unit.collect_garbage
 
   if ?unit.shared:
-    var all_edits = unit.shared.edits
-    for id, edits in unit.shared.edits:
+    var all_edits = unit.shared.value.edits
+    for id, edits in unit.shared.value.edits:
       if id != unit.id and edits.len == 0:
         all_edits.del id
-    unit.shared.edits = all_edits
+    unit.shared.value.edits = all_edits
 
   unit.reset()
   state.pop_flag ConsoleVisible
@@ -642,117 +648,116 @@ proc change_code(self: ScriptEngine, unit: Unit, code: string) =
     self.module_names.excl unit.script_ctx.module_name
     unit.script_ctx.script = ""
   elif code.strip != "":
-    p "loading ", unit.id
+    debug "loading unit", unit_id = unit.id
     if not state.reloading and not self.retry_failures:
       write_file(unit.script_ctx.script, code)
-      self.load_script_and_dependents(unit)
+      if not self.interpreter.is_nil:
+        # We load the player before we init the interpreter to get to an
+        # interactive state quicker. Otherwise this shouldn't ever be nil.
+        assert unit.id == "player"
+        self.load_script_and_dependents(unit)
+      else:
+        debug "Interpreter is nil"
     else:
       self.load_script(unit)
 
-proc watch_code(self: ScriptEngine, unit: Unit) =
+proc watch_code(self: Worker, unit: Unit) =
   if unit.script_ctx.is_nil:
-    unit.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter, timeout_at: MonoTime.high)
+    unit.script_ctx = ScriptCtx(timer: MonoTime.high,
+        interpreter: self.interpreter, timeout_at: MonoTime.high)
 
   unit.code.changes:
     if added or touched:
       self.change_code(unit, change.item)
 
-proc watch_units(self: ScriptEngine, units: ZenSeq[Unit]) =
-  units.changes:
-    let unit = change.item
+proc watch_units(self: Worker, units: ZenSeq[Unit], body:
+    proc(unit: Unit, change: Change[Unit], added: bool, removed: bool)
+    {.gcsafe.}) {.gcsafe.} =
+
+  units.track proc(changes: seq[Change[Unit]]) =
+    for change in changes:
+      let unit = change.item
+      let added = Added in change.changes
+      let removed = Removed in change.changes
+      body(unit, change, added, removed)
+      if added:
+        self.watch_units(unit.units, body)
+
+template for_all_units(self: Worker, body: untyped) {.dirty.} =
+  self.watch_units state.units,
+    proc(unit: Unit, change: Change[Unit], added: bool, removed: bool) {.gcsafe.} =
+      body
+
+proc load_player*(self: Worker) =
+  state.player.value = Player.init
+  state.units.add state.player.value
+
+proc init_interpreter[T](self: Worker, _: T) {.gcsafe.}
+
+proc launch_worker(params: (ZenContext, GameState)) =
+  let (ctx, main_thread_state) = params
+  worker_lock.acquire
+
+  Zen.thread_ctx = ZenContext.init(name = "worker")
+  ctx.subscribe(Zen.thread_ctx)
+  Zen.thread_ctx.subscribe(ctx)
+
+  Zen.thread_ctx.recv
+  assert Zen.thread_ctx.len == ctx.len
+  state = GameState.init_from(main_thread_state)
+  state.config = Config()
+  state.config[] = main_thread_state.config[]
+  state.config.font_size = Zen.thread_ctx[state.config.font_size]
+
+  state.player.value = Player.init
+
+
+  work_done.signal
+  worker_lock.release
+
+  var worker = Worker()
+
+  worker.for_all_units:
     if added:
       unit.frame_delta.changes:
         if touched:
-          self.advance_unit(unit, change.item)
+          worker.advance_unit(unit, change.item)
       unit.frame_delta.changes:
         if touched and unit.script_ctx.callback != nil:
           let task_state = unit.script_ctx.callback(change.item)
           if task_state in {Done, NextTask}:
             unit.script_ctx.callback = nil
-      self.watch_code unit
-      self.watch_units unit.units
+      worker.watch_code unit
 
-      if not ?unit.clone_of:
+    if not ?unit.clone_of:
         unit.script_ctx.script = script_file_for unit
         if file_exists(unit.script_ctx.script):
           unit.code.value = read_file(unit.script_ctx.script)
+
     if removed:
-      self.unmap_unit(unit)
+      worker.unmap_unit(unit)
       if not ?unit.clone_of and ?unit.script_ctx:
-        self.module_names.excl unit.script_ctx.module_name
+        worker.module_names.excl unit.script_ctx.module_name
 
-proc load_player*(self: ScriptEngine) =
-  state.player.value = Player.init
   state.units.add state.player.value
+  worker.init_interpreter("")
 
-proc load_player*(self: ScriptController) =
-  engine.load_player
+  # We add the player to the scene before the interpreter is initialized to
+  # get to an interactive state quicker. Now that we have an interpreter we
+  # explicitly load the player script.
+  state.player.value.script_ctx.interpreter = worker.interpreter
+  worker.load_script_and_dependents(state.player.value)
 
-proc init_interpreter[T](self: ScriptEngine, _: T)
+  load_world()
 
-proc worker_iter(params: (ZenContext, GameState)): iterator() =
-  return iterator() =
-    let (ctx, main_thread_state) = params
-
-    Zen.thread_ctx = ZenContext.init(name = "worker")
-    ctx.subscribe(Zen.thread_ctx)
-    Zen.thread_ctx.subscribe(ctx)
+  while true:
     Zen.thread_ctx.recv
-    assert Zen.thread_ctx.len == ctx.len
-
-    worker_state = GameState.init_from(state)
-    worker_state.config = Config()
-    worker_state.config[] = state.config[]
-    worker_state.config.font_size = Zen.thread_ctx[state.config.font_size]
-    engine = ScriptEngine()
-    engine.init_interpreter("")
-    state = worker_state
-    engine.load_player()
-
-    engine.watch_units state.units
-
-    while true:
-      Zen.thread_ctx.recv()
-      yield
-
-#[
-proc worker(params: (ZenContext, GameState)) =
-  {.cast(gcsafe).}:
-    let (ctx, main_thread_state) = params
-    var first = true
-    worker_lock.acquire
-    Zen.thread_ctx = ZenContext.init(name = "worker")
-    ctx.subscribe(Zen.thread_ctx)
-    Zen.thread_ctx.subscribe(ctx)
-    Zen.thread_ctx.recv
-    assert Zen.thread_ctx.len == ctx.len
-    state = GameState.init_from(main_thread_state)
-    state.config = Config.init_from(main_thread_state.config)
-    state.config = Config()
-    state.config[] = main_thread_state.config[]
-    state.config.font_size = Zen.thread_ctx[state.config.font_size]
-    var engine = ScriptEngine()
-
-    engine.init_interpreter("")
-    engine.watch_units state.units
-    engine.load_player()
-    work_done.signal
-    worker_lock.release
-    while true:
-      if first:
-        first = false
-      else:
-        worker_lock.acquire
-      Zen.thread_ctx.recv()
-      work_done.signal
-      worker_lock.release
-]#
 
 proc extract_file_info(msg: string): tuple[name: string, info: TLineInfo] =
   if msg =~ re"unhandled exception: (.*)\((\d+), (\d+)\)":
     result = (matches[0], TLineInfo(line: matches[1].parse_int.uint16, col: matches[2].parse_int.int16))
 
-proc eval*(self: ScriptEngine, code: string) =
+proc eval*(self: Worker, code: string) =
   let active = self.active_unit
   self.active_unit = state.open_sign.value.owner
   defer:
@@ -763,15 +768,12 @@ proc eval*(self: ScriptEngine, code: string) =
 
 proc init*(T: type ScriptController): ScriptController =
   result = ScriptController()
-  var my_ctx = Zen.thread_ctx
-  work_i = worker_iter((Zen.thread_ctx, state))
-  work_i()
+  worker_lock.acquire
+  result.worker_thread.create_thread(launch_worker, (Zen.thread_ctx, state))
+  work_done.wait(worker_lock)
+  worker_lock.release
 
-  state = main_state
-  worker_ctx = Zen.thread_ctx
-  Zen.thread_ctx = my_ctx
-
-proc init_interpreter[T](self: ScriptEngine, _: T) =
+proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
   private_access ScriptCtx
 
   var interpreter = Interpreter.init(state.config.script_dir, state.config.lib_dir)
@@ -791,7 +793,7 @@ proc init_interpreter[T](self: ScriptEngine, _: T) =
         "???"
 
       var loc = &"{file_name}({int info.line},{int info.col})"
-      p "error: ", msg, " from ", ctx.file_name
+      error "vm error", msg, file = ctx.file_name
       ctx.errors.add (msg, info, loc)
       ctx.exit_code = error_code
       raise (ref VMQuit)(info: info, msg: msg, location: loc)
@@ -823,7 +825,7 @@ proc init_interpreter[T](self: ScriptEngine, _: T) =
     ctx.tos = tos
     if ctx.pause_requested:
       ctx.pause_requested = false
-      raise new_exception(VMPause, "vm paused")
+      raise VMPause.new_exception("vm paused")
 
   # binding.nim is expecting a var called `result`. Fix this.
   var result = controller

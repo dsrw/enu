@@ -14,8 +14,9 @@ private_access ScriptCtx
 proc init*(_: type Interpreter, script_dir, vmlib: string): Interpreter =
   let std_paths = STDLIB_PATHS.map_it join_path(vmlib, "stdlib", it)
   let source_paths = std_paths & join_path(vmlib, "enu") & @[script_dir]
-  print source_paths
-  result = create_interpreter("base_api.nim", source_paths)
+  #print source_paths
+  {.cast(gcsafe).}:
+    result = create_interpreter("base_api.nim", source_paths)
 
 proc pause*(ctx: ScriptCtx) =
   ctx.pause_requested = true
@@ -38,10 +39,10 @@ proc run*(self: ScriptCtx): bool =
   except VMPause:
     private_access ScriptCtx
     result = self.exit_code.is_none
-  except:
+  except CatchableError as e:
     self.running = false
     self.exit_code = some(99)
-    raise
+    raise VMQuit.new_exception("Unhandled err", e)
 
 proc eval*(self: ScriptCtx, code: string): bool =
   self.exit_code = none(int)
@@ -68,7 +69,8 @@ proc call_proc*(self: ScriptCtx, proc_name: string, args: varargs[PNode, `to_nod
   if foreign_proc == nil:
     raise new_exception(VMError, &"script does not export a proc of the name: '{proc_name}'")
   result = try:
-    (false, self.interpreter.call_routine(foreign_proc, args))
+    {.cast(gcsafe).}:
+      (false, self.interpreter.call_routine(foreign_proc, args))
   except VMPause:
     (self.exit_code.is_none, nil)
   except:
@@ -86,7 +88,8 @@ proc resume*(self: ScriptCtx): bool =
   assert not self.tos.is_nil
 
   result = try:
-    discard exec_from_ctx(self.ctx, self.pc, self.tos)
+    {.cast(gcsafe).}:
+      discard exec_from_ctx(self.ctx, self.pc, self.tos)
     false
   except VMPause:
     self.exit_code.is_none

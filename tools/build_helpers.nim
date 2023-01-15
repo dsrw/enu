@@ -8,7 +8,7 @@ import godotapigen
 include "../installer/export_presets.cfg.nimf"
 include "../installer/Info.plist.nimf"
 
-const 
+const
   stdlib = find_nim_std_lib_compile_time()
   macros_url = "https://raw.githubusercontent.com/dsrw/Nim/v1.6.4-enu/lib/core/macros.nim"
 
@@ -29,8 +29,6 @@ proc build_last_test(debug = false) =
   quit exec_shell_cmd(cmd)
 
 proc copy_stdlib(destination: string) =
-  var client = new_http_client()
-  let macros_source = client.get_content(macros_url)
   remove_dir destination
   create_dir destination
   for path in @["core", "pure", "std", "fusion", "system"]:
@@ -40,7 +38,10 @@ proc copy_stdlib(destination: string) =
     copy_file join_path(stdlib, file),
               join_path(destination, file)
 
-  write_file destination / "core" / "macros.nim", macros_source
+  when (NimMajor, NimMinor) < (1, 7):
+    var client = new_http_client()
+    let macros_source = client.get_content(macros_url)
+    write_file destination / "core" / "macros.nim", macros_source
 
 proc run_tests =
   discard

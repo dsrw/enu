@@ -38,7 +38,7 @@ proc to_result(val: SomeOrdinal or enum or bool): BiggestInt = BiggestInt(val)
 proc to_result(val: Vector3 or string): PNode = val.to_node
 proc to_result(val: PNode): PNode = result = val
 
-macro bind_procs(self: ScriptEngine, module_name: string, proc_refs: varargs[untyped]): untyped =
+macro bind_procs(self: Worker, module_name: string, proc_refs: varargs[untyped]): untyped =
   result = new_stmt_list()
   result.add quote do:
     when not declared_in_scope(script_engine):
@@ -56,7 +56,7 @@ macro bind_procs(self: ScriptEngine, module_name: string, proc_refs: varargs[unt
       var pos = -1
       for ident_def in arg_nodes:
         let typ = ident_def[1].str_val
-        if typ == $ScriptEngine.type:
+        if typ == $Worker.type:
           ident"script_engine"
         elif typ == "VmArgs":
           ident"a"
