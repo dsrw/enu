@@ -122,9 +122,10 @@ gdobj BotNode of KinematicBody:
 
   method process(delta: float) =
     if ?self.model:
-      self.model.frame_delta.touch delta
       self.model.transform.pause self.transform_zid:
         self.model.transform.value = self.transform
+      self.model.global_transform.value = self.global_transform
+      self.model.frame_delta.touch delta
 
 var bot_scene {.threadvar.}: PackedScene
 proc init*(_: type BotNode): BotNode =

@@ -52,7 +52,7 @@ gdobj Game of Node:
       self.rescale()
     if time > self.save_at:
       self.save_at = time + auto_save_interval
-      #save_world()
+      save_world()
 
     if state.queued_action != "":
       var ev = gdnew[InputEventAction]()
@@ -69,7 +69,7 @@ gdobj Game of Node:
 
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
-      #save_world()
+      save_world()
       self.get_tree().quit()
     if what == main_loop.NOTIFICATION_WM_ABOUT:
       alert(&"Enu {enu_version}\n\n© 2022 Scott Wadden", "Enu")
@@ -233,7 +233,7 @@ gdobj Game of Node:
       state.config.world = prefix & $num
       user_config.world = some(state.config.world)
       self.save_user_config(user_config)
-    #save_world()
+    save_world()
     state.reloading = true
     state.pop_flag Playing
     state.units.clear
@@ -281,7 +281,7 @@ gdobj Game of Node:
       state.set_flag ConsoleVisible, ConsoleVisible notin state.flags
     elif event.is_action_pressed("quit"):
       if host_os != "macosx":
-        #save_world()
+        save_world()
         self.get_tree().quit()
     elif EditorVisible notin state.flags:
       if event.is_action_pressed("toggle_mouse_captured"):
@@ -316,4 +316,4 @@ gdobj Game of Node:
       discard
       #self.script_controller.eval(url[6..^1])
     elif shell_open(url) != godotcoretypes.Error.OK:
-      state.logger("err", &"Unable to open url {url}")
+      logger("err", &"Unable to open url {url}")

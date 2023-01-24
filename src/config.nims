@@ -10,8 +10,9 @@
 #--define:use_malloc
 
 --define:"chronicles_enabled=on"
+--define:"chronicles_log_level=INFO"
 --define:"chronicles_disabled_topics=model_citizen"
---define:"chronicles_sinks=textblocks[dynamic]"
+--define:"chronicles_sinks=textlines[dynamic]"
 
 if defined(release):
   --define:"chronicles_colors=None"

@@ -40,14 +40,12 @@ proc add_to_scene(unit: Unit) =
     node.model = unit
     node.transform = unit.start_transform
     if node.owner != nil:
-      error "node shouldn't be owned", typ = T.name
-    if parent_node != nil and unit.node != nil:
-      parent_node.add_child(unit.node)
-      unit.node.owner = parent_node
-      when compiles(node.setup):
-        node.setup
-    else:
-      assert false, "shouldn't be here"
+      raise_assert $T.name & " node shouldn't be owned"
+    parent_node.add_child(unit.node)
+    unit.node.owner = parent_node
+    when compiles(node.setup):
+      node.setup
+    unit.main_thread_init
 
   let parent_node = if Global in unit.flags:
     state.nodes.data

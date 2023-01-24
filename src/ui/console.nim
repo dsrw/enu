@@ -9,11 +9,6 @@ gdobj Console of RichTextLabel:
     default_mouse_filter: int64
 
   proc init*() =
-    state.logger = proc(level, msg: string) =
-      if level == "err":
-        self.visible = true
-      state.console.log += &"[b]{level.to_upper}[/b] {msg}\n"
-
     state.flags.changes:
       self.visible = ConsoleVisible in state.flags
 

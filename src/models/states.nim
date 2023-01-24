@@ -2,6 +2,8 @@ import std / [tables, strutils, sequtils, algorithm, sets, sugar]
 import pkg / [print]
 import core, models / [colors]
 
+var state* {.threadvar.}: GameState
+
 # only one flag from the group is active at a time
 const groups = @[
   {EditorFocused, ConsoleFocused, DocsFocused},
@@ -83,14 +85,22 @@ proc `-=`*(self: ZenSet[StateFlags], flag: StateFlags) {.error:
 proc selected_color*(self: GameState): Color =
   action_colors[Colors(ord self.tool.value)]
 
+proc logger*(level, msg: string) =
+  if level == "err":
+    debug "console visible"
+    state.push_flag ConsoleVisible
+  let msg = &"[b]{level.to_upper}[/b] {msg}"
+  debug "logging", msg
+  state.console.log += msg & "\n"
+
 proc debug*(self: GameState, args: varargs[string, `$`]) =
-  self.logger("debug", args.join)
+  logger("debug", args.join)
 
 proc info*(self: GameState, args: varargs[string, `$`]) =
-  self.logger("info", args.join)
+  logger("info", args.join)
 
 proc err*(self: GameState, args: varargs[string, `$`]) =
-  self.logger "err", args.join
+  logger "err", args.join
 
 proc init*(_: type GameState): GameState =
   let self = GameState(
@@ -122,8 +132,6 @@ proc init*(_: type GameState): GameState =
       self.pop_flag DocsFocused
 
   result = self
-
-var state* {.threadvar.}: GameState
 
 when is_main_module:
   import pkg / print

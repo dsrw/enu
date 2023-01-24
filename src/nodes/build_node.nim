@@ -45,7 +45,7 @@ gdobj BuildNode of VoxelTerrain:
     self.prepare_materials()
 
   proc draw(location: Vector3, color: Color) =
-    self.get_voxel_tool.set_voxel(location, color.action_index.ord)
+    self.get_voxel_tool.set_voxel(location, ord color.action_index)
 
   proc draw_block(voxels: Chunk) =
     for loc, info in voxels:
@@ -102,6 +102,7 @@ gdobj BuildNode of VoxelTerrain:
     self.bounds = self.model.bounds.value
     self.model.bounds.watch:
       if added:
+        debug "changing bounds", new = change.item
         self.bounds = change.item
 
     self.model.chunks.watch:
@@ -138,9 +139,10 @@ gdobj BuildNode of VoxelTerrain:
 
   method process(delta: float) =
     if ?self.model:
-      self.model.frame_delta.touch delta
       self.model.transform.pause self.transform_zid:
        self.model.transform.value = self.transform
+      self.model.global_transform.value = self.global_transform
+      self.model.frame_delta.touch delta
 
   proc setup* =
     let was_skipping_join = dont_join

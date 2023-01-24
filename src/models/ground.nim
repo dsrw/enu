@@ -22,7 +22,7 @@ proc fire(self: Ground, append = false) {.gcsafe.} =
     state.units += Bot.init(transform = t)
 
 proc init*(_: type Ground, node: Spatial): Ground =
-  let self = Ground(flags: ZenSet[ModelFlags].init, node: node)
+  let self = Ground(flags: ZenSet[ModelFlags].init)
 
   state.flags.changes:
     if PrimaryDown.added and Hover in self.flags:

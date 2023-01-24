@@ -4,11 +4,11 @@ import pkg / print
 import core, models
 import controllers / script_controllers
 
-var load_chunks = false
+var load_chunks {.threadvar.}: bool
 
 type WorldInfo = object
   enu_version, format_version: string
-#[
+
 proc write_file(path, text: string) =
   let tmp = path & ".tmp"
   let previous = path & ".previous"
@@ -35,7 +35,7 @@ proc from_json_hook(self: var Color, json: JsonNode) =
   else:
     hex.parse_html_hex
 
-proc to_json_hook(self: VoxelInfo): JsonNode =
+proc to_json_hook(self: VoxelInfo): JsonNode  =
   %* [self.kind.ord, jsonutils.to_json(self.color)]
 
 proc from_json_hook(self: var VoxelInfo, json: JsonNode) =
@@ -50,7 +50,7 @@ proc from_json_hook(self: var Vector3, json: JsonNode) =
   self.y = json[1].get_float
   self.z = json[2].get_float
 
-proc to_json_hook(shared_edits: Table[string, Table[Vector3, VoxelInfo]]): JsonNode =
+proc to_json_hook(shared_edits: ZenTable[string, Table[Vector3, VoxelInfo]]): JsonNode =
   let edits = collect:
     for id, edits in shared_edits:
       if edits.len > 0:
@@ -61,7 +61,7 @@ proc to_json_hook(shared_edits: Table[string, Table[Vector3, VoxelInfo]]): JsonN
 
   result = jsonutils.to_json(edits)
 
-proc from_json_hook(self: var Table[Vector3, VoxelInfo], json: JsonNode) =
+proc from_json_hook(self: var Table[Vector3, VoxelInfo], json: JsonNode) {.gcsafe.} =
   assert load_chunks
   for chunks in json:
     for chunk in chunks[1]:
@@ -69,7 +69,7 @@ proc from_json_hook(self: var Table[Vector3, VoxelInfo], json: JsonNode) =
       let info = chunk[1].json_to(VoxelInfo)
       self[location] = info
 
-proc from_json_hook(self: var Table[string, Table[Vector3, VoxelInfo]], json: JsonNode) =
+proc from_json_hook(self: var ZenTable[string, Table[Vector3, VoxelInfo]], json: JsonNode) =
   assert not load_chunks
   for id, edits in json:
     for edit in edits:
@@ -77,7 +77,9 @@ proc from_json_hook(self: var Table[string, Table[Vector3, VoxelInfo]], json: Js
         self[id] = init_table[Vector3, VoxelInfo]()
       let location = edit[0].json_to(Vector3)
       let info = edit[1].json_to(VoxelInfo)
-      self[id][location] = info
+      var locations = self[id]
+      locations[location] = info
+      self[id] = locations
 
 proc to_json_hook(self: Build): JsonNode =
   %* {
@@ -98,7 +100,7 @@ proc from_json_hook(self: var Build, json: JsonNode) =
   else:
     self.shared.value.edits.from_json(json["edits"])
 
-proc to_json_hook(self: Bot): JsonNode =
+proc to_json_hook(self: Bot): JsonNode {.gcsafe.} =
   %* {
     "id": self.id,
     "start_transform": jsonutils.to_json(self.start_transform),
@@ -126,7 +128,7 @@ proc save*(unit: Unit) =
     for unit in unit.units:
       unit.save
 
-proc save_worldd*() =
+proc save_world*() =
   let world = WorldInfo(enu_version: enu_version, format_version: "v0.9.1")
   write_file state.config.world_dir / "world.json", jsonutils.to_json(world).pretty
   debug "Saving", unit_count = state.dirty_units.len
@@ -136,7 +138,7 @@ proc save_worldd*() =
     unit.save
   state.dirty_units.clear
 
-proc load_unitss(parent: Unit) =
+proc load_units(parent: Unit) =
   let opts = JOptions(allow_missing_keys: true)
   let path =
     if ?parent:
@@ -161,19 +163,18 @@ proc load_unitss(parent: Unit) =
       Build(unit).reset_bounds
       Build(unit).restore_edits
     load_units(unit)
-]#
 
 proc load_world*() =
   let world_file = state.config.world_dir / "world.json"
   debug "loading ", world_file
-  #if file_exists(world_file):
-    #let world_json = read_file(world_file)
-    #let world = world_json.parse_json.json_to(WorldInfo)
-    #load_chunks = world.format_version == "v0.9"
+  if file_exists(world_file):
+    let world_json = read_file(world_file)
+    let world = world_json.parse_json.json_to(WorldInfo)
+    load_chunks = world.format_version == "v0.9"
 
   #dont_join = true
   #retry_failures = true
-  #load_units(nil)
+  load_units(nil)
   #controller.retry_failed_scripts()
   #retry_failures = false
   #dont_join = false

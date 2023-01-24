@@ -12,7 +12,7 @@ const default_color = action_colors[blue]
 var
   current_build* {.threadvar.}: Build
   previous_build* {.threadvar.}: Build
-  dont_join* {.threadvar.}: bool
+  dont_join*: bool
   skip_point = vec3()
   last_point: Vector3
   draw_normal = vec3()
@@ -57,8 +57,8 @@ proc add_build(self, source: Build) =
   dont_join = true
   for chunk_id, chunk in source.chunks:
     for position, info in chunk:
-      var position = source.node.to_global(position)
-      position = self.node.to_local(position)
+      var position = source.to_global(position)
+      position = self.to_local(position)
       self.draw(position, info)
 
   if source.parent.is_nil:
@@ -79,8 +79,8 @@ proc maybe_join_previous_build(self: Build, position: Vector3, voxel: VoxelInfo)
       partner = Build(root)
 
     if partner != self:
-      for position in self.node.to_global(position).surrounding:
-        if partner.node.to_local(position) in partner:
+      for position in self.to_global(position).surrounding:
+        if partner.to_local(position) in partner:
           var source, dest: Build
           if partner.code.value.strip == "":
             source = partner
@@ -201,7 +201,7 @@ proc remove(self: Build) =
         self.parent.units -= self
 
 proc fire(self: Build) =
-  let global_point = self.node.to_global(self.target_point)
+  let global_point = self.to_global(self.target_point)
   if state.tool.value notin {CodeMode, PlaceBot}:
     state.skip_block_paint = true
     draw_normal = self.target_normal
@@ -248,13 +248,14 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
     var count = 0
 
     result = proc(delta: float): TaskStates =
-      while count.float < steps and self.voxels_remaining_this_frame >= 1 and
-        get_mono_time() < state.timeout_frame_at:
-
+      while count.float < steps: #and
+        #get_mono_time() < state.timeout_frame_at:
         if steps < 1:
-          self.draw_transform = self.draw_transform.translated(direction * steps)
+          self.draw_transform.value =
+            self.draw_transform.value.translated(direction * steps)
         else:
-          self.draw_transform = self.draw_transform.translated(direction)
+          self.draw_transform.value =
+            self.draw_transform.value.translated(direction)
         inc count
         self.voxels_remaining_this_frame -= 1
         self.drop_block()
@@ -291,10 +292,10 @@ method on_begin_turn*(self: Build, axis: Vector3, degrees: float, lean: bool, mo
   else:
     let axis = self.draw_transform.basis.xform(axis)
     self.draw_transform.basis = self.draw_transform.basis.rotated(axis, deg_to_rad(degrees))
-    self.draw_transform = self.draw_transform.orthonormalized()
+    self.draw_transform.value = self.draw_transform.value.orthonormalized()
 
 proc reset_state*(self: Build) =
-  self.draw_transform = Transform.init
+  self.draw_transform.value = Transform.init
   self.transform.value = self.start_transform
 
 method reset*(self: Build) =
@@ -336,7 +337,7 @@ proc init*(_: type Build,
     id: id,
     chunks: ZenTable[Vector3, Chunk].init(track_children = false),
     start_transform: transform,
-    draw_transform: Transform.init,
+    draw_transform: Zen.init(Transform.init),
     start_color: color,
     drawing: true,
     bounds: Zen.init(init_aabb(vec3(), vec3(-1, -1, -1))),
@@ -353,6 +354,9 @@ proc init*(_: type Build,
   if global: self.flags += Global
   self.flags += Visible
   self.reset()
+  result = self
+
+method main_thread_init*(self: Build) {.gcsafe.} =
   self.flags.watch:
     if Hover.added and state.tool.value == CodeMode:
       if Playing notin state.flags:
@@ -391,8 +395,6 @@ proc init*(_: type Build,
       state.draw_unit_id = ""
       last_point = vec3()
 
-  result = self
-
 method on_collision*(self: Build, partner: Model, normal: Vector3) =
   self.collisions.add (partner, normal)
   if ?self.script_ctx:
@@ -411,7 +413,7 @@ method clone*(self: Build, clone_to: Unit, id: string): Unit =
   var transform = clone_to.transform.value
   var global = true
   if clone_to of Build:
-    transform = Build(clone_to).draw_transform
+    transform = Build(clone_to).draw_transform.value
     global = false
 
   # we need this off for Potato Zombies, but on for the

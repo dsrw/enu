@@ -8,6 +8,7 @@ proc init_unit*[T: Unit](self: T) =
   with self:
     units = units
     transform = Zen.init(self.start_transform)
+    global_transform = ZenValue[Transform].init
     flags = ZenSet[ModelFlags].init
     code = ZenValue[string].init
     velocity = ZenValue[Vector3].init
@@ -27,6 +28,12 @@ proc init_unit*[T: Unit](self: T) =
   if self.id notin self.shared.value.edits:
     let table = init_table[Vector3, VoxelInfo]()
     self.shared.value.edits[self.id] = table
+
+proc to_local*(self: Unit, global_point: Vector3): Vector3 =
+  self.global_transform.value.affine_inverse.xform_vector3(global_point)
+
+proc to_global*(self: Unit, local_point: Vector3): Vector3 =
+  self.global_transform.value.xform_vector3(local_point)
 
 proc find_root*(self: Unit, all_clones = false): Unit =
   result = self
@@ -57,7 +64,7 @@ proc data_dir*(self: Unit): string =
 proc data_file*(self: Unit): string =
   self.data_dir / self.id & ".json"
 
-
+method main_thread_init*(self: Unit) {.base, gcsafe.} = discard
 
 method on_begin_move*(self: Unit, direction: Vector3, steps: float, move_mode: int): Callback {.base, gcsafe.} =
   raise_assert "override me"

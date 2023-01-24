@@ -165,7 +165,7 @@ proc hit(unit_a: Unit, unit_b: Unit): Vector3 =
 
 proc echo_console(msg: string) =
   debug msg
-  #state.console.log += msg & "\n"
+  logger("info", msg & "\n")
   state.push_flag ConsoleVisible
 
 proc action_running(self: Unit): bool =
@@ -205,13 +205,13 @@ proc position(self: Unit): Vector3 =
   if Global in self.flags:
     self.transform.origin
   else:
-    self.parent.node.to_global(self.transform.origin)
+    self.parent.to_global(self.transform.origin)
 
 proc start_position(self: Unit): Vector3 =
   if Global in self.flags:
     self.start_transform.origin
   else:
-    self.parent.node.to_global(self.start_transform.origin)
+    self.parent.to_global(self.start_transform.origin)
 
 proc `position=impl`(self: Unit, position: Vector3) =
   var position = position
@@ -221,7 +221,7 @@ proc `position=impl`(self: Unit, position: Vector3) =
   if Global in self.flags:
     self.transform.origin = position
   else:
-    self.transform.origin = self.parent.node.to_local(position)
+    self.transform.origin = self.parent.to_local(position)
 
 proc speed(self: Unit): float =
   self.speed
@@ -304,7 +304,7 @@ proc seen(self: Worker, target: Unit, distance: float): bool =
   if unit of Build:
     let ray = Build(unit).sight_ray
     let node = VoxelTerrain(Build(unit).node)
-    let target_position = unit.node.to_local(target.position)
+    let target_position = unit.to_local(target.position)
     let angle = target_position - ray.transform.origin
     if angle.length <= distance and angle.normalized.z <= -0.3:
       ray.cast_to = angle
@@ -340,7 +340,7 @@ proc drop_transform(unit: Unit): Transform =
   if unit of Bot:
     result = Transform.init
   elif unit of Build:
-    result = Build(unit).draw_transform
+    result = Build(unit).draw_transform.value
     result.origin = result.origin.snapped(vec3(1, 1, 1))
     result = result.translated(FORWARD * 0.51)
     result.origin = result.origin - (FORWARD + LEFT + DOWN) * 0.5
@@ -402,10 +402,10 @@ proc initial_position(self: Build): Vector3 =
   self.initial_position
 
 proc save(self: Build, name: string) =
-  self.save_points[name] = (self.draw_transform, self.color.value, self.drawing)
+  self.save_points[name] = (self.draw_transform.value, self.color.value, self.drawing)
 
 proc restore(self: Build, name: string) =
-  (self.draw_transform, self.color.value, self.drawing) = self.save_points[name]
+  (self.draw_transform.value, self.color.value, self.drawing) = self.save_points[name]
 
 # Player binding
 
@@ -485,7 +485,7 @@ proc `coding=`(self: Unit, value: Unit) =
 # End of bindings
 
 proc script_error(self: Worker, unit: Unit, e: ref VMQuit) =
-  state.logger("err", e.msg)
+  logger("err", e.msg)
   unit.ensure_visible
   state.push_flags ConsoleVisible
 
@@ -524,9 +524,8 @@ proc advance_unit(self: Worker, unit: Unit, delta: float) =
           discard ctx.resume()
 
     except VMQuit as e:
-      debug "skipping"
-      #self.interpreter.reset_module(unit.script_ctx.module_name)
-      #self.script_error(unit, e)
+      self.interpreter.reset_module(unit.script_ctx.module_name)
+      self.script_error(unit, e)
     finally:
       self.active_unit = nil
 
@@ -558,11 +557,11 @@ proc load_script(self: Worker, unit: Unit, timeout = script_timeout) =
 
   except VMQuit as e:
     ctx.running = false
-    # self.interpreter.reset_module(unit.script_ctx.module_name)
-    # if retry_failures and e.kind != Timeout:
-    #   self.failed.add (unit, e)
-    # else:
-    #   self.script_error(unit, e)
+    self.interpreter.reset_module(unit.script_ctx.module_name)
+    if retry_failures and e.kind != Timeout:
+      self.failed.add (unit, e)
+    else:
+      self.script_error(unit, e)
   finally:
     self.active_unit = nil
 
@@ -587,7 +586,7 @@ proc load_script_and_dependents(self: Worker, unit: Unit) =
   var units_by_module: Table[string, Unit]
   var units_to_reload: HashSet[Unit]
 
-  #save_world()
+  save_world()
 
   units_to_reload.incl unit
   state.reloading = true
@@ -629,6 +628,7 @@ proc script_file_for(self: Unit): string =
     ""
 
 proc change_code(self: Worker, unit: Unit, code: string) =
+  debug "code changing", unit = unit.id
   if ?unit.script_ctx and unit.script_ctx.running and not ?unit.clone_of:
     unit.collect_garbage
 
@@ -652,12 +652,11 @@ proc change_code(self: Worker, unit: Unit, code: string) =
     if not state.reloading and not self.retry_failures:
       write_file(unit.script_ctx.script, code)
       if not self.interpreter.is_nil:
+        self.load_script_and_dependents(unit)
+      else:
         # We load the player before we init the interpreter to get to an
         # interactive state quicker. Otherwise this shouldn't ever be nil.
         assert unit.id == "player"
-        self.load_script_and_dependents(unit)
-      else:
-        debug "Interpreter is nil"
     else:
       self.load_script(unit)
 
@@ -708,6 +707,7 @@ proc launch_worker(params: (ZenContext, GameState)) =
   state.config = Config()
   state.config[] = main_thread_state.config[]
   state.config.font_size = Zen.thread_ctx[state.config.font_size]
+  state.console = ConsoleModel.init_from(main_thread_state.console)
 
   state.player.value = Player.init
 

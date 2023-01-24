@@ -46,7 +46,6 @@ type
       player: Node
     ]
     player*: ZenValue[Player]
-    logger*: proc(level, msg: string) {.gcsafe.}
     units*: ZenSeq[Unit]
     ground*: Ground
     draw_unit_id*: string
@@ -86,6 +85,7 @@ type
     disabled*: bool
     velocity*: ZenValue[Vector3]
     transform*: ZenValue[Transform]
+    global_transform*: ZenValue[Transform]
     clone_of*: Unit
     collisions*: seq[tuple[model: Model, normal: Vector3]]
     frame_delta*: ZenValue[float]
@@ -121,7 +121,7 @@ type
 
   Build* = ref object of Unit
     chunks*: ZenTable[Vector3, Chunk]
-    draw_transform*: Transform
+    draw_transform*: ZenValue[Transform]
     voxels_per_frame*: float
     voxels_remaining_this_frame*: float
     drawing*: bool
