@@ -756,7 +756,7 @@ proc launch_worker(params: (ZenContext, GameState)) =
   load_world()
 
   while true:
-    state.timeout_frame_at = get_mono_time() + 0.5.seconds
+    state.timeout_frame_at = get_mono_time() + 500.seconds
     Zen.thread_ctx.recv
 
 proc extract_file_info(msg: string): tuple[name: string, info: TLineInfo] =

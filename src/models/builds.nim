@@ -1,12 +1,13 @@
 import std / [hashes, tables, sets, options, sequtils, math, wrapnils,
   monotimes, sugar, deques, macros]
-import godotapi / spatial
+import godotapi / [spatial, voxel_tool]
 import core, models / [states, bots, colors, units]
 const ChunkSize = vec3(16, 16, 16)
 
 include "build_code_template.nim.nimf"
 
 const default_color = action_colors[blue]
+const empty_zid: ZID = 0
 
 var
   current_build* {.threadvar.}: Build
@@ -328,34 +329,6 @@ method ensure_visible*(self: Build) =
       self.start_color
     self.draw(vec3(), (Computed, color))
 
-proc init*(_: type Build,
-    id = "build_" & generate_id(), transform = Transform.init,
-    color = default_color, clone_of: Unit = nil, global = true,
-    bot_collisions = true, parent: Unit = nil): Build =
-
-  var self = Build(
-    id: id,
-    chunks: ZenTable[Vector3, Chunk].init(track_children = false),
-    start_transform: transform,
-    draw_transform: Zen.init(Transform.init),
-    start_color: color,
-    drawing: true,
-    bounds: Zen.init(init_aabb(vec3(), vec3(-1, -1, -1))),
-    speed: 1.0,
-    clone_of: clone_of,
-    bot_collisions: bot_collisions,
-    frame_created: state.frame_count
-  )
-
-  self.init_unit
-  if clone_of == nil:
-    state.dirty_units.incl self
-
-  if global: self.flags += Global
-  self.flags += Visible
-  self.reset()
-  result = self
-
 method main_thread_init*(self: Build) {.gcsafe.} =
   self.flags.watch:
     if Hover.added and state.tool.value == CodeMode:
@@ -394,6 +367,80 @@ method main_thread_init*(self: Build) {.gcsafe.} =
     if PrimaryDown.removed or SecondaryDown.removed:
       state.draw_unit_id = ""
       last_point = vec3()
+
+proc draw_voxel(self: Build, location: Vector3, color: Color) =
+  assert self.voxel_tool.value[] != nil
+  self.voxel_tool.value[].set_voxel(location, ord color.action_index)
+
+proc draw_block(self: Build, voxels: Chunk) =
+  for loc, info in voxels:
+    self.draw_voxel(loc, info.color)
+
+proc track_chunk(self: Build, chunk_id: Vector3) =
+  if chunk_id in self.chunks:
+    self.draw_block(self.chunks[chunk_id])
+    self.active_chunks[chunk_id] = self.chunks[chunk_id].watch:
+      # `and not modified` isn't required, but the block will be replaced on the next iteration anyway.
+      if removed and not modified:
+        self.draw_voxel(change.item.key, action_colors[eraser])
+      elif added:
+        self.draw_voxel(change.item.key, change.item.value.color)
+    self.draw_block(self.chunks[chunk_id])
+  else:
+    self.active_chunks[chunk_id] = empty_zid
+
+proc worker_thread_init(self: Build) =
+  self.last_loaded_chunk_id.changes:
+    if added:
+      self.track_chunk(change.item)
+
+  self.last_unloaded_chunk_id.changes:
+    if added:
+      let chunk_id = change.item
+      let zid = self.active_chunks[chunk_id]
+      if zid != empty_zid:
+        self.chunks[chunk_id].untrack(zid)
+      self.active_chunks.del(chunk_id)
+
+  self.chunks.changes:
+    let id = change.item.key
+    if id in self.active_chunks:
+      if added:
+        self.track_chunk(change.item.key)
+      elif removed:
+        self.active_chunks[id] = empty_zid
+
+proc init*(_: type Build,
+    id = "build_" & generate_id(), transform = Transform.init,
+    color = default_color, clone_of: Unit = nil, global = true,
+    bot_collisions = true, parent: Unit = nil): Build =
+
+  var self = Build(
+    id: id,
+    chunks: ZenTable[Vector3, Chunk].init(track_children = false),
+    start_transform: transform,
+    draw_transform: Zen.init(Transform.init),
+    start_color: color,
+    drawing: true,
+    bounds: Zen.init(init_aabb(vec3(), vec3(-1, -1, -1))),
+    speed: 1.0,
+    clone_of: clone_of,
+    bot_collisions: bot_collisions,
+    frame_created: state.frame_count,
+    last_loaded_chunk_id: ZenValue[Vector3].init,
+    last_unloaded_chunk_id: ZenValue[Vector3].init,
+    voxel_tool: ZenValue[ptr VoxelTool].init
+  )
+
+  self.init_unit
+  if clone_of == nil:
+    state.dirty_units.incl self
+
+  if global: self.flags += Global
+  self.flags += Visible
+  self.reset()
+  self.worker_thread_init()
+  result = self
 
 method on_collision*(self: Build, partner: Model, normal: Vector3) =
   self.collisions.add (partner, normal)

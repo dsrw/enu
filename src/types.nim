@@ -1,5 +1,5 @@
 import std / [tables, monotimes, sets, options]
-import godotapi / [spatial, ray_cast]
+import godotapi / [spatial, ray_cast, voxel_tool]
 import pkg/core/godotcoretypes except Color
 import pkg / core / [vector3, basis, aabb, godotbase]
 import pkg / compiler / passes {.all.}
@@ -128,6 +128,10 @@ type
       Table[string, tuple[position: Transform, color: Color, drawing: bool]]
     bounds*: ZenValue[AABB]
     bot_collisions*: bool
+    voxel_tool*: ZenValue[ptr VoxelTool]
+    active_chunks* {.local.}: Table[Vector3, ZID]
+    last_loaded_chunk_id*: ZenValue[Vector3]
+    last_unloaded_chunk_id*: ZenValue[Vector3]
 
   Config* = ref object
     font_size*: ZenValue[int]

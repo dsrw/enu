@@ -7,7 +7,6 @@ import core, models / [builds, colors, states], globals
 const
   highlight_glow = 1.0
   default_glow = 0.0
-  empty_zid: ZID = 0
 
 var build_scene {.threadvar.}: PackedScene
 var shader {.threadvar.}: Shader
@@ -16,9 +15,9 @@ var hidden_shader {.threadvar.}: Shader
 gdobj BuildNode of VoxelTerrain:
   var
     model*: Build
-    active_chunks: Table[Vector3, ZID]
     transform_zid: ZID
     default_view_distance: int
+    voxel_tool_ref: VoxelTool
 
   proc init*() =
     self.bind_signals self, "block_loaded", "block_unloaded"
@@ -41,14 +40,9 @@ gdobj BuildNode of VoxelTerrain:
 
   method ready() =
     self.model.sight_ray = self.get_node("SightRay") as RayCast
+    self.voxel_tool_ref = self.get_voxel_tool()
+    self.model.voxel_tool.value = addr self.voxel_tool_ref
     self.prepare_materials()
-
-  proc draw(location: Vector3, color: Color) =
-    self.get_voxel_tool.set_voxel(location, ord color.action_index)
-
-  proc draw_block(voxels: Chunk) =
-    for loc, info in voxels:
-      self.draw(loc, info.color)
 
   proc set_glow(glow: float) =
     let library = self.mesher.as(VoxelMesherBlocky).library
@@ -57,27 +51,11 @@ gdobj BuildNode of VoxelTerrain:
       if not m.is_nil:
         m.set_shader_param("emission_energy", glow.to_variant)
 
-  proc track_chunk(chunk_id: Vector3) =
-    if chunk_id in self.model.chunks:
-      self.draw_block(self.model.chunks[chunk_id])
-      self.active_chunks[chunk_id] = self.model.chunks[chunk_id].watch:
-        # `and not modified` isn't required, but the block will be replaced on the next iteration anyway.
-        if removed and not modified:
-          self.draw(change.item.key, action_colors[eraser])
-        elif added:
-          self.draw(change.item.key, change.item.value.color)
-      self.draw_block(self.model.chunks[chunk_id])
-    else:
-      self.active_chunks[chunk_id] = empty_zid
-
   method on_block_loaded(chunk_id: Vector3) =
-    self.track_chunk(chunk_id)
+    self.model.last_loaded_chunk_id.value = chunk_id
 
   method on_block_unloaded(chunk_id: Vector3) =
-    let zid = self.active_chunks[chunk_id]
-    if zid != empty_zid:
-      self.model.chunks[chunk_id].untrack(zid)
-    self.active_chunks.del(chunk_id)
+    self.model.last_unloaded_chunk_id.value = chunk_id
 
   proc set_visibility =
     if Visible in self.model.flags:
@@ -103,14 +81,6 @@ gdobj BuildNode of VoxelTerrain:
       if added:
         debug "changing bounds", new = change.item
         self.bounds = change.item
-
-    self.model.chunks.watch:
-      let id = change.item.key
-      if id in self.active_chunks:
-        if added:
-          self.track_chunk(change.item.key)
-        elif removed:
-          self.active_chunks[id] = empty_zid
 
     self.model.flags.watch:
       if Highlight.added:
