@@ -38,7 +38,6 @@ gdobj Game of Node:
 
   method process*(delta: float) =
     Zen.thread_ctx.recv
-    state.timeout_frame_at = get_mono_time() + 0.1.seconds
     inc state.frame_count
     let time = get_mono_time()
     if state.config.show_stats:

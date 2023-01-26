@@ -247,8 +247,9 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
     var count = 0
 
     result = proc(delta: float): TaskStates =
-      while count.float < steps: #and
-        #get_mono_time() < state.timeout_frame_at:
+      while count.float < steps and self.voxels_remaining_this_frame >= 1 and
+          get_mono_time() < state.timeout_frame_at:
+
         if steps < 1:
           self.draw_transform.value =
             self.draw_transform.value.translated(direction * steps)

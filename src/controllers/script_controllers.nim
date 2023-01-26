@@ -505,7 +505,9 @@ proc advance_unit(self: Worker, unit: Unit, delta: float) =
       while resume_script and not state.paused:
         resume_script = false
 
-        if ctx.callback == nil:
+        if ctx.callback == nil or
+            (task_state = ctx.callback(delta); task_state in {Done, NextTask}):
+
           ctx.timer = MonoTime.high
           ctx.action_running = false
           self.active_unit = unit
@@ -514,6 +516,9 @@ proc advance_unit(self: Worker, unit: Unit, delta: float) =
           if not ctx.running and not ?unit.clone_of:
             unit.collect_garbage
             unit.ensure_visible
+          if ctx.running and task_state == NextTask:
+            resume_script = true
+
 
         elif now >= ctx.timer:
           ctx.timer = now + advance_step
@@ -751,6 +756,7 @@ proc launch_worker(params: (ZenContext, GameState)) =
   load_world()
 
   while true:
+    state.timeout_frame_at = get_mono_time() + 0.5.seconds
     Zen.thread_ctx.recv
 
 proc extract_file_info(msg: string): tuple[name: string, info: TLineInfo] =
