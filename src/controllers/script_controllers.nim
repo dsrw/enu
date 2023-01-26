@@ -6,13 +6,13 @@ import pkg / godot except print
 import pkg / print
 import pkg / compiler / vm except get_int
 import pkg / compiler / ast except new_node
-import pkg / compiler / [vmdef, lineinfos, astalgo,  renderer, msgs]
+import pkg / compiler / [vmdef, lineinfos, renderer, msgs]
 import godotapi / [spatial, ray_cast, voxel_terrain]
 import core, models /
   [states, bots, builds, units, colors, signs, players]
 import libs / [interpreters, eval]
 
-from pkg/compiler/vm {.all.} import stack_trace_aux
+from pkg / compiler / vm {.all.} import stack_trace_aux
 
 proc retry_failed_scripts*(self: ScriptController)
 
@@ -60,7 +60,8 @@ proc unmap_unit(self: Worker, unit: Unit) =
 proc link_dependency_impl(self: Worker, dep: Unit) =
   let dep = dep.find_root
   let active = self.active_unit.find_root
-  debug &"**reloading {dep.script_ctx.module_name} will reload {active.script_ctx.module_name}"
+  debug "linking dependency", dependency = dep.script_ctx.module_name,
+    will_reload = active.script_ctx.module_name
   dep.script_ctx.dependents.incl active.script_ctx.module_name
 
 proc write_stack_trace(self: Worker) =
@@ -164,7 +165,6 @@ proc hit(unit_a: Unit, unit_b: Unit): Vector3 =
       return collision.normal.snapped(vec3(1, 1, 1))
 
 proc echo_console(msg: string) =
-  debug msg
   logger("info", msg & "\n")
   state.push_flag ConsoleVisible
 

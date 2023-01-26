@@ -1,11 +1,10 @@
-import std / [tables, sugar, os, math]
+import std / [tables, math]
 import pkg/godot except print
 import pkg / [chroma]
 import godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
                    input_event, animation_player, resource_loader, packed_scene,
                    spatial_material]
-import globals, core, print
-import core, models / [bots, units, states, colors]
+import globals, core, models / [states, colors]
 
 gdobj BotNode of KinematicBody:
   var

@@ -26,12 +26,12 @@ src_dir = "src"
 bin = @["enu" & lib_ext]
 
 when (NimMajor, NimMinor) >= (1, 7):
-  requires "https://github.com/dsrw/Nim#328d5aa"
+  requires "https://github.com/dsrw/Nim#c07ccfebf"
 else:
   requires "https://github.com/dsrw/Nim#a6d502f"
 
 requires "nim >= 1.6.10",
-  "https://github.com/dsrw/godot-nim#125732b",
+  "https://github.com/dsrw/godot-nim#82d40be",
   "https://github.com/dsrw/model_citizen 0.9.2",
   "https://github.com/dsrw/nanoid.nim 0.2.1",
   "cligen 1.5.33",
@@ -40,8 +40,7 @@ requires "nim >= 1.6.10",
   "markdown",
   "chronicles",
   "https://github.com/haxscramper/hmatching",
-  "zippy",
-  "https://github.com/dsrw/Nim#a6d502f"
+  "zippy"
 
 proc gen: string =
   if generator_path == "":

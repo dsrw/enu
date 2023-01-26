@@ -2,7 +2,7 @@ import pkg / [godot]
 import godotapi / [spatial, resource_loader, packed_scene, collision_shape,
                    mesh_instance, quad_mesh, spatial_material, viewport,
                    style_box_flat]
-import ui / markdown_label, models / [signs]
+import ui / markdown_label
 import core, models / [states]
 
 gdobj SignNode of Spatial:

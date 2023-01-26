@@ -3,7 +3,6 @@ import godotapi / [spatial, ray_cast]
 import pkg/core/godotcoretypes except Color
 import pkg / core / [vector3, basis, aabb, godotbase]
 import pkg / compiler / passes {.all.}
-import pkg / compiler / ast
 import pkg / model_citizen
 import models/colors, libs / [eval]
 

@@ -1,5 +1,4 @@
 include compiler / nimeval
-import std / tables
 import compiler / [syntaxes, reorder]
 import compiler / passes {.all.}
 

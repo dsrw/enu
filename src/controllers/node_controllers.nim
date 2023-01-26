@@ -1,5 +1,4 @@
-import std / [strutils, os, tables, typetraits]
-import pkg / [print]
+import std / [os, tables, typetraits]
 import pkg/godot except print
 import godotapi / [node, spatial]
 import core, models, nodes / [bot_node, build_node, sign_node, player_node]

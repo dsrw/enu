@@ -1,6 +1,5 @@
 import std / [hashes, tables, sets, options, sequtils, math, wrapnils,
   monotimes, sugar, deques, macros]
-import pkg / [print]
 import godotapi / spatial
 import core, models / [states, bots, colors, units]
 const ChunkSize = vec3(16, 16, 16)

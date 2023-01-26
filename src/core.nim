@@ -6,11 +6,10 @@ const enu_version* = static_exec("git describe --tags HEAD")
 
 ### Sugar ###
 from sugar import dup, dump, collect
-import std/with, strformat, strutils, sequtils, sets, tables, times, std/monotimes, print
+import std/with, strformat, strutils, sequtils, sets, tables, times, std/monotimes, pkg/print
 export dup, with, strformat, strutils, sequtils, sets, tables, print
 
 ### Debug
-import parseutils
 export dump
 
 import pkg / chronicles

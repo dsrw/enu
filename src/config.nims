@@ -7,7 +7,8 @@
 --deepcopy:on
 --panics:on
 --warning:"LockLevel:off"
-#--define:use_malloc
+--warning:"UseBase:off"
+--experimental:case_stmt_macros
 
 --define:"chronicles_enabled=on"
 --define:"chronicles_log_level=INFO"

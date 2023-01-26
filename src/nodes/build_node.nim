@@ -1,6 +1,5 @@
 import std / [tables, bitops]
 import pkg/godot except print, Color
-import pkg / [print]
 import godotapi / [node, voxel_terrain, voxel_mesher_blocky, voxel_tool,
        voxel_library, shader_material,resource_loader, packed_scene]
 import core, models / [builds, colors, states], globals

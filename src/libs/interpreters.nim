@@ -1,7 +1,6 @@
-import std / [os, strformat, with, importutils]
+import std / [os, strformat, importutils]
 import pkg / compiler / ast except new_node
-import pkg / godot except print
-import pkg / [print], pkg / compiler / [vm, vmdef, options, lineinfos, llstream]
+import pkg / compiler / [vm, vmdef]
 import core, eval
 
 export Interpreter, VmArgs, set_result
@@ -59,7 +58,7 @@ proc eval*(self: ScriptCtx, code: string): bool =
     result = false
   except VMPause:
     result = self.exit_code.is_none
-  except:
+  except CatchableError:
     self.running = false
     self.exit_code = some(99)
     raise
@@ -73,7 +72,7 @@ proc call_proc*(self: ScriptCtx, proc_name: string, args: varargs[PNode, `to_nod
       (false, self.interpreter.call_routine(foreign_proc, args))
   except VMPause:
     (self.exit_code.is_none, nil)
-  except:
+  except CatchableError:
     self.running = false
     self.exit_code = some(99)
     raise
@@ -93,7 +92,7 @@ proc resume*(self: ScriptCtx): bool =
     false
   except VMPause:
     self.exit_code.is_none
-  except:
+  except CatchableError:
     self.running = false
     self.exit_code = some(99)
     raise

@@ -1,5 +1,4 @@
-import std / [tables, strutils, sequtils, algorithm, sets, sugar]
-import pkg / [print]
+import std / [tables, strutils, sequtils, sets, sugar]
 import core, models / [colors]
 
 var state* {.threadvar.}: GameState

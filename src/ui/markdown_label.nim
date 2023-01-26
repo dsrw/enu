@@ -1,5 +1,5 @@
 import std / [lists, algorithm, tables]
-import pkg / [godot, markdown, hmatching, print]
+import pkg / [godot, markdown, hmatching]
 import godotapi / [rich_text_label, scroll_container, text_edit, theme,
                    dynamic_font, dynamic_font_data, style_box_flat, main_loop]
 import core, globals

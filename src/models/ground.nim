@@ -1,5 +1,3 @@
-import std / [sugar]
-import pkg / [print]
 import godotapi / spatial
 import core, states, bots, builds
 

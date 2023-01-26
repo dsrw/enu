@@ -1,6 +1,5 @@
 import pkg/core/godotcoretypes as godot except Color
 import pkg/chroma
-import pkg/print
 
 export chroma
 

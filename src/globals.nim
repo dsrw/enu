@@ -1,4 +1,4 @@
-import std / [strformat, tables]
+import std / [strformat]
 import pkg / [godot]
 import godotapi / [node, scene_tree, voxel_buffer]
 import core, models / [states]
