@@ -23,7 +23,7 @@ export times
 proc seconds*(s: float): TimeInterval {.inline.} =
   init_time_interval(milliseconds = int(s * 1000))
 
-proc to_duration(interval: TimeInterval): Duration =
+proc to_duration*(interval: TimeInterval): Duration =
   init_duration(nanoseconds = interval.nanoseconds,
                 microseconds = interval.microseconds,
                 milliseconds = interval.milliseconds,

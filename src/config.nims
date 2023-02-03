@@ -15,6 +15,8 @@
 --define:"chronicles_disabled_topics=model_citizen"
 --define:"chronicles_sinks=textlines[dynamic]"
 
+# --define:zen_trace
+
 if defined(release):
   --define:"chronicles_colors=None"
 

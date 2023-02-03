@@ -1,5 +1,5 @@
 import std / [hashes, tables, sets, options, sequtils, math, wrapnils,
-  monotimes, sugar, deques, macros]
+  monotimes, sugar, deques, macros, os]
 import godotapi / spatial
 import core, models / [states, bots, colors, units]
 const ChunkSize = vec3(16, 16, 16)
@@ -248,7 +248,8 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
 
     result = proc(delta: float): TaskStates =
       while count.float < steps and self.voxels_remaining_this_frame >= 1 and
-          get_mono_time() < state.timeout_frame_at:
+          get_mono_time() < state.timeout_frame_at and
+          Zen.thread_ctx.pressure < 0.5:
 
         if steps < 1:
           self.draw_transform.value =
@@ -306,16 +307,15 @@ method reset*(self: Build) =
   self.scale.value = 1
   self.flags += Visible
   self.reset_state()
+
   let chunks = self.chunks.value
   for chunk_id, chunk in chunks:
-    let voxels = chunk.value
-    for vec, info in voxels:
+    for vec, info in chunk.value:
       if info.kind == Computed:
         self.chunks[chunk_id].del(vec)
         if self.chunks[chunk_id].len == 0:
           self.chunks.del(chunk_id)
-  self.units.clear()
-  self.draw(vec3(), (Computed, self.start_color))
+    Zen.thread_ctx.recv
 
 method ensure_visible*(self: Build) =
   # It's possible for a build to have no blocks of its own if has children with blocks. However, if the script

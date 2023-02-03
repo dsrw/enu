@@ -702,8 +702,10 @@ proc launch_worker(params: (ZenContext, GameState)) =
   let (ctx, main_thread_state) = params
   worker_lock.acquire
 
-  Zen.thread_ctx = ZenContext.init(name = "worker")
-  ctx.subscribe(Zen.thread_ctx)
+  let worker_ctx = ZenContext.init(name = "work", chan_size = 1000)
+  Zen.thread_ctx = ctx
+  ctx.subscribe(worker_ctx)
+  Zen.thread_ctx = worker_ctx
   Zen.thread_ctx.subscribe(ctx)
 
   Zen.thread_ctx.recv
@@ -716,7 +718,6 @@ proc launch_worker(params: (ZenContext, GameState)) =
 
   state.player.value = Player.init
 
-
   work_done.signal
   worker_lock.release
 
@@ -725,13 +726,13 @@ proc launch_worker(params: (ZenContext, GameState)) =
   worker.for_all_units:
     if added:
       unit.frame_delta.changes:
-        if touched:
-          worker.advance_unit(unit, change.item)
-      unit.frame_delta.changes:
-        if touched and unit.script_ctx.callback != nil:
-          let task_state = unit.script_ctx.callback(change.item)
-          if task_state in {Done, NextTask}:
-            unit.script_ctx.callback = nil
+        if Zen.thread_ctx.pressure < 0.5:
+          if touched:
+            worker.advance_unit(unit, change.item)
+          if touched and unit.script_ctx.callback != nil:
+            let task_state = unit.script_ctx.callback(change.item)
+            if task_state in {Done, NextTask}:
+              unit.script_ctx.callback = nil
       worker.watch_code unit
 
     if not ?unit.clone_of:

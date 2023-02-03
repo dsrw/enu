@@ -20,6 +20,7 @@ type
     world_prefix: Option[string]
 
 const auto_save_interval = 30.seconds
+Zen.thread_ctx = ZenContext.init(name = "main", chan_size = 1000)
 state = GameState.init
 
 gdobj Game of Node:
@@ -238,8 +239,6 @@ gdobj Game of Node:
     state.units.clear
     NodeController.reset_nodes
     self.prepare_to_load_world()
-    #self.script_controller.load_player()
-    #self.script_controller.load_world()
     state.reloading = false
 
   method unhandled_input*(event: InputEvent) =
