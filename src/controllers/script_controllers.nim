@@ -35,16 +35,13 @@ const
   error_code = some(99)
   script_timeout = 5.0.seconds
 
-
 var
+  retry_failures* {.threadvar.}: bool
   worker_lock*: locks.Lock
   work_done*: locks.Cond
 
 worker_lock.init_lock
 work_done.init_cond
-
-var
-  retry_failures* {.threadvar.}: bool
 
 private_access ScriptCtx
 
@@ -67,7 +64,8 @@ proc link_dependency_impl(self: Worker, dep: Unit) =
 proc write_stack_trace(self: Worker) =
   let ctx = self.active_unit.script_ctx
   {.cast(gcsafe).}:
-    msg_writeln(ctx.ctx.config, "stack trace: (most recent call last)", {msgNoUnitSep})
+    msg_writeln(ctx.ctx.config, "stack trace: (most recent call last)",
+        {msg_no_unit_sep})
     stack_trace_aux(ctx.ctx, ctx.tos, ctx.pc)
 
 proc get_unit(self: Worker, a: VmArgs, pos: int): Unit =

@@ -317,6 +317,9 @@ method reset*(self: Build) =
           self.chunks.del(chunk_id)
     Zen.thread_ctx.recv
 
+  self.units.clear()
+  self.draw(vec3(), (Computed, self.start_color))
+
 method ensure_visible*(self: Build) =
   # It's possible for a build to have no blocks of its own if has children with blocks. However, if the script
   # fails or is changed to remove its children, the unit will still exist but will have no presence in the world,
