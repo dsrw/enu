@@ -39,7 +39,6 @@ requires "nim >= 1.6.10",
   "chroma",
   "markdown",
   "chronicles",
-  "https://github.com/haxscramper/hmatching",
   "zippy"
 
 proc gen: string =

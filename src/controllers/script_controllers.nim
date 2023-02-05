@@ -517,7 +517,6 @@ proc advance_unit(self: Worker, unit: Unit, delta: float) =
           if ctx.running and task_state == NextTask:
             resume_script = true
 
-
         elif now >= ctx.timer:
           ctx.timer = now + advance_step
           ctx.saved_callback = ctx.callback

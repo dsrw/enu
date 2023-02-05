@@ -1,5 +1,5 @@
 import std / [lists, algorithm, tables]
-import pkg / [godot, markdown, hmatching]
+import pkg / [godot, markdown]
 import godotapi / [rich_text_label, scroll_container, text_edit, theme,
                    dynamic_font, dynamic_font_data, style_box_flat, main_loop]
 import core, globals
@@ -133,31 +133,30 @@ gdobj MarkdownLabel of ScrollContainer:
         label.newline
         self.needs_margin = false
 
-      case t:
-      of of Heading():
+      if t of Heading:
         label.with(push_font self.local_header_font,
           push_color ir_black[keyword])
         self.render_markdown t
         label.with(pop, pop, newline)
         self.needs_margin = true
 
-      of of Em():
+      elif t of Em:
         label.push_font self.local_italic_font
         self.render_markdown t
         label.pop
 
-      of of Strong():
+      elif t of Strong:
         label.push_font self.local_bold_font
         self.render_markdown t
         label.pop
 
-      of of CodeSpan():
+      elif t of CodeSpan:
         label.with(push_font self.local_mono_font, push_color ir_black[number],
                    add_text t.doc)
         self.render_markdown t
         label.with(pop, pop)
 
-      of of CodeBlock():
+      elif t of CodeBlock:
         self.needs_margin = false
 
         var editor = self.add_text_edit()
@@ -166,19 +165,19 @@ gdobj MarkdownLabel of ScrollContainer:
         self.container.add_child editor
         self.add_label()
 
-      of of Paragraph():
+      elif t of Paragraph:
         self.render_markdown(t, inline_blocks = inline_blocks)
         if not inline_blocks:
           label.newline
         self.needs_margin = true
 
-      of of OL():
+      elif t of OL:
         self.render_markdown(t, 1)
 
-      of of UL():
+      elif t of UL:
         self.render_markdown(t)
 
-      of of LI():
+      elif t of LI:
         label.with(push_table 2, push_cell, push_font self.local_mono_font)
 
         if list_position > 0:
@@ -190,7 +189,7 @@ gdobj MarkdownLabel of ScrollContainer:
         self.render_markdown(t, inline_blocks = true)
         label.with(pop, pop, newline)
 
-      of of Link():
+      elif t of Link:
         let t = Link(t)
         label.push_color(ir_black[variable])
         label.push_font self.local_bold_font
@@ -201,11 +200,12 @@ gdobj MarkdownLabel of ScrollContainer:
         label.pop
         label.pop
 
-      of of Text():
+      elif t of Text:
         label.add_text t.doc
 
-      of of SoftBreak():
+      elif t of SoftBreak:
         label.add_text " "
+
       else:
         self.render_markdown(t)
 
