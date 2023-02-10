@@ -230,7 +230,7 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
       finish = self.transform.origin + moving * steps
       finish_time = 1.0 / self.speed * steps
 
-    result = proc(delta: float): TaskStates =
+    result = proc(delta: float, _: MonoTime): TaskStates =
       duration += delta
       if duration >= finish_time:
         self.transform.origin = finish
@@ -246,10 +246,9 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
       self.voxels_per_frame = self.speed
     var count = 0
 
-    result = proc(delta: float): TaskStates =
+    result = proc(delta: float, timeout: MonoTime): TaskStates =
       while count.float < steps and self.voxels_remaining_this_frame >= 1 and
-          get_mono_time() < state.timeout_frame_at and
-          Zen.thread_ctx.pressure < 0.5:
+          get_mono_time() < timeout:
 
         if steps < 1:
           self.draw_transform.value =
@@ -282,7 +281,7 @@ method on_begin_turn*(self: Build, axis: Vector3, degrees: float, lean: bool, mo
     final_transform.basis = final_transform.basis.rotated(axis, deg_to_rad(degrees))
                                            .orthonormalized.scaled(vec3(scale, scale, scale))
 
-    result = proc(delta: float): TaskStates =
+    result = proc(delta: float, _: MonoTime): TaskStates =
       duration += delta
       self.transform.basis = self.transform.basis.rotated(axis, deg_to_rad(degrees * delta * self.speed))
       if duration <= 1.0 / self.speed:
@@ -315,7 +314,7 @@ method reset*(self: Build) =
         self.chunks[chunk_id].del(vec)
         if self.chunks[chunk_id].len == 0:
           self.chunks.del(chunk_id)
-    Zen.thread_ctx.recv
+    #Zen.thread_ctx.recv
 
   self.units.clear()
   self.draw(vec3(), (Computed, self.start_color))

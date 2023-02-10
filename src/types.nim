@@ -3,6 +3,7 @@ import godotapi / [spatial, ray_cast]
 import pkg/core/godotcoretypes except Color
 import pkg / core / [vector3, basis, aabb, godotbase]
 import pkg / compiler / passes {.all.}
+import pkg / compiler / ast
 import pkg / model_citizen
 import models/colors, libs / [eval]
 
@@ -26,7 +27,7 @@ type
     Running, Done, NextTask
 
   ModelFlags* = enum
-    Hover, TargetMoved, Highlight, Global, Visible, Lock
+    Hover, TargetMoved, Highlight, Global, Visible, Lock, Ready
 
   ConsoleModel* = ref object
     log*: ZenSeq[string]
@@ -54,7 +55,6 @@ type
     reloading*: bool
     skip_block_paint*: bool
     open_sign*: ZenValue[Sign]
-    timeout_frame_at*: MonoTime
     queued_action*: string
     scale_factor*: float
 
@@ -87,13 +87,13 @@ type
     global_transform*: ZenValue[Transform]
     clone_of*: Unit
     collisions*: seq[tuple[model: Model, normal: Vector3]]
-    frame_delta*: ZenValue[float]
     shared*: ZenValue[Shared]
     start_color*: Color
     color*: ZenValue[Color]
     sight_ray*: RayCast
     frame_created*: int
     zids*: seq[ZID]
+    last_ran*: MonoTime
 
   Player* = ref object of Unit
     colliders*: HashSet[Model]
@@ -180,10 +180,19 @@ type
 
   VMPause* = object of CatchableError
 
-  Callback* = proc(delta: float): TaskStates {.gcsafe.}
+  Callback* = proc(delta: float, timeout: MonoTime): TaskStates {.gcsafe.}
 
   ScriptController* = ref object
     worker_thread*: system.Thread[tuple[ctx: ZenContext, state: GameState]]
 
+  Worker* = ref object
+    retry_failures*: bool
+    interpreter: Interpreter
+    module_names: HashSet[string]
+    watch_active: bool
+    active_unit: Unit
+    unit_map: Table[PNode, Unit]
+    node_map: Table[Unit, PNode]
+    failed: seq[tuple[unit: Unit, e: ref VMQuit]]
 
   NodeController* = ref object

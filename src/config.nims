@@ -11,8 +11,8 @@
 --experimental:case_stmt_macros
 
 --define:"chronicles_enabled=on"
---define:"chronicles_log_level=DEBUG"
---define:"chronicles_disabled_topics=model_citizen"
+--define:"chronicles_log_level=INFO"
+--define:"chronicles_disabled_topics=model_citizen,scripting"
 --define:"chronicles_sinks=textlines[dynamic]"
 
 # --define:zen_trace

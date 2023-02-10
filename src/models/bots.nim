@@ -13,7 +13,7 @@ method on_begin_move*(self: Bot, direction: Vector3, steps: float, moving_mode: 
     moving = -self.transform.basis.z
     finish_time = 1.0 / self.speed * steps
 
-  result = proc(delta: float): TaskStates =
+  result = proc(delta: float, _: MonoTime): TaskStates =
     duration += delta
     if duration >= finish_time:
       self.velocity.touch(vec3())
@@ -28,7 +28,7 @@ method on_begin_turn*(self: Bot, axis: Vector3, degrees: float, lean: bool, move
   let degrees = degrees * -axis.x
   var duration = 0.0
   var final_basis = self.transform.basis.rotated(UP, deg_to_rad(degrees))
-  result = proc(delta: float): TaskStates =
+  result = proc(delta: float, _: MonoTime): TaskStates =
     duration += delta
     self.transform.basis = self.transform.basis.rotated(UP, deg_to_rad(degrees * delta * self.speed))
     if duration <= 1.0 / self.speed:

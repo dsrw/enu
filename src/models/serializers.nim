@@ -1,6 +1,7 @@
 import system except write_file
 import std / [json, jsonutils, sugar, tables, strutils, os]
 import core, models
+import controllers / script_controllers
 
 var load_chunks {.threadvar.}: bool
 
@@ -160,9 +161,8 @@ proc load_units(parent: Unit) =
     if unit of Build:
       Build(unit).reset_bounds
       Build(unit).restore_edits
-    load_units(unit)
 
-proc load_world*() =
+proc load_world*(worker: Worker) =
   let world_file = state.config.world_dir / "world.json"
   debug "loading ", world_file
   if file_exists(world_file):
@@ -170,10 +170,10 @@ proc load_world*() =
     let world = world_json.parse_json.json_to(WorldInfo)
     load_chunks = world.format_version == "v0.9"
 
-  #dont_join = true
-  #retry_failures = true
+  dont_join = true
+  worker.retry_failures = true
   load_units(nil)
-  #controller.retry_failed_scripts()
-  #retry_failures = false
-  #dont_join = false
+  worker.retry_failed_scripts()
+  worker.retry_failures = false
+  dont_join = false
   state.dirty_units.clear

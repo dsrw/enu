@@ -4,6 +4,8 @@ import godotapi / [node, spatial]
 import core, models, nodes / [bot_node, build_node, sign_node, player_node]
 
 proc remove_from_scene(unit: Unit) =
+  debug "removing unit", unit = unit.id
+  assert ?unit.node
   if unit == previous_build: previous_build = nil
   if unit == current_build: current_build = nil
   let parent_node = unit.node.get_node("..")
@@ -11,16 +13,11 @@ proc remove_from_scene(unit: Unit) =
   for zid in unit.zids:
     Zen.thread_ctx.untrack zid
 
-  if ?unit.script_ctx:
-    unit.script_ctx.callback = nil
-  if not state.reloading and not ?unit.clone_of:
-    remove_file unit.script_ctx.script
-    remove_dir unit.data_dir
+  unit.flags -= Ready
+
   for child in unit.units:
     child.remove_from_scene()
   unit.parent = nil
-  unit.node.owner = nil
-  parent_node.remove_child(unit.node)
   if unit.node of BuildNode:
     BuildNode(unit.node).model = nil
   elif unit.node of BotNode:
@@ -28,9 +25,12 @@ proc remove_from_scene(unit: Unit) =
   elif unit.node of SignNode:
     SignNode(unit.node).model = nil
   unit.node.queue_free()
+  debug "removing node", unit_id = unit.id
   unit.node = nil
+  Zen.thread_ctx.free(unit)
 
 proc add_to_scene(unit: Unit) =
+  debug "adding unit to scene", unit = unit.id
   proc add(unit: auto, T: type, parent_node: Node) =
     var node = unit.node as T
     if node.is_nil:
@@ -45,6 +45,7 @@ proc add_to_scene(unit: Unit) =
     when compiles(node.setup):
       node.setup
     unit.main_thread_init
+    unit.flags += Ready
 
   let parent_node = if Global in unit.flags:
     state.nodes.data

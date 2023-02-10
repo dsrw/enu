@@ -12,16 +12,16 @@ proc init_unit*[T: Unit](self: T) =
     flags = ZenSet[ModelFlags].init
     code = ZenValue[string].init
     velocity = ZenValue[Vector3].init
-    frame_delta = ZenValue[float].init
     scale = Zen.init(1.0)
     glow = ZenValue[float].init
     color = Zen.init(self.start_color)
+    last_ran = get_mono_time()
 
   if ?self.parent:
     self.shared = self.parent.shared
   else:
     self.shared.init
-    var shared = Shared(id: self.id)
+    var shared = Shared(id: self.id & "-shared")
     shared.init_zen_fields
     self.shared.value = shared
 

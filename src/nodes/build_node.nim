@@ -71,13 +71,15 @@ gdobj BuildNode of VoxelTerrain:
       self.active_chunks[chunk_id] = empty_zid
 
   method on_block_loaded(chunk_id: Vector3) =
-    self.track_chunk(chunk_id)
+    if ?self.model:
+      self.track_chunk(chunk_id)
 
   method on_block_unloaded(chunk_id: Vector3) =
-    let zid = self.active_chunks[chunk_id]
-    if zid != empty_zid:
-      self.model.chunks[chunk_id].untrack(zid)
-    self.active_chunks.del(chunk_id)
+    if ?self.model:
+      let zid = self.active_chunks[chunk_id]
+      if zid != empty_zid:
+        self.model.chunks[chunk_id].untrack(zid)
+      self.active_chunks.del(chunk_id)
 
   proc set_visibility =
     if Visible in self.model.flags:
@@ -141,7 +143,6 @@ gdobj BuildNode of VoxelTerrain:
       self.model.transform.pause self.transform_zid:
        self.model.transform.value = self.transform
       self.model.global_transform.value = self.global_transform
-      self.model.frame_delta.touch delta
 
   proc setup* =
     let was_skipping_join = dont_join

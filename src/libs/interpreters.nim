@@ -5,6 +5,9 @@ import core, eval
 
 export Interpreter, VmArgs, set_result
 
+log_scope:
+  topics = "scripting"
+
 const
     STDLIB_PATHS = [".", "core", "pure", "pure/collections", "pure/concurrency", "std", "fusion"]
 
@@ -13,7 +16,6 @@ private_access ScriptCtx
 proc init*(_: type Interpreter, script_dir, vmlib: string): Interpreter =
   let std_paths = STDLIB_PATHS.map_it join_path(vmlib, "stdlib", it)
   let source_paths = std_paths & join_path(vmlib, "enu") & @[script_dir]
-  #print source_paths
   {.cast(gcsafe).}:
     result = create_interpreter("base_api.nim", source_paths)
 
@@ -86,6 +88,7 @@ proc resume*(self: ScriptCtx): bool =
   assert self.pc > 0
   assert not self.tos.is_nil
 
+  debug "resuming", script = self.file_name, module = self.module_name
   result = try:
     {.cast(gcsafe).}:
       discard exec_from_ctx(self.ctx, self.pc, self.tos)

@@ -1,6 +1,6 @@
 import std /
   [os, macros, sugar, sets, strutils, times, monotimes, sequtils, importutils,
-  tables, options, math, re]
+  tables, options, math, re, hashes, random]
 import locks except Lock
 import pkg / godot except print
 import pkg / print
@@ -14,19 +14,13 @@ import libs / [interpreters, eval]
 
 from pkg / compiler / vm {.all.} import stack_trace_aux
 
-proc retry_failed_scripts*(self: ScriptController)
+log_scope:
+  topics = "scripting"
+  thread_ctx = Zen.thread_ctx
+
+proc retry_failed_scripts*(self: Worker) {.gcsafe.}
 
 import models / serializers
-
-type
-  Worker = ref object
-    retry_failures: bool
-    interpreter: Interpreter
-    module_names: HashSet[string]
-    active_unit: Unit
-    unit_map: Table[PNode, Unit]
-    node_map: Table[Unit, PNode]
-    failed: seq[tuple[unit: Unit, e: ref VMQuit]]
 
 include script_controllers/bindings
 
@@ -36,7 +30,6 @@ const
   script_timeout = 5.0.seconds
 
 var
-  retry_failures* {.threadvar.}: bool
   worker_lock*: locks.Lock
   work_done*: locks.Cond
 
@@ -44,13 +37,16 @@ worker_lock.init_lock
 work_done.init_cond
 
 private_access ScriptCtx
+private_access Worker
 
 proc map_unit(self: Worker, unit: Unit, pnode: PNode) =
+  debug "mapping pnode ", hash = pnode.hash, unit = unit.id
   self.unit_map[pnode] = unit
   self.node_map[unit] = pnode
 
 proc unmap_unit(self: Worker, unit: Unit) =
   if unit in self.node_map:
+    debug "unmapping node ", hash = self.node_map[unit].hash, unit = unit.id
     self.unit_map.del self.node_map[unit]
     self.node_map.del unit
 
@@ -68,8 +64,9 @@ proc write_stack_trace(self: Worker) =
         {msg_no_unit_sep})
     stack_trace_aux(ctx.ctx, ctx.tos, ctx.pc)
 
-proc get_unit(self: Worker, a: VmArgs, pos: int): Unit =
+proc get_unit(self: Worker, a: VmArgs, pos: int): Unit {.gcsafe.} =
   let pnode = a.get_node(pos)
+  assert pnode in self.unit_map
   {.cast(gcsafe).}:
     result = self.unit_map[pnode]
 
@@ -110,8 +107,9 @@ proc new_instance(self: Worker, src: Unit, dest: PNode) =
   clone.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter,
                                module_name: src.id, timeout_at: MonoTime.high)
   self.map_unit(clone, dest)
+
+  debug "adding to active unit", unit = clone.id, active_unit = self.active_unit.id
   self.active_unit.units.add(clone)
-  clone.reset
 
 proc exec_instance(self: Worker, unit: Unit) =
   let active = self.active_unit
@@ -147,7 +145,7 @@ proc begin_move(self: Worker, unit: Unit, direction: Vector3, steps: float, move
 
 proc sleep_impl(ctx: ScriptCtx, seconds: float) =
   var duration = 0.0
-  ctx.callback = proc(delta: float): TaskStates =
+  ctx.callback = proc(delta: float, _: MonoTime): TaskStates =
     duration += delta
     if seconds > 0 and duration < seconds:
       Running
@@ -296,6 +294,7 @@ proc `rotation=`(self: Unit, degrees: float) =
   self.transform.value = t
 
 proc seen(self: Worker, target: Unit, distance: float): bool =
+  return false
   if target == state.player.value and Flying in state.flags:
     return false
   let unit = self.active_unit
@@ -487,11 +486,9 @@ proc script_error(self: Worker, unit: Unit, e: ref VMQuit) =
   unit.ensure_visible
   state.push_flags ConsoleVisible
 
-proc advance_unit(self: Worker, unit: Unit, delta: float) =
+proc advance_unit(self: Worker, unit: Unit, timeout: MonoTime) =
   let ctx = unit.script_ctx
   if ?ctx and ctx.running:
-    let now = get_mono_time()
-
     if unit of Build:
       let unit = Build(unit)
       unit.voxels_remaining_this_frame += unit.voxels_per_frame
@@ -502,27 +499,30 @@ proc advance_unit(self: Worker, unit: Unit, delta: float) =
 
       while resume_script and not state.paused:
         resume_script = false
+        let now = get_mono_time()
+        if now > timeout:
+          break
 
+        let delta = (now - unit.last_ran).in_microseconds.float / 1000000.0
+        unit.last_ran = now
         if ctx.callback == nil or
-            (task_state = ctx.callback(delta); task_state in {Done, NextTask}):
+            (task_state = ctx.callback(delta, timeout); task_state in {Done, NextTask}):
 
           ctx.timer = MonoTime.high
           ctx.action_running = false
           self.active_unit = unit
-          ctx.timeout_at = get_mono_time() + script_timeout
+          ctx.timeout_at = now + script_timeout
           ctx.running = ctx.resume()
           if not ctx.running and not ?unit.clone_of:
             unit.collect_garbage
             unit.ensure_visible
-          if ctx.running and task_state == NextTask:
-            resume_script = true
 
         elif now >= ctx.timer:
           ctx.timer = now + advance_step
           ctx.saved_callback = ctx.callback
           ctx.callback = nil
           self.active_unit = unit
-          ctx.timeout_at = get_mono_time() + script_timeout
+          ctx.timeout_at = now + script_timeout
           discard ctx.resume()
 
     except VMQuit as e:
@@ -560,14 +560,14 @@ proc load_script(self: Worker, unit: Unit, timeout = script_timeout) =
   except VMQuit as e:
     ctx.running = false
     self.interpreter.reset_module(unit.script_ctx.module_name)
-    if retry_failures and e.kind != Timeout:
+    if self.retry_failures and e.kind != Timeout:
       self.failed.add (unit, e)
     else:
       self.script_error(unit, e)
   finally:
     self.active_unit = nil
 
-proc retry_failed_scripts(self: Worker) =
+proc retry_failed_scripts*(self: Worker) {.gcsafe.} =
   var prev_failed: self.failed.type = @[]
   while prev_failed.len != self.failed.len:
     prev_failed = self.failed
@@ -579,9 +579,6 @@ proc retry_failed_scripts(self: Worker) =
   for f in prev_failed:
     self.script_error(f.unit, f.e)
   self.failed = @[]
-
-proc retry_failed_scripts*(self: ScriptController) =
-  discard
 
 proc load_script_and_dependents(self: Worker, unit: Unit) =
   var previous: HashSet[Unit]
@@ -645,6 +642,7 @@ proc change_code(self: Worker, unit: Unit, code: string) =
   state.pop_flag ConsoleVisible
   if not state.reloading and code.strip == "":
     self.interpreter.reset_module(unit.script_ctx.module_name)
+    debug "reset module", module = unit.script_ctx.module_name
     unit.script_ctx.running = false
     remove_file unit.script_ctx.script
     self.module_names.excl unit.script_ctx.module_name
@@ -663,13 +661,17 @@ proc change_code(self: Worker, unit: Unit, code: string) =
       self.load_script(unit)
 
 proc watch_code(self: Worker, unit: Unit) =
+  unit.code.changes:
+    if added or touched:
+      self.change_code(unit, change.item)
+
   if unit.script_ctx.is_nil:
     unit.script_ctx = ScriptCtx(timer: MonoTime.high,
         interpreter: self.interpreter, timeout_at: MonoTime.high)
 
-  unit.code.changes:
-    if added or touched:
-      self.change_code(unit, change.item)
+    unit.script_ctx.script = script_file_for unit
+    if file_exists(unit.script_ctx.script):
+      unit.code.value = read_file(unit.script_ctx.script)
 
 proc watch_units(self: Worker, units: ZenSeq[Unit], body:
     proc(unit: Unit, change: Change[Unit], added: bool, removed: bool)
@@ -695,7 +697,7 @@ proc load_player*(self: Worker) =
 
 proc init_interpreter[T](self: Worker, _: T) {.gcsafe.}
 
-proc launch_worker(params: (ZenContext, GameState)) =
+proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
   let (ctx, main_thread_state) = params
   worker_lock.acquire
 
@@ -722,25 +724,18 @@ proc launch_worker(params: (ZenContext, GameState)) =
 
   worker.for_all_units:
     if added:
-      unit.frame_delta.changes:
-        if Zen.thread_ctx.pressure < 0.5:
-          if touched:
-            worker.advance_unit(unit, change.item)
-          if touched and unit.script_ctx.callback != nil:
-            let task_state = unit.script_ctx.callback(change.item)
-            if task_state in {Done, NextTask}:
-              unit.script_ctx.callback = nil
       worker.watch_code unit
-
-    if not ?unit.clone_of:
-        unit.script_ctx.script = script_file_for unit
-        if file_exists(unit.script_ctx.script):
-          unit.code.value = read_file(unit.script_ctx.script)
 
     if removed:
       worker.unmap_unit(unit)
       if not ?unit.clone_of and ?unit.script_ctx:
         worker.module_names.excl unit.script_ctx.module_name
+      if ?unit.script_ctx:
+        unit.script_ctx.running = false
+        unit.script_ctx.callback = nil
+        if not state.reloading and not ?unit.clone_of:
+          remove_file unit.script_ctx.script
+          remove_dir unit.data_dir
 
   state.units.add state.player.value
   worker.init_interpreter("")
@@ -751,11 +746,28 @@ proc launch_worker(params: (ZenContext, GameState)) =
   state.player.value.script_ctx.interpreter = worker.interpreter
   worker.load_script_and_dependents(state.player.value)
 
-  load_world()
-
+  load_world(worker)
+  const max_time = (1.0 / 60.0).seconds
+  const min_time = (1.0 / 120.0).seconds
   while true:
-    state.timeout_frame_at = get_mono_time() + 0.5.seconds
+    let frame_start = get_mono_time()
+    let timeout = frame_start + max_time
+    let wait_until = frame_start + min_time
+
     Zen.thread_ctx.recv
+    if Zen.thread_ctx.pressure < 0.7:
+      var units: seq[Unit]
+      state.units.value.walk_tree proc(unit: Unit) =
+        if Ready in unit.flags:
+          units.add unit
+
+      units.shuffle
+      for unit in units:
+        worker.advance_unit(unit, timeout)
+
+    let frame_end = get_mono_time()
+    if frame_end < wait_until:
+      sleep int((wait_until - frame_end).in_milliseconds)
 
 proc extract_file_info(msg: string): tuple[name: string, info: TLineInfo] =
   if msg =~ re"unhandled exception: (.*)\((\d+), (\d+)\)":
