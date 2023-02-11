@@ -101,14 +101,20 @@ proc register_active(self: Worker, pnode: PNode) =
   self.map_unit(self.active_unit, pnode)
 
 proc new_instance(self: Worker, src: Unit, dest: PNode) =
-  let id = src.id & "_" & self.active_unit.id & "_instance_" & $(self.active_unit.units.len + 1)
+  let id = src.id & "_" & self.active_unit.id & "_instance_" &
+      $(self.active_unit.units.len + 1)
+
   var clone = src.clone(self.active_unit, id)
   assert not clone.is_nil
-  clone.script_ctx = ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter,
-                               module_name: src.id, timeout_at: MonoTime.high)
+  clone.script_ctx =
+      ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter,
+      module_name: src.id, timeout_at: MonoTime.high)
+
   self.map_unit(clone, dest)
 
-  debug "adding to active unit", unit = clone.id, active_unit = self.active_unit.id
+  debug "adding to active unit", unit = clone.id,
+      active_unit = self.active_unit.id
+
   self.active_unit.units.add(clone)
 
 proc exec_instance(self: Worker, unit: Unit) =
@@ -132,7 +138,9 @@ proc begin_turn(self: Worker, unit: Unit, direction: Vector3, degrees: float,
   if not ctx.callback.is_nil:
     ctx.pause()
 
-proc begin_move(self: Worker, unit: Unit, direction: Vector3, steps: float, move_mode: int) =
+proc begin_move(self: Worker, unit: Unit, direction: Vector3, steps: float,
+    move_mode: int) =
+
   var steps = steps
   var direction = direction
   let ctx = self.active_unit.script_ctx
@@ -399,10 +407,12 @@ proc initial_position(self: Build): Vector3 =
   self.initial_position
 
 proc save(self: Build, name: string) =
-  self.save_points[name] = (self.draw_transform.value, self.color.value, self.drawing)
+  self.save_points[name] =
+      (self.draw_transform.value, self.color.value, self.drawing)
 
 proc restore(self: Build, name: string) =
-  (self.draw_transform.value, self.color.value, self.drawing) = self.save_points[name]
+  (self.draw_transform.value, self.color.value, self.drawing) =
+      self.save_points[name]
 
 # Player binding
 
@@ -486,44 +496,42 @@ proc script_error(self: Worker, unit: Unit, e: ref VMQuit) =
   unit.ensure_visible
   state.push_flags ConsoleVisible
 
-proc advance_unit(self: Worker, unit: Unit, timeout: MonoTime) =
+proc advance_unit(self: Worker, unit: Unit, timeout: MonoTime): bool =
   let ctx = unit.script_ctx
   if ?ctx and ctx.running:
     if unit of Build:
       let unit = Build(unit)
       unit.voxels_remaining_this_frame += unit.voxels_per_frame
-    var resume_script = true
     try:
       assert self.active_unit.is_nil
-      var task_state = Done
+      var task_state = NextTask
 
-      while resume_script and not state.paused:
-        resume_script = false
-        let now = get_mono_time()
-        if now > timeout:
-          break
+      let now = get_mono_time()
 
-        let delta = (now - unit.last_ran).in_microseconds.float / 1000000.0
-        unit.last_ran = now
-        if ctx.callback == nil or
-            (task_state = ctx.callback(delta, timeout); task_state in {Done, NextTask}):
+      let delta = (now - unit.last_ran).in_microseconds.float / 1000000.0
+      unit.last_ran = now
+      if ctx.callback == nil or
+          (task_state = ctx.callback(delta, timeout);
+          task_state in {Done, NextTask}):
 
-          ctx.timer = MonoTime.high
-          ctx.action_running = false
-          self.active_unit = unit
-          ctx.timeout_at = now + script_timeout
-          ctx.running = ctx.resume()
-          if not ctx.running and not ?unit.clone_of:
-            unit.collect_garbage
-            unit.ensure_visible
+        ctx.timer = MonoTime.high
+        ctx.action_running = false
+        self.active_unit = unit
+        ctx.timeout_at = now + script_timeout
+        ctx.running = ctx.resume()
+        if not ctx.running and not ?unit.clone_of:
+          unit.collect_garbage
+          unit.ensure_visible
 
-        elif now >= ctx.timer:
-          ctx.timer = now + advance_step
-          ctx.saved_callback = ctx.callback
-          ctx.callback = nil
-          self.active_unit = unit
-          ctx.timeout_at = now + script_timeout
-          discard ctx.resume()
+        result = ctx.running and task_state == NextTask
+
+      elif now >= ctx.timer:
+        ctx.timer = now + advance_step
+        ctx.saved_callback = ctx.callback
+        ctx.callback = nil
+        self.active_unit = unit
+        ctx.timeout_at = now + script_timeout
+        discard ctx.resume()
 
     except VMQuit as e:
       self.interpreter.reset_module(unit.script_ctx.module_name)
@@ -688,7 +696,9 @@ proc watch_units(self: Worker, units: ZenSeq[Unit], body:
 
 template for_all_units(self: Worker, body: untyped) {.dirty.} =
   self.watch_units state.units,
-    proc(unit: Unit, change: Change[Unit], added: bool, removed: bool) {.gcsafe.} =
+    proc(unit: Unit, change: Change[Unit], added: bool,
+        removed: bool) {.gcsafe.} =
+
       body
 
 proc load_player*(self: Worker) =
@@ -747,7 +757,7 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
   worker.load_script_and_dependents(state.player.value)
 
   load_world(worker)
-  const max_time = (1.0 / 60.0).seconds
+  const max_time = (1.0 / 30.0).seconds
   const min_time = (1.0 / 120.0).seconds
   while true:
     let frame_start = get_mono_time()
@@ -755,15 +765,20 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
     let wait_until = frame_start + min_time
 
     Zen.thread_ctx.recv
-    if Zen.thread_ctx.pressure < 0.7:
-      var units: seq[Unit]
-      state.units.value.walk_tree proc(unit: Unit) =
-        if Ready in unit.flags:
-          units.add unit
 
-      units.shuffle
+    var to_process: seq[Unit]
+    state.units.value.walk_tree proc(unit: Unit) = to_process.add unit
+    to_process.shuffle
+
+    while Zen.thread_ctx.pressure < 0.7 and to_process.len > 0 and
+        get_mono_time() < timeout:
+
+      let units = to_process
+      to_process = @[]
       for unit in units:
-        worker.advance_unit(unit, timeout)
+        if Ready in unit.flags:
+          if worker.advance_unit(unit, timeout):
+            to_process.add(unit)
 
     let frame_end = get_mono_time()
     if frame_end < wait_until:
@@ -771,7 +786,8 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
 
 proc extract_file_info(msg: string): tuple[name: string, info: TLineInfo] =
   if msg =~ re"unhandled exception: (.*)\((\d+), (\d+)\)":
-    result = (matches[0], TLineInfo(line: matches[1].parse_int.uint16, col: matches[2].parse_int.int16))
+    result = (matches[0], TLineInfo(line: matches[1].parse_int.uint16,
+        col: matches[2].parse_int.int16))
 
 proc eval*(self: Worker, code: string) =
   let active = self.active_unit
@@ -792,13 +808,17 @@ proc init*(T: type ScriptController): ScriptController =
 proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
   private_access ScriptCtx
 
-  var interpreter = Interpreter.init(state.config.script_dir, state.config.lib_dir)
+  var interpreter = Interpreter.init(state.config.script_dir,
+      state.config.lib_dir)
+
   let controller = self
 
   self.interpreter = interpreter
   interpreter.config.spell_suggest_max = 0
 
-  interpreter.register_error_hook proc(config, info, msg, severity: auto) {.gcsafe.} =
+  interpreter.register_error_hook proc(config, info, msg,
+      severity: auto) {.gcsafe.} =
+
     var info = info
     var msg = msg
     let ctx = controller.active_unit.script_ctx
@@ -825,12 +845,17 @@ proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
     if ctx.timeout_at < now:
       let duration = script_timeout
       raise (ref VMQuit)(info: info, kind: Timeout,
-        msg: &"Timeout. Script {ctx.script} executed for too long without yielding: {duration}")
+        msg: &"Timeout. Script {ctx.script} executed for too long without " &
+            &"yielding: {duration}")
 
     if ctx.previous_line != info:
       let config = interpreter.config
-      if info.file_index.int >= 0 and info.file_index.int < config.m.file_infos.len:
-        let file_name = config.m.file_infos[info.file_index.int].full_path.string
+      if info.file_index.int >= 0 and
+          info.file_index.int < config.m.file_infos.len:
+
+        let file_name =
+            config.m.file_infos[info.file_index.int].full_path.string
+
         if file_name == ctx.file_name:
           if ctx.line_changed != nil:
             ctx.line_changed(info, ctx.previous_line)
@@ -874,7 +899,9 @@ proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
 
 when is_main_module:
   proc main =
-    state.config.lib_dir = current_source_path().parent_dir / ".." / ".." / "vmlib"
+    state.config.lib_dir =
+        current_source_path().parent_dir / ".." / ".." / "vmlib"
+
     var b = Bot.init
     let c = ScriptController.init
     state.units.add b

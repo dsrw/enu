@@ -18,24 +18,10 @@ export chronicles
 template nim_filename*: string = instantiation_info(full_paths = true).filename
 
 ### times ###
-export times
+export monotimes
 
-proc seconds*(s: float): TimeInterval {.inline.} =
-  init_time_interval(milliseconds = int(s * 1000))
-
-proc to_duration*(interval: TimeInterval): Duration =
-  init_duration(nanoseconds = interval.nanoseconds,
-                microseconds = interval.microseconds,
-                milliseconds = interval.milliseconds,
-                seconds = interval.seconds,
-                minutes = interval.minutes,
-                hours = interval.hours)
-
-proc `+`*(time: MonoTime, interval: TimeInterval): MonoTime =
-  time + interval.to_duration
-
-proc `-`*(time: MonoTime, interval: TimeInterval): MonoTime =
-  time - interval.to_duration
+proc seconds*(s: float): Duration {.inline.} =
+  init_duration(milliseconds = int(s * 1000))
 
 ### options ###
 import options

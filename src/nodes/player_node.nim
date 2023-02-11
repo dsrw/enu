@@ -1,9 +1,10 @@
 import std / [math, sugar]
+from std / times import `+`
 import pkg / godot except print
 import godotapi / [kinematic_body, spatial, input, input_event,
-                   input_event_mouse_motion, input_event_joypad_motion,
-                   ray_cast, scene_tree, input_event_pan_gesture, viewport, camera, global_constants,
-                   collision_shape, kinematic_collision, packed_scene, resource_loader]
+    input_event_mouse_motion, input_event_joypad_motion, ray_cast, scene_tree,
+    input_event_pan_gesture, viewport, camera, global_constants,
+    collision_shape, kinematic_collision, packed_scene, resource_loader]
 import core, globals, nodes / helpers
 import aim_target, models
 
@@ -32,7 +33,7 @@ let
   run_toggle = 0.3.seconds
   sensitivity_gamepad = vec2(2.5, 2.5)
   sensitivity_mouse = vec2(0.005, -0.005)
-  nil_time = none(DateTime)
+  nil_time = MonoTime.none
   input_command_timeout = 0.25
 
 # NOTE: Most of this needs to be moved into player model
@@ -40,7 +41,7 @@ gdobj PlayerNode of KinematicBody:
   var
     running, always_run, skip_release, skip_next_mouse_move, jump_down: bool
     aim_ray, world_ray, down_ray: RayCast
-    jump_time, run_time: Option[DateTime]
+    jump_time, run_time: Option[MonoTime]
 
     position_start: Vector3
     input_relative = vec2()
@@ -94,7 +95,7 @@ gdobj PlayerNode of KinematicBody:
         float_time + float_time
       else:
         float_time
-      let floating = self.jump_down and ?self.jump_time and self.jump_time.get + float_time > now()
+      let floating = self.jump_down and ?self.jump_time and self.jump_time.get + float_time > get_mono_time()
       let gravity = if floating:
         state.gravity / 4
       else:
@@ -264,7 +265,7 @@ gdobj PlayerNode of KinematicBody:
     if event.is_action_pressed("jump"):
       self.jump_down = true
       let
-        time = now()
+        time = get_mono_time()
         toggle = ?self.jump_time and time < self.jump_time.get + fly_toggle
 
       if toggle:
@@ -285,7 +286,7 @@ gdobj PlayerNode of KinematicBody:
 
     if event.is_action_pressed("run"):
       let
-        time = now()
+        time = get_mono_time()
         toggle = ?self.run_time and time < self.run_time.get + run_toggle
 
       if toggle:

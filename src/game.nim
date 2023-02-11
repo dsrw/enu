@@ -1,4 +1,4 @@
-import std / [monotimes, times, os, jsonutils, json, math, locks]
+import std / [monotimes, os, jsonutils, json, math, locks]
 import pkg / [godot, zippy / ziparchives]
 import godotapi / [input, input_event, gd_os, node, scene_tree,
                    packed_scene, sprite, control, viewport, viewport_texture,
@@ -38,7 +38,7 @@ gdobj Game of Node:
     script_controller: ScriptController
 
   method process*(delta: float) =
-    Zen.thread_ctx.recv
+    Zen.thread_ctx.recv(duration = (1.0 / 60.0).seconds)
     inc state.frame_count
     let time = get_mono_time()
     if state.config.show_stats:
