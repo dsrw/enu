@@ -8,7 +8,6 @@ proc remove_from_scene(unit: Unit) =
   assert ?unit.node
   if unit == previous_build: previous_build = nil
   if unit == current_build: current_build = nil
-  let parent_node = unit.node.get_node("..")
 
   for zid in unit.zids:
     Zen.thread_ctx.untrack zid

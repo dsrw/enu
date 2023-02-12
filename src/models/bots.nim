@@ -6,7 +6,9 @@ include "bot_code_template.nim.nimf"
 method code_template*(self: Bot, imports: string): string =
   result = bot_code_template(self.script_ctx.script, imports)
 
-method on_begin_move*(self: Bot, direction: Vector3, steps: float, moving_mode: int): Callback =
+method on_begin_move*(self: Bot, direction: Vector3, steps: float,
+    moving_mode: int): Callback =
+
   # move_mode param is ignored
   var duration = 0.0
   let
@@ -23,14 +25,18 @@ method on_begin_move*(self: Bot, direction: Vector3, steps: float, moving_mode: 
       self.velocity.touch(moving * self.speed)
       return Running
 
-method on_begin_turn*(self: Bot, axis: Vector3, degrees: float, lean: bool, move_mode: int): Callback =
+method on_begin_turn*(self: Bot, axis: Vector3, degrees: float, lean: bool,
+    move_mode: int): Callback =
+
   # move mode param is ignored
   let degrees = degrees * -axis.x
   var duration = 0.0
   var final_basis = self.transform.basis.rotated(UP, deg_to_rad(degrees))
   result = proc(delta: float, _: MonoTime): TaskStates =
     duration += delta
-    self.transform.basis = self.transform.basis.rotated(UP, deg_to_rad(degrees * delta * self.speed))
+    self.transform.basis = self.transform.basis.rotated(UP,
+        deg_to_rad(degrees * delta * self.speed))
+
     if duration <= 1.0 / self.speed:
       Running
     else:
@@ -54,8 +60,9 @@ method reset*(self: Bot) =
   self.velocity.value = vec3()
   self.units.clear()
 
-proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init, clone_of: Bot = nil,
-           global = true, parent: Unit = nil): Bot =
+proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
+    clone_of: Bot = nil, global = true, parent: Unit = nil): Bot =
+
   var self = Bot(
     id: id,
     start_transform: transform,
@@ -100,7 +107,8 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
 
 method clone*(self: Bot, clone_to: Unit, id: string): Unit =
   var transform = clone_to.transform.value
-  result = Bot.init(id = id, transform = transform, clone_of = self, parent = clone_to)
+  result = Bot.init(id = id, transform = transform, clone_of = self,
+      parent = clone_to)
 
 method on_collision*(self: Unit, partner: Model, normal: Vector3) =
   self.collisions.add (partner, normal)

@@ -3,8 +3,11 @@ import pkg/chroma
 
 export chroma
 
-converter to_chroma_color*(self: godot.Color): chroma.Color = cast[chroma.Color](self)
-converter to_godot_color*(self: chroma.Color): godot.Color = cast[godot.Color](self)
+converter to_chroma_color*(self: godot.Color): chroma.Color =
+    cast[chroma.Color](self)
+
+converter to_godot_color*(self: chroma.Color): godot.Color =
+    cast[godot.Color](self)
 
 proc col*(hex: string): chroma.Color = hex.parse_hex
 

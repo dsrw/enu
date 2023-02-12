@@ -26,7 +26,8 @@ gdobj BuildNode of VoxelTerrain:
 
   proc prepare_materials =
     if self.model.shared.value.materials.len == 0:
-      # generate our own copy of the library materials, so we can manipulate them without impacting other builds.
+      # generate our own copy of the library materials, so we can manipulate
+      # them without impacting other builds.
       for i in 0..int.high:
         let m = self.get_material(i)
         if m.is_nil:
@@ -61,7 +62,8 @@ gdobj BuildNode of VoxelTerrain:
     if chunk_id in self.model.chunks:
       self.draw_block(self.model.chunks[chunk_id])
       self.active_chunks[chunk_id] = self.model.chunks[chunk_id].watch:
-        # `and not modified` isn't required, but the block will be replaced on the next iteration anyway.
+        # `and not modified` isn't required, but the block will be
+        # replaced on the next iteration anyway.
         if removed and not modified:
           self.draw(change.item.key, action_colors[eraser])
         elif added:

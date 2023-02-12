@@ -66,7 +66,9 @@ proc add_build(self, source: Build) =
     source.parent.units -= source
   dont_join = false
 
-proc maybe_join_previous_build(self: Build, position: Vector3, voxel: VoxelInfo) =
+proc maybe_join_previous_build(self: Build,
+    position: Vector3, voxel: VoxelInfo) =
+
   if self != current_build:
     previous_build = current_build
     current_build = self
@@ -152,8 +154,11 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) {.gcsafe.} =
         var locations = self.shared.value.edits[self.id]
         locations.del position
         self.shared.value.edits[self.id] = locations
-    elif ?self.clone_of and position in self.clone_of.shared.value.edits[self.clone_of.id] and
-         self.clone_of.shared.value.edits[self.clone_of.id][position].kind == Hole:
+    elif ? self.clone_of and position in
+        self.clone_of.shared.value.edits[self.clone_of.id] and
+        self.clone_of.shared.value.edits[self.clone_of.id][position].kind ==
+           Hole:
+
       return
     else:
       self.add_voxel(position, voxel)
@@ -188,12 +193,16 @@ proc remove(self: Build) =
   if state.tool.value notin {CodeMode, PlaceBot}:
     state.skip_block_paint = true
     draw_normal = self.target_normal
-    let point = self.target_point - self.target_normal - (self.target_normal.inverse_normalized * 0.5)
+    let point = self.target_point - self.target_normal -
+        (self.target_normal.inverse_normalized * 0.5)
+
     skip_point = vec3()
     last_point = self.target_point
     self.draw(point, (Hole, action_colors[eraser]))
 
-    if self.units.len == 0 and not self.chunks.any_it(it.value.any_it(it.value.color != action_colors[eraser])):
+    if self.units.len == 0 and not self.chunks.any_it(
+          it.value.any_it(it.value.color != action_colors[eraser])):
+
       if self.parent.is_nil:
         state.units -= self
       else:
@@ -220,7 +229,9 @@ proc fire(self: Build) =
 proc is_moving(self: Build, move_mode: int): bool =
   move_mode == 2
 
-method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: int): Callback =
+method on_begin_move*(self: Build,
+      direction: Vector3, steps: float, move_mode: int): Callback =
+
   let move = self.is_moving(move_mode)
   if move:
     let steps = steps.float
@@ -236,7 +247,9 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
         self.transform.origin = finish
         return Done
       else:
-        self.transform.origin = self.transform.origin + (moving * self.speed * delta)
+        self.transform.origin = self.transform.origin +
+            (moving * self.speed * delta)
+
         return Running
   else:
     if self.speed == 0:
@@ -265,7 +278,9 @@ method on_begin_move*(self: Build, direction: Vector3, steps: float, move_mode: 
       else:
         Running
 
-method on_begin_turn*(self: Build, axis: Vector3, degrees: float, lean: bool, move_mode: int): Callback =
+method on_begin_turn*(self: Build,
+    axis: Vector3, degrees: float, lean: bool, move_mode: int): Callback =
+
   let map = if lean:
     {LEFT: BACK, RIGHT: FORWARD, BACK: RIGHT, FORWARD: LEFT}.to_table
   else:
@@ -278,12 +293,14 @@ method on_begin_turn*(self: Build, axis: Vector3, degrees: float, lean: bool, mo
     let axis = self.transform.basis.orthonormalized.xform(axis)
     let scale = self.scale.value
     var final_transform = self.transform.value
-    final_transform.basis = final_transform.basis.rotated(axis, deg_to_rad(degrees))
-                                           .orthonormalized.scaled(vec3(scale, scale, scale))
+    final_transform.basis = final_transform.basis.rotated(axis,
+        deg_to_rad(degrees)).orthonormalized.scaled(vec3(scale, scale, scale))
 
     result = proc(delta: float, _: MonoTime): TaskStates =
       duration += delta
-      self.transform.basis = self.transform.basis.rotated(axis, deg_to_rad(degrees * delta * self.speed))
+      self.transform.basis = self.transform.basis.rotated(axis,
+          deg_to_rad(degrees * delta * self.speed))
+
       if duration <= 1.0 / self.speed:
         Running
       else:
@@ -291,7 +308,9 @@ method on_begin_turn*(self: Build, axis: Vector3, degrees: float, lean: bool, mo
         Done
   else:
     let axis = self.draw_transform.basis.xform(axis)
-    self.draw_transform.basis = self.draw_transform.basis.rotated(axis, deg_to_rad(degrees))
+    self.draw_transform.basis =
+        self.draw_transform.basis.rotated(axis, deg_to_rad(degrees))
+
     self.draw_transform.value = self.draw_transform.value.orthonormalized()
 
 proc reset_state*(self: Build) =
@@ -320,10 +339,14 @@ method reset*(self: Build) =
   self.draw(vec3(), (Computed, self.start_color))
 
 method ensure_visible*(self: Build) =
-  # It's possible for a build to have no blocks of its own if has children with blocks. However, if the script
-  # fails or is changed to remove its children, the unit will still exist but will have no presence in the world,
-  # and is therefor impossible to select or modify. In that case we want to draw a single block.
-  if self.units.len == 0 and not self.chunks.any_it(it.value.any_it(it.value.color != action_colors[eraser])):
+  # It's possible for a build to have no blocks of its own if has children with
+  # blocks. However, if the script fails or is changed to remove its children,
+  # the unit will still exist but will have no presence in the world, and is
+  # therefor impossible to select or modify. In that case we want to draw a
+  # single block.
+  if self.units.len == 0 and not self.chunks.any_it(
+        it.value.any_it(it.value.color != action_colors[eraser])):
+
     let color = if self.start_color == action_colors[eraser]:
       action_colors[blue]
     else:
@@ -368,10 +391,13 @@ method main_thread_init*(self: Build) {.gcsafe.} =
       let root = self.find_root(true)
       root.walk_tree proc(unit: Unit) = unit.flags -= Highlight
     if TargetMoved.touched:
-      let length = (self.target_point * self.target_normal - last_point * self.target_normal).length
+      let length = (self.target_point * self.target_normal -
+          last_point * self.target_normal).length
+
       if state.skip_block_paint:
         state.skip_block_paint = false
-      elif state.draw_unit_id == self.id and self.target_normal == draw_normal and
+      elif state.draw_unit_id == self.id and
+          self.target_normal == draw_normal and
           length <= 5 and self.target_point != skip_point:
 
         if SecondaryDown in state.flags:
@@ -421,8 +447,9 @@ method clone*(self: Build, clone_to: Unit, id: string): Unit =
   # we need this off for Potato Zombies, but on for the
   # tutorials. Make it configurable somehow.
   let bot_collisions = true #not (clone_to of Bot)
-  let clone = Build.init(id = id, transform = transform, clone_of = self, global = global, parent = clone_to,
-                         color = self.start_color, bot_collisions = bot_collisions)
+  let clone = Build.init(id = id, transform = transform, clone_of = self,
+      global = global, parent = clone_to, color = self.start_color,
+      bot_collisions = bot_collisions)
 
   for loc, info in self.shared.value.edits[self.id]:
     if info.kind != Hole and loc notin clone.shared.value.edits[clone.id]:

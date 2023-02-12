@@ -28,8 +28,9 @@ gdobj BotNode of KinematicBody:
   method ready() =
     self.skin = self.get_node("Mannequiny").as(Spatial)
     self.mesh = self.skin.get_node("root/Skeleton/body001").as(MeshInstance)
-    self.animation_player = self.skin.get_node("AnimationPlayer").as(AnimationPlayer)
     self.set_default_material()
+    self.animation_player =
+        self.skin.get_node("AnimationPlayer").as(AnimationPlayer)
 
   proc set_color(color: chroma.Color) =
     var adjusted: chroma.Color

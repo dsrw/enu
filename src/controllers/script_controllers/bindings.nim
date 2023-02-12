@@ -38,7 +38,9 @@ proc to_result(val: SomeOrdinal or enum or bool): BiggestInt = BiggestInt(val)
 proc to_result(val: Vector3 or string): PNode = val.to_node
 proc to_result(val: PNode): PNode = result = val
 
-macro bind_procs(self: Worker, module_name: string, proc_refs: varargs[untyped]): untyped =
+macro bind_procs(self: Worker,
+    module_name: string, proc_refs: varargs[untyped]): untyped =
+
   result = new_stmt_list()
   result.add quote do:
     when not declared_in_scope(script_engine):
@@ -65,7 +67,9 @@ macro bind_procs(self: Worker, module_name: string, proc_refs: varargs[untyped])
         elif typ in ["Unit", "Bot", "Build", "Sign"]:
           let getter = "get_" & typ
           pos.inc
-          new_call(bind_sym(getter), ident"script_engine", ident"a", new_lit(pos))
+          new_call(bind_sym(getter), ident"script_engine",
+              ident"a", new_lit(pos))
+
         else:
           let getter = "get_" & typ
           pos.inc
@@ -74,11 +78,16 @@ macro bind_procs(self: Worker, module_name: string, proc_refs: varargs[untyped])
     var call = new_call(proc_ref, args)
     if return_node.kind == nnkSym:
       if return_node.str_val in ["Unit", "Bot", "Build", "Sign"]:
-        call = new_call(bind_sym"set_result", ident"a", new_call(bind_sym"to_node", ident"script_engine", call))
+        call = new_call(bind_sym"set_result", ident"a",
+            new_call(bind_sym"to_node", ident"script_engine", call))
+
       else:
-        call = new_call(bind_sym"set_result", ident"a", new_call(bind_sym"to_result", call))
+        call = new_call(bind_sym"set_result", ident"a",
+            new_call(bind_sym"to_result", call))
 
     result.add quote do:
       mixin implement_routine
-      `self`.interpreter.implement_routine "*", `module_name`, `proc_name`, proc(a {.inject.}: VmArgs) {.gcsafe.} =
+      `self`.interpreter.implement_routine "*", `module_name`, `proc_name`,
+          proc(a {.inject.}: VmArgs) {.gcsafe.} =
+
         `call`

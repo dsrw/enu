@@ -49,7 +49,9 @@ proc from_json_hook(self: var Vector3, json: JsonNode) =
   self.y = json[1].get_float
   self.z = json[2].get_float
 
-proc to_json_hook(shared_edits: ZenTable[string, Table[Vector3, VoxelInfo]]): JsonNode =
+proc to_json_hook(shared_edits: ZenTable[string, Table[Vector3, VoxelInfo]]):
+    JsonNode =
+
   let edits = collect:
     for id, edits in shared_edits:
       if edits.len > 0:
@@ -60,7 +62,9 @@ proc to_json_hook(shared_edits: ZenTable[string, Table[Vector3, VoxelInfo]]): Js
 
   result = jsonutils.to_json(edits)
 
-proc from_json_hook(self: var Table[Vector3, VoxelInfo], json: JsonNode) {.gcsafe.} =
+proc from_json_hook(self: var Table[Vector3, VoxelInfo],
+    json: JsonNode) {.gcsafe.} =
+
   assert load_chunks
   for chunks in json:
     for chunk in chunks[1]:
@@ -68,7 +72,9 @@ proc from_json_hook(self: var Table[Vector3, VoxelInfo], json: JsonNode) {.gcsaf
       let info = chunk[1].json_to(VoxelInfo)
       self[location] = info
 
-proc from_json_hook(self: var ZenTable[string, Table[Vector3, VoxelInfo]], json: JsonNode) =
+proc from_json_hook(self: var ZenTable[string, Table[Vector3, VoxelInfo]],
+    json: JsonNode) =
+
   assert not load_chunks
   for id, edits in json:
     for edit in edits:
@@ -90,7 +96,8 @@ proc to_json_hook(self: Build): JsonNode =
 
 proc from_json_hook(self: var Build, json: JsonNode) =
   let color = json["start_color"].json_to(Color)
-  self = Build.init(id = json["id"].json_to(string), transform = json["start_transform"].json_to(Transform), color = color)
+  self = Build.init(id = json["id"].json_to(string), transform =
+      json["start_transform"].json_to(Transform), color = color)
 
   if load_chunks:
     var edit = init_table[Vector3, VoxelInfo]()
@@ -108,7 +115,9 @@ proc to_json_hook(self: Bot): JsonNode {.gcsafe.} =
   }
 
 proc from_json_hook(self: var Bot, json: JsonNode) =
-  self = Bot.init(id = json["id"].json_to(string), transform = json["start_transform"].json_to(Transform))
+  self = Bot.init(id = json["id"].json_to(string), transform =
+      json["start_transform"].json_to(Transform))
+
   if not load_chunks:
     self.shared.value.edits.from_json(json["edits"])
 
@@ -129,7 +138,9 @@ proc save*(unit: Unit) =
 
 proc save_world*() =
   let world = WorldInfo(enu_version: enu_version, format_version: "v0.9.1")
-  write_file state.config.world_dir / "world.json", jsonutils.to_json(world).pretty
+  write_file state.config.world_dir / "world.json",
+      jsonutils.to_json(world).pretty
+
   debug "Saving", unit_count = state.dirty_units.len
   let units = state.dirty_units
   state.dirty_units.clear

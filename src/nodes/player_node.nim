@@ -8,7 +8,9 @@ import godotapi / [kinematic_body, spatial, input, input_event,
 import core, globals, nodes / helpers
 import aim_target, models
 
-proc handle_collisions(self: Player, collisions: seq[KinematicCollision]) {.inline, gcsafe.} =
+proc handle_collisions(self: Player, collisions:
+    seq[KinematicCollision]) {.inline, gcsafe.} =
+
   var colliders: HashSet[Model]
   for collision in collisions:
     let collider = collision.collider
@@ -95,14 +97,14 @@ gdobj PlayerNode of KinematicBody:
         float_time + float_time
       else:
         float_time
-      let floating = self.jump_down and ?self.jump_time and self.jump_time.get + float_time > get_mono_time()
+      let floating = self.jump_down and ?self.jump_time and
+          self.jump_time.get + float_time > get_mono_time()
+
       let gravity = if floating:
         state.gravity / 4
       else:
         state.gravity
       result.y = velocity_current.y + gravity * delta
-
-
 
   method ready*() =
     self.camera_rig = self.get_node("CameraRig") as Spatial
@@ -158,7 +160,7 @@ gdobj PlayerNode of KinematicBody:
       self.camera_rig.rotation = r
 
       self.model.rotation.pause(self.rotation_zid):
-       self.model.rotation.value = rad_to_deg r.y
+        self.model.rotation.value = rad_to_deg r.y
 
     let ray_length = if state.tool.value == CodeMode: 200.0 else: 100.0
     if MouseCaptured notin state.flags:
@@ -166,7 +168,9 @@ gdobj PlayerNode of KinematicBody:
         mouse_pos = self.get_viewport().get_mouse_position() *
           float state.scale_factor
         cast_from = self.camera.project_ray_origin(mouse_pos)
-        cast_to = self.aim_ray.translation + self.camera.project_ray_normal(mouse_pos) * ray_length
+        cast_to = self.aim_ray.translation +
+            self.camera.project_ray_normal(mouse_pos) * ray_length
+
       self.world_ray.cast_to = cast_to
       self.world_ray.translation = cast_from
       self.aim_target.update(self.world_ray)
@@ -184,11 +188,12 @@ gdobj PlayerNode of KinematicBody:
     let
       process_input =
         EditorVisible notin state.flags or CommandMode in state.flags
-      input_direction = if process_input: self.get_input_direction()
-                        else: vec3()
-      basis   = self.camera_rig.global_transform.basis
-      right   = basis.x * input_direction.x
-      up      = UP * input_direction.y
+      input_direction =
+          if process_input: self.get_input_direction() else: vec3()
+
+      basis = self.camera_rig.global_transform.basis
+      right = basis.x * input_direction.x
+      up = UP * input_direction.y
       forward = (basis.x * input_direction.z).rotated(UP, forward_rotation)
 
     var move_direction = forward + right
@@ -220,7 +225,8 @@ gdobj PlayerNode of KinematicBody:
         self.down_ray.translation = move_direction * 0.3 + vec3(0, 1, 0)
         if self.down_ray.is_colliding():
           let length = 1.85
-          let diff = length - (self.down_ray.global_transform.origin - self.down_ray.get_collision_point).y
+          let diff = length - (self.down_ray.global_transform.origin -
+              self.down_ray.get_collision_point).y
           if diff > 0 and (self.is_on_floor() or not self.boosted):
             let boost = 16.1 * cbrt(diff)
             if boost > self.velocity.y:
@@ -233,7 +239,9 @@ gdobj PlayerNode of KinematicBody:
 
   proc has_active_input(device: int): bool =
     for axis in 0..JOY_AXIS_MAX:
-      if axis != JOY_ANALOG_L2 and axis != JOY_ANALOG_R2 and get_joy_axis(device, axis).abs >= 0.2:
+      if axis != JOY_ANALOG_L2 and axis != JOY_ANALOG_R2 and
+          get_joy_axis(device, axis).abs >= 0.2:
+
         return true
     for button in 0..JOY_BUTTON_MAX:
       if is_joy_button_pressed(device, button):

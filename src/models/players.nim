@@ -11,7 +11,9 @@ proc init*(_: type Player): Player =
   result.init_unit
   result.flags += Global
 
-method on_begin_turn*(self: Player, direction: Vector3, degrees: float, lean: bool, move_mode: int): Callback =
+method on_begin_turn*(self: Player, direction: Vector3, degrees: float,
+    lean: bool, move_mode: int): Callback =
+
   let rotation = floor_mod(self.rotation.value, 360)
   let degrees = if direction == LEFT: -degrees else: degrees
   self.rotation.touch rotation - degrees
