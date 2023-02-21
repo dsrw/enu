@@ -6,8 +6,11 @@ const enu_version* = static_exec("git describe --tags HEAD")
 
 ### Sugar ###
 from sugar import dup, dump, collect
-import std/with, strformat, strutils, sequtils, sets, tables, times, std/monotimes, pkg/print
-export dup, with, strformat, strutils, sequtils, sets, tables, print
+import std / [with, strformat, strutils, sequtils, sets, tables, times,
+    monotimes]
+
+import pkg / [print, flatty]
+export dup, with, strformat, strutils, sequtils, sets, tables, print, flatty
 
 ### Debug
 export dump
@@ -150,6 +153,19 @@ import pkg / core / transforms
 export transforms
 
 import godotapi / [spatial]
+
+proc from_flatty*[N: NimGodotObject](s: string, i: var int, n: N) =
+  discard
+
+proc to_flatty*[N: NimGodotObject](s: var string, n: N) =
+  discard
+
+proc from_flatty*(s: string, i: var int, n: var ScriptCtx) =
+  discard
+
+proc to_flatty*(s: var string, n: ScriptCtx) =
+  discard
+
 import pkg / model_citizen
 export model_citizen except `%`
 
