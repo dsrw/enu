@@ -143,6 +143,8 @@ type
     start_full_screen*: bool
     semicolon_as_colon*: bool
     world_prefix*: string
+    listen*: bool
+    server_address*: string
 
   ScriptCtx* = ref object
     script*: string

@@ -1,19 +1,21 @@
---define:vm_exec_hooks
 --threads:on
---define:nim_preview_hash_ref
---define:nim_type_names
---experimental:dynamic_bind_sym
 --mm:orc
 --panics:on
+
 --warning:"LockLevel:off"
 --warning:"UseBase:off"
 
+--experimental:"dynamic_bind_sym"
+
+--define:"vm_exec_hooks"
+--define:"nim_preview_hash_ref"
+--define:"nim_type_names"
 --define:"chronicles_enabled=on"
 --define:"chronicles_log_level=INFO"
 --define:"chronicles_disabled_topics=model_citizen,scripting"
 --define:"chronicles_sinks=textlines[dynamic]"
-
-# --define:zen_trace
+# --define:"chronicles_timestamps=None" # disable timestamps for better diffs
+# --define:"zen_trace"
 
 if defined(release):
   --define:"chronicles_colors=None"

@@ -200,7 +200,7 @@ proc select_routine*(i: Interpreter; name: string, module_name: string): PSym =
   ## Selects a declared routine (proc/func/etc) from the main module.
   ## The routine needs to have the export marker ``*``. The only matching
   ## routine is returned and ``nil`` if it is overloaded.
-  {.cast(gcsafe).}:
+  {.gcsafe.}:
     result = select_unique_symbol(i, name, {sk_template, sk_macro, sk_func,
       sk_method, sk_proc, sk_converter}, module_name)
 
@@ -225,7 +225,7 @@ proc load_module*(i: Interpreter, file_name, code: string,
       break
 
   if module.is_nil:
-    {.cast(gcsafe).}:
+    {.gcsafe.}:
       module = i.graph.make_module(file_name)
 
   init_str_tables(i.graph, module)
@@ -236,7 +236,7 @@ proc load_module*(i: Interpreter, file_name, code: string,
   # which causes "cannot evaluate at compile time" issues with some variables.
   # Force things back to em_repl.
   PCtx(i.graph.vm).mode = em_repl
-  {.cast(gcsafe).}:
+  {.gcsafe.}:
     discard process_module(i.graph, module, i.idgen, stream, a)
 
 # adapted from

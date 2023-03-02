@@ -59,7 +59,7 @@ proc link_dependency_impl(self: Worker, dep: Unit) =
 
 proc write_stack_trace(self: Worker) =
   let ctx = self.active_unit.script_ctx
-  {.cast(gcsafe).}:
+  {.gcsafe.}:
     msg_writeln(ctx.ctx.config, "stack trace: (most recent call last)",
         {msg_no_unit_sep})
     stack_trace_aux(ctx.ctx, ctx.tos, ctx.pc)
@@ -67,7 +67,7 @@ proc write_stack_trace(self: Worker) =
 proc get_unit(self: Worker, a: VmArgs, pos: int): Unit {.gcsafe.} =
   let pnode = a.get_node(pos)
   assert pnode in self.unit_map
-  {.cast(gcsafe).}:
+  {.gcsafe.}:
     result = self.unit_map[pnode]
 
 proc get_bot(self: Worker, a: VmArgs, pos: int): Bot =
@@ -717,6 +717,9 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
 
   Zen.thread_ctx = worker_ctx
   Zen.thread_ctx.subscribe(ctx)
+  let server_address = main_thread_state.config.server_address
+  if not listen and server_address != "":
+    Zen.thread_ctx.subscribe(server_address)
 
   Zen.thread_ctx.recv
   assert Zen.thread_ctx.len == ctx.len
@@ -787,8 +790,8 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
 
 proc extract_file_info(msg: string): tuple[name: string, info: TLineInfo] =
   if msg =~ re"unhandled exception: (.*)\((\d+), (\d+)\)":
-    result = (matches[0], TLineInfo(line: matches[1].parse_int.uint16,
-        col: matches[2].parse_int.int16))
+    result = (matches[0], TLineInfo(line: matches[1].parse_int.uint16, col:
+        matches[2].parse_int.int16))
 
 proc eval*(self: Worker, code: string) =
   let active = self.active_unit

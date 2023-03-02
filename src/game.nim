@@ -1,10 +1,11 @@
 import std / [monotimes, os, jsonutils, json, math, locks]
 import pkg / [godot, zippy / ziparchives]
-import godotapi / [input, input_event, gd_os, node, scene_tree,
-                   packed_scene, sprite, control, viewport, viewport_texture,
-                   performance, label, theme, dynamic_font, resource_loader, main_loop,
-                   project_settings, input_map, input_event_action, input_event_key, global_constants,
-                   scroll_container]
+from dotenv import nil
+import godotapi / [input, input_event, gd_os, node, scene_tree, packed_scene,
+    sprite, control, viewport, viewport_texture, performance, label, theme,
+    dynamic_font, resource_loader, main_loop, project_settings, input_map,
+    input_event_action, input_event_key, global_constants, scroll_container]
+
 import core, types, globals, controllers, models / serializers
 
 type
@@ -18,8 +19,14 @@ type
     start_full_screen: Option[bool]
     semicolon_as_colon: Option[bool]
     world_prefix: Option[string]
+    listen: Option[bool]
+    server_address: Option[string]
 
 const auto_save_interval = 30.seconds
+
+if file_exists(".env"):
+  dotenv.overload()
+
 Zen.thread_ctx = ZenContext.init(name = "main", chan_size = 1000)
 state = GameState.init
 
@@ -38,14 +45,15 @@ gdobj Game of Node:
     script_controller: ScriptController
 
   method process*(delta: float) =
-    Zen.thread_ctx.recv(duration = (1.0 / 60.0).seconds)
+    Zen.thread_ctx.recv(max_duration = (1.0 / 60.0).seconds)
     inc state.frame_count
     let time = get_mono_time()
     if state.config.show_stats:
       let fps = get_monitor(TIME_FPS)
 
       let vram = get_monitor(RENDER_VIDEO_MEM_USED)
-      self.stats.text = &"FPS: {fps}\nscale_factor: {state.scale_factor}\nvram: {vram}"
+      self.stats.text =
+          &"FPS: {fps}\nscale_factor: {state.scale_factor}\nvram: {vram}"
 
     if time > self.rescale_at:
       self.rescale_at = MonoTime.high
@@ -64,7 +72,9 @@ gdobj Game of Node:
 
   proc rescale*() =
     let vp = self.get_viewport().size
-    state.scale_factor = sqrt(state.config.mega_pixels * 1_000_000.0 / (vp.x * vp.y))
+    state.scale_factor = sqrt(state.config.mega_pixels *
+        1_000_000.0 / (vp.x * vp.y))
+
     self.scaled_viewport.size = vp * state.scale_factor
 
   method notification*(what: int) =
@@ -134,6 +144,7 @@ gdobj Game of Node:
     assert not state.config.is_nil
 
     state.config.font_size.value = uc.font_size ||= (20 * screen_scale).int
+    let env_listen = get_env("ENU_LISTEN").to_lower() == "true"
     with state.config:
       dock_icon_size = uc.dock_icon_size ||= 100 * screen_scale
       world_prefix = uc.world_prefix ||= "tutorial"
@@ -142,7 +153,10 @@ gdobj Game of Node:
       mega_pixels = uc.mega_pixels ||= 2.0
       start_full_screen = uc.start_full_screen ||= true
       semicolon_as_colon = uc.semicolon_as_colon ||= false
-      lib_dir = join_path(get_executable_path().parent_dir(), "..", "..", "..", "vmlib")
+      lib_dir = join_path(get_executable_path().parent_dir(), "..", "..", "..",
+          "vmlib")
+      server_address = uc.server_address ||= ""
+      listen = env_listen or (uc.listen ||= false)
 
     state.set_flag(God, uc.god_mode ||= false)
 
@@ -153,7 +167,9 @@ gdobj Game of Node:
     when defined(dist):
       let exe_dir = parent_dir get_executable_path()
       if host_os == "macosx":
-        state.config.lib_dir = join_path(exe_dir.parent_dir, "Resources", "vmlib")
+        state.config.lib_dir = join_path(exe_dir.parent_dir, "Resources",
+            "vmlib")
+
       elif host_os == "windows":
         state.config.lib_dir = join_path(exe_dir, "vmlib")
       elif host_os == "linux":
@@ -186,7 +202,9 @@ gdobj Game of Node:
   method ready* =
     state.nodes.data = state.nodes.game.find_node("Level").get_node("data")
     assert not state.nodes.data.is_nil
-    self.scaled_viewport = self.get_node("ViewportContainer/Viewport") as Viewport
+    self.scaled_viewport =
+        self.get_node("ViewportContainer/Viewport") as Viewport
+
     self.bind_signals(self.get_viewport(), "size_changed")
     assert not self.scaled_viewport.is_nil
     if state.config.mega_pixels >= 1.0:
@@ -253,10 +271,12 @@ gdobj Game of Node:
 
       if event.is_action_pressed("previous"):
         state.update_action_index(-1)
-        # NOTE: alt+enter isn't being picked up on windows if the editor is open. Needs investigation.
+        # NOTE: alt+enter isn't being picked up on windows if the editor is
+        # open. Needs investigation.
     if event.is_action_pressed("toggle_fullscreen") or (host_os == "windows" and
-      CommandMode in state.flags and EditorVisible in state.flags and
-      event of InputEventKey and event.as(InputEventKey).scancode == KEY_ENTER):
+        CommandMode in state.flags and EditorVisible in state.flags and
+        event of InputEventKey and
+        event.as(InputEventKey).scancode == KEY_ENTER):
 
       set_window_fullscreen not is_window_fullscreen()
     elif event.is_action_pressed("next_world"):

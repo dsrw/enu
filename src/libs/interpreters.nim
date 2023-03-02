@@ -16,7 +16,7 @@ private_access ScriptCtx
 proc init*(_: type Interpreter, script_dir, vmlib: string): Interpreter =
   let std_paths = STDLIB_PATHS.map_it join_path(vmlib, "stdlib", it)
   let source_paths = std_paths & join_path(vmlib, "enu") & @[script_dir]
-  {.cast(gcsafe).}:
+  {.gcsafe.}:
     result = create_interpreter("base_api.nim", source_paths)
 
 proc pause*(ctx: ScriptCtx) =
@@ -70,7 +70,7 @@ proc call_proc*(self: ScriptCtx, proc_name: string, args: varargs[PNode, `to_nod
   if foreign_proc == nil:
     raise new_exception(VMError, &"script does not export a proc of the name: '{proc_name}'")
   result = try:
-    {.cast(gcsafe).}:
+    {.gcsafe.}:
       (false, self.interpreter.call_routine(foreign_proc, args))
   except VMPause:
     (self.exit_code.is_none, nil)
@@ -90,7 +90,7 @@ proc resume*(self: ScriptCtx): bool =
 
   debug "resuming", script = self.file_name, module = self.module_name
   result = try:
-    {.cast(gcsafe).}:
+    {.gcsafe.}:
       discard exec_from_ctx(self.ctx, self.pc, self.tos)
     false
   except VMPause:

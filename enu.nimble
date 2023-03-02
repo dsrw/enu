@@ -39,7 +39,8 @@ requires "nim >= 1.6.10",
   "chroma",
   "markdown",
   "chronicles",
-  "zippy"
+  "zippy",
+  "dotenv"
 
 proc gen: string =
   if generator_path == "":

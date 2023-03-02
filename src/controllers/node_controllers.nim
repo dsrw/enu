@@ -89,8 +89,6 @@ proc find_nested_changes(parent: Change[Unit]) =
 
 proc watch*(self: NodeController, state: GameState) =
   state.units.changes:
-    if ?change.item:
-      debug "Unit added", unit = change.item.id, changes = change.changes
     if added:
       change.item.add_to_scene()
     elif modified:
