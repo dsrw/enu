@@ -711,9 +711,10 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
   let (ctx, main_thread_state) = params
   worker_lock.acquire
 
-  let worker_ctx = ZenContext.init(name = "work", chan_size = 2000)
-  Zen.thread_ctx = ctx
-  ctx.subscribe(worker_ctx)
+  let listen = main_thread_state.config.listen
+  let worker_ctx = ZenContext.init(name = "work", chan_size = 2000,
+      listen = listen)
+
   Zen.thread_ctx = worker_ctx
   Zen.thread_ctx.subscribe(ctx)
 
