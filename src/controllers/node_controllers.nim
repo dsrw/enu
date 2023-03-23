@@ -54,7 +54,15 @@ proc add_to_scene(unit: Unit) =
   if unit of Bot: Bot(unit).add(BotNode, parent_node)
   elif unit of Build: Build(unit).add(BuildNode, parent_node)
   elif unit of Sign: Sign(unit).add(SignNode, parent_node)
-  elif unit of Player: Player(unit).add(PlayerNode, parent_node)
+  elif unit of Player:
+    let player = Player(unit)
+    # TODO: PlayerNode should work for connected players as well
+    if player.id == state.player.value.id:
+      player.add(PlayerNode, parent_node)
+    else:
+      player.add(BotNode, state.nodes.data)
+  else:
+    raise_assert "unknown unit type for " & unit.id
 
 proc set_global(unit: Unit, global: bool) =
   var parent_node = unit.node.get_node("..")

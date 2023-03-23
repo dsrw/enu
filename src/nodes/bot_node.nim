@@ -8,7 +8,7 @@ import globals, core, models / [states, colors]
 
 gdobj BotNode of KinematicBody:
   var
-    model*: Bot
+    model*: Unit
     material* {.gdExport.}, highlight_material* {.gdExport.},
       selected_material* {.gdExport.}: Material
     skin: Spatial
@@ -80,26 +80,28 @@ gdobj BotNode of KinematicBody:
         self.set_visibility
 
     var velocity_zid: ZID
-    velocity_zid = self.model.velocity.watch:
-      if touched:
-        self.model.velocity.pause velocity_zid:
-          self.model.velocity.value = self.move_and_slide(change.item, UP)
-        if self.model.animation.value == "auto":
-          if change.item.length <= 0.1:
-            self.animation_player.playback_speed = 0.5
-            self.animation_player.play("idle", custom_blend = 0.5)
-          elif change.item.length <= 3:
-            self.animation_player.playback_speed = change.item.length / 2
-            self.animation_player.play("walk", custom_blend = 0.1)
-          else:
-            self.animation_player.playback_speed = change.item.length / 10
-            self.animation_player.play("run", custom_blend = 0.1)
+    if self.model of Bot:
+      let bot = Bot(self.model)
+      velocity_zid = bot.velocity.watch:
+        if touched:
+          bot.velocity.pause velocity_zid:
+            bot.velocity.value = self.move_and_slide(change.item, UP)
+          if bot.animation.value == "auto":
+            if change.item.length <= 0.1:
+              self.animation_player.playback_speed = 0.5
+              self.animation_player.play("idle", custom_blend = 0.5)
+            elif change.item.length <= 3:
+              self.animation_player.playback_speed = change.item.length / 2
+              self.animation_player.play("walk", custom_blend = 0.1)
+            else:
+              self.animation_player.playback_speed = change.item.length / 10
+              self.animation_player.play("run", custom_blend = 0.1)
 
-    self.model.animation.watch:
-      if added or touched and change.item in ["", "auto"]:
-        self.animation_player.play("idle")
-      elif added:
-        self.animation_player.play(change.item)
+      bot.animation.watch:
+        if added or touched and change.item in ["", "auto"]:
+          self.animation_player.play("idle")
+        elif added:
+          self.animation_player.play(change.item)
 
     self.model.scale.watch:
       if added:

@@ -102,16 +102,17 @@ proc err*(self: GameState, args: varargs[string, `$`]) =
   logger "err", args.join
 
 proc init*(_: type GameState): GameState =
+  let flags = {TrackChildren, SyncLocal}
   let self = GameState(
-    player: ZenValue[Player].init,
-    flags: Zen.init(set[StateFlags]),
-    units: Zen.init(seq[Unit]),
-    open_unit: ZenValue[Unit].init,
-    config: Config(font_size: Zen.init(0)),
-    tool: Zen.init(BlueBlock),
+    player: ZenValue[Player].init(flags = flags),
+    flags: Zen.init(set[StateFlags], flags = flags),
+    units: Zen.init(seq[Unit], id = "root_units"),
+    open_unit: ZenValue[Unit].init(flags = flags),
+    config: Config(font_size: Zen.init(0, flags = flags)),
+    tool: Zen.init(BlueBlock, flags = flags),
     gravity: -80.0,
-    console: ConsoleModel(log: Zen.init(seq[string])),
-    open_sign: ZenValue[Sign].init
+    console: ConsoleModel(log: Zen.init(seq[string], flags = flags)),
+    open_sign: ZenValue[Sign].init(flags = flags)
   )
   result = self
   self.open_unit.changes:

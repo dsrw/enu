@@ -32,7 +32,7 @@ else:
 
 requires "nim >= 1.6.10",
   "https://github.com/dsrw/godot-nim#82d40be",
-  "https://github.com/dsrw/model_citizen 0.10.1",
+  "https://github.com/dsrw/model_citizen 0.10.2",
   "https://github.com/dsrw/nanoid.nim 0.2.1",
   "cligen 1.5.33",
   "print#b671140",

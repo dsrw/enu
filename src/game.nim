@@ -6,7 +6,7 @@ import godotapi / [input, input_event, gd_os, node, scene_tree, packed_scene,
     dynamic_font, resource_loader, main_loop, project_settings, input_map,
     input_event_action, input_event_key, global_constants, scroll_container]
 
-import core, types, globals, controllers, models / serializers
+import core, types, globals, controllers, models / [serializers, units]
 
 type
   UserConfig = object
@@ -27,7 +27,7 @@ const auto_save_interval = 30.seconds
 if file_exists(".env"):
   dotenv.overload()
 
-Zen.thread_ctx = ZenContext.init(name = "main", chan_size = 1000)
+Zen.thread_ctx = ZenContext.init(name = &"main-{generate_id()}", chan_size = 1000)
 state = GameState.init
 
 gdobj Game of Node:
@@ -52,8 +52,13 @@ gdobj Game of Node:
       let fps = get_monitor(TIME_FPS)
 
       let vram = get_monitor(RENDER_VIDEO_MEM_USED)
+      var unit_count = 0
+      state.units.value.walk_tree proc(unit: Unit) =
+        inc unit_count
+
       self.stats.text =
-          &"FPS: {fps}\nscale_factor: {state.scale_factor}\nvram: {vram}"
+          &"FPS: {fps}\nscale_factor: {state.scale_factor}\nvram: {vram}\n" &
+          &"units: {unit_count}"
 
     if time > self.rescale_at:
       self.rescale_at = MonoTime.high

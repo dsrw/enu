@@ -627,7 +627,7 @@ proc load_script_and_dependents(self: Worker, unit: Unit) =
   state.dirty_units.clear
 
 proc script_file_for(self: Unit): string =
-  if self.id == "player":
+  if self.id == state.player.value.id:
     state.config.lib_dir & "/enu/players.nim"
   elif not ?self.clone_of:
     state.config.script_dir / self.id & ".nim"
@@ -664,7 +664,7 @@ proc change_code(self: Worker, unit: Unit, code: string) =
       else:
         # We load the player before we init the interpreter to get to an
         # interactive state quicker. Otherwise this shouldn't ever be nil.
-        assert unit.id == "player"
+        assert unit.id == state.player.value.id
     else:
       self.load_script(unit)
 
@@ -701,10 +701,6 @@ template for_all_units(self: Worker, body: untyped) {.dirty.} =
 
       body
 
-proc load_player*(self: Worker) =
-  state.player.value = Player.init
-  state.units.add state.player.value
-
 proc init_interpreter[T](self: Worker, _: T) {.gcsafe.}
 
 proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
@@ -712,17 +708,13 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
   worker_lock.acquire
 
   let listen = main_thread_state.config.listen
-  let worker_ctx = ZenContext.init(name = "work", chan_size = 2000,
+  let worker_ctx = ZenContext.init(name = &"work-{generate_id()}", chan_size = 2000,
       listen = listen)
 
   Zen.thread_ctx = worker_ctx
-  Zen.thread_ctx.subscribe(ctx)
+  ctx.subscribe(Zen.thread_ctx)
   let server_address = main_thread_state.config.server_address
-  if not listen and server_address != "":
-    Zen.thread_ctx.subscribe(server_address)
 
-  Zen.thread_ctx.recv
-  assert Zen.thread_ctx.len == ctx.len
   state = GameState.init_from(main_thread_state)
   state.config = Config()
   state.config[] = main_thread_state.config[]
@@ -751,8 +743,14 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
           remove_file unit.script_ctx.script
           remove_dir unit.data_dir
 
-  state.units.add state.player.value
-  worker.init_interpreter("")
+  if listen or server_address == "":
+    state.units.add state.player.value
+    worker.init_interpreter("")
+    load_world(worker)
+  else:
+    worker.init_interpreter("")
+    Zen.thread_ctx.subscribe(server_address)
+    state.units.add state.player.value
 
   # We add the player to the scene before the interpreter is initialized to
   # get to an interactive state quicker. Now that we have an interpreter we
@@ -760,7 +758,6 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
   state.player.value.script_ctx.interpreter = worker.interpreter
   worker.load_script_and_dependents(state.player.value)
 
-  load_world(worker)
   const max_time = (1.0 / 30.0).seconds
   const min_time = (1.0 / 120.0).seconds
   while true:

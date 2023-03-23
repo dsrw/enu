@@ -1,5 +1,4 @@
-# begin Nimble config (version 1)
---experimental:overloadableEnums
-when fileExists("nimble.paths"):
+# begin Nimble config (version 2)
+when withDir(thisDir(), system.fileExists("nimble.paths")):
   include "nimble.paths"
 # end Nimble config

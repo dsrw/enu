@@ -10,7 +10,7 @@ proc init_unit*[T: Unit](self: T) =
     transform = Zen.init(self.start_transform)
     global_transform = ZenValue[Transform].init
     flags = ZenSet[ModelFlags].init
-    code = ZenValue[string].init
+    code = ZenValue[string].init(flags = {TrackChildren, SyncLocal})
     velocity = ZenValue[Vector3].init
     scale = Zen.init(1.0)
     glow = ZenValue[float].init

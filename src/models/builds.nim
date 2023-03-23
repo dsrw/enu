@@ -360,7 +360,7 @@ proc init*(_: type Build,
 
   var self = Build(
     id: id,
-    chunks: ZenTable[Vector3, Chunk].init(track_children = false),
+    chunks: ZenTable[Vector3, Chunk].init(flags = {SyncLocal, SyncRemote}),
     start_transform: transform,
     draw_transform: Zen.init(Transform.init),
     start_color: color,

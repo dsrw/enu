@@ -6,6 +6,7 @@
 --warning:"UseBase:off"
 
 --experimental:"dynamic_bind_sym"
+--experimental:"overloadable_enums"
 
 --define:"vm_exec_hooks"
 --define:"nim_preview_hash_ref"
