@@ -1,16 +1,18 @@
 import types
 export types
 
+import pkg / model_citizen / utils
+export utils
+
 ### Globals ###
 const enu_version* = static_exec("git describe --tags HEAD")
 
 ### Sugar ###
 from sugar import dup, dump, collect
-import std / [with, strformat, strutils, sequtils, sets, tables, times,
-    monotimes]
-
+import std / [with, times, monotimes]
 import pkg / [print, flatty]
-export dup, with, strformat, strutils, sequtils, sets, tables, print, flatty
+
+export with, sets, tables, print, flatty
 
 ### Debug
 export dump
@@ -29,12 +31,6 @@ proc seconds*(s: float): Duration {.inline.} =
 ### options ###
 import options
 export options
-
-proc `?`*(self: ref): bool = not self.is_nil
-proc `?`*[T](option: Option[T]): bool = option.is_some
-proc `?`*(self: SomeNumber): bool = self > 0
-proc `?`*(self: string): bool = self != ""
-proc `?`*[T](self: open_array[T]): bool = self.len > 0
 
 proc `||=`*[T](opt: var Option[T], val: T): T {.discardable.} =
   if not opt.is_some:
@@ -124,15 +120,6 @@ proc wrap*[T](value, min, max: T): float =
     min
   else:
     value - (range * floor((value - min) / range))
-
-# ids
-
-import pkg/nanoid
-
-proc generate_id*(): string = generate(
-    alphabet = "abcdefghijklmnopqrstuvwxyz0123456789",
-    size = 13
-  )
 
 # exceptions
 
