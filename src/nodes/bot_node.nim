@@ -26,11 +26,14 @@ gdobj BotNode of KinematicBody:
     self.update_material(self.highlight_material)
 
   method ready() =
-    self.skin = self.get_node("Mannequiny").as(Spatial)
+    self.skin = self.get_node("model").as(Spatial)
     self.mesh = self.skin.get_node("root/Skeleton/body001").as(MeshInstance)
     self.set_default_material()
     self.animation_player =
         self.skin.get_node("AnimationPlayer").as(AnimationPlayer)
+    if self.model of Player:
+      # hack so player model doesn't hover
+      self.skin.translate DOWN * 0.8
 
   proc set_color(color: chroma.Color) =
     var adjusted: chroma.Color
@@ -58,6 +61,23 @@ gdobj BotNode of KinematicBody:
       SpatialMaterial(self.material).albedo_color = color
     else:
       self.visible = false
+
+  proc set_walk_animation(velocity: float, backwards: bool) =
+    if velocity <= 0.1:
+      self.animation_player.playback_speed = 0.5
+      self.animation_player.play("idle", custom_blend = 0.5)
+    elif velocity <= 5:
+      self.animation_player.playback_speed = velocity / 2
+      if backwards:
+        self.animation_player.play_backwards("walk", custom_blend = 0.1)
+      else:
+        self.animation_player.play("walk", custom_blend = 0.1)
+    else:
+      self.animation_player.playback_speed = velocity / 10
+      if backwards:
+        self.animation_player.play_backwards("run", custom_blend = 0.1)
+      else:
+        self.animation_player.play("run", custom_blend = 0.1)
 
   proc track_changes() =
     self.model.glow.watch:
@@ -87,21 +107,24 @@ gdobj BotNode of KinematicBody:
           bot.velocity.pause velocity_zid:
             bot.velocity.value = self.move_and_slide(change.item, UP)
           if bot.animation.value == "auto":
-            if change.item.length <= 0.1:
-              self.animation_player.playback_speed = 0.5
-              self.animation_player.play("idle", custom_blend = 0.5)
-            elif change.item.length <= 3:
-              self.animation_player.playback_speed = change.item.length / 2
-              self.animation_player.play("walk", custom_blend = 0.1)
-            else:
-              self.animation_player.playback_speed = change.item.length / 10
-              self.animation_player.play("run", custom_blend = 0.1)
-
+            self.set_walk_animation(change.item.length, false)
       bot.animation.watch:
         if added or touched and change.item in ["", "auto"]:
           self.animation_player.play("idle")
         elif added:
           self.animation_player.play(change.item)
+
+    elif self.model of Player:
+      let player = Player(self.model)
+      player.rotation.watch:
+        if added:
+          self.skin.rotation_degrees = (change.item + 180.0) * UP
+
+      player.velocity.watch:
+        if added:
+          var velocity = change.item.length
+          self.set_walk_animation(change.item.length,
+              player.input_direction.value.z > 0.0)
 
     self.model.scale.watch:
       if added:

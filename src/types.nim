@@ -99,6 +99,7 @@ type
   Player* = ref object of Unit
     colliders*: HashSet[Model]
     rotation*: ZenValue[float]
+    input_direction*: ZenValue[Vector3]
 
   Bot* = ref object of Unit
     animation*: ZenValue[string]

@@ -141,6 +141,7 @@ import pkg / core / transforms
 export transforms
 
 import godotapi / [spatial]
+import pkg / godot
 
 proc from_flatty*[N: NimGodotObject](s: string, i: var int, n: N) =
   discard

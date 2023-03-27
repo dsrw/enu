@@ -207,6 +207,7 @@ gdobj PlayerNode of KinematicBody:
     var velocity = self.calculate_velocity(self.velocity, move_direction,
                                            delta, self.flying, self.running)
 
+    self.model.input_direction.value = input_direction
     self.velocity = self.move_and_slide(velocity, UP)
 
     self.model.transform.value = self.transform
