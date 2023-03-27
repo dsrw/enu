@@ -1,6 +1,6 @@
 import godotapi / [mesh_instance]
 import pkg/godot except print
-import globals, models
+import core, globals, models
 
 gdobj GroundNode of MeshInstance:
   var model*: Ground

@@ -1,8 +1,6 @@
 import std / [tables, strutils, sequtils, sets, sugar]
 import core, models / [colors]
 
-var state* {.threadvar.}: GameState
-
 # only one flag from the group is active at a time
 const groups = @[
   {EditorFocused, ConsoleFocused, DocsFocused},

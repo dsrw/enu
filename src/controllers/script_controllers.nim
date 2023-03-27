@@ -588,12 +588,13 @@ proc retry_failed_scripts*(self: Worker) {.gcsafe.} =
     self.script_error(f.unit, f.e)
   self.failed = @[]
 
-proc load_script_and_dependents(self: Worker, unit: Unit) =
+proc load_script_and_dependents(self: Worker, unit: Unit, exec: bool) =
   var previous: HashSet[Unit]
   var units_by_module: Table[string, Unit]
   var units_to_reload: HashSet[Unit]
 
-  save_world()
+  if exec:
+    save_world()
 
   units_to_reload.incl unit
   state.reloading = true
@@ -626,6 +627,9 @@ proc load_script_and_dependents(self: Worker, unit: Unit) =
   state.reloading = false
   state.dirty_units.clear
 
+  if not exec:
+    unit.script_ctx.running = false
+
 proc script_file_for(self: Unit): string =
   if self.id == state.player.value.id:
     state.config.lib_dir & "/enu/players.nim"
@@ -655,12 +659,13 @@ proc change_code(self: Worker, unit: Unit, code: Code) =
     remove_file unit.script_ctx.script
     self.module_names.excl unit.script_ctx.module_name
     unit.script_ctx.script = ""
-  elif code.nim.strip != "" and code.owner == Zen.thread_ctx.name:
+  elif code.nim.strip != "":
     debug "loading unit", unit_id = unit.id
     if not state.reloading and not self.retry_failures:
       write_file(unit.script_ctx.script, code.nim)
       if not self.interpreter.is_nil:
-        self.load_script_and_dependents(unit)
+        let exec = code.owner == Zen.thread_ctx.name
+        self.load_script_and_dependents(unit, exec)
       else:
         # We load the player before we init the interpreter to get to an
         # interactive state quicker. Otherwise this shouldn't ever be nil.
@@ -718,6 +723,8 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
   state.config[] = main_thread_state.config[]
   state.config.font_size = Zen.thread_ctx[state.config.font_size]
   state.console = ConsoleModel.init_from(main_thread_state.console)
+  state.worker_ctx_name = worker_ctx.name
+  main_thread_state.worker_ctx_name = worker_ctx.name
 
   state.player.value = Player.init
 
@@ -754,7 +761,7 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
   # get to an interactive state quicker. Now that we have an interpreter we
   # explicitly load the player script.
   state.player.value.script_ctx.interpreter = worker.interpreter
-  worker.load_script_and_dependents(state.player.value)
+  worker.load_script_and_dependents(state.player.value, true)
 
   const max_time = (1.0 / 30.0).seconds
   const min_time = (1.0 / 120.0).seconds

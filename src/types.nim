@@ -57,6 +57,7 @@ type
     open_sign*: ZenValue[Sign]
     queued_action*: string
     scale_factor*: float
+    worker_ctx_name*: string
 
   Model* = ref object of RootObj
     target_point*: Vector3
