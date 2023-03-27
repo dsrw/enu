@@ -727,6 +727,7 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
   main_thread_state.worker_ctx_name = worker_ctx.name
 
   state.player.value = Player.init
+  state.player.value.color.value = state.config.player_color
 
   work_done.signal
   worker_lock.release

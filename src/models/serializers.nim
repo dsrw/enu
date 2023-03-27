@@ -22,17 +22,19 @@ proc write_file(path, text: string) =
   debug "moved", src = tmp, dest = path
 
 proc to_json_hook(self: Color): JsonNode =
-  if self == action_colors[eraser]:
-    %""
-  else:
-    %self.to_html_hex
+  for i, color in Colors.enum_fields:
+    if self == action_colors[Colors(i)]:
+      return %color
+  return %self.to_html_hex
 
 proc from_json_hook(self: var Color, json: JsonNode) =
   let hex = json.get_str
-  self = if hex == "":
-    action_colors[eraser]
-  else:
-    hex.parse_html_hex
+  for i, color in Colors.enum_fields:
+    if color == hex:
+      self = action_colors[Colors(i)]
+      return
+
+  self = hex.parse_html_hex
 
 proc to_json_hook(self: VoxelInfo): JsonNode  =
   %* [self.kind.ord, jsonutils.to_json(self.color)]

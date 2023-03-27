@@ -231,3 +231,14 @@ template watch*(zen: Zen, body: untyped) =
     watch(zen, self.model, body)
   else:
     watch(zen, self, body)
+
+# from https://forum.nim-lang.org/t/5481#34239
+macro enum_fields*(n: typed): untyped =
+  let impl = get_type(n)
+  expect_kind impl[1], nnk_enum_ty
+  result = nnk_bracket.new_tree()
+  for f in impl[1]:
+    case f.kind
+    of nnk_sym, nnk_ident:
+      result.add new_lit(f.str_val)
+    else: discard

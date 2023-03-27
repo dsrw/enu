@@ -6,7 +6,7 @@ import godotapi / [input, input_event, gd_os, node, scene_tree, packed_scene,
     dynamic_font, resource_loader, main_loop, project_settings, input_map,
     input_event_action, input_event_key, global_constants, scroll_container]
 
-import core, types, globals, controllers, models / [serializers, units]
+import core, types, globals, controllers, models / [serializers, units, colors]
 
 type
   UserConfig = object
@@ -21,6 +21,7 @@ type
     world_prefix: Option[string]
     listen: Option[bool]
     server_address: Option[string]
+    player_color: Option[colortypes.Color]
 
 const auto_save_interval = 30.seconds
 
@@ -162,6 +163,7 @@ gdobj Game of Node:
           "vmlib")
       server_address = uc.server_address ||= ""
       listen = env_listen or (uc.listen ||= false)
+      player_color = uc.player_color ||= action_colors[black]
 
     state.set_flag(God, uc.god_mode ||= false)
 

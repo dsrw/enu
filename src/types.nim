@@ -147,6 +147,7 @@ type
     world_prefix*: string
     listen*: bool
     server_address*: string
+    player_color*: Color
 
   Code* = object
     owner*: string
