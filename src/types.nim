@@ -79,7 +79,7 @@ type
     scale*: ZenValue[float]
     glow*: ZenValue[float]
     speed*: float
-    code*: ZenValue[string]
+    code*: ZenValue[Code]
     script_ctx*: ScriptCtx
     disabled*: bool
     velocity*: ZenValue[Vector3]
@@ -145,6 +145,10 @@ type
     world_prefix*: string
     listen*: bool
     server_address*: string
+
+  Code* = object
+    owner*: string
+    nim*: string
 
   ScriptCtx* = ref object
     script*: string

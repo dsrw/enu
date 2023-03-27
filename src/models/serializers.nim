@@ -173,6 +173,9 @@ proc load_units(parent: Unit) =
       Build(unit).reset_bounds
       Build(unit).restore_edits
 
+    if file_exists(unit.script_ctx.script):
+      unit.code.value = Code.init(read_file(unit.script_ctx.script))
+
 proc load_world*(worker: Worker) =
   let world_file = state.config.world_dir / "world.json"
   debug "loading ", world_file

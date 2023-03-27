@@ -83,10 +83,10 @@ proc maybe_join_previous_build(self: Build,
       for position in self.to_global(position).surrounding:
         if partner.to_local(position) in partner:
           var source, dest: Build
-          if partner.code.value.strip == "":
+          if partner.code.value.nim.strip == "":
             source = partner
             dest = self
-          elif self.code.value.strip == "":
+          elif self.code.value.nim.strip == "":
             source = self
             dest = partner
 

@@ -172,10 +172,6 @@ proc local_to*(self: Vector3, unit: Unit): Vector3 =
 proc global_from*(self: Vector3, unit: Unit): Vector3 =
   result = -self.local_to(unit)
 
-proc init*(_: type Transform, origin = vec3()): Transform =
-  result = init_transform()
-  result.origin = origin
-
 proc `+=`*(self: ZenValue[string], str: string) =
   self.value = self.value & str
 
@@ -196,6 +192,13 @@ proc `basis=`*(self: ZenValue[Transform], value: Basis) =
   self.value = transform
 
 proc init*(_: type Basis): Basis = init_basis()
+
+proc init*(_: type Transform, origin = vec3()): Transform =
+  result = init_transform()
+  result.origin = origin
+
+proc init*(_: type Code, nim: string): Code =
+  Code(owner: Zen.thread_ctx.name, nim: nim)
 
 proc update_action_index*(state: GameState, change: int) =
   var index = int(state.tool.value) + change

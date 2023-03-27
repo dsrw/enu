@@ -4,13 +4,12 @@ from pkg/core/godotcoretypes import Basis
 import core, models / [states, colors], libs / interpreters
 
 proc init_unit*[T: Unit](self: T) =
-  let units = Zen.init(seq[Unit])
   with self:
-    units = units
+    units = Zen.init(seq[Unit])
     transform = Zen.init(self.start_transform)
     global_transform = ZenValue[Transform].init
     flags = ZenSet[ModelFlags].init
-    code = ZenValue[string].init(flags = {TrackChildren, SyncLocal})
+    code = ZenValue[Code].init
     velocity = ZenValue[Vector3].init
     scale = Zen.init(1.0)
     glow = ZenValue[float].init
@@ -42,7 +41,9 @@ proc find_root*(self: Unit, all_clones = false): Unit =
   while parent != nil:
     result = parent
 
-    if (all_clones and not ?parent.clone_of) or (not all_clones and Global in parent.flags):
+    if (all_clones and not ?parent.clone_of) or
+        (not all_clones and Global in parent.flags):
+
       parent = nil
     else:
       parent = parent.parent
@@ -66,10 +67,14 @@ proc data_file*(self: Unit): string =
 
 method main_thread_init*(self: Unit) {.base, gcsafe.} = discard
 
-method on_begin_move*(self: Unit, direction: Vector3, steps: float, move_mode: int): Callback {.base, gcsafe.} =
+method on_begin_move*(self: Unit, direction: Vector3, steps: float,
+    move_mode: int): Callback {.base, gcsafe.} =
+
   raise_assert "override me"
 
-method on_begin_turn*(self: Unit, direction: Vector3, degrees: float, lean: bool, move_mode: int): Callback {.base, gcsafe.} =
+method on_begin_turn*(self: Unit, direction: Vector3, degrees: float,
+    lean: bool, move_mode: int): Callback {.base, gcsafe.} =
+
   raise_assert "override me"
 
 method clone*(self: Unit, clone_to: Unit, id: string): Unit {.base, gcsafe.} =

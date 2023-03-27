@@ -555,7 +555,7 @@ proc load_script(self: Worker, unit: Unit, timeout = script_timeout) =
         ""
       let code = unit.code_template(imports)
       ctx.timeout_at = get_mono_time() + timeout
-      debug "loading script", script = ctx.script
+      info "loading script", script = ctx.script
       ctx.load(ctx.script, code)
 
     if not state.paused:
@@ -619,7 +619,7 @@ proc load_script_and_dependents(self: Worker, unit: Unit) =
 
   for other in units_to_reload:
     if other != unit:
-      other.code.touch other.code.value
+      other.code.touch Code.init(other.code.value.nim)
 
   self.retry_failed_scripts()
   self.retry_failures = false
@@ -634,7 +634,7 @@ proc script_file_for(self: Unit): string =
   else:
     ""
 
-proc change_code(self: Worker, unit: Unit, code: string) =
+proc change_code(self: Worker, unit: Unit, code: Code) =
   debug "code changing", unit = unit.id
   if ?unit.script_ctx and unit.script_ctx.running and not ?unit.clone_of:
     unit.collect_garbage
@@ -648,17 +648,17 @@ proc change_code(self: Worker, unit: Unit, code: string) =
 
   unit.reset()
   state.pop_flag ConsoleVisible
-  if not state.reloading and code.strip == "":
+  if not state.reloading and code.nim.strip == "":
     self.interpreter.reset_module(unit.script_ctx.module_name)
     debug "reset module", module = unit.script_ctx.module_name
     unit.script_ctx.running = false
     remove_file unit.script_ctx.script
     self.module_names.excl unit.script_ctx.module_name
     unit.script_ctx.script = ""
-  elif code.strip != "":
+  elif code.nim.strip != "" and code.owner == Zen.thread_ctx.name:
     debug "loading unit", unit_id = unit.id
     if not state.reloading and not self.retry_failures:
-      write_file(unit.script_ctx.script, code)
+      write_file(unit.script_ctx.script, code.nim)
       if not self.interpreter.is_nil:
         self.load_script_and_dependents(unit)
       else:
@@ -678,8 +678,6 @@ proc watch_code(self: Worker, unit: Unit) =
         interpreter: self.interpreter, timeout_at: MonoTime.high)
 
     unit.script_ctx.script = script_file_for unit
-    if file_exists(unit.script_ctx.script):
-      unit.code.value = read_file(unit.script_ctx.script)
 
 proc watch_units(self: Worker, units: ZenSeq[Unit], body:
     proc(unit: Unit, change: Change[Unit], added: bool, removed: bool)
@@ -708,8 +706,8 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
   worker_lock.acquire
 
   let listen = main_thread_state.config.listen
-  let worker_ctx = ZenContext.init(name = &"work-{generate_id()}", chan_size = 2000,
-      listen = listen)
+  let worker_ctx = ZenContext.init(name = &"work-{generate_id()}",
+      chan_size = 2000, listen = listen)
 
   Zen.thread_ctx = worker_ctx
   ctx.subscribe(Zen.thread_ctx)
@@ -906,7 +904,7 @@ when is_main_module:
     var b = Bot.init
     let c = ScriptController.init
     state.units.add b
-    b.code.value = dedent """
+    b.code.value = Code.init """
       forward 1
-    """
+    """.dedent
   main()

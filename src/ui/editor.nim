@@ -62,7 +62,7 @@ gdobj Editor of TextEdit:
   method unhandled_input*(event: InputEvent) =
     if EditorFocused in state.flags and event.is_action_pressed("ui_cancel"):
       if not (event of InputEventJoypadButton) or CommandMode notin state.flags:
-        state.open_unit.value.code.value = self.text
+        state.open_unit.value.code.value = Code.init(self.text)
         state.open_unit.value = nil
         self.get_tree().set_input_as_handled()
 
@@ -118,7 +118,7 @@ gdobj Editor of TextEdit:
         else:
           self.visible = true
           self.set_open_script_ctx()
-          self.text = state.open_unit.value.code.value
+          self.text = state.open_unit.value.code.value.nim
           if CommandMode in state.flags:
             self.modulate = dimmed_alpha
           else:
@@ -132,7 +132,8 @@ gdobj Editor of TextEdit:
         self.grab_focus
       if CommandMode.added:
         if EditorVisible in state.flags:
-          state.open_unit.value.code.value = self.text
+          state.open_unit.value.code.value = Code.init(self.text)
+
           self.modulate = dimmed_alpha
           self.release_focus
 

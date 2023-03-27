@@ -13,7 +13,7 @@
 --define:"nim_type_names"
 --define:"chronicles_enabled=on"
 --define:"chronicles_log_level=INFO"
---define:"chronicles_disabled_topics=model_citizen,scripting"
+# --define:"chronicles_disabled_topics=model_citizen,scripting"
 --define:"chronicles_sinks=textlines[dynamic]"
 # --define:"chronicles_timestamps=None" # disable timestamps for better diffs
 # --define:"zen_trace"
