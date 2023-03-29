@@ -88,7 +88,7 @@ proc resume*(self: ScriptCtx): bool =
   assert self.pc > 0
   assert not self.tos.is_nil
 
-  debug "resuming", script = self.file_name, module = self.module_name
+  trace "resuming", script = self.file_name, module = self.module_name
   result = try:
     {.gcsafe.}:
       discard exec_from_ctx(self.ctx, self.pc, self.tos)

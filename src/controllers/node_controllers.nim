@@ -60,6 +60,7 @@ proc add_to_scene(unit: Unit) =
     if player.id == state.player.value.id:
       player.add(PlayerNode, parent_node)
     else:
+      player.start_transform = player.transform.value
       player.add(BotNode, state.nodes.data)
   else:
     raise_assert "unknown unit type for " & unit.id

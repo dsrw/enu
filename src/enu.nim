@@ -1,7 +1,7 @@
 {.warning[UnusedImport]: off.}
 
 import segfaults
-import game
+import core, game
 
 import ui / [editor, console, toolbar, action_button, preview_maker,
              markdown_label, right_panel]
