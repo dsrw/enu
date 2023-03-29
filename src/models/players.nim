@@ -4,7 +4,7 @@ import core, models / units
 
 proc init*(_: type Player): Player =
   result = Player(
-    id: &"player-{generate_id()}",
+    id: &"player-{Zen.thread_ctx.name}",
     rotation: Zen.init(0.0),
     start_transform: Transform.init(origin = vec3(0, 1, 0)),
     input_direction: ZenValue[Vector3].init

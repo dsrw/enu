@@ -772,6 +772,13 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
     let wait_until = frame_start + min_time
 
     Zen.thread_ctx.recv
+    for ctx_name in Zen.thread_ctx.unsubscribed:
+      var i  = 0
+      while i < state.units.len:
+        if state.units[i].id == &"player-{ctx_name}":
+          state.units.del i
+        else:
+          i += 1
 
     var to_process: seq[Unit]
     state.units.value.walk_tree proc(unit: Unit) = to_process.add unit
