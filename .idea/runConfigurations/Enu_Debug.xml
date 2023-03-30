@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Enu Debug" type="CLionExternalRunConfiguration" factoryName="Application" PROGRAM_PARAMS="--verbose scenes/game.tscn" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$ProjectFileDir$/app" PASS_PARENT_ENVS_2="true" PROJECT_NAME="enu" TARGET_NAME="nimble build" CONFIG_NAME="nimble build" RUN_PATH="$PROJECT_DIR$/vendor/godot/bin/godot.osx.opt.tools.arm64">
     <envs>
-      <env name="ENU_LISTEN" value="true" />
+      <env name="ENU_LISTEN_ADDRESS" value="127.0.0.1" />
     </envs>
     <method v="2">
       <option name="CLION.EXTERNAL.BUILD" enabled="true" />

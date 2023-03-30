@@ -710,9 +710,9 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
   let (ctx, main_thread_state) = params
   worker_lock.acquire
 
-  let listen = main_thread_state.config.listen
+  var listen_address = main_thread_state.config.listen_address
   let worker_ctx = ZenContext.init(name = &"work-{generate_id()}",
-      chan_size = 2000, listen = listen)
+      chan_size = 2000, listen_address = listen_address)
 
   Zen.thread_ctx = worker_ctx
   ctx.subscribe(Zen.thread_ctx)
@@ -749,7 +749,7 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
           remove_file unit.script_ctx.script
           remove_dir unit.data_dir
 
-  if listen or server_address == "":
+  if ?listen_address or not ?server_address:
     state.units.add state.player.value
     worker.init_interpreter("")
     load_world(worker)

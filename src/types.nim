@@ -145,7 +145,7 @@ type
     start_full_screen*: bool
     semicolon_as_colon*: bool
     world_prefix*: string
-    listen*: bool
+    listen_address*: string
     server_address*: string
     player_color*: Color
 

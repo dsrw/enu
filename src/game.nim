@@ -19,7 +19,7 @@ type
     start_full_screen: Option[bool]
     semicolon_as_colon: Option[bool]
     world_prefix: Option[string]
-    listen: Option[bool]
+    listen_address: Option[string]
     server_address: Option[string]
     player_color: Option[colortypes.Color]
 
@@ -150,7 +150,7 @@ gdobj Game of Node:
     assert not state.config.is_nil
 
     state.config.font_size.value = uc.font_size ||= (20 * screen_scale).int
-    let env_listen = get_env("ENU_LISTEN").to_lower() == "true"
+    let env_listen_address = get_env("ENU_LISTEN_ADDRESS")
     with state.config:
       dock_icon_size = uc.dock_icon_size ||= 100 * screen_scale
       world_prefix = uc.world_prefix ||= "tutorial"
@@ -162,7 +162,7 @@ gdobj Game of Node:
       lib_dir = join_path(get_executable_path().parent_dir(), "..", "..", "..",
           "vmlib")
       server_address = uc.server_address ||= ""
-      listen = env_listen or (uc.listen ||= false)
+      listen_address = env_listen_address || (uc.listen_address ||= "")
       player_color = uc.player_color ||= action_colors[black]
 
     state.set_flag(God, uc.god_mode ||= false)
