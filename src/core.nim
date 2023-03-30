@@ -128,11 +128,6 @@ proc wrap*[T](value, min, max: T): float =
   else:
     value - (range * floor((value - min) / range))
 
-# exceptions
-
-proc init*[T: Exception](kind: type[T], message: string, parent: ref Exception = nil): ref Exception =
-  (ref kind)(msg: message, parent: parent)
-
 # output
 
 when not defined(no_godot):

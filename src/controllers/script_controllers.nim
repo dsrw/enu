@@ -754,9 +754,9 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
     worker.init_interpreter("")
     load_world(worker)
   else:
-    worker.init_interpreter("")
     Zen.thread_ctx.subscribe(server_address)
     state.units.add state.player.value
+    worker.init_interpreter("")
 
   # We add the player to the scene before the interpreter is initialized to
   # get to an interactive state quicker. Now that we have an interpreter we
