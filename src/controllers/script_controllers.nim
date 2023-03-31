@@ -454,24 +454,24 @@ proc `markdown=`(self: Sign, value: string) =
   self.markdown.value = value
 
 proc width(self: Sign): float =
-  self.width
+  self.width.value
 
 proc `width=`(self: Sign, value: float) =
-  self.width = value
+  self.width.value = value
   self.title.touch self.title.value
 
 proc height(self: Sign): float =
-  self.height
+  self.height.value
 
 proc `height=`(self: Sign, value: float) =
-  self.height = value
+  self.height.value = value
   self.title.touch self.title.value
 
 proc size(self: Sign): int =
-  self.size
+  self.size.value
 
 proc `size=`(self: Sign, value: int) =
-  self.size = value
+  self.size.value = value
   self.title.touch self.title.value
 
 proc open(self: Sign): bool =

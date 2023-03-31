@@ -31,26 +31,26 @@ gdobj SignNode of Spatial:
 
     proc resize =
       var
-        ratio = self.model.width / self.model.height
+        ratio = self.model.width.value / self.model.height.value
         size = vec2(viewport.size.x, viewport.size.x / ratio)
 
-      quad.size = vec2(self.model.width, self.model.height)
-      shape.scale = vec3(self.model.width, self.model.height, 1)
+      quad.size = vec2(self.model.width.value, self.model.height.value)
+      shape.scale = vec3(self.model.width.value, self.model.height.value, 1)
       var t = mesh.transform
-      t.origin.x = self.model.width / -2 + 0.5
-      t.origin.y = self.model.height / -2 + 0.5
+      t.origin.x = self.model.width.value / -2 + 0.5
+      t.origin.y = self.model.height.value / -2 + 0.5
       mesh.transform = t
       viewport.size = size
       label.rect_size = size
 
       var stylebox = label.og_label.get_stylebox("normal") as StyleBoxFlat
 
-      stylebox.content_margin_left = 80 / self.model.width
-      label.size = int(float(self.model.size) / self.model.width)
+      stylebox.content_margin_left = 80 / self.model.width.value
+      label.size = int(float(self.model.size.value) / self.model.width.value)
 
     resize()
     self.material.params_billboard_mode =
-      if self.model.billboard:
+      if self.model.billboard.value:
         BILLBOARD_FIXED_Y
       else:
         BILLBOARD_DISABLED

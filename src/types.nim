@@ -106,9 +106,9 @@ type
 
   Sign* = ref object of Unit
     markdown*, title*: ZenValue[string]
-    width*, height*: float
-    size*: int
-    billboard*, zoomable*: bool
+    width*, height*: ZenValue[float]
+    size*: ZenValue[int]
+    billboard*, zoomable*: ZenValue[bool]
     owner*: Unit
 
   VoxelKind* = enum
