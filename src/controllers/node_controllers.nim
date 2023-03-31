@@ -84,6 +84,7 @@ proc find_nested_changes(parent: Change[Unit]) =
       if Modified in change.changes:
         find_nested_changes(change)
       elif Added in change.changes:
+        # FIXME: this is being set for the worker thread in script_controller
         change.item.parent = parent.item
         change.item.add_to_scene()
       elif Removed in change.changes:

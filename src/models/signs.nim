@@ -7,17 +7,11 @@ proc init*(_: type Sign,
   zoomable = true): Sign =
 
   let title = if title == "": markdown else: title
-  let self = Sign(
-    flags: ZenSet[ModelFlags].init,
+  var self = Sign(
+    id: "sign_" & generate_id(),
     markdown: Zen.init(markdown),
     title: Zen.init(title),
-    units: Zen.init(seq[Unit]),
-    start_transform: transform,
-    transform: Zen.init(transform),
-    code: ZenValue[Code].init,
-    velocity: ZenValue[Vector3].init,
     glow: ZenValue[float].init,
-    scale: Zen.init(1.0),
     width: width,
     height: height,
     size: size,
@@ -27,6 +21,7 @@ proc init*(_: type Sign,
     color: Zen.init(action_colors[black]),
     owner: owner
   )
+  self.init_unit
 
   self.flags += Visible
   state.flags.watch:

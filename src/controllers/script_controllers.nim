@@ -684,7 +684,7 @@ proc watch_code(self: Worker, unit: Unit) =
 
     unit.script_ctx.script = script_file_for unit
 
-proc watch_units(self: Worker, units: ZenSeq[Unit], body:
+proc watch_units(self: Worker, units: ZenSeq[Unit], parent: Unit, body:
     proc(unit: Unit, change: Change[Unit], added: bool, removed: bool)
     {.gcsafe.}) {.gcsafe.} =
 
@@ -695,10 +695,12 @@ proc watch_units(self: Worker, units: ZenSeq[Unit], body:
       let removed = Removed in change.changes
       body(unit, change, added, removed)
       if added:
-        self.watch_units(unit.units, body)
+        # FIXME: this is being set for the main thread in node_controller
+        unit.parent = parent
+        self.watch_units(unit.units, unit, body)
 
 template for_all_units(self: Worker, body: untyped) {.dirty.} =
-  self.watch_units state.units,
+  self.watch_units state.units, parent = nil,
     proc(unit: Unit, change: Change[Unit], added: bool,
         removed: bool) {.gcsafe.} =
 

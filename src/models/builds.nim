@@ -356,7 +356,7 @@ method ensure_visible*(self: Build) =
 proc init*(_: type Build,
     id = "build_" & generate_id(), transform = Transform.init,
     color = default_color, clone_of: Unit = nil, global = true,
-    bot_collisions = true, parent: Unit = nil): Build =
+    bot_collisions = true): Build =
 
   var self = Build(
     id: id,
@@ -448,7 +448,7 @@ method clone*(self: Build, clone_to: Unit, id: string): Unit =
   # tutorials. Make it configurable somehow.
   let bot_collisions = true #not (clone_to of Bot)
   let clone = Build.init(id = id, transform = transform, clone_of = self,
-      global = global, parent = clone_to, color = self.start_color,
+      global = global, color = self.start_color,
       bot_collisions = bot_collisions)
 
   for loc, info in self.shared.value.edits[self.id]:
