@@ -25,16 +25,16 @@ bin_dir = "app/_dlls"
 src_dir = "src"
 bin = @["enu" & lib_ext]
 
-when (NimMajor, NimMinor) >= (1, 7):
+if (NimMajor, NimMinor) >= (1, 7):
   requires "https://github.com/dsrw/Nim#c07ccfebf"
 else:
   requires "https://github.com/dsrw/Nim#a6d502f"
 
 requires "nim >= 1.6.10",
   "https://github.com/dsrw/godot-nim#82d40be",
-  "https://github.com/dsrw/model_citizen 0.10.7",
+  "https://github.com/dsrw/model_citizen 0.10.8",
   "https://github.com/dsrw/nanoid.nim 0.2.1",
-  "cligen 1.5.33",
+  "cligen 1.6.0",
   "print#b671140",
   "chroma",
   "markdown",
