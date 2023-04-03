@@ -8,7 +8,7 @@ import godotapigen
 include "../installer/export_presets.cfg.nimf"
 include "../installer/Info.plist.nimf"
 
-const 
+const
   stdlib = find_nim_std_lib_compile_time()
   macros_url = "https://raw.githubusercontent.com/dsrw/Nim/v1.6.4-enu/lib/core/macros.nim"
 
@@ -36,7 +36,7 @@ proc copy_stdlib(destination: string) =
   for path in @["core", "pure", "std", "fusion", "system"]:
     copy_dir join_path(stdlib, path), join_path(destination, path)
 
-  for file in @["system.nim", "stdlib.nimble"]:
+  for file in @["system.nim", "stdlib.nimble", "compilation.nim"]:
     copy_file join_path(stdlib, file),
               join_path(destination, file)
 

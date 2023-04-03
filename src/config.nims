@@ -5,6 +5,7 @@
 --define:nimPreviewHashRef
 --experimental:dynamicBindSym
 --experimental:caseStmtMacros
+--experimental:overloadableEnums
 --mm:orc
 #--define:nimLeakDetector
 

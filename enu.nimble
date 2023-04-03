@@ -27,16 +27,15 @@ bin = @["enu" & lib_ext]
 
 requires "nim >= 1.6.4",
   "https://github.com/dsrw/Nim#a6d502f",
-  "https://github.com/dsrw/godot-nim#125732b",
+  "https://github.com/dsrw/godot-nim#82d40be",
   "https://github.com/dsrw/model_citizen 0.7.4",
   "https://github.com/dsrw/nanoid.nim 0.2.1",
-  "cligen 1.5.19",
+  "cligen 1.6.0",
   "print#f78c855",
   "chroma",
   "markdown",
   "https://github.com/haxscramper/hmatching",
-  "zippy",
-  "https://github.com/dsrw/Nim#a6d502f"
+  "zippy"
 
 proc gen: string =
   if generator_path == "":
