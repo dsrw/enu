@@ -21,6 +21,7 @@ gdobj SignNode of Spatial:
       self.visible = false
 
   proc setup* =
+    debug "sign setup", sign = self.id
     var
       label = self.find_node("MarkdownLabel") as MarkdownLabel
       shape = self.find_node("CollisionShape") as CollisionShape
@@ -30,6 +31,7 @@ gdobj SignNode of Spatial:
     self.material = mesh.get_active_material(0) as SpatialMaterial
 
     proc resize =
+      debug "sign resize", sign = self.id
       var
         ratio = self.model.width.value / self.model.height.value
         size = vec2(viewport.size.x, viewport.size.x / ratio)

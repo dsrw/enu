@@ -9,7 +9,8 @@ log_scope:
   topics = "scripting"
 
 const
-    STDLIB_PATHS = [".", "core", "pure", "pure/collections", "pure/concurrency", "std", "fusion"]
+    STDLIB_PATHS = [".", "core", "pure", "pure/collections", "pure/concurrency",
+        "std", "fusion"]
 
 private_access ScriptCtx
 

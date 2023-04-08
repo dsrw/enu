@@ -19,7 +19,8 @@ proc init*(_: type Sign,
     zoomable: ZenValue[bool].init(zoomable),
     frame_created: state.frame_count,
     color: Zen.init(action_colors[black]),
-    owner: owner
+    owner: owner,
+    start_transform: transform
   )
   self.init_unit
 
