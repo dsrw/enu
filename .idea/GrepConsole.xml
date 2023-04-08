@@ -17,47 +17,103 @@
                     <list>
                       <Pin>
                         <option name="consoleUUID" value="0456366f-c432-449b-a503-5d70e390cf63" />
-                        <option name="grepModel">
-                          <GrepModel>
-                            <option name="expression" value="Enu: *" />
-                            <option name="unlessExpression" value="" />
-                          </GrepModel>
+                        <option name="grepCompositeModel">
+                          <GrepCompositeModel>
+                            <option name="models">
+                              <list>
+                                <GrepModel>
+                                  <option name="expression" value="Enu: *" />
+                                </GrepModel>
+                              </list>
+                            </option>
+                          </GrepCompositeModel>
                         </option>
                       </Pin>
                       <Pin>
                         <option name="consoleUUID" value="1204179b-650f-49e5-85cc-499c84dfa9ec" />
-                        <option name="grepModel">
-                          <GrepModel>
-                            <option name="expression" value="Enu" />
-                            <option name="unlessExpression" value="" />
-                          </GrepModel>
+                        <option name="grepCompositeModel">
+                          <GrepCompositeModel>
+                            <option name="models">
+                              <list>
+                                <GrepModel>
+                                  <option name="expression" value="Enu" />
+                                </GrepModel>
+                              </list>
+                            </option>
+                          </GrepCompositeModel>
                         </option>
                       </Pin>
                       <Pin>
                         <option name="consoleUUID" value="56f866e7-41bd-4a78-9f0b-6d5e585a1946" />
-                        <option name="grepModel">
-                          <GrepModel>
-                            <option name="expression" value="Enu: " />
-                            <option name="unlessExpression" value="" />
-                          </GrepModel>
+                        <option name="grepCompositeModel">
+                          <GrepCompositeModel>
+                            <option name="models">
+                              <list>
+                                <GrepModel>
+                                  <option name="expression" value="Enu: " />
+                                </GrepModel>
+                              </list>
+                            </option>
+                          </GrepCompositeModel>
                         </option>
                       </Pin>
                       <Pin>
                         <option name="consoleUUID" value="69179ab1-8c79-4a67-91a2-a470e2d22f4e" />
-                        <option name="grepModel">
-                          <GrepModel>
-                            <option name="expression" value="Enu: " />
-                            <option name="unlessExpression" value="" />
-                          </GrepModel>
+                        <option name="grepCompositeModel">
+                          <GrepCompositeModel>
+                            <option name="models">
+                              <list>
+                                <GrepModel>
+                                  <option name="expression" value="Enu: " />
+                                </GrepModel>
+                              </list>
+                            </option>
+                          </GrepCompositeModel>
                         </option>
                       </Pin>
                       <Pin>
                         <option name="consoleUUID" value="07f7750d-b707-4d1c-82a0-5e2d4fe98f48" />
-                        <option name="grepModel">
-                          <GrepModel>
-                            <option name="expression" value="Enu: " />
-                            <option name="unlessExpression" value="" />
-                          </GrepModel>
+                        <option name="grepCompositeModel">
+                          <GrepCompositeModel>
+                            <option name="models">
+                              <list>
+                                <GrepModel>
+                                  <option name="expression" value="Enu: " />
+                                </GrepModel>
+                              </list>
+                            </option>
+                          </GrepCompositeModel>
+                        </option>
+                      </Pin>
+                    </list>
+                  </option>
+                </Pins>
+              </value>
+            </entry>
+            <entry>
+              <key>
+                <RunConfigurationRef>
+                  <option name="icon" value="application.svg)" />
+                  <option name="name" value="Enu Debug" />
+                </RunConfigurationRef>
+              </key>
+              <value>
+                <Pins>
+                  <option name="pins">
+                    <list>
+                      <Pin>
+                        <option name="consoleUUID" value="a65ac63a-32c0-45f1-96b3-c96ac896d9c2" />
+                        <option name="contentType" value="ConsoleContent" />
+                        <option name="grepCompositeModel">
+                          <GrepCompositeModel>
+                            <option name="models">
+                              <list>
+                                <GrepModel>
+                                  <option name="expression" value="transf" />
+                                </GrepModel>
+                              </list>
+                            </option>
+                          </GrepCompositeModel>
                         </option>
                       </Pin>
                     </list>

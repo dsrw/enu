@@ -34,7 +34,7 @@ proc copy_stdlib(destination: string) =
   for path in @["core", "pure", "std", "fusion", "system"]:
     copy_dir join_path(stdlib, path), join_path(destination, path)
 
-  for file in @["system.nim", "stdlib.nimble"]:
+  for file in @["system.nim", "stdlib.nimble", "compilation.nim"]:
     copy_file join_path(stdlib, file),
               join_path(destination, file)
 
