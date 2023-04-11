@@ -34,7 +34,7 @@ type
 
   GameState* = ref object
     flags*: ZenSet[StateFlags]
-    wants*: OrderedSet[StateFlags]
+    wants*: ZenSeq[StateFlags]
     config*: Config
     open_unit*: ZenValue[Unit]
     dirty_units*: HashSet[Unit]

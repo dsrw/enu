@@ -1,6 +1,10 @@
 import std / [tables, strutils, sequtils, sets, sugar]
 import core, models / [colors]
 
+log_scope:
+  topics = "state"
+  ctx = Zen.thread_ctx.name
+
 # only one flag from the group is active at a time
 const groups = @[
   {EditorFocused, ConsoleFocused, DocsFocused},
@@ -9,6 +13,7 @@ const groups = @[
 ]
 
 proc resolve_flags(self: GameState) =
+  debug "resolving flags", flags = self.flags.value, wants = self.wants.value
   var result: set[StateFlags]
   for flag in self.wants:
     for group in groups:
@@ -36,6 +41,7 @@ proc resolve_flags(self: GameState) =
   if MouseCaptured notin result:
     result.excl(ReticleVisible)
 
+  debug "resolved flags", flags = result
   self.flags.value = result
 
 proc replace_flags*(self: GameState, flags: varargs[StateFlags]) =
@@ -43,8 +49,9 @@ proc replace_flags*(self: GameState, flags: varargs[StateFlags]) =
     for group in groups:
       if flag in group:
         for flag in group:
-          self.wants.excl flag
-        self.wants.incl flag
+          self.wants -= flag
+        if flag notin self.wants:
+          self.wants += flag
   self.resolve_flags
 
 proc replace_flag*(self: GameState, flag: StateFlags) =
@@ -52,7 +59,8 @@ proc replace_flag*(self: GameState, flag: StateFlags) =
 
 proc push_flags*(self: GameState, flags: varargs[StateFlags]) =
   for flag in flags:
-    self.wants.incl flag
+    if flag notin self.wants:
+      self.wants += flag
   self.resolve_flags
 
 proc push_flag*(self: GameState, flag: StateFlags) =
@@ -60,7 +68,7 @@ proc push_flag*(self: GameState, flag: StateFlags) =
 
 proc pop_flags*(self: GameState, flags: varargs[StateFlags]) =
   for flag in flags:
-    self.wants.excl flag
+    self.wants -= flag
 
   self.resolve_flags
 
@@ -110,7 +118,8 @@ proc init*(_: type GameState): GameState =
     tool: Zen.init(BlueBlock, flags = flags),
     gravity: -80.0,
     console: ConsoleModel(log: Zen.init(seq[string], flags = flags)),
-    open_sign: ZenValue[Sign].init(flags = flags)
+    open_sign: ZenValue[Sign].init(flags = flags),
+    wants: ZenSeq[StateFlags].init(flags = flags)
   )
   result = self
   self.open_unit.changes:
@@ -166,10 +175,10 @@ when is_main_module:
     CommandMode notin state.flags
     MouseCaptured notin state.flags
 
-  var added: set[StateFlags]
-  var removed: set[StateFlags]
+  var added {.threadvar.}: set[StateFlags]
+  var removed {.threadvar.}: set[StateFlags]
 
-  state.flags.track proc(changes, _: auto) =
+  state.flags.track proc(changes: auto) {.gcsafe.} =
     added = {}
     removed = {}
     for change in changes:
