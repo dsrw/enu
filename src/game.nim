@@ -28,7 +28,7 @@ const auto_save_interval = 30.seconds
 if file_exists(".env"):
   dotenv.overload()
 
-Zen.thread_ctx = ZenContext.init(name = &"main-{generate_id()}", chan_size = 1000)
+Zen.thread_ctx = ZenContext.init(name = &"main-{generate_id()}")
 state = GameState.init
 
 gdobj Game of Node:

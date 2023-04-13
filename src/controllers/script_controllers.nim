@@ -714,7 +714,7 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
 
   var listen_address = main_thread_state.config.listen_address
   let worker_ctx = ZenContext.init(name = &"work-{generate_id()}",
-      chan_size = 2000, listen_address = listen_address)
+      listen_address = listen_address)
 
   Zen.thread_ctx = worker_ctx
   ctx.subscribe(Zen.thread_ctx)
@@ -751,20 +751,19 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
           remove_file unit.script_ctx.script
           remove_dir unit.data_dir
 
+
+  let player = state.player.value
+  # add player before interpreter is initialized to get to an interactive
+  # state quicker
+  state.units.add player
+  worker.init_interpreter("")
+  player.script_ctx.interpreter = worker.interpreter
+  worker.load_script_and_dependents(player, true)
+
   if ?listen_address or not ?server_address:
-    state.units.add state.player.value
-    worker.init_interpreter("")
-    load_world(worker)
+    worker.load_world
   else:
     Zen.thread_ctx.subscribe(server_address)
-    state.units.add state.player.value
-    worker.init_interpreter("")
-
-  # We add the player to the scene before the interpreter is initialized to
-  # get to an interactive state quicker. Now that we have an interpreter we
-  # explicitly load the player script.
-  state.player.value.script_ctx.interpreter = worker.interpreter
-  worker.load_script_and_dependents(state.player.value, true)
 
   const max_time = (1.0 / 30.0).seconds
   const min_time = (1.0 / 120.0).seconds
@@ -786,9 +785,7 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
     state.units.value.walk_tree proc(unit: Unit) = to_process.add unit
     to_process.shuffle
 
-    while Zen.thread_ctx.pressure < 0.7 and to_process.len > 0 and
-        get_mono_time() < timeout:
-
+    while to_process.len > 0 and get_mono_time() < timeout:
       let units = to_process
       to_process = @[]
       for unit in units:
