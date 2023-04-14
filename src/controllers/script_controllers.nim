@@ -719,6 +719,7 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
   Zen.thread_ctx = worker_ctx
   ctx.subscribe(Zen.thread_ctx)
   let server_address = main_thread_state.config.server_address
+  let server = ?listen_address or not ?server_address
 
   state = GameState.init_from(main_thread_state)
   state.config = Config()
@@ -755,15 +756,18 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
   let player = state.player.value
   # add player before interpreter is initialized to get to an interactive
   # state quicker
-  state.units.add player
+  if server:
+    state.units.add player
   worker.init_interpreter("")
-  player.script_ctx.interpreter = worker.interpreter
-  worker.load_script_and_dependents(player, true)
-
-  if ?listen_address or not ?server_address:
+  if server:
+    player.script_ctx.interpreter = worker.interpreter
+    worker.load_script_and_dependents(player, true)
     worker.load_world
   else:
     Zen.thread_ctx.subscribe(server_address)
+    state.units.add player
+    player.script_ctx.interpreter = worker.interpreter
+    worker.load_script_and_dependents(player, true)
 
   const max_time = (1.0 / 30.0).seconds
   const min_time = (1.0 / 120.0).seconds
