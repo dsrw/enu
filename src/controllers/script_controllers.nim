@@ -135,6 +135,7 @@ proc begin_turn(self: Worker, unit: Unit, direction: Vector3, degrees: float,
   var degrees = floor_mod(degrees, 360)
   let ctx = self.active_unit.script_ctx
   ctx.callback = unit.on_begin_turn(direction, degrees, lean, move_mode)
+  ctx.last_ran = MonoTime.default
   if not ctx.callback.is_nil:
     ctx.pause()
 
@@ -148,6 +149,7 @@ proc begin_move(self: Worker, unit: Unit, direction: Vector3, steps: float,
     steps = steps * -1
     direction = direction * -1
   ctx.callback = unit.on_begin_move(direction, steps, move_mode)
+  ctx.last_ran = MonoTime.default
   if not ctx.callback.is_nil:
     ctx.pause()
 
@@ -161,6 +163,7 @@ proc sleep_impl(ctx: ScriptCtx, seconds: float) =
       Running
     else:
       Done
+  ctx.last_ran = MonoTime.default
   ctx.pause()
 
 proc hit(unit_a: Unit, unit_b: Unit): Vector3 =
@@ -508,8 +511,12 @@ proc advance_unit(self: Worker, unit: Unit, timeout: MonoTime): bool =
 
       let now = get_mono_time()
 
-      let delta = (now - unit.last_ran).in_microseconds.float / 1000000.0
-      unit.last_ran = now
+      let delta = if ?ctx.last_ran:
+        (now - ctx.last_ran).in_microseconds.float / 1000000.0
+      else:
+        0.0
+
+      ctx.last_ran = now
       if ctx.callback == nil or
           (task_state = ctx.callback(delta, timeout);
           task_state in {Done, NextTask}):

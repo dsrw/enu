@@ -14,7 +14,6 @@ proc init_unit*[T: Unit](self: T) =
     scale = Zen.init(1.0)
     glow = ZenValue[float].init
     color = Zen.init(self.start_color)
-    last_ran = get_mono_time()
 
   if ?self.parent:
     self.shared = self.parent.shared

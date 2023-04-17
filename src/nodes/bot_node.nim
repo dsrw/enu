@@ -104,8 +104,6 @@ gdobj BotNode of KinematicBody:
       let bot = Bot(self.model)
       velocity_zid = bot.velocity.watch:
         if touched:
-          bot.velocity.pause velocity_zid:
-            bot.velocity.value = self.move_and_slide(change.item, UP)
           if bot.animation.value == "auto":
             self.set_walk_animation(change.item.length, false)
       bot.animation.watch:
@@ -150,6 +148,10 @@ gdobj BotNode of KinematicBody:
       self.model.transform.pause self.transform_zid:
         self.model.transform.value = self.transform
       self.model.global_transform.value = self.global_transform
+      if self.model of Bot:
+        let bot = Bot(self.model)
+        if bot.velocity.value.length > 0:
+          discard self.move_and_slide(self.model.velocity.value, UP)
 
 var bot_scene {.threadvar.}: PackedScene
 proc init*(_: type BotNode): BotNode =

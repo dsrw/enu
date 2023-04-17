@@ -94,7 +94,6 @@ type
     sight_ray*: RayCast
     frame_created*: int
     zids*: seq[ZID]
-    last_ran*: MonoTime
 
   Player* = ref object of Unit
     colliders*: HashSet[Model]
@@ -177,6 +176,7 @@ type
     code*: string
     dependents*: HashSet[string]
     pass_context*: TPassContextArray
+    last_ran*: MonoTime
 
   VMError* = object of CatchableError
   QuitKind* = enum
