@@ -22,10 +22,7 @@ jobs:
           release: false
           install: mingw-w64-x86_64-mesa
       - name: Update path
-        run: echo "${HOME}/.nimble/bin;C:\tools\Nim\nim-1.6.6\bin;C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-      - name: Install Nimble 0.14
-        run: |
-          nimble install -y nimble@#head
+        run: echo "${HOME}/.nimble/bin;C:\tools\Nim\nim-1.6.12\bin;C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Install nimble deps
         run: nimble setup
       - name: Save SHAs of submodules
@@ -45,7 +42,7 @@ jobs:
         run: nimble dist_prereqs
         if: steps.prereq-cache.outputs.cache-hit != 'true'
       - name: Copy mesa
-        run: copy c:\msys64\mingw64\bin\opengl32.dll vendor\godot\bin\opengl32.dll      
+        run: copy c:\msys64\mingw64\bin\opengl32.dll vendor\godot\bin\opengl32.dll
       - name: Dist
         run: nimble dist_package
       - uses: actions/upload-artifact@v3

@@ -12,14 +12,12 @@ jobs:
       - name: Install Nim
         run: |
           cd $HOME &&
-          curl -O https://nim-lang.org/download/nim-1.6.6-linux_x64.tar.xz &&
-          tar xf nim-1.6.6-linux_x64.tar.xz
+          curl -O https://nim-lang.org/download/nim-1.6.12-linux_x64.tar.xz &&
+          tar xf nim-1.6.12-linux_x64.tar.xz
       - name: Install Nim and build deps
         run: sudo apt-get install build-essential scons pkg-config libx11-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev
       - name: Update path
-        run: echo "$HOME/.nimble/bin:$HOME/nim-1.6.6/bin" >> $GITHUB_PATH
-      - name: Install Nimble 0.14
-        run: nimble install -y nimble@#head
+        run: echo "$HOME/.nimble/bin:$HOME/nim-1.6.12/bin" >> $GITHUB_PATH
       - name: Install nimble deps
         run: nimble setup
       - name: Save SHAs of submodules
