@@ -320,6 +320,17 @@ task dist_package, "Build distribution binaries":
     with_dir "dist":
       exec &"tar -czvf enu-{git_version}-linux-x64.tar.gz enu-{git_version}"
 
+    let app_dir = "dist/Enu.AppDir"
+    exec &"cp -r installer/Enu.AppDir {app_dir}"
+    exec &"cp -r {root}/bin {app_dir}/bin"
+    exec &"cp -r {root}/lib {app_dir}/lib"
+    exec &"cp {root}/enu.pck {app_dir}/bin/enu.pck"
+
+    with_dir("dist"):
+      exec "curl -OJL https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+      exec "chmod a+x appimagetool-x86_64.AppImage"
+      exec &"./appimagetool-x86_64.AppImage Enu.AppDir enu-{git_version}-x86_64.AppImage"
+
   else:
     quit &"dist is currently unsupported on {host_os}"
 

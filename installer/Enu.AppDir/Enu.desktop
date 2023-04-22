@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Enu
+Exec=enu
+StartupNotify=true
+Icon=Enu
+Categories=Game;Development;
+X-AppImage-Version=add4a96b

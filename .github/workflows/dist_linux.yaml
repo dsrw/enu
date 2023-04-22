@@ -42,4 +42,6 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: Enu Linux Distribution
-          path: dist/*.tar.gz
+          path: |
+            dist/enu-*.tar.gz
+            dist/enu-*.AppImage
