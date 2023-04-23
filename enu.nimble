@@ -9,7 +9,6 @@ var
   generated_dir = "generated/godotapi"
   api_json = "api.json"
   generator = "tools/build_helpers"
-  godot_bin = this_dir() & &"/vendor/godot/bin/godot.{target}.opt.tools.{cpu}{exe_ext}"
   godot_build_url = "https://docs.godotengine.org/en/stable/development/compiling/index.html"
   gcc_dlls = ["libgcc_s_seh-1.dll", "libwinpthread-1.dll"]
   nim_dlls = ["pcre64.dll"]
@@ -41,6 +40,11 @@ requires "nim >= 1.6.10",
   "chronicles",
   "zippy",
   "dotenv"
+
+proc godot_bin(target = target): string =
+  result = this_dir() & &"/vendor/godot/bin/godot.{target}.opt.tools.{cpu}{exe_ext}"
+  if target == "server":
+    result = result.replace("godot.server", "godot_server.x11")
 
 proc gen: string =
   if generator_path == "":
@@ -159,13 +163,13 @@ proc mingw_path: string =
   else:
     find_exe("gcc").parent_dir
 
-proc gen_binding_and_copy_stdlib =
+proc gen_binding_and_copy_stdlib(target = target) =
   if host_os == "windows":
     # Assumes mingw
     find_and_copy_dlls mingw_path(), join_path("app", "_dlls"), gcc_dlls
     find_and_copy_dlls get_current_compiler_exe().parent_dir, join_path("vendor", "godot", "bin"), nim_dlls
   mk_dir generated_dir
-  exec &"{godot_bin} --verbose --gdnative-generate-json-api {join_path generated_dir, api_json}"
+  exec &"{godot_bin(target)} --verbose --gdnative-generate-json-api {join_path generated_dir, api_json}"
   exec &"{gen()} generate_api -d={generated_dir} -j={api_json}"
   exec &"{gen()} copy_stdlib -d=vmlib/stdlib"
 
@@ -177,18 +181,18 @@ task prereqs, "Build godot, download fonts, generate binding and stdlib":
 
 task import_assets, "Import Godot assets. Only required if you're not using the Godot editor":
   p "Importing assets..."
-  exec godot_bin & " app/project.godot --editor --quit"
+  exec godot_bin() & " app/project.godot --editor --quit"
 
 task clean, "Remove files produced by build":
   rm_dir generated_dir
   rm_dir ".nimcache"
 
 task edit, "Edit project in Godot":
-  exec godot_bin & " app/project.godot &"
+  exec godot_bin() & " app/project.godot &"
 
 task start, "Run Enu":
   cd "app"
-  exec godot_bin & " --verbose scenes/game.tscn"
+  exec godot_bin() & " --verbose scenes/game.tscn"
 
 task build_and_start, "Build and start":
   exec "nimble build"
@@ -206,7 +210,6 @@ task dist_prereqs, "Build godot debug and release versions, and download fonts":
     target = "server"
     build_godot_task()
     target ="x11"
-    exec &"mv {godot_bin.replace(\"godot.x11\", \"godot_server.x11\")} {godot_bin}"
   else:
     build_godot_task()
   download_fonts()
@@ -223,11 +226,11 @@ task dist_package, "Build distribution binaries":
   p "Packaging distribution..."
   let git_version = static_exec("git describe --tags HEAD").strip
   copy_fonts()
-  gen_binding_and_copy_stdlib()
   rm_dir "dist"
   mk_dir "dist"
 
   when host_os == "windows":
+    gen_binding_and_copy_stdlib()
     let release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
     let root = &"dist/enu-{git_version}"
     mk_dir root
@@ -237,7 +240,7 @@ task dist_package, "Build distribution binaries":
     exec &"{gen()} write_export_presets --enu_version {git_version}"
 
     let pck_path = &"{this_dir()}/{root}/enu.pck"
-    exec &"{godot_bin} --verbose --path app --export-pack \"win\" " & pck_path
+    exec &"{godot_bin()} --verbose --path app --export-pack \"win\" " & pck_path
 
     exec "nimble build -d:release -d:dist"
     cp_file "app/_dlls/enu.dll", root & "/enu.dll"
@@ -249,6 +252,7 @@ task dist_package, "Build distribution binaries":
       exec &"zip -r enu-{git_version}-windows-x64.zip enu-{git_version}"
 
   elif host_os == "macosx":
+    gen_binding_and_copy_stdlib()
     proc nim_build(target, cpu: string) =
       rm_dir ".nim_cache"
       let cmd =  &"nim c --cpu:{cpu} -l:'-target {target}-apple-macos11' " &
@@ -275,7 +279,7 @@ task dist_package, "Build distribution binaries":
     let config = read_file("dist_config.json").parse_json
     let pck_path = this_dir() & "/dist/Enu.app/Contents/Resources/Enu.pck"
 
-    exec &"{godot_bin} --path app --export-pack \"mac\" " & pck_path
+    exec &"{godot_bin()} --path app --export-pack \"mac\" " & pck_path
 
     exec "lipo -create dist/Enu.app/Contents/Frameworks/enu.dylib.x86_64 dist/Enu.app/Contents/Frameworks/enu.dylib.arm64 -output dist/Enu.app/Contents/Frameworks/enu.dylib"
     exec "rm dist/Enu.app/Contents/Frameworks/enu.dylib.*"
@@ -304,6 +308,7 @@ task dist_package, "Build distribution binaries":
       exec &"xcrun altool --notarize-app --primary-bundle-id 'ca.dsrw.enu'  --username '{username}' --password '{password}' --file dist/{package_name}"
 
   elif host_os == "linux":
+    gen_binding_and_copy_stdlib("server")
     let release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
     let root = &"dist/enu-{git_version}"
     mk_dir root & "/bin"
@@ -316,7 +321,7 @@ task dist_package, "Build distribution binaries":
     exec "chmod +x " & root & "/bin/enu"
     exec &"{gen()} write_export_presets --enu_version {git_version}"
     let pck_path = this_dir() & "/" & root & "/enu.pck"
-    exec &"{godot_bin} --verbose --path app --export-pack \"x11\" " & pck_path
+    exec &"{godot_bin(\"server\")} --verbose --path app --export-pack \"x11\" " & pck_path
     with_dir "dist":
       exec &"tar -czvf enu-{git_version}-linux-x64.tar.gz enu-{git_version}"
 
