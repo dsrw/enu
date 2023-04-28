@@ -99,6 +99,7 @@ proc press_action(self: Worker, name: string) =
 proc register_active(self: Worker, pnode: PNode) =
   assert not self.active_unit.is_nil
   self.map_unit(self.active_unit, pnode)
+  self.active_unit.flags -= ScriptInitializing
 
 proc new_instance(self: Worker, src: Unit, dest: PNode) =
   let id = src.id & "_" & self.active_unit.id & "_instance_" &
@@ -496,6 +497,7 @@ proc `coding=`(self: Unit, value: Unit) =
 
 proc script_error(self: Worker, unit: Unit, e: ref VMQuit) =
   logger("err", e.msg)
+  unit.flags -= ScriptInitializing
   unit.ensure_visible
   state.push_flags ConsoleVisible
 
@@ -758,7 +760,6 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
         if not state.reloading and not ?unit.clone_of:
           remove_file unit.script_ctx.script
           remove_dir unit.data_dir
-
 
   let player = state.player.value
   # add player before interpreter is initialized to get to an interactive

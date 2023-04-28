@@ -121,7 +121,9 @@ gdobj BuildNode of VoxelTerrain:
         self.set_glow highlight_glow
       elif Highlight.removed:
         self.set_glow self.model.glow.value
-      elif change.item == Visible:
+      elif (change.item == Visible and ScriptInitializing notin
+          self.model.flags) or ScriptInitializing.removed:
+
         self.set_visibility
 
     state.flags.watch:

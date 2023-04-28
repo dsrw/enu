@@ -15,6 +15,8 @@ proc init_unit*[T: Unit](self: T) =
     glow = ZenValue[float].init
     color = Zen.init(self.start_color)
 
+  self.flags += Visible
+
   if ?self.parent:
     self.shared = self.parent.shared
   else:
@@ -81,12 +83,6 @@ method clone*(self: Unit, clone_to: Unit, id: string): Unit {.base, gcsafe.} =
 
 method code_template*(self: Unit, imports: string): string {.base, gcsafe.} =
   read_file self.script_ctx.script
-
-method on_script_loaded*(self: Unit) {.base.} =
-  raise_assert "override me"
-
-method load_vars*(self: Unit) {.base.} =
-  raise_assert "override me"
 
 method reset*(self: Unit) {.base, gcsafe.} =
   discard

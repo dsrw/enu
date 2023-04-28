@@ -79,7 +79,6 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
     state.dirty_units.incl self
 
   if global: self.flags += Global
-  self.flags += Visible
 
   self.flags.watch:
     if Hover.added:

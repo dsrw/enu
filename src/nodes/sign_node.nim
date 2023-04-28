@@ -86,7 +86,9 @@ gdobj SignNode of Spatial:
         self.transform = change.item
 
     self.model.flags.watch:
-      if change.item == Visible:
+      if (change.item == Visible and ScriptInitializing notin
+          self.model.flags) or ScriptInitializing.removed:
+
         self.set_visibility
 
     state.flags.watch:

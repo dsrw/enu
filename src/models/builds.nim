@@ -377,7 +377,6 @@ proc init*(_: type Build,
     state.dirty_units.incl self
 
   if global: self.flags += Global
-  self.flags += Visible
   self.reset()
   result = self
 

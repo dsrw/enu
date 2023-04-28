@@ -39,6 +39,10 @@ proc add_to_scene(unit: Unit) =
     node.transform = unit.start_transform
     if node.owner != nil:
       raise_assert $T.name & " node shouldn't be owned"
+
+    unit.node.visible = Visible in unit.flags and
+        ScriptInitializing notin unit.flags
+
     parent_node.add_child(unit.node)
     unit.node.owner = parent_node
     when compiles(node.setup):

@@ -27,7 +27,8 @@ type
     Running, Done, NextTask
 
   ModelFlags* = enum
-    Hover, TargetMoved, Highlight, Global, Visible, Lock, Ready
+    Hover, TargetMoved, Highlight, Global, Visible, Lock, Ready,
+        ScriptInitializing
 
   ConsoleModel* = ref object
     log*: ZenSeq[string]
@@ -156,7 +157,6 @@ type
     script*: string
     timer*: MonoTime
     timeout_at*: MonoTime
-    load_vars*: proc() {.gcsafe.}
     ctx: PCtx
     pc: int
     tos: PStackFrame

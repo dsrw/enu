@@ -92,7 +92,9 @@ gdobj BotNode of KinematicBody:
         self.highlight()
       elif Highlight.removed:
         self.set_default_material()
-      elif change.item == Visible:
+      elif (change.item == Visible and ScriptInitializing notin
+          self.model.flags) or ScriptInitializing.removed:
+
         self.set_visibility
 
     state.flags.watch:

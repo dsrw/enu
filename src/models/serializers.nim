@@ -167,6 +167,8 @@ proc load_units(parent: Unit) =
       unit = data_file.json_to(Build, opts)
     else:
       quit "Unknown unit type: " & unit_id
+
+    unit.flags += ScriptInitializing
     if parent.is_nil:
       state.units.add(unit)
     else:
@@ -177,6 +179,8 @@ proc load_units(parent: Unit) =
 
     if file_exists(unit.script_ctx.script):
       unit.code.value = Code.init(read_file(unit.script_ctx.script))
+    else:
+      unit.flags -= ScriptInitializing
 
 proc load_world*(worker: Worker) =
   let world_file = state.config.world_dir / "world.json"
