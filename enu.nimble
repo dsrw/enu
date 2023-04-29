@@ -276,6 +276,9 @@ task dist_package, "Build distribution binaries":
     exec &"cp {release_bin} dist/Enu.app/Contents/MacOS/Enu.arm64"
     nim_build "arm64", "arm64"
 
+    if not "dist_config.json".file_exists:
+      exec &"cp dist_config.example.json dist_config.json"
+
     let config = read_file("dist_config.json").parse_json
     let pck_path = this_dir() & "/dist/Enu.app/Contents/Resources/Enu.pck"
 
