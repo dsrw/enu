@@ -99,7 +99,6 @@ proc press_action(self: Worker, name: string) =
 proc register_active(self: Worker, pnode: PNode) =
   assert not self.active_unit.is_nil
   self.map_unit(self.active_unit, pnode)
-  self.active_unit.flags -= ScriptInitializing
 
 proc new_instance(self: Worker, src: Unit, dest: PNode) =
   let id = src.id & "_" & self.active_unit.id & "_instance_" &
@@ -129,6 +128,10 @@ proc exec_instance(self: Worker, unit: Unit) =
 
 proc active_unit(self: Worker): Unit = self.active_unit
 
+proc pause_script(self: Worker) =
+  self.active_unit.flags -= ScriptInitializing
+  self.active_unit.script_ctx.pause()
+
 proc begin_turn(self: Worker, unit: Unit, direction: Vector3, degrees: float,
     lean: bool, move_mode: int): string =
 
@@ -138,7 +141,7 @@ proc begin_turn(self: Worker, unit: Unit, direction: Vector3, degrees: float,
   ctx.callback = unit.on_begin_turn(direction, degrees, lean, move_mode)
   ctx.last_ran = MonoTime.default
   if not ctx.callback.is_nil:
-    ctx.pause()
+    self.pause_script()
 
 proc begin_move(self: Worker, unit: Unit, direction: Vector3, steps: float,
     move_mode: int) =
@@ -152,9 +155,9 @@ proc begin_move(self: Worker, unit: Unit, direction: Vector3, steps: float,
   ctx.callback = unit.on_begin_move(direction, steps, move_mode)
   ctx.last_ran = MonoTime.default
   if not ctx.callback.is_nil:
-    ctx.pause()
+    self.pause_script()
 
-proc sleep_impl(ctx: ScriptCtx, seconds: float) =
+proc sleep_impl(self: Worker, ctx: ScriptCtx, seconds: float) =
   var duration = 0.0
   ctx.callback = proc(delta: float, _: MonoTime): TaskStates =
     duration += delta
@@ -165,7 +168,7 @@ proc sleep_impl(ctx: ScriptCtx, seconds: float) =
     else:
       Done
   ctx.last_ran = MonoTime.default
-  ctx.pause()
+  self.pause_script()
 
 proc hit(unit_a: Unit, unit_b: Unit): Vector3 =
   for collision in unit_a.collisions:
@@ -333,11 +336,11 @@ proc yield_script(self: Worker, unit: Unit) =
   let ctx = unit.script_ctx
   ctx.callback = ctx.saved_callback
   ctx.saved_callback = nil
-  ctx.pause()
+  self.pause_script()
 
-proc exit(ctx: ScriptCtx, exit_code: int) =
+proc exit(self: Worker, ctx: ScriptCtx, exit_code: int) =
   ctx.exit_code = some(exit_code)
-  ctx.pause()
+  self.pause_script()
   ctx.running = false
 
 proc frame_count(): int = state.frame_count
