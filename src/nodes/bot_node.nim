@@ -48,10 +48,11 @@ gdobj BotNode of KinematicBody:
       adjusted = color.saturate(0.2).darken(dist - 0.15)
       adjusted.a = 0.95 - color.distance(action_colors[black]) / 100
 
+    debug "setting bot color", color, adjusted
     SpatialMaterial(self.material).albedo_color = adjusted
 
   proc set_visibility =
-    var color = SpatialMaterial(self.material).albedo_color
+    var color = self.model.color.value
     if Visible in self.model.flags:
       self.visible = true
       self.set_color(color)

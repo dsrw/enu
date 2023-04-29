@@ -12,7 +12,7 @@
 --define:"nim_preview_hash_ref"
 --define:"nim_type_names"
 --define:"chronicles_enabled=on"
---define:"chronicles_log_level=INFO"
+--define:"chronicles_log_level=DEBUG"
 --define:"chronicles_disabled_topics=model_citizen"
 --define:"chronicles_sinks=textlines[dynamic]"
 # --define:"chronicles_timestamps=None" # disable timestamps for better diffs
