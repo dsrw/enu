@@ -1,6 +1,6 @@
 import std / [strformat, strutils, strscans, os, json, os]
 
-var
+const
   (target, lib_ext, exe_ext) = case host_os
     of "windows": ("windows", ".dll", ".exe")
     of "macosx" : ("osx", ".dylib", "")
@@ -13,7 +13,6 @@ var
   gcc_dlls = ["libgcc_s_seh-1.dll", "libwinpthread-1.dll"]
   nim_dlls = ["pcre64.dll"]
   godot_opts = "target=release_debug"
-  generator_path  = ""
 
 version = "0.1.99"
 author = "Scott Wadden"
@@ -46,6 +45,7 @@ proc godot_bin(target = target): string =
   if target == "server":
     result = result.replace("godot.server", "godot_server.x11")
 
+var generator_path = ""
 proc gen: string =
   if generator_path == "":
     exec &"nimble c -d:ssl {generator}"
@@ -64,7 +64,7 @@ proc p(msg: varargs[string, `$`]) =
     echo underline & "\e[00m"
   echo ""
 
-task build_godot, "Build godot":
+proc build_godot(target = target, cpu = cpu, opts = godot_opts) =
   p "Building Godot..."
   exec "git submodule update --init"
   let
@@ -73,11 +73,13 @@ task build_godot, "Build godot":
   if scons == "":
     quit &"*** scons not found on path, and is required to build Godot. See {godot_build_url} ***"
   with_dir "vendor/godot":
-    exec &"{scons} custom_modules=../modules platform={target} arch={cpu} {godot_opts} -j{cores}"
+    exec &"{scons} custom_modules=../modules platform={target} arch={cpu} {opts} -j{cores}"
+
+task build_godot, "Build godot":
+  build_godot()
 
 task build_headless, "build headless godot":
-  target = "server use_static_cpp=no"
-  build_godot_task()
+  build_godot(target = "server use_static_cpp=no")
 
 task test, "run godot tests":
   exec "nimble c tests/godot/tnode_factories"
@@ -174,7 +176,7 @@ proc gen_binding_and_copy_stdlib(target = target) =
   exec &"{gen()} copy_stdlib -d=vmlib/stdlib"
 
 task prereqs, "Build godot, download fonts, generate binding and stdlib":
-  build_godot_task()
+  build_godot()
   download_fonts()
   copy_fonts()
   gen_binding_and_copy_stdlib()
@@ -207,20 +209,15 @@ proc code_sign(id, path: string) =
 task dist_prereqs, "Build godot debug and release versions, and download fonts":
   p "Buiding distribution prereqs..."
   if target == "x11":
-    target = "server"
-    build_godot_task()
-    target ="x11"
+    build_godot(target = "server")
   else:
-    build_godot_task()
+    build_godot()
   download_fonts()
 
-  godot_opts = "target=release tools=no"
-
-  cpu = "64"
-  build_godot_task()
+  let release_opts = "target=release tools=no"
+  build_godot(cpu = "64", opts = release_opts)
   when host_os == "macosx":
-    cpu = "arm64"
-    build_godot_task()
+    build_godot(cpu = "arm64", opts = release_opts)
 
 task dist_package, "Build distribution binaries":
   p "Packaging distribution..."
@@ -266,13 +263,11 @@ task dist_package, "Build distribution binaries":
     exec &"{gen()} write_export_presets --enu_version {git_version}"
     exec &"{gen()} write_info_plist --enu_version {git_version}"
 
-    cpu = "64"
-    var release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
+    var release_bin = &"vendor/godot/bin/godot.{target}.opt.64{exe_ext}"
     exec &"cp {release_bin} dist/Enu.app/Contents/MacOS/Enu.x86_64"
     nim_build "x86_64", "amd64"
 
-    cpu = "arm64"
-    release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
+    release_bin = &"vendor/godot/bin/godot.{target}.opt.arm64{exe_ext}"
     exec &"cp {release_bin} dist/Enu.app/Contents/MacOS/Enu.arm64"
     nim_build "arm64", "arm64"
 
