@@ -15,12 +15,6 @@ jobs:
         run: refreshenv
       - name: Install scons
         run: python -m pip install scons
-      - name: Install mesa
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          release: false
-          install: mingw-w64-x86_64-mesa
       - name: Update path
         run: echo "${HOME}/.nimble/bin;C:\tools\Nim\nim-1.6.12\bin;C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Install Nimble 0.14.2
@@ -39,12 +33,23 @@ jobs:
           path: |
             vendor/godot/bin
             fonts
-          key: ${{ runner.os }}-prereq-cache-v2-${{ hashFiles('.submodules.tmp') }}
+          key: ${{ runner.os }}-prereq-cache-v3-${{ hashFiles('.submodules.tmp') }}
       - name: build prereqs
         run: nimble dist_prereqs
         if: steps.prereq-cache.outputs.cache-hit != 'true'
-      - name: Copy mesa
-        run: copy c:\msys64\mingw64\bin\opengl32.dll vendor\godot\bin\opengl32.dll
+      - name: Download and copy mesa
+        # github runner doesn't have a GPU, so we need to link to mesa
+        # to start godot
+        run: |
+          md -f vendor/godot/bin
+          md mesa
+          cd mesa
+          C:\msys64\usr\bin\wget.exe https://github.com/pal1000/mesa-dist-win/releases/download/19.2.5/mesa3d-19.2.5-release-mingw.7z
+          7z.exe e mesa3d-19.2.5-release-mingw.7z -y -o"..\vendor\godot\bin" x64/opengl32.dll
+          cd ..
+          rm mesa -Recurse
+        if: steps.prereq-cache.outputs.cache-hit != 'true'
+
       - name: Dist
         run: nimble dist_package
       - uses: actions/upload-artifact@v3
