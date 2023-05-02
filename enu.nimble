@@ -219,6 +219,13 @@ task dist_prereqs, "Build godot debug and release versions, and download fonts":
   when host_os == "macosx":
     build_godot(cpu = "arm64", opts = release_opts)
 
+proc copy_vmlib(src, dest: string) =
+  cp_dir src, dest
+  with_dir dest & "/projects":
+    for file in list_dirs("."):
+      exec &"zip -r {file} {file} -x \"*.DS_Store\""
+      exec &"rm -rf {file}"
+
 task dist_package, "Build distribution binaries":
   p "Packaging distribution..."
   let git_version = static_exec("git describe --tags HEAD").strip
@@ -243,7 +250,7 @@ task dist_package, "Build distribution binaries":
     cp_file "app/_dlls/enu.dll", root & "/enu.dll"
     find_and_copy_dlls mingw_path(), root, gcc_dlls
     find_and_copy_dlls get_current_compiler_exe().parent_dir, root, nim_dlls
-    cp_dir "vmlib", root & "/vmlib"
+    copy_vmlib "vmlib", root & "/vmlib"
     exec &"iscc /DVersion={git_version} installer/enu.iss"
     with_dir "dist":
       exec &"zip -r enu-{git_version}-windows-x64.zip enu-{git_version}"
@@ -285,7 +292,7 @@ task dist_package, "Build distribution binaries":
     exec "lipo -create dist/Enu.app/Contents/MacOS/Enu.x86_64 dist/Enu.app/Contents/MacOS/Enu.arm64 -output dist/Enu.app/Contents/MacOS/Enu"
     exec "rm dist/Enu.app/Contents/MacOS/Enu.*"
 
-    exec "cp -r vmlib dist/Enu.app/Contents/Resources/vmlib"
+    copy_vmlib "vmlib", "dist/Enu.app/Contents/Resources/vmlib"
 
     if config["sign"].get_bool:
       let id = config["id"].get_str
@@ -315,7 +322,7 @@ task dist_package, "Build distribution binaries":
     exec "strip " & release_bin
     cp_file release_bin, root & "/bin/enu"
     cp_file "app/_dlls/enu.so", root & "/lib/enu.so"
-    cp_dir "vmlib", root & "/lib/vmlib"
+    copy_vmlib "vmlib", root & "/lib/vmlib"
     exec "chmod +x " & root & "/bin/enu"
     exec &"{gen()} write_export_presets --enu_version {git_version}"
     let pck_path = this_dir() & "/" & root & "/enu.pck"

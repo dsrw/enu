@@ -1,0 +1,31 @@
+{
+  "id": "build_fsued2iao7tij",
+  "start_transform": {
+    "basis": {
+      "elements": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    "origin": [
+      -27.0,
+      0.0,
+      95.0
+    ]
+  },
+  "start_color": "#0067FF",
+  "edits": {}
+}

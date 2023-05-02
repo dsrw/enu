@@ -1,0 +1,1 @@
+name lose_spot

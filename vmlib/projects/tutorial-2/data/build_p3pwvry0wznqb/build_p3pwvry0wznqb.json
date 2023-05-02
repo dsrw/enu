@@ -1,0 +1,31 @@
+{
+  "id": "build_p3pwvry0wznqb",
+  "start_transform": {
+    "basis": {
+      "elements": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    "origin": [
+      19.0,
+      0.0,
+      -118.0
+    ]
+  },
+  "start_color": "#0067FF",
+  "edits": {}
+}

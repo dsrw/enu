@@ -1,0 +1,31 @@
+{
+  "id": "build_qmjxkhcjwnbhb",
+  "start_transform": {
+    "basis": {
+      "elements": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    "origin": [
+      136.0,
+      0.0,
+      20.0
+    ]
+  },
+  "start_color": "",
+  "edits": {}
+}
