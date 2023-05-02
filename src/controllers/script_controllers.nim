@@ -232,7 +232,7 @@ proc `position=impl`(self: Unit, position: Vector3) =
   if Global in self.flags:
     self.transform.origin = position
   else:
-    self.transform.origin = self.parent.to_local(position)
+    self.transform.origin = position.local_to(self.parent)
 
 proc speed(self: Unit): float =
   self.speed
@@ -368,6 +368,7 @@ proc new_markdown_sign_impl(self: Worker,
     transform = drop_transform(unit), width = width, height = height,
     size = size, zoomable = zoomable, billboard = billboard)
 
+  info "creating sign", id = result.id
   self.map_unit(result, pnode)
   unit.units.add(result)
 

@@ -169,7 +169,7 @@ proc local_to*(self: Vector3, unit: Unit): Vector3 =
   result = self
   var unit = unit
   while unit != nil:
-    result -= unit.node.transform.origin
+    result -= unit.transform.value.origin
     unit = unit.parent
 
 proc global_from*(self: Vector3, unit: Unit): Vector3 =

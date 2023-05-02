@@ -2,9 +2,9 @@ import godotapi / spatial
 import core, states, bots, builds, models / colors
 
 proc init*(_: type Sign,
-  markdown: string, title = "", owner: Unit, transform = Transform.init,
-  width = 1.0, height = 1.0, size = 32, billboard = false,
-  zoomable = true): Sign =
+    markdown: string, title = "", owner: Unit, transform = Transform.init,
+    width = 1.0, height = 1.0, size = 32, billboard = false,
+    zoomable = true): Sign =
 
   let title = if title == "": markdown else: title
   var self = Sign(
