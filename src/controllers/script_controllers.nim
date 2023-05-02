@@ -216,13 +216,13 @@ proc position(self: Unit): Vector3 =
   if Global in self.flags:
     self.transform.origin
   else:
-    self.parent.to_global(self.transform.origin)
+    self.transform.origin.global_from(self.parent)
 
 proc start_position(self: Unit): Vector3 =
   if Global in self.flags:
     self.start_transform.origin
   else:
-    self.parent.to_global(self.start_transform.origin)
+    self.start_transform.origin.global_from(self.parent)
 
 proc `position=impl`(self: Unit, position: Vector3) =
   var position = position
@@ -316,7 +316,7 @@ proc seen(self: Worker, target: Unit, distance: float): bool =
   if unit of Build:
     let ray = Build(unit).sight_ray
     let node = VoxelTerrain(Build(unit).node)
-    let target_position = unit.to_local(target.position)
+    let target_position = target.position.local_to(unit)
     let angle = target_position - ray.transform.origin
     if angle.length <= distance and angle.normalized.z <= -0.3:
       ray.cast_to = angle

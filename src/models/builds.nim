@@ -56,8 +56,8 @@ proc add_build(self, source: Build) =
   dont_join = true
   for chunk_id, chunk in source.chunks:
     for position, info in chunk:
-      var position = source.to_global(position)
-      position = self.to_local(position)
+      var position = position.global_from(source)
+      position = position.local_to(self)
       self.draw(position, info)
 
   if source.parent.is_nil:
@@ -80,8 +80,8 @@ proc maybe_join_previous_build(self: Build,
       partner = Build(root)
 
     if partner != self:
-      for position in self.to_global(position).surrounding:
-        if partner.to_local(position) in partner:
+      for position in position.global_from(self).surrounding:
+        if position.local_to(partner) in partner:
           var source, dest: Build
           if partner.code.value.nim.strip == "":
             source = partner
@@ -209,7 +209,7 @@ proc remove(self: Build) =
         self.parent.units -= self
 
 proc fire(self: Build) =
-  let global_point = self.to_global(self.target_point)
+  let global_point = self.target_point.global_from(self)
   if state.tool.value notin {CodeMode, PlaceBot}:
     state.skip_block_paint = true
     draw_normal = self.target_normal

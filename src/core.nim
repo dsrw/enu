@@ -165,15 +165,19 @@ Zen.register_type(Sign)
 Zen.register_type(Bot)
 Zen.register_type(Shared)
 
+proc global_from*(self: Vector3, unit: Unit): Vector3 =
+  result = self
+  var unit = unit
+  while unit != nil:
+    result += unit.transform.value.origin
+    unit = unit.parent
+
 proc local_to*(self: Vector3, unit: Unit): Vector3 =
   result = self
   var unit = unit
   while unit != nil:
     result -= unit.transform.value.origin
     unit = unit.parent
-
-proc global_from*(self: Vector3, unit: Unit): Vector3 =
-  result = -self.local_to(unit)
 
 proc `+=`*(self: ZenValue[string], str: string) =
   self.value = self.value & str

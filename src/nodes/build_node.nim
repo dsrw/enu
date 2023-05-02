@@ -146,7 +146,6 @@ gdobj BuildNode of VoxelTerrain:
     if ?self.model:
       self.model.transform.pause self.transform_zid:
        self.model.transform.value = self.transform
-      self.model.global_transform.value = self.global_transform
 
   proc setup* =
     let was_skipping_join = dont_join

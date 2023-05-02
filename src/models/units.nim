@@ -7,7 +7,6 @@ proc init_unit*[T: Unit](self: T) =
   with self:
     units = Zen.init(seq[Unit])
     transform = Zen.init(self.start_transform)
-    global_transform = ZenValue[Transform].init
     flags = ZenSet[ModelFlags].init
     code = ZenValue[Code].init
     velocity = ZenValue[Vector3].init
@@ -28,12 +27,6 @@ proc init_unit*[T: Unit](self: T) =
   if self.id notin self.shared.value.edits:
     let table = init_table[Vector3, VoxelInfo]()
     self.shared.value.edits[self.id] = table
-
-proc to_local*(self: Unit, global_point: Vector3): Vector3 =
-  self.global_transform.value.affine_inverse.xform_vector3(global_point)
-
-proc to_global*(self: Unit, local_point: Vector3): Vector3 =
-  self.global_transform.value.xform_vector3(local_point)
 
 proc find_root*(self: Unit, all_clones = false): Unit =
   result = self

@@ -150,7 +150,6 @@ gdobj BotNode of KinematicBody:
     if ?self.model:
       self.model.transform.pause self.transform_zid:
         self.model.transform.value = self.transform
-      self.model.global_transform.value = self.global_transform
       if self.model of Bot:
         let bot = Bot(self.model)
         if bot.velocity.value.length > 0:

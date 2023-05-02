@@ -86,7 +86,6 @@ type
     disabled*: bool
     velocity*: ZenValue[Vector3]
     transform*: ZenValue[Transform]
-    global_transform*: ZenValue[Transform]
     clone_of*: Unit
     collisions*: seq[tuple[model: Model, normal: Vector3]]
     shared*: ZenValue[Shared]
