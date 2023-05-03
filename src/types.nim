@@ -147,6 +147,7 @@ type
     listen_address*: string
     server_address*: string
     player_color*: Color
+    channel_size*: int
 
   Code* = object
     owner*: string

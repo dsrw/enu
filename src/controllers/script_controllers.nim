@@ -727,6 +727,7 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
 
   var listen_address = main_thread_state.config.listen_address
   let worker_ctx = ZenContext.init(name = &"work-{generate_id()}",
+      chan_size = 1000, buffer = true,
       listen_address = listen_address)
 
   Zen.thread_ctx = worker_ctx

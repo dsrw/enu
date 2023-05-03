@@ -22,14 +22,12 @@ type
     listen_address: Option[string]
     server_address: Option[string]
     player_color: Option[colortypes.Color]
+    channel_size: Option[int]
 
 const auto_save_interval = 30.seconds
 
 if file_exists(".env"):
   dotenv.overload()
-
-Zen.thread_ctx = ZenContext.init(name = &"main-{generate_id()}")
-state = GameState.init
 
 gdobj Game of Node:
   var
@@ -38,7 +36,7 @@ gdobj Game of Node:
     triggered = false
     saved_mouse_captured_state = false
     stats: Label
-    last_tool = state.tool.value
+    last_tool = BlueBlock
     saved_mouse_position: Vector2
     rescale_at = get_mono_time()
     save_at = get_mono_time() + auto_save_interval
@@ -134,7 +132,7 @@ gdobj Game of Node:
 
   proc init* =
     self.process_priority = -100
-    state.nodes.game = self
+
     let
       screen_scale = if host_os == "macos":
         get_screen_scale(-1)
@@ -145,12 +143,21 @@ gdobj Game of Node:
 
     var initial_user_config = self.load_user_config()
 
+    var chan_size = initial_user_config.channel_size || 5000
+
+    Zen.thread_ctx = ZenContext.init(name = &"main-{generate_id()}",
+        chan_size = chan_size, buffer = false)
+
+    state = GameState.init
+    state.nodes.game = self
+
     var uc = initial_user_config
     assert not state.is_nil
     assert not state.config.is_nil
 
     state.config.font_size.value = uc.font_size ||= (20 * screen_scale).int
     let env_listen_address = get_env("ENU_LISTEN_ADDRESS")
+
     with state.config:
       dock_icon_size = uc.dock_icon_size ||= 100 * screen_scale
       world_prefix = uc.world_prefix ||= "tutorial"
@@ -164,6 +171,7 @@ gdobj Game of Node:
       server_address = uc.server_address ||= ""
       listen_address = env_listen_address || (uc.listen_address ||= "")
       player_color = uc.player_color ||= action_colors[black]
+      channel_size = uc.channel_size ||= chan_size
 
     state.set_flag(God, uc.god_mode ||= false)
 
