@@ -1,5 +1,5 @@
 import std / [monotimes, os, jsonutils, json, math, locks]
-import pkg / [godot, zippy / ziparchives]
+import pkg / [godot]
 from dotenv import nil
 import godotapi / [input, input_event, gd_os, node, scene_tree, packed_scene,
     sprite, control, viewport, viewport_texture, performance, label, theme,
@@ -127,7 +127,7 @@ gdobj Game of Node:
     if not file_exists(state.config.world_dir / "world.json"):
       for file in walk_dir(state.config.lib_dir / "projects"):
         if state.config.world.ends_with file.path.split_file.name:
-          file.path.extract_all(state.config.world_dir)
+          file.path.copy_dir(state.config.world_dir)
 
     create_dir(state.config.data_dir)
     create_dir(state.config.script_dir)

@@ -37,7 +37,6 @@ requires "nim >= 1.6.10",
   "chroma",
   "markdown",
   "chronicles",
-  "zippy",
   "dotenv"
 
 proc godot_bin(target = target): string =
@@ -221,10 +220,6 @@ task dist_prereqs, "Build godot debug and release versions, and download fonts":
 
 proc copy_vmlib(src, dest: string) =
   cp_dir src, dest
-  with_dir dest & "/projects":
-    for file in list_dirs("."):
-      exec &"zip -r {file} {file} -x \"*.DS_Store\""
-      exec &"rm -rf {file}"
 
 task dist_package, "Build distribution binaries":
   p "Packaging distribution..."
