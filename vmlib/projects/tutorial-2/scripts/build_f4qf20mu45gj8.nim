@@ -6,7 +6,7 @@ var
   primary_color = black
   roof_odds = 6
   roof_sides = {2, 3}
-  
+
 - ring:
   5.times(side):
     color = if 1 in 20:
@@ -19,7 +19,7 @@ var
   turn angle
   left 0.5
 
-turn left 
+turn left
 2000.times:
   ring()
   if 1 in 50:
