@@ -69,6 +69,10 @@ proc add_to_scene(unit: Unit) =
   else:
     raise_assert "unknown unit type for " & unit.id
 
+  for child in unit.units:
+    child.parent = unit
+    child.add_to_scene
+
 proc set_global(unit: Unit, global: bool) =
   var parent_node = unit.node.get_node("..")
   parent_node.remove_child(unit.node)
