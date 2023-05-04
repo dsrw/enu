@@ -20,10 +20,10 @@ proc get_bot: Bot =
       return bot
 
 proc say(title = "", width = 0.0, height = 0.0, body = "") =
-  if width > 0.0: sign.width = width
-  if height > 0.0: sign.height = height
-  if body != "": sign.markdown = body
-  if title != "": sign.title = title
+  if ?width: sign.width = width
+  if ?height: sign.height = height
+  if ?body: sign.markdown = body
+  if ?title: sign.title = title
   sign.show = true
 
 - setup:
@@ -104,18 +104,18 @@ Jump, fly, then returning to the ground to continue the tutorial.
   while not player.flying: sleep()
 
 - flying_done:
-  say "- Now drop!", 2.5, 0.5
+  say "- Now drop!", 3.0, 0.5
   while player.flying: sleep()
 
 - good_job:
   sign.open = false
-  say "- Good Job!", 2.5, 0.5, "# Good Job!"
+  say "- Good Job!", 3.0, 0.5, "# Good Job!"
   sleep 2
 
 - tool_info:
   say "- Switch to `Place Bot`", 3.0, 1.0, """
 
-    # Changing tools
+# Changing tools
 
 Tools are selected from the `Tool Bar` on the bottom of the screen.
 
@@ -124,10 +124,10 @@ buttons, or by releasing the mouse with `ESC` and selecting a tool with the
 mouse pointer.
 
 Enu currently has 8 tools. Tool `1` on the left is the `Code` tool. It can
-program almost anything in Enu, and will be explained in detail later. Tool `8`
-on the right is the `Place Bot` tool. Use it to fill your world with friendly
-robots. Tools `2` - `7` are the `blue`, `red`, `green`, `black`, `white`, and
-`brown` colored blocks.
+program almost anything in Enu, and will be explained in more detail later.
+Tool `8` on the right is the `Place Bot` tool. Use it to fill your world with
+friendly robots. Tools `2` - `7` are the `blue`, `red`, `green`, `black`,
+`white`, and `brown` colored blocks.
 
 Select the `Place Bot` tool to continue the tutorial.
 
@@ -174,7 +174,7 @@ Place a `Bot` on the ground to continue the tutorial.
   sleep 1
 
 - code_info:
-  say("- Coding", 2.0, 0.5, """
+  say "- Coding", 2.5, 0.5, """
 
 # Coding Enu
 
@@ -185,7 +185,7 @@ the course.
 
 Switch to the `Code` tool to continue the tutorial.
 
-  """)
+  """
 
   sign.open = true
   while player.tool != CodeMode:
@@ -258,7 +258,7 @@ Good luck! We'll conclude this tutorial when your `Bot` goes past the
 
 - win:
   maze.won = true
-  say("- Great Job!", 3.0, 0.5, "# Great Job!")
+  say "- Great Job!", 3.0, 0.5, "# Great Job!"
   sleep 15
   say "- All Done!", 2.5, 0.5, """
 
@@ -284,23 +284,17 @@ suggestions. Thanks for trying Enu!
 
   sign.open = true
 
-loop:
-  nil -> setup
-  if test_mode:
-    setup -> draw_maze
-  else:
-    setup -> approach
-
-  approach -> movement_info
-  movement_info -> flying_info
-  flying_info -> flying_done
-  flying_done -> good_job
-  flying_done -> good_job
-  good_job -> tool_info
-  tool_info -> bot_info
-  bot_info -> draw_maze
-  draw_maze -> code_info
-  code_info -> open_code
-  open_code -> bot_navigation
-  bot_navigation -> win
-  win -> nil
+setup()
+if not test_mode:
+  approach()
+  movement_info()
+  flying_info()
+  flying_done()
+  good_job()
+  tool_info()
+  bot_info()
+draw_maze()
+code_info()
+open_code()
+bot_navigation()
+win()

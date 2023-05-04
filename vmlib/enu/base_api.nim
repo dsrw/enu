@@ -1,4 +1,4 @@
-import std / [strformat, math, importutils, strutils]
+import std / [strformat, math, importutils, strutils, options]
 import random as rnd except rand
 import types, state_machine, base_bridge, base_bridge_private
 
@@ -192,7 +192,7 @@ proc turn*(self: Unit, direction: Directions, degrees = 90.0, move_mode: int) =
   let dir = vec3(direction)
   if dir in [BACK, FORWARD]:
     raise IndexDefect.init("You can't turn forward or back")
-  
+
   self.begin_turn(dir, degrees, false, move_mode)
 
 proc turn*(self: Unit, degrees: float, move_mode: int) =
@@ -232,7 +232,7 @@ proc lean*(self: Unit, direction: Directions, degrees = 90.0, move_mode: int) =
   let dir = vec3(direction)
   if dir in [UP, DOWN]:
     raise IndexDefect.init("You can't lean up or down")
-  
+
   self.begin_turn(dir, degrees, true, move_mode)
 
 proc lean*(self: Unit, degrees: float, move_mode: int) =
@@ -423,7 +423,7 @@ proc md*(self: Unit,
   zoomable = true, billboard = false): Sign {.discardable.} =
 
   result = Sign()
-  self.new_markdown_sign_impl(result, markdown, title, width, height, size, 
+  self.new_markdown_sign_impl(result, markdown, title, width, height, size,
     zoomable, billboard)
 
 template md*(markdown: string,
@@ -434,3 +434,19 @@ template md*(markdown: string,
 
 template reset*(clear = false) =
   enu_target.reset(clear)
+
+template `\`*(s: string): string =
+  var f = fmt(s)
+  f.remove_prefix("\n")
+  f.remove_suffix(' ')
+  f.remove_suffix("\n\n")
+  f
+
+template `?`*(self: ref): bool = not self.is_nil
+template `?`*(self: object): bool = self != self.type.default
+template `?`*[T](option: Option[T]): bool = option.is_some
+template `?`*(self: SomeNumber): bool = self != 0
+template `?`*(self: string): bool = self != ""
+template `?`*[T](self: open_array[T]): bool = self.len > 0
+template `?`*[T](self: set[T]): bool = self.card > 0
+template `?`*[T](self: HashSet[T]): bool = self.card > 0
