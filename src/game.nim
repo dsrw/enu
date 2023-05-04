@@ -55,9 +55,15 @@ gdobj Game of Node:
       state.units.value.walk_tree proc(unit: Unit) =
         inc unit_count
 
-      self.stats.text =
-          &"FPS: {fps}\nscale_factor: {state.scale_factor}\nvram: {vram}\n" &
-          &"units: {unit_count}"
+      self.stats.text = \"""
+
+FPS: {fps}
+scale_factor: {state.scale_factor}
+vram: {vram}
+units: {unit_count}
+zen objects: {Zen.thread_ctx.len}
+
+      """
 
     if time > self.rescale_at:
       self.rescale_at = MonoTime.high
@@ -86,7 +92,7 @@ gdobj Game of Node:
       save_world()
       self.get_tree().quit()
     if what == main_loop.NOTIFICATION_WM_ABOUT:
-      alert(&"Enu {enu_version}\n\n© 2022 Scott Wadden", "Enu")
+      alert(&"Enu {enu_version}\n\n© 2023 Scott Wadden", "Enu")
 
   proc add_platform_input_actions =
     let suffix = "." & host_os

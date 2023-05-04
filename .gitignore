@@ -35,3 +35,5 @@ nimble.paths
 fonts/
 nimbledeps/
 .submodules.tmp
+
+*.previous

@@ -5,17 +5,20 @@ import pkg / model_citizen / utils
 export utils
 
 ### Globals ###
+
 const enu_version* = static_exec("git describe --tags HEAD")
 var state* {.threadvar.}: GameState
 
 ### Sugar ###
+
 from sugar import dup, dump, collect
-import std / [with, times, monotimes]
+import std / [with, times, monotimes, strformat]
 import pkg / [print, flatty]
 
-export with, sets, tables, print, flatty
+export with, sets, tables, print, flatty, strformat
 
 ### Debug
+
 export dump
 
 import pkg / chronicles
@@ -24,12 +27,14 @@ export chronicles
 template nim_filename*: string = instantiation_info(full_paths = true).filename
 
 ### times ###
+
 export monotimes
 
 proc seconds*(s: float): Duration {.inline.} =
   init_duration(milliseconds = int(s * 1000))
 
 ### options ###
+
 import options
 export options
 
@@ -62,6 +67,7 @@ proc optional_get*[T](self: var HashSet[T], key: T): Option[T] =
     result = none(T)
 
 ### Vector3 ###
+
 import core/godotcoretypes, core/vector3, math
 
 const
@@ -120,6 +126,7 @@ proc surrounding*(point: Vector3): seq[Vector3] =
           point + vec3(x - 1, y - 1, z - 1)
 
 # math
+
 const CMP_EPSILON = 0.00001
 proc roughly_zero[T](s: T): bool =
   abs(s) < CMP_EPSILON
@@ -144,6 +151,14 @@ when not defined(no_godot):
       godot.print msg
 
 # misc
+
+template `\`*(s: string): string =
+  var f = fmt(s)
+  f.remove_prefix("\n")
+  f.remove_suffix(' ')
+  f.remove_suffix("\n\n")
+  f
+
 import pkg / core / transforms
 export transforms
 
