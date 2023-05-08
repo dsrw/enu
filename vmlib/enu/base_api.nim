@@ -1,4 +1,4 @@
-import std / [strformat, math, importutils, strutils, options]
+import std / [strformat, math, importutils, strutils, options, sets]
 import random as rnd except rand
 import types, state_machine, base_bridge, base_bridge_private
 

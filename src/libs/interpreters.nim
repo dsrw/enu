@@ -69,7 +69,7 @@ proc eval*(self: ScriptCtx, code: string): bool =
 proc call_proc*(self: ScriptCtx, proc_name: string, args: varargs[PNode, `to_node`]): tuple[paused: bool, result: PNode] =
   let foreign_proc = self.interpreter.select_routine(proc_name, module_name = self.module_name)
   if foreign_proc == nil:
-    raise new_exception(VMError, &"script does not export a proc of the name: '{proc_name}'")
+    raise new_exception(VMError, \"script does not export a proc of the name: '{proc_name}'")
   result = try:
     {.gcsafe.}:
       (false, self.interpreter.call_routine(foreign_proc, args))

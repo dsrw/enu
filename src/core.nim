@@ -12,10 +12,10 @@ var state* {.threadvar.}: GameState
 ### Sugar ###
 
 from sugar import dup, dump, collect
-import std / [with, times, monotimes, strformat]
+import std / [with, times, monotimes]
 import pkg / [print, flatty]
 
-export with, sets, tables, print, flatty, strformat
+export with, sets, tables, print, flatty
 
 ### Debug
 

@@ -92,7 +92,7 @@ zen objects: {Zen.thread_ctx.len}
       save_world()
       self.get_tree().quit()
     if what == main_loop.NOTIFICATION_WM_ABOUT:
-      alert(&"Enu {enu_version}\n\n© 2023 Scott Wadden", "Enu")
+      alert \"Enu {enu_version}\n\n© 2023 Scott Wadden", "Enu"
 
   proc add_platform_input_actions =
     let suffix = "." & host_os
@@ -151,7 +151,7 @@ zen objects: {Zen.thread_ctx.len}
 
     var chan_size = initial_user_config.channel_size || 5000
 
-    Zen.thread_ctx = ZenContext.init(name = &"main-{generate_id()}",
+    Zen.thread_ctx = ZenContext.init(name = \"main-{generate_id()}",
         chan_size = chan_size, buffer = false)
 
     state = GameState.init
@@ -355,4 +355,4 @@ zen objects: {Zen.thread_ctx.len}
       discard
       #self.script_controller.eval(url[6..^1])
     elif shell_open(url) != godotcoretypes.Error.OK:
-      logger("err", &"Unable to open url {url}")
+      logger("err", \"Unable to open url {url}")

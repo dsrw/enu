@@ -27,7 +27,7 @@ gdobj PreviewMaker of Viewport:
     self.skip_next = false
 
   proc generate_block_preview*(material_name: string, callback: proc(preview: Image) {.gcsafe.}) =
-    let material = load(&"res://materials/{material_name}.tres") as Material
+    let material = load(\"res://materials/{material_name}.tres") as Material
     self.cube.visible = true
     self.bot.visible = false
     self.cube.set_surface_material(0, material)

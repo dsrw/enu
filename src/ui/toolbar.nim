@@ -44,7 +44,7 @@ gdobj Toolbar of HBoxContainer:
     if not self.waiting and self.blocks.len > 0:
       var color = self.blocks.pop()
       self.waiting = true
-      self.preview_maker.generate_block_preview &"{color}-block-grid", proc(preview: Image) =
+      self.preview_maker.generate_block_preview \"{color}-block-grid", proc(preview: Image) =
         self.preview_result = some (color: color, preview: preview)
         self.waiting = false
     if not self.waiting and self.blocks.len == 0 and self.objects.len > 0:

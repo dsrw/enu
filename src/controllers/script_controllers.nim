@@ -726,7 +726,7 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
   worker_lock.acquire
 
   var listen_address = main_thread_state.config.listen_address
-  let worker_ctx = ZenContext.init(name = &"work-{generate_id()}",
+  let worker_ctx = ZenContext.init(name = \"work-{generate_id()}",
       chan_size = 1000, buffer = true,
       listen_address = listen_address)
 
@@ -793,7 +793,7 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
     for ctx_name in Zen.thread_ctx.unsubscribed:
       var i  = 0
       while i < state.units.len:
-        if state.units[i].id == &"player-{ctx_name}":
+        if state.units[i].id == \"player-{ctx_name}":
           state.units.del i
         else:
           i += 1
@@ -858,7 +858,7 @@ proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
       else:
         "???"
 
-      var loc = &"{file_name}({int info.line},{int info.col})"
+      var loc = \"{file_name}({int info.line},{int info.col})"
       error "vm error", msg, file = ctx.file_name
       ctx.errors.add (msg, info, loc)
       ctx.exit_code = error_code
@@ -875,8 +875,8 @@ proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
     if ctx.timeout_at < now:
       let duration = script_timeout
       raise (ref VMQuit)(info: info, kind: Timeout,
-        msg: &"Timeout. Script {ctx.script} executed for too long without " &
-            &"yielding: {duration}")
+        msg: \"Timeout. Script {ctx.script} executed for too long without " &
+            \"yielding: {duration}")
 
     if ctx.previous_line != info:
       let config = interpreter.config

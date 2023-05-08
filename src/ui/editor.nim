@@ -68,8 +68,8 @@ gdobj Editor of TextEdit:
 
   proc configure_highlighting =
     # strings
-    self.add_color_region("\"\"\"", "\"\"\"", ir_black[normal], false)
     self.add_color_region("\"", "\"", ir_black[text], false)
+    self.add_color_region("\"\"\"", "\"\"\"", ir_black[text], false)
     # block comments
     self.add_color_region("#[", "]#", self.comment_color, false)
     # line comments
