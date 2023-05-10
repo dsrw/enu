@@ -1,5 +1,5 @@
 import std / [lists, algorithm, tables]
-import pkg / [godot, markdown]
+import pkg / [godot, markdown, model_citizen / typeids]
 import godotapi / [rich_text_label, scroll_container, text_edit, theme,
                    dynamic_font, dynamic_font_data, style_box_flat, main_loop]
 import core, globals
@@ -8,6 +8,9 @@ import models / colors except Color
 export scroll_container
 
 const comment_color = col"808080"
+
+log_scope:
+  topics = "signs"
 
 proc stylebox(self: Control): StyleBoxFlat =
   self.get_stylebox("normal").as(StyleBoxFlat)
@@ -128,6 +131,7 @@ gdobj MarkdownLabel of ScrollContainer:
   proc render_markdown(token: Token, list_position = 0, inline_blocks = false) =
     var list_position = list_position
     for t in token.children:
+      debug "rendering markdown token", token = t, type = t.base_type
       var label = self.current_label
       if self.needs_margin and not (t of CodeBlock):
         label.newline
@@ -201,7 +205,7 @@ gdobj MarkdownLabel of ScrollContainer:
         label.pop
 
       elif t of Text:
-        label.add_text t.doc
+        label.add_text(t.doc.replace("\n", " "))
 
       elif t of SoftBreak:
         label.add_text " "
