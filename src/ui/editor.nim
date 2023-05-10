@@ -10,24 +10,6 @@ gdobj Editor of TextEdit:
   var
     comment_color* {.gdExport.} = init_color(0.5, 0.5, 0.5)
     og_bg_color: Color
-    dirty = false
-    open_script_ctx: ScriptCtx
-
-  proc set_open_script_ctx() =
-    # TODO: yuck
-    var current = self.open_script_ctx
-    if ?state.open_unit.value and ?state.open_unit.value.script_ctx:
-      current = state.open_unit.value.script_ctx
-    if self.open_script_ctx != current:
-      if ?self.open_script_ctx:
-        self.open_script_ctx.line_changed = nil
-
-    if not state.open_unit.value.is_nil and not state.open_unit.value.script_ctx.is_nil:
-      self.open_script_ctx = state.open_unit.value.script_ctx
-      if ?self.open_script_ctx:
-        self.executing_line = int self.open_script_ctx.current_line.line - 1
-        self.open_script_ctx.line_changed = proc(current: TLineInfo, previous: TLineInfo) =
-          self.executing_line = int current.line - 1
 
   proc indent_new_line() =
     let column = int self.cursor_get_column - 1
@@ -81,17 +63,15 @@ gdobj Editor of TextEdit:
 
   proc highlight_errors =
     self.clear_executing_line()
-    self.set_open_script_ctx()
-    if not self.open_script_ctx.is_nil:
-      for err in self.open_script_ctx.errors:
+    if ?state.open_unit.value:
+      for err in state.open_unit.value.errors:
         self.set_line_as_marked(int64(err.info.line - 1), true)
 
   proc `executing_line=`*(line: int) =
-    if self.get_line_count >= line:
+    if self.get_line_count >= line and line >= 0:
       self.set_executing_line(line)
-
-  method on_text_changed() =
-    self.dirty = true
+    else:
+      self.clear_executing_line()
 
   method ready* =
     self.bind_signals(self, "text_changed")
@@ -106,19 +86,24 @@ gdobj Editor of TextEdit:
       elif EditorFocused.added:
         self.grab_focus
 
+    var line_zid: ZID
     state.open_unit.changes:
       if added:
         let unit = change.item
         if unit.is_nil:
           self.release_focus()
           self.visible = false
-          if ?self.open_script_ctx:
-            self.open_script_ctx.line_changed = nil
-            self.open_script_ctx = nil
         else:
+          line_zid = unit.current_line.changes:
+            if added:
+              # only update the executing line if the code hasn't been changed.
+              if self.text == state.open_unit.value.code.value.nim:
+                self.executing_line = change.item - 1
+              else:
+                self.clear_executing_line()
           self.visible = true
-          self.set_open_script_ctx()
           self.text = state.open_unit.value.code.value.nim
+
           if CommandMode in state.flags:
             self.modulate = dimmed_alpha
           else:
@@ -126,6 +111,11 @@ gdobj Editor of TextEdit:
             self.grab_focus()
           self.clear_errors()
           self.highlight_errors()
+          let line = unit.current_line.value - 1
+          self.executing_line = line
+      if removed:
+        if ?change.item:
+          Zen.thread_ctx.untrack(line_zid)
 
     state.flags.changes:
       if EditorFocused.added:

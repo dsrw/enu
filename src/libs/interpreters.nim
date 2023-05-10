@@ -34,7 +34,7 @@ proc load*(self: ScriptCtx, file_name, code: string) =
 proc run*(self: ScriptCtx): bool =
   private_access ScriptCtx
   self.exit_code = none(int)
-  self.errors = @[]
+
   try:
     self.interpreter.load_module(self.file_name, self.code, self.pass_context)
     result = false
@@ -48,7 +48,7 @@ proc run*(self: ScriptCtx): bool =
 
 proc eval*(self: ScriptCtx, code: string): bool =
   self.exit_code = none(int)
-  self.errors = @[]
+
   try:
     var
       ctx = self.ctx

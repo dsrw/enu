@@ -73,6 +73,8 @@ type
     materials*: seq[ShaderMaterial]
     edits*: ZenTable[string, Table[Vector3, VoxelInfo]]
 
+  ScriptErrors* = ZenSeq[tuple[msg: string, info: TLineInfo, location: string]]
+
   Unit* = ref object of Model
     id*: string
     parent*: Unit
@@ -94,6 +96,8 @@ type
     sight_ray*: RayCast
     frame_created*: int
     zids*: seq[ZID]
+    errors*: ScriptErrors
+    current_line*: ZenValue[int]
 
   Player* = ref object of Unit
     colliders*: HashSet[Model]
@@ -160,14 +164,12 @@ type
     ctx: PCtx
     pc: int
     tos: PStackFrame
-    line_changed*: proc(current, previous: TLineInfo) {.gcsafe.}
     current_line*: TLineInfo
     previous_line: TLineInfo
     pause_requested: bool
     module_name*: string
     file_name*: string
     exit_code*: Option[int]
-    errors*: seq[tuple[msg: string, info: TLineInfo, location: string]]
     callback*: Callback
     saved_callback*: Callback
     action_running*: bool

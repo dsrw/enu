@@ -1,6 +1,6 @@
 import std / [os, sugar, with, tables]
 import godotapi / spatial
-from pkg/core/godotcoretypes import Basis
+from pkg / core / godotcoretypes import Basis
 import core, models / [states, colors], libs / interpreters
 
 proc init_unit*[T: Unit](self: T) =
@@ -13,6 +13,8 @@ proc init_unit*[T: Unit](self: T) =
     scale = Zen.init(1.0)
     glow = ZenValue[float].init
     color = Zen.init(self.start_color)
+    errors = ScriptErrors.init
+    current_line = ZenValue[int].init
 
   self.flags += Visible
 

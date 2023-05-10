@@ -39,6 +39,16 @@ work_done.init_cond
 private_access ScriptCtx
 private_access Worker
 
+proc init*(_: type ScriptCtx, owner: Unit, clone_of: Unit = nil,
+   interpreter: Interpreter): ScriptCtx =
+
+  result = ScriptCtx(
+    module_name: if ?clone_of: clone_of.id else: "",
+    interpreter: interpreter,
+    timeout_at: MonoTime.high,
+    timer: MonoTime.high
+  )
+
 proc map_unit(self: Worker, unit: Unit, pnode: PNode) =
   debug "mapping pnode ", hash = pnode.hash, unit = unit.id
   self.unit_map[pnode] = unit
@@ -106,9 +116,8 @@ proc new_instance(self: Worker, src: Unit, dest: PNode) =
 
   var clone = src.clone(self.active_unit, id)
   assert not clone.is_nil
-  clone.script_ctx =
-      ScriptCtx(timer: MonoTime.high, interpreter: self.interpreter,
-      module_name: src.id, timeout_at: MonoTime.high)
+  clone.script_ctx = ScriptCtx.init(owner = clone, clone_of = src,
+      interpreter = self.interpreter)
 
   self.map_unit(clone, dest)
 
@@ -500,13 +509,17 @@ proc `coding=`(self: Unit, value: Unit) =
 # End of bindings
 
 proc script_error(self: Worker, unit: Unit, e: ref VMQuit) =
-  logger("err", e.msg)
+  var msg = e.msg
+  if ?e.parent:
+    msg = e.parent.msg
+  logger("err", msg)
   unit.flags -= ScriptInitializing
   unit.ensure_visible
   state.push_flags ConsoleVisible
 
 proc advance_unit(self: Worker, unit: Unit, timeout: MonoTime): bool =
   let ctx = unit.script_ctx
+  unit.current_line.value = ctx.current_line.line.int
   if ?ctx and ctx.running:
     if unit of Build:
       let unit = Build(unit)
@@ -535,6 +548,7 @@ proc advance_unit(self: Worker, unit: Unit, timeout: MonoTime): bool =
         if not ctx.running and not ?unit.clone_of:
           unit.collect_garbage
           unit.ensure_visible
+          unit.current_line.value = 0
 
         result = ctx.running and task_state == NextTask
 
@@ -653,6 +667,7 @@ proc script_file_for(self: Unit): string =
 
 proc change_code(self: Worker, unit: Unit, code: Code) =
   debug "code changing", unit = unit.id
+  unit.errors.clear
   if ?unit.script_ctx and unit.script_ctx.running and not ?unit.clone_of:
     unit.collect_garbage
 
@@ -692,8 +707,8 @@ proc watch_code(self: Worker, unit: Unit) =
       self.change_code(unit, change.item)
 
   if unit.script_ctx.is_nil:
-    unit.script_ctx = ScriptCtx(timer: MonoTime.high,
-        interpreter: self.interpreter, timeout_at: MonoTime.high)
+    unit.script_ctx = ScriptCtx.init(owner = unit,
+        interpreter = self.interpreter)
 
     unit.script_ctx.script = script_file_for unit
 
@@ -852,15 +867,22 @@ proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
     var info = info
     var msg = msg
     let ctx = controller.active_unit.script_ctx
+    let errors = controller.active_unit.errors
     if severity == Severity.Error and config.error_counter >= config.error_max:
       var file_name = if info.file_index.int >= 0:
         config.m.file_infos[info.file_index.int].full_path.string
       else:
         "???"
 
+      if file_name.get_file_info != ctx.file_name.get_file_info:
+        (file_name, info) = extract_file_info msg
+        msg = msg.replace(re"unhandled exception:.*\) Error\: ", "")
+      else:
+        msg = msg.replace(re"(?ms);.*", "")
+
       var loc = \"{file_name}({int info.line},{int info.col})"
       error "vm error", msg, file = ctx.file_name
-      ctx.errors.add (msg, info, loc)
+      errors.add (msg, info, loc)
       ctx.exit_code = error_code
       raise (ref VMQuit)(info: info, msg: msg, location: loc)
 
@@ -887,8 +909,6 @@ proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
             config.m.file_infos[info.file_index.int].full_path.string
 
         if file_name == ctx.file_name:
-          if ctx.line_changed != nil:
-            ctx.line_changed(info, ctx.previous_line)
           (ctx.previous_line, ctx.current_line) = (ctx.current_line, info)
 
     ctx.ctx = c
