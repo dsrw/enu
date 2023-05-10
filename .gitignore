@@ -27,6 +27,7 @@ app/export_presets.cfg
 dist/
 vmlib/stdlib
 dist_config.json
+user_config.nims
 
 /.last_test
 nimble.develop
