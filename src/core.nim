@@ -2,7 +2,8 @@ import types
 export types
 
 import pkg / model_citizen / utils
-export utils
+import std / [sequtils, strutils, sugar, macros]
+export utils, sequtils, strutils, sugar
 
 ### Globals ###
 
@@ -12,10 +13,10 @@ var state* {.threadvar.}: GameState
 ### Sugar ###
 
 from sugar import dup, dump, collect
-import std / [with, times, monotimes]
-import pkg / [print, flatty]
+import std / [with, sets, times, monotimes, tables]
+import pkg / [pretty, flatty]
 
-export with, sets, tables, print, flatty
+export with, sets, tables, pretty, flatty
 
 ### Debug
 
@@ -152,13 +153,6 @@ when not defined(no_godot):
 
 # misc
 
-template `\`*(s: string): string =
-  var f = fmt(s)
-  f.remove_prefix("\n")
-  f.remove_suffix(' ')
-  f.remove_suffix("\n\n")
-  f
-
 import pkg / core / transforms
 export transforms
 
@@ -237,15 +231,13 @@ proc update_action_index*(state: GameState, change: int) =
 
   state.tool.value = Tools(index)
 
-# Workaround for templates not supporting {.discardable.}
-proc maybe_discard*[T](self: T): T {.discardable, inline.} = self
-
 template watch*(zen: Zen, unit: untyped, body: untyped) =
   when unit is Unit:
+    mixin thread_ctx
     let zid = zen.changes:
       body
     unit.zids.add(zid)
-    maybe_discard(zid)
+    make_discardable(zid)
   else:
     {. error:
       "Watch needs a Unit object to bind its lifetime to. The Unit " &
@@ -268,3 +260,10 @@ macro enum_fields*(n: typed): untyped =
     of nnk_sym, nnk_ident:
       result.add new_lit(f.str_val)
     else: discard
+
+template value*(self: ZenValue, body: untyped) {.dirty.} =
+  block:
+    var value = self.value
+    with value:
+      body
+    self.value = value

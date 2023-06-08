@@ -36,7 +36,7 @@ type
   GameState* = ref object
     flags*: ZenSet[StateFlags]
     wants*: ZenSeq[StateFlags]
-    config*: Config
+    config*: ZenValue[Config]
     open_unit*: ZenValue[Unit]
     dirty_units*: HashSet[Unit]
     tool*: ZenValue[Tools]
@@ -95,7 +95,7 @@ type
     color*: ZenValue[Color]
     sight_ray*: RayCast
     frame_created*: int
-    zids*: seq[ZID]
+    zids* {.zen_ignore.}: seq[ZID]
     errors*: ScriptErrors
     current_line*: ZenValue[int]
 
@@ -134,10 +134,10 @@ type
     bounds*: ZenValue[AABB]
     bot_collisions*: bool
 
-  Config* = ref object
-    font_size*: ZenValue[int]
-    dock_icon_size*: float
+  Config* = object
+    font_size*: int
     world*: string
+    dock_icon_size*: float
     show_stats*: bool
     mega_pixels*: float
     world_dir*: string
@@ -152,6 +152,7 @@ type
     server_address*: string
     player_color*: Color
     channel_size*: int
+    work_dir*: string
 
   Code* = object
     owner*: string

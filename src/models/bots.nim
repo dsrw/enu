@@ -75,12 +75,13 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
   )
 
   self.init_unit
-  if clone_of == nil:
-    state.dirty_units.incl self
 
   if global: self.flags += Global
 
   self.flags.watch:
+    debug "self flag changed", zid, changes = change.changes,
+        item = change.item, unit = self.id, zen_id = self.flags.id
+
     if Hover.added:
       state.push_flag ReticleVisible
       if state.tool.value in {CodeMode, PlaceBot}:
@@ -91,17 +92,20 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
       root.walk_tree proc(unit: Unit) = unit.flags -= Highlight
       state.pop_flag ReticleVisible
 
-  state.flags.watch:
-    if Hover in self.flags:
-      if PrimaryDown.added and state.tool.value == CodeMode:
-        let root = self.find_root(true)
-        state.open_unit.value = root
-      if SecondaryDown.added and state.tool.value == PlaceBot:
-        if self.parent.is_nil:
-          state.units -= self
-        else:
-          self.parent.units -= self
+  self.flags.untrack_on_destroy:
+    state.flags.changes:
+      debug "state flag changed", zid, changes = change.changes,
+          item = change.item, unit = self.id, zen_id = self.flags.id
 
+      if Hover in self.flags:
+        if PrimaryDown.added and state.tool.value == CodeMode:
+          let root = self.find_root(true)
+          state.open_unit.value = root
+        if SecondaryDown.added and state.tool.value == PlaceBot:
+          if self.parent.is_nil:
+            state.units -= self
+          else:
+            self.parent.units -= self
   result = self
 
 method clone*(self: Bot, clone_to: Unit, id: string): Unit =

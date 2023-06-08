@@ -94,7 +94,7 @@ proc logger*(level, msg: string) =
   if level == "err":
     debug "console visible"
     state.push_flag ConsoleVisible
-  let msg = &"[b]{level.to_upper}[/b] {msg}"
+  let msg = \"[b]{level.to_upper}[/b] {msg}"
   debug "logging", msg
   state.console.log += msg & "\n"
 
@@ -114,7 +114,7 @@ proc init*(_: type GameState): GameState =
     flags: Zen.init(set[StateFlags], flags = flags),
     units: Zen.init(seq[Unit], id = "root_units"),
     open_unit: ZenValue[Unit].init(flags = flags),
-    config: Config(font_size: Zen.init(0, flags = flags)),
+    config: ZenValue[Config].init(id = "config", flags = flags),
     tool: Zen.init(BlueBlock, flags = flags),
     gravity: -80.0,
     console: ConsoleModel(log: Zen.init(seq[string], flags = flags)),

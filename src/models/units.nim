@@ -3,6 +3,19 @@ import godotapi / spatial
 from pkg / core / godotcoretypes import Basis
 import core, models / [states, colors], libs / interpreters
 
+proc init_shared*(self: Unit) =
+  if ?self.parent:
+    self.shared = self.parent.shared
+  else:
+    self.shared.init
+    var shared = Shared(id: self.id & "-shared")
+    shared.init_zen_fields
+    self.shared.value = shared
+
+  if self.id notin self.shared.value.edits:
+    let table = init_table[Vector3, VoxelInfo]()
+    self.shared.value.edits[self.id] = table
+
 proc init_unit*[T: Unit](self: T) =
   with self:
     units = Zen.init(seq[Unit])
@@ -16,19 +29,8 @@ proc init_unit*[T: Unit](self: T) =
     errors = ScriptErrors.init
     current_line = ZenValue[int].init
 
+  self.init_shared
   self.flags += Visible
-
-  if ?self.parent:
-    self.shared = self.parent.shared
-  else:
-    self.shared.init
-    var shared = Shared(id: self.id & "-shared")
-    shared.init_zen_fields
-    self.shared.value = shared
-
-  if self.id notin self.shared.value.edits:
-    let table = init_table[Vector3, VoxelInfo]()
-    self.shared.value.edits[self.id] = table
 
 proc find_root*(self: Unit, all_clones = false): Unit =
   result = self
@@ -46,15 +48,15 @@ proc find_root*(self: Unit, all_clones = false): Unit =
 
 proc walk_tree*(units: seq[Unit], callback: proc(unit: Unit) {.gcsafe.}) =
   for unit in units:
-    callback(unit)
     walk_tree(unit.units.value, callback)
+    callback(unit)
 
 proc walk_tree*(root: Unit, callback: proc(unit: Unit) {.gcsafe.}) =
   walk_tree(@[root], callback)
 
 proc data_dir*(self: Unit): string =
   if self.parent.is_nil:
-    state.config.data_dir / self.id
+    state.config.value.data_dir / self.id
   else:
     self.parent.data_dir / self.id
 
@@ -106,3 +108,26 @@ method on_collision*(self: Model, partner: Model, normal: Vector3) {.base, gcsaf
 
 method off_collision*(self: Model, partner: Model) {.base, gcsafe.} =
   discard
+
+proc destroy*[T: Unit](self: T) =
+  assert ?self
+
+  if self.shared.valid and ?self.shared.value:
+    let shared = self.shared.value
+    self.shared.value = nil
+    shared.edits.destroy
+    Zen.thread_ctx.free(shared)
+  for field in self[].fields:
+    when field is Zen:
+      # :(
+      if ?field and not field.destroyed:
+        field.destroy
+  Zen.thread_ctx.free(self)
+
+proc clear_all*(units: ZenSeq[Unit]) =
+  var roots = units.value
+  for unit in roots:
+    unit.walk_tree proc(unit: Unit) =
+      unit.units.clear
+    if not (unit of Player):
+      units -= unit

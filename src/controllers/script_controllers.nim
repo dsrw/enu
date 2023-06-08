@@ -3,7 +3,6 @@ import std /
   tables, options, math, re, hashes, random]
 import locks except Lock
 import pkg / godot except print
-import pkg / print
 import pkg / compiler / vm except get_int
 import pkg / compiler / ast except new_node
 import pkg / compiler / [vmdef, lineinfos, renderer, msgs]
@@ -519,8 +518,8 @@ proc script_error(self: Worker, unit: Unit, e: ref VMQuit) =
 
 proc advance_unit(self: Worker, unit: Unit, timeout: MonoTime): bool =
   let ctx = unit.script_ctx
-  unit.current_line.value = ctx.current_line.line.int
   if ?ctx and ctx.running:
+    unit.current_line.value = ctx.current_line.line.int
     if unit of Build:
       let unit = Build(unit)
       unit.voxels_remaining_this_frame += unit.voxels_per_frame
@@ -615,13 +614,10 @@ proc retry_failed_scripts*(self: Worker) {.gcsafe.} =
     self.script_error(f.unit, f.e)
   self.failed = @[]
 
-proc load_script_and_dependents(self: Worker, unit: Unit, exec: bool) =
+proc load_script_and_dependents(self: Worker, unit: Unit) =
   var previous: HashSet[Unit]
   var units_by_module: Table[string, Unit]
   var units_to_reload: HashSet[Unit]
-
-  if exec:
-    save_world()
 
   units_to_reload.incl unit
   state.reloading = true
@@ -652,16 +648,12 @@ proc load_script_and_dependents(self: Worker, unit: Unit, exec: bool) =
   self.retry_failed_scripts()
   self.retry_failures = false
   state.reloading = false
-  state.dirty_units.clear
-
-  if not exec:
-    unit.script_ctx.running = false
 
 proc script_file_for(self: Unit): string =
   if self.id == state.player.value.id:
-    state.config.lib_dir & "/enu/players.nim"
+    state.config.value.lib_dir & "/enu/players.nim"
   elif not ?self.clone_of:
-    state.config.script_dir / self.id & ".nim"
+    state.config.value.script_dir / self.id & ".nim"
   else:
     ""
 
@@ -692,8 +684,7 @@ proc change_code(self: Worker, unit: Unit, code: Code) =
     if not state.reloading and not self.retry_failures:
       write_file(unit.script_ctx.script, code.nim)
       if not self.interpreter.is_nil:
-        let exec = code.owner == Zen.thread_ctx.name
-        self.load_script_and_dependents(unit, exec)
+        self.load_script_and_dependents(unit)
       else:
         # We load the player before we init the interpreter to get to an
         # interactive state quicker. Otherwise this shouldn't ever be nil.
@@ -704,7 +695,8 @@ proc change_code(self: Worker, unit: Unit, code: Code) =
 proc watch_code(self: Worker, unit: Unit) =
   unit.code.changes:
     if added or touched:
-      self.change_code(unit, change.item)
+      if change.item.owner == "" or change.item.owner == Zen.thread_ctx.name:
+        self.change_code(unit, change.item)
 
   if unit.script_ctx.is_nil:
     unit.script_ctx = ScriptCtx.init(owner = unit,
@@ -712,9 +704,12 @@ proc watch_code(self: Worker, unit: Unit) =
 
     unit.script_ctx.script = script_file_for unit
 
-proc watch_units(self: Worker, units: ZenSeq[Unit], parent: Unit, body:
-    proc(unit: Unit, change: Change[Unit], added: bool, removed: bool)
-    {.gcsafe.}) {.gcsafe.} =
+proc watch_units(self: Worker,
+  units: ZenSeq[Unit],
+  parent: Unit,
+  body: proc(unit: Unit, change: Change[Unit], added: bool,
+      removed: bool) {.gcsafe.}
+) =
 
   units.track proc(changes: seq[Change[Unit]]) =
     for change in changes:
@@ -723,6 +718,8 @@ proc watch_units(self: Worker, units: ZenSeq[Unit], parent: Unit, body:
       let removed = Removed in change.changes
       body(unit, change, added, removed)
       if added:
+        if not ?unit.clone_of:
+          state.dirty_units.incl unit
         # FIXME: this is being set for the main thread in node_controller
         unit.parent = parent
         self.watch_units(unit.units, unit, body)
@@ -740,26 +737,24 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
   let (ctx, main_thread_state) = params
   worker_lock.acquire
 
-  var listen_address = main_thread_state.config.listen_address
+  var listen_address = main_thread_state.config.value.listen_address
   let worker_ctx = ZenContext.init(name = \"work-{generate_id()}",
       chan_size = 1000, buffer = true,
       listen_address = listen_address)
 
   Zen.thread_ctx = worker_ctx
   ctx.subscribe(Zen.thread_ctx)
-  let server_address = main_thread_state.config.server_address
+  let server_address = main_thread_state.config.value.server_address
   let server = ?listen_address or not ?server_address
 
   state = GameState.init_from(main_thread_state)
-  state.config = Config()
-  state.config[] = main_thread_state.config[]
-  state.config.font_size = Zen.thread_ctx[state.config.font_size]
+  state.config = ZenValue[Config](Zen.thread_ctx["config"])
   state.console = ConsoleModel.init_from(main_thread_state.console)
   state.worker_ctx_name = worker_ctx.name
   main_thread_state.worker_ctx_name = worker_ctx.name
 
   state.player.value = Player.init
-  state.player.value.color.value = state.config.player_color
+  state.player.value.color.value = state.config.value.player_color
 
   work_done.signal
   worker_lock.release
@@ -781,6 +776,12 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
           remove_file unit.script_ctx.script
           remove_dir unit.data_dir
 
+      for zid in unit.zids:
+        debug "untracking zid", zid, unit = unit.id
+        Zen.thread_ctx.untrack zid
+      unit.zids = @[]
+      unit.destroy
+
   let player = state.player.value
   # add player before interpreter is initialized to get to an interactive
   # state quicker
@@ -788,14 +789,25 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
     state.units.add player
   worker.init_interpreter("")
   if server:
+    var world_dir = state.config.value.world_dir
     player.script_ctx.interpreter = worker.interpreter
-    worker.load_script_and_dependents(player, true)
-    worker.load_world
+    worker.load_script_and_dependents(player)
+
+    worker.load_world(world_dir)
+    state.config.changes:
+      if added:
+        if change.item.world_dir != world_dir:
+          if world_dir != "":
+            save_world(world_dir)
+          worker.unload_world()
+          world_dir = change.item.world_dir
+          if world_dir != "":
+            worker.load_world(world_dir)
   else:
     Zen.thread_ctx.subscribe(server_address)
     state.units.add player
     player.script_ctx.interpreter = worker.interpreter
-    worker.load_script_and_dependents(player, true)
+    worker.load_script_and_dependents(player)
 
   const max_time = (1.0 / 30.0).seconds
   const min_time = (1.0 / 120.0).seconds
@@ -853,8 +865,8 @@ proc init*(T: type ScriptController): ScriptController =
 proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
   private_access ScriptCtx
 
-  var interpreter = Interpreter.init(state.config.script_dir,
-      state.config.lib_dir)
+  var interpreter = Interpreter.init(state.config.value.script_dir,
+      state.config.value.lib_dir)
 
   let controller = self
 
@@ -950,7 +962,7 @@ proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
 when is_main_module:
   proc main =
     state.config.lib_dir =
-        current_source_path().parent_dir / ".." / ".." / "vmlib"
+        current_source_path().parent_dir / .. / .. / "vmlib"
 
     var b = Bot.init
     let c = ScriptController.init

@@ -137,6 +137,7 @@ proc restore_edits*(self: Build) =
           var locations = self.shared.value.edits[self.id]
           locations[loc] = info
           self.shared.value.edits[self.id] = locations
+          self.chunks[buffer].destroy
           self.chunks[buffer].del loc
 
 proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) {.gcsafe.} =
@@ -164,7 +165,6 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) {.gcsafe.} =
       self.add_voxel(position, voxel)
 
   else:
-    state.dirty_units.incl self.find_root
     if self.id notin self.shared.value.edits:
       self.shared.value.edits[self.id] = init_table[Vector3, VoxelInfo]()
     var voxel = voxel
@@ -356,7 +356,7 @@ method ensure_visible*(self: Build) =
 proc init*(_: type Build,
     id = "build_" & generate_id(), transform = Transform.init,
     color = default_color, clone_of: Unit = nil, global = true,
-    bot_collisions = true): Build =
+    bot_collisions = true, parent: Unit = nil): Build =
 
   var self = Build(
     id: id,
@@ -369,18 +369,17 @@ proc init*(_: type Build,
     speed: 1.0,
     clone_of: clone_of,
     bot_collisions: bot_collisions,
-    frame_created: state.frame_count
+    frame_created: state.frame_count,
+    parent: parent
   )
 
   self.init_unit
-  if clone_of == nil:
-    state.dirty_units.incl self
 
   if global: self.flags += Global
   self.reset()
   result = self
 
-method main_thread_init*(self: Build) {.gcsafe.} =
+method main_thread_init*(self: Build) =
   self.flags.watch:
     if Hover.added and state.tool.value == CodeMode:
       if Playing notin state.flags:
@@ -448,7 +447,7 @@ method clone*(self: Build, clone_to: Unit, id: string): Unit =
   let bot_collisions = true #not (clone_to of Bot)
   let clone = Build.init(id = id, transform = transform, clone_of = self,
       global = global, color = self.start_color,
-      bot_collisions = bot_collisions)
+      bot_collisions = bot_collisions, parent = clone_to)
 
   for loc, info in self.shared.value.edits[self.id]:
     if info.kind != Hole and loc notin clone.shared.value.edits[clone.id]:

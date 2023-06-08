@@ -17,7 +17,6 @@ gdobj AimTarget of Sprite3D:
       elif BlockTargetVisible.removed:
         self.visible = false
 
-
     state.tool.watch(state.player.value):
       # tool changed. Retarget.
       if self.target_model != nil:
@@ -34,6 +33,10 @@ gdobj AimTarget of Sprite3D:
       nil
 
     let unit = ?.collider.model
+    if ?self.target_model and ?self.target_model.flags:
+      # :(
+      if self.target_model.flags.destroyed:
+        self.target_model = nil
 
     if unit != self.target_model:
       if self.target_model != nil:

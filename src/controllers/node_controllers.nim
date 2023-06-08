@@ -11,6 +11,7 @@ proc remove_from_scene(unit: Unit) =
 
   for zid in unit.zids:
     Zen.thread_ctx.untrack zid
+  unit.zids = @[]
 
   unit.flags -= Ready
 
@@ -26,7 +27,10 @@ proc remove_from_scene(unit: Unit) =
   unit.node.queue_free()
   debug "removing node", unit_id = unit.id
   unit.node = nil
-  Zen.thread_ctx.free(unit)
+
+  if unit of Build: Build(unit).destroy
+  elif unit of Bot: Bot(unit).destroy
+  elif unit of Sign: Sign(unit).destroy
 
 proc add_to_scene(unit: Unit) =
   debug "adding unit to scene", unit = unit.id
@@ -38,8 +42,7 @@ proc add_to_scene(unit: Unit) =
     node.model = unit
     node.transform = unit.start_transform
     if node.owner != nil:
-      raise_assert $T.name & " node shouldn't be owned"
-
+      raise_assert \"{T.name} node shouldn't be owned. unit = {unit.id}"
     unit.node.visible = Visible in unit.flags and
         ScriptInitializing notin unit.flags
 
@@ -85,6 +88,10 @@ proc set_global(unit: Unit, global: bool) =
     unit.node.owner = unit.parent.node
     unit.transform.origin = unit.transform.origin - unit.start_transform.origin
 
+proc reset_nodes() =
+  current_build = nil
+  previous_build = nil
+
 proc find_nested_changes(parent: Change[Unit]) =
   for change in parent.triggered_by:
     if change.type_name == $Change[Unit]:
@@ -96,6 +103,7 @@ proc find_nested_changes(parent: Change[Unit]) =
         change.item.parent = parent.item
         change.item.add_to_scene()
       elif Removed in change.changes:
+        reset_nodes()
         change.item.remove_from_scene()
     elif change.type_name == $Change[ModelFlags]:
       let change = Change[ModelFlags](change)
@@ -113,10 +121,6 @@ proc watch*(self: NodeController, state: GameState) =
       find_nested_changes(change)
     elif removed:
       change.item.remove_from_scene()
-
-proc reset_nodes*(_: type NodeController) =
-  current_build = nil
-  previous_build = nil
 
 proc init*(_: type NodeController): NodeController =
   result = NodeController()

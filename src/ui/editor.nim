@@ -31,7 +31,9 @@ gdobj Editor of TextEdit:
     if not event.is_nil and event.pressed:
       if event.scancode == KEY_ENTER:
         self.indent_new_line()
-      if event.scancode == KEY_SEMICOLON and state.config.semicolon_as_colon:
+      if event.scancode == KEY_SEMICOLON and
+          state.config.value.semicolon_as_colon:
+
         self.insert_text_at_cursor(":")
         self.get_tree.set_input_as_handled()
       elif event.scancode == KEY_HOME:

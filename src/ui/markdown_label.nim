@@ -1,5 +1,5 @@
 import std / [lists, algorithm, tables]
-import pkg / [godot, markdown, model_citizen / typeids]
+import pkg / [godot, markdown, model_citizen / utils / typeids]
 import godotapi / [rich_text_label, scroll_container, text_edit, theme,
                    dynamic_font, dynamic_font_data, style_box_flat, main_loop]
 import core, globals
@@ -53,7 +53,7 @@ gdobj MarkdownLabel of ScrollContainer:
       if self.size > 0:
         self.size
       else:
-        state.config.font_size.value
+        state.config.value.font_size
 
     self.local_default_font.size = size
     self.local_italic_font.size = size
@@ -117,7 +117,7 @@ gdobj MarkdownLabel of ScrollContainer:
     self.og_text_edit.add_font_override("font", self.local_mono_font)
     self.og_label.add_font_override("normal_font", self.local_default_font)
 
-    self.zid = state.config.font_size.changes:
+    self.zid = state.config.changes:
       if added:
         self.set_font_sizes()
 
@@ -215,7 +215,7 @@ gdobj MarkdownLabel of ScrollContainer:
 
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_PREDELETE:
-      state.config.font_size.untrack(self.zid)
+      state.config.untrack(self.zid)
 
   proc update*() =
     self.resized = false

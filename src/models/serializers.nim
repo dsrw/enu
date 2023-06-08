@@ -143,9 +143,9 @@ proc save*(unit: Unit) =
     for unit in unit.units:
       unit.save
 
-proc save_world*() =
+proc save_world*(world_dir: string) =
   let world = WorldInfo(enu_version: enu_version, format_version: "v0.9.1")
-  write_file state.config.world_dir / "world.json",
+  write_file world_dir / "world.json",
       jsonutils.to_json(world).pretty
 
   debug "Saving", unit_count = state.dirty_units.len
@@ -153,7 +153,6 @@ proc save_world*() =
   state.dirty_units.clear
   for unit in units:
     unit.save
-  state.dirty_units.clear
 
 proc load_units(parent: Unit) =
   let opts = JOptions(allow_missing_keys: true)
@@ -161,7 +160,7 @@ proc load_units(parent: Unit) =
     if ?parent:
       parent.data_dir
     else:
-      state.config.data_dir
+      state.config.value.data_dir
   for dir in walk_dirs(path / "*"):
     let unit_id = dir.split_path.tail
     let data_file = read_file(dir / unit_id & ".json").parse_json
@@ -187,8 +186,31 @@ proc load_units(parent: Unit) =
     else:
       unit.flags -= ScriptInitializing
 
-proc load_world*(worker: Worker) =
-  let world_file = state.config.world_dir / "world.json"
+proc unload_world*(worker: Worker) =
+  state.reloading = true
+  state.pop_flag Playing
+  state.units.clear_all
+  state.reloading = false
+
+proc load_world*(worker: Worker, world_dir: string) =
+  state.reloading = true
+  var config = state.config.value
+
+  config.world_dir = world_dir
+  config.data_dir = join_path(config.world_dir, "data")
+  config.script_dir = join_path(config.world_dir, "scripts")
+
+  if not file_exists(config.world_dir / "world.json"):
+    for file in walk_dir(config.lib_dir / "projects"):
+      if config.world.ends_with file.path.split_file.name:
+        file.path.copy_dir(config.world_dir)
+
+  create_dir(config.data_dir)
+  create_dir(config.script_dir)
+
+  state.config.value = config
+
+  let world_file = world_dir / "world.json"
   debug "loading ", world_file
   if file_exists(world_file):
     let world_json = read_file(world_file)
@@ -202,3 +224,4 @@ proc load_world*(worker: Worker) =
   worker.retry_failures = false
   dont_join = false
   state.dirty_units.clear
+  state.reloading = false
