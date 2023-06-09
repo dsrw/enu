@@ -177,14 +177,16 @@ world: {state.config.value.world}
     when defined(dist):
       let exe_dir = parent_dir get_executable_path()
       if host_os == "macosx":
-        state.config.value.lib_dir = join_path(exe_dir.parent_dir, "Resources",
-            "vmlib")
+        state.config.value:
+          lib_dir = join_path(exe_dir.parent_dir, "Resources", "vmlib")
 
       elif host_os == "windows":
-        state.config.value.lib_dir = join_path(exe_dir, "vmlib")
+        state.config.value:
+          lib_dir = join_path(exe_dir, "vmlib")
+
       elif host_os == "linux":
-        state.config.value.lib_dir =
-          join_path(exe_dir.parent_dir, "lib", "vmlib")
+        state.config.value:
+          lib_dir = join_path(exe_dir.parent_dir, "lib", "vmlib")
 
     self.node_controller = NodeController.init
     self.script_controller = ScriptController.init
