@@ -26,9 +26,11 @@ type
   TaskStates* = enum
     Running, Done, NextTask
 
-  ModelFlags* = enum
-    Hover, TargetMoved, Highlight, Global, Visible, Lock, Ready,
-        ScriptInitializing
+  GlobalModelFlags* = enum
+    Global, Visible, Lock, Ready, ScriptInitializing
+
+  LocalModelFlags* = enum
+    Hover, TargetMoved, Highlight
 
   ConsoleModel* = ref object
     log*: ZenSeq[string]
@@ -63,7 +65,8 @@ type
   Model* = ref object of RootObj
     target_point*: Vector3
     target_normal*: Vector3
-    flags*: ZenSet[ModelFlags]
+    local_flags*: ZenSet[LocalModelFlags]
+    global_flags*: ZenSet[GlobalModelFlags]
     node*: Spatial
 
   Ground* = ref object of Model

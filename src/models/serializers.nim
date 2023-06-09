@@ -172,7 +172,7 @@ proc load_units(parent: Unit) =
     else:
       quit "Unknown unit type: " & unit_id
 
-    unit.flags += ScriptInitializing
+    unit.global_flags += ScriptInitializing
     if parent.is_nil:
       state.units.add(unit)
     else:
@@ -184,7 +184,7 @@ proc load_units(parent: Unit) =
     if file_exists(unit.script_ctx.script):
       unit.code.value = Code.init(read_file(unit.script_ctx.script))
     else:
-      unit.flags -= ScriptInitializing
+      unit.global_flags -= ScriptInitializing
 
 proc unload_world*(worker: Worker) =
   state.reloading = true

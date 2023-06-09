@@ -11,10 +11,10 @@ gdobj SignNode of Spatial:
   var material: SpatialMaterial
 
   proc set_visibility =
-    if Visible in self.model.flags:
+    if Visible in self.model.global_flags:
       self.visible = true
       self.material.params_blend_mode = spatial_material.BLEND_MODE_MIX
-    elif Visible notin self.model.flags and God in state.flags:
+    elif Visible notin self.model.global_flags and God in state.flags:
       self.visible = true
       self.material.params_blend_mode = spatial_material.BLEND_MODE_ADD
     else:
@@ -85,9 +85,9 @@ gdobj SignNode of Spatial:
       if added:
         self.transform = change.item
 
-    self.model.flags.watch:
+    self.model.global_flags.watch:
       if (change.item == Visible and ScriptInitializing notin
-          self.model.flags) or ScriptInitializing.removed:
+          self.model.global_flags) or ScriptInitializing.removed:
 
         self.set_visibility
 

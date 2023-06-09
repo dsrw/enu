@@ -137,7 +137,7 @@ proc exec_instance(self: Worker, unit: Unit) =
 proc active_unit(self: Worker): Unit = self.active_unit
 
 proc pause_script(self: Worker) =
-  self.active_unit.flags -= ScriptInitializing
+  self.active_unit.global_flags -= ScriptInitializing
   self.active_unit.script_ctx.pause()
 
 proc begin_turn(self: Worker, unit: Unit, direction: Vector3, degrees: float,
@@ -200,34 +200,34 @@ proc `action_running=`(self: Unit, value: bool) =
 proc id(self: Unit): string = self.id
 
 proc global(self: Unit): bool =
-  Global in self.flags
+  Global in self.global_flags
 
 proc `global=`(self: Unit, global: bool) =
   if global:
-    self.flags += Global
+    self.global_flags += Global
   else:
-    self.flags -= Global
+    self.global_flags -= Global
 
 proc lock(self: Unit): bool =
-  Lock in self.flags
+  Lock in self.global_flags
 
 proc `lock=`(self: Unit, value: bool) =
   if value:
-    self.flags += Lock
+    self.global_flags += Lock
   else:
-    self.flags -= Lock
+    self.global_flags -= Lock
 
 proc local_position(self: Unit): Vector3 =
   self.transform.origin
 
 proc position(self: Unit): Vector3 =
-  if Global in self.flags:
+  if Global in self.global_flags:
     self.transform.origin
   else:
     self.transform.origin.global_from(self.parent)
 
 proc start_position(self: Unit): Vector3 =
-  if Global in self.flags:
+  if Global in self.global_flags:
     self.start_transform.origin
   else:
     self.start_transform.origin.global_from(self.parent)
@@ -237,7 +237,7 @@ proc `position=impl`(self: Unit, position: Vector3) =
   if self of Player and position.y <= 0:
     position.y = 0.1
 
-  if Global in self.flags:
+  if Global in self.global_flags:
     self.transform.origin = position
   else:
     self.transform.origin = position.local_to(self.parent)
@@ -273,13 +273,13 @@ proc `color=`(self: Unit, color: Colors) =
   self.color.value = action_colors[color]
 
 proc show(self: Unit): bool =
-  Visible in self.flags
+  Visible in self.global_flags
 
 proc `show=`(self: Unit, value: bool) =
   if value:
-    self.flags += Visible
+    self.global_flags += Visible
   else:
-    self.flags -= Visible
+    self.global_flags -= Visible
 
 proc rotation(self: Unit): float =
   # TODO: fix this
@@ -512,7 +512,7 @@ proc script_error(self: Worker, unit: Unit, e: ref VMQuit) =
   if ?e.parent:
     msg = e.parent.msg
   logger("err", msg)
-  unit.flags -= ScriptInitializing
+  unit.global_flags -= ScriptInitializing
   unit.ensure_visible
   state.push_flags ConsoleVisible
 
@@ -833,7 +833,7 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
       let units = to_process
       to_process = @[]
       for unit in units:
-        if Ready in unit.flags:
+        if Ready in unit.global_flags:
           if worker.advance_unit(unit, timeout):
             to_process.add(unit)
 

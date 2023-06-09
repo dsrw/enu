@@ -20,7 +20,7 @@ gdobj AimTarget of Sprite3D:
     state.tool.watch(state.player.value):
       # tool changed. Retarget.
       if self.target_model != nil:
-        self.target_model.flags -= Hover
+        self.target_model.local_flags -= Hover
         self.target_model.target_point = vec3()
         self.target_model.target_normal = vec3()
         self.target_model = nil
@@ -33,22 +33,28 @@ gdobj AimTarget of Sprite3D:
       nil
 
     let unit = ?.collider.model
-    if ?self.target_model and ?self.target_model.flags:
+    if ?self.target_model:
       # :(
-      if self.target_model.flags.destroyed:
+      if ?self.target_model.global_flags and
+          self.target_model.global_flags.destroyed:
+
+        self.target_model = nil
+      if ?self.target_model.local_flags and
+          self.target_model.local_flags.destroyed:
+
         self.target_model = nil
 
     if unit != self.target_model:
       if self.target_model != nil:
-        self.target_model.flags -= Hover
+        self.target_model.local_flags -= Hover
         state.pop_flag BlockTargetVisible
       self.target_model = unit
       if not (unit == nil or (unit of Sign and not Sign(unit).zoomable.value) or
         (God notin state.flags and (unit of Bot or unit of Build) and
-        Lock in Unit(unit).find_root.flags)):
+        Lock in Unit(unit).find_root.global_flags)):
 
         state.push_flag BlockTargetVisible
-        unit.flags += Hover
+        unit.local_flags += Hover
 
     if collider != nil:
       var
@@ -80,9 +86,9 @@ gdobj AimTarget of Sprite3D:
         if (unit.target_point, unit.target_normal) != (local_point, local_normal):
           unit.target_point = local_point
           unit.target_normal = local_normal
-          unit.flags.touch TargetMoved
+          unit.local_flags.touch TargetMoved
         else:
-          unit.flags -= TargetMoved
+          unit.local_flags -= TargetMoved
     else:
       state.skip_block_paint = false
 

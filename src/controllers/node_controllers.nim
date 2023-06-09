@@ -13,7 +13,7 @@ proc remove_from_scene(unit: Unit) =
     Zen.thread_ctx.untrack zid
   unit.zids = @[]
 
-  unit.flags -= Ready
+  unit.global_flags -= Ready
 
   for child in unit.units:
     child.remove_from_scene()
@@ -43,17 +43,17 @@ proc add_to_scene(unit: Unit) =
     node.transform = unit.start_transform
     if node.owner != nil:
       raise_assert \"{T.name} node shouldn't be owned. unit = {unit.id}"
-    unit.node.visible = Visible in unit.flags and
-        ScriptInitializing notin unit.flags
+    unit.node.visible = Visible in unit.global_flags and
+        ScriptInitializing notin unit.global_flags
 
     parent_node.add_child(unit.node)
     unit.node.owner = parent_node
     when compiles(node.setup):
       node.setup
     unit.main_thread_init
-    unit.flags += Ready
+    unit.global_flags += Ready
 
-  let parent_node = if Global in unit.flags:
+  let parent_node = if Global in unit.global_flags:
     state.nodes.data
   else:
     unit.parent.node
@@ -105,8 +105,8 @@ proc find_nested_changes(parent: Change[Unit]) =
       elif Removed in change.changes:
         reset_nodes()
         change.item.remove_from_scene()
-    elif change.type_name == $Change[ModelFlags]:
-      let change = Change[ModelFlags](change)
+    elif change.type_name == $Change[GlobalModelFlags]:
+      let change = Change[GlobalModelFlags](change)
       if change.item == Global:
         if Added in change.changes:
           parent.item.set_global(true)

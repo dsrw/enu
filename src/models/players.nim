@@ -10,7 +10,7 @@ proc init*(_: type Player): Player =
     input_direction: ZenValue[Vector3].init
   )
   result.init_unit
-  result.flags += Global
+  result.global_flags += Global
 
 method on_begin_turn*(self: Player, direction: Vector3, degrees: float,
     lean: bool, move_mode: int): Callback =

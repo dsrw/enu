@@ -20,7 +20,8 @@ proc init_unit*[T: Unit](self: T) =
   with self:
     units = Zen.init(seq[Unit])
     transform = Zen.init(self.start_transform)
-    flags = ZenSet[ModelFlags].init
+    global_flags = ZenSet[GlobalModelFlags].init
+    local_flags = ZenSet[LocalModelFlags].init(flags = {SyncLocal})
     code = ZenValue[Code].init
     velocity = ZenValue[Vector3].init
     scale = Zen.init(1.0)
@@ -30,7 +31,7 @@ proc init_unit*[T: Unit](self: T) =
     current_line = ZenValue[int].init
 
   self.init_shared
-  self.flags += Visible
+  self.global_flags += Visible
 
 proc find_root*(self: Unit, all_clones = false): Unit =
   result = self
@@ -40,7 +41,7 @@ proc find_root*(self: Unit, all_clones = false): Unit =
     result = parent
 
     if (all_clones and not ?parent.clone_of) or
-        (not all_clones and Global in parent.flags):
+        (not all_clones and Global in parent.global_flags):
 
       parent = nil
     else:

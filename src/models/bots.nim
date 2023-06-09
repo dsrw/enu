@@ -56,7 +56,7 @@ method reset*(self: Bot) =
   self.speed = 1
   self.color.value = self.start_color
   self.animation.touch "auto"
-  self.flags += Visible
+  self.global_flags += Visible
   self.velocity.value = vec3()
   self.units.clear()
 
@@ -76,9 +76,9 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
 
   self.init_unit
 
-  if global: self.flags += Global
+  if global: self.global_flags += Global
 
-  self.flags.watch:
+  self.local_flags.watch:
     debug "self flag changed", zid, changes = change.changes,
         item = change.item, unit = self.id, zen_id = self.flags.id
 
@@ -86,18 +86,18 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
       state.push_flag ReticleVisible
       if state.tool.value in {CodeMode, PlaceBot}:
         let root = self.find_root(true)
-        root.walk_tree proc(unit: Unit) = unit.flags += Highlight
+        root.walk_tree proc(unit: Unit) = unit.local_flags += Highlight
     elif Hover.removed:
       let root = self.find_root(true)
-      root.walk_tree proc(unit: Unit) = unit.flags -= Highlight
+      root.walk_tree proc(unit: Unit) = unit.local_flags -= Highlight
       state.pop_flag ReticleVisible
 
-  self.flags.untrack_on_destroy:
+  self.global_flags.untrack_on_destroy:
     state.flags.changes:
       debug "state flag changed", zid, changes = change.changes,
           item = change.item, unit = self.id, zen_id = self.flags.id
 
-      if Hover in self.flags:
+      if Hover in self.local_flags:
         if PrimaryDown.added and state.tool.value == CodeMode:
           let root = self.find_root(true)
           state.open_unit.value = root

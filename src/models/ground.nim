@@ -22,15 +22,18 @@ proc fire(self: Ground, append = false) {.gcsafe.} =
     state.units += Bot.init(transform = t)
 
 proc init*(_: type Ground, node: Spatial): Ground =
-  let self = Ground(flags: ZenSet[ModelFlags].init)
+  let self = Ground(
+    global_flags: ZenSet[GlobalModelFlags].init,
+    local_flags: ZenSet[LocalModelFlags].init(flags = {SyncLocal}),
+  )
 
   state.flags.changes:
-    if PrimaryDown.added and Hover in self.flags:
+    if PrimaryDown.added and Hover in self.local_flags:
       self.fire(append = false)
     if PrimaryDown.removed or SecondaryDown.removed:
       state.draw_unit_id = ""
 
-  self.flags.changes:
+  self.local_flags.changes:
     if PrimaryDown in state.flags and state.draw_unit_id == "ground":
       if change.item == TargetMoved:
         self.fire(append = true)

@@ -25,10 +25,10 @@ proc init*(_: type Sign,
   self.init_unit
 
   state.flags.watch:
-    if PrimaryDown.added and Hover in self.flags:
+    if PrimaryDown.added and Hover in self.local_flags:
       state.open_sign.value = self
 
-  self.flags.watch:
+  self.local_flags.watch:
     if Hover.added:
       self.glow.value = 1
       state.push_flag ReticleVisible

@@ -84,12 +84,12 @@ gdobj BuildNode of VoxelTerrain:
       self.active_chunks.del(chunk_id)
 
   proc set_visibility =
-    if Visible in self.model.flags:
+    if Visible in self.model.global_flags:
       self.visible = true
 
       for material in self.model.shared.value.materials:
         material.shader = shader
-    elif Visible notin self.model.flags and God in state.flags:
+    elif Visible notin self.model.global_flags and God in state.flags:
       self.visible = true
 
       for material in self.model.shared.value.materials:
@@ -116,15 +116,17 @@ gdobj BuildNode of VoxelTerrain:
         elif removed:
           self.active_chunks[id] = empty_zid
 
-    self.model.flags.watch:
+    self.model.global_flags.watch:
+      if (change.item == Visible and ScriptInitializing notin
+          self.model.global_flags) or ScriptInitializing.removed:
+
+        self.set_visibility
+
+    self.model.local_flags.watch:
       if Highlight.added:
         self.set_glow highlight_glow
       elif Highlight.removed:
         self.set_glow self.model.glow.value
-      elif (change.item == Visible and ScriptInitializing notin
-          self.model.flags) or ScriptInitializing.removed:
-
-        self.set_visibility
 
     state.flags.watch:
       if change.item == God:

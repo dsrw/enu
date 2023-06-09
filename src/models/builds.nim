@@ -323,7 +323,7 @@ method reset*(self: Build) =
   self.color.value = self.start_color
   self.speed = 1
   self.scale.value = 1
-  self.flags += Visible
+  self.global_flags += Visible
   self.reset_state()
 
   let chunks = self.chunks.value
@@ -375,19 +375,19 @@ proc init*(_: type Build,
 
   self.init_unit
 
-  if global: self.flags += Global
+  if global: self.global_flags += Global
   self.reset()
   result = self
 
 method main_thread_init*(self: Build) =
-  self.flags.watch:
+  self.local_flags.watch:
     if Hover.added and state.tool.value == CodeMode:
       if Playing notin state.flags:
         let root = self.find_root(true)
-        root.walk_tree proc(unit: Unit) = unit.flags += Highlight
+        root.walk_tree proc(unit: Unit) = unit.local_flags += Highlight
     elif Hover.removed:
       let root = self.find_root(true)
-      root.walk_tree proc(unit: Unit) = unit.flags -= Highlight
+      root.walk_tree proc(unit: Unit) = unit.local_flags -= Highlight
     if TargetMoved.touched:
       let length = (self.target_point * self.target_normal -
           last_point * self.target_normal).length
@@ -410,7 +410,7 @@ method main_thread_init*(self: Build) =
         state.pop_flag BlockTargetVisible
 
   state.flags.watch:
-    if Hover in self.flags:
+    if Hover in self.local_flags:
       if PrimaryDown.added:
         state.draw_unit_id = self.id
         self.fire
