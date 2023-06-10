@@ -11,6 +11,8 @@ jobs:
           fetch-depth: 0
       - name: Install Nim and build deps
         run: choco install nim yasm innosetup rcedit zip
+      - name: import chocolatey
+        run: Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
       - name: Refresh path
         run: refreshenv
       - name: Install scons
