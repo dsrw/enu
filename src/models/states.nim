@@ -3,7 +3,7 @@ import core, models / [colors]
 
 log_scope:
   topics = "state"
-  ctx = Zen.thread_ctx.name
+  ctx = Zen.thread_ctx.id
 
 # only one flag from the group is active at a time
 const groups = @[

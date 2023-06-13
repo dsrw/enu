@@ -138,7 +138,7 @@ world: {state.config.value.world}
 
     var chan_size = initial_user_config.channel_size || 5000
 
-    Zen.thread_ctx = ZenContext.init(name = \"main-{generate_id()}",
+    Zen.thread_ctx = ZenContext.init(id = \"main-{generate_id()}",
         chan_size = chan_size, buffer = false)
 
     state = GameState.init

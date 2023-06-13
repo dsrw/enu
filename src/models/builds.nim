@@ -422,15 +422,14 @@ method main_thread_init*(self: Build) =
       last_point = vec3()
 
 method on_collision*(self: Build, partner: Model, normal: Vector3) =
-  self.collisions.add (partner, normal)
+  self.collisions.add (partner.id, normal)
   if ?self.script_ctx:
     self.script_ctx.timer = get_mono_time()
 
-method off_collision*(self: Build, partner: Model) =
-  self.collisions = collect:
-    for collision in self.collisions:
-      if collision.model != partner:
-        collision
+method off_collision*(self: Unit, partner: Model) =
+  for collision in self.collisions.value.dup:
+    if collision.id == partner.id:
+      self.collisions -= collision
 
   if ?self.script_ctx:
     self.script_ctx.timer = get_mono_time()

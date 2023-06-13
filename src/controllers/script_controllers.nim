@@ -180,7 +180,7 @@ proc sleep_impl(self: Worker, ctx: ScriptCtx, seconds: float) =
 
 proc hit(unit_a: Unit, unit_b: Unit): Vector3 =
   for collision in unit_a.collisions:
-    if collision.model == unit_b:
+    if collision.id == unit_b.id:
       return collision.normal.snapped(vec3(1, 1, 1))
 
 proc echo_console(msg: string) =
@@ -695,7 +695,7 @@ proc change_code(self: Worker, unit: Unit, code: Code) =
 proc watch_code(self: Worker, unit: Unit) =
   unit.code.changes:
     if added or touched:
-      if change.item.owner == "" or change.item.owner == Zen.thread_ctx.name:
+      if change.item.owner == "" or change.item.owner == Zen.thread_ctx.id:
         self.change_code(unit, change.item)
 
   if unit.script_ctx.is_nil:
@@ -738,7 +738,7 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
   worker_lock.acquire
 
   var listen_address = main_thread_state.config.value.listen_address
-  let worker_ctx = ZenContext.init(name = \"work-{generate_id()}",
+  let worker_ctx = ZenContext.init(id = \"work-{generate_id()}",
       chan_size = 1000, buffer = true,
       listen_address = listen_address)
 
@@ -750,8 +750,8 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
   state = GameState.init_from(main_thread_state)
   state.config = ZenValue[Config](Zen.thread_ctx["config"])
   state.console = ConsoleModel.init_from(main_thread_state.console)
-  state.worker_ctx_name = worker_ctx.name
-  main_thread_state.worker_ctx_name = worker_ctx.name
+  state.worker_ctx_name = worker_ctx.id
+  main_thread_state.worker_ctx_name = worker_ctx.id
 
   state.player.value = Player.init
   state.player.value.color.value = state.config.value.player_color
@@ -934,7 +934,7 @@ proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
   var result = controller
 
   result.bind_procs "base_bridge",
-    register_active, echo_console, new_instance, exec_instance,  hit, exit,
+    register_active, echo_console, new_instance, exec_instance, hit, exit,
     global, `global=`, position, local_position, rotation, `rotation=`, id,
     glow, `glow=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`,
     active_unit, color, `color=`, seen, start_position, wake, frame_count,

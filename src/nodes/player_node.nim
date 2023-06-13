@@ -17,7 +17,7 @@ proc handle_collisions(self: Player, collisions:
     let normal = collision.normal
     let model = collider.model
     if not model.is_nil:
-      if model notin self.colliders and model notin colliders:
+      if not (model in self.colliders or model in colliders) and model.id != "":
         model.on_collision(self, normal)
       colliders.incl model
   for model in self.colliders - colliders:

@@ -114,10 +114,9 @@ method clone*(self: Bot, clone_to: Unit, id: string): Unit =
       parent = clone_to)
 
 method on_collision*(self: Unit, partner: Model, normal: Vector3) =
-  self.collisions.add (partner, normal)
+  self.collisions.add (partner.id, normal)
 
 method off_collision*(self: Unit, partner: Model) =
-  self.collisions = collect:
-    for collision in self.collisions:
-      if collision.model != partner:
-        collision
+  for collision in self.collisions.value.dup:
+    if collision.id == partner.id:
+      self.collisions -= collision

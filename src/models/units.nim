@@ -29,6 +29,7 @@ proc init_unit*[T: Unit](self: T) =
     color = Zen.init(self.start_color)
     errors = ScriptErrors.init
     current_line = ZenValue[int].init
+    collisions = ZenSeq[(string, Vector3)].init
 
   self.init_shared
   self.global_flags += Visible

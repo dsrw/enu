@@ -63,6 +63,7 @@ type
     worker_ctx_name*: string
 
   Model* = ref object of RootObj
+    id*: string
     target_point*: Vector3
     target_normal*: Vector3
     local_flags*: ZenSet[LocalModelFlags]
@@ -79,7 +80,6 @@ type
   ScriptErrors* = ZenSeq[tuple[msg: string, info: TLineInfo, location: string]]
 
   Unit* = ref object of Model
-    id*: string
     parent*: Unit
     units*: ZenSeq[Unit]
     start_transform*: Transform
@@ -92,7 +92,7 @@ type
     velocity*: ZenValue[Vector3]
     transform*: ZenValue[Transform]
     clone_of*: Unit
-    collisions*: seq[tuple[model: Model, normal: Vector3]]
+    collisions*: ZenSeq[tuple[id: string, normal: Vector3]]
     shared*: ZenValue[Shared]
     start_color*: Color
     color*: ZenValue[Color]
