@@ -27,7 +27,7 @@ bin = @["enu" & lib_ext]
 
 requires "nim >= 1.6.4",
   "https://github.com/dsrw/Nim#a6d502f",
-  "https://github.com/dsrw/godot-nim#82d40be",
+  "https://github.com/dsrw/godot-nim#892c482",
   "https://github.com/dsrw/model_citizen 0.7.4",
   "https://github.com/dsrw/nanoid.nim 0.2.1",
   "cligen 1.6.0",
