@@ -24,7 +24,7 @@ proc init*(_: type Sign,
   )
   self.init_unit
 
-  state.flags.watch:
+  state.local_flags.watch:
     if PrimaryDown.added and Hover in self.local_flags:
       state.open_sign.value = self
 

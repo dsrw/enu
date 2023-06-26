@@ -27,14 +27,14 @@ proc init*(_: type Ground, node: Spatial): Ground =
     local_flags: ZenSet[LocalModelFlags].init(flags = {SyncLocal}),
   )
 
-  state.flags.changes:
+  state.local_flags.changes:
     if PrimaryDown.added and Hover in self.local_flags:
       self.fire(append = false)
     if PrimaryDown.removed or SecondaryDown.removed:
       state.draw_unit_id = ""
 
   self.local_flags.changes:
-    if PrimaryDown in state.flags and state.draw_unit_id == "ground":
+    if PrimaryDown in state.local_flags and state.draw_unit_id == "ground":
       if change.item == TargetMoved:
         self.fire(append = true)
 

@@ -13,11 +13,15 @@ export Interpreter
 
 type
 
-  StateFlags* = enum
+  LocalStateFlags* = enum
     CommandMode, EditorVisible, ConsoleVisible,
     BlockTargetVisible, ReticleVisible, DocsVisible, MouseCaptured,
     PrimaryDown, SecondaryDown, EditorFocused, ConsoleFocused, DocsFocused,
-    Playing, Flying, God
+    Playing, Flying, God,
+    LoadingScript
+
+  GlobalStateFlags* = enum
+    LoadingWorld
 
   Tools* = enum
     CodeMode, BlueBlock, RedBlock, GreenBlock, BlackBlock, WhiteBlock,
@@ -36,8 +40,9 @@ type
     log*: ZenSeq[string]
 
   GameState* = ref object
-    flags*: ZenSet[StateFlags]
-    wants*: ZenSeq[StateFlags]
+    local_flags*: ZenSet[LocalStateFlags]
+    wants*: ZenSeq[LocalStateFlags]
+    global_flags*: ZenSet[GlobalStateFlags]
     config*: ZenValue[Config]
     open_unit*: ZenValue[Unit]
     dirty_units*: HashSet[Unit]
@@ -55,7 +60,6 @@ type
     console*: ConsoleModel
     paused*: bool
     frame_count*: int
-    reloading*: bool
     skip_block_paint*: bool
     open_sign*: ZenValue[Sign]
     queued_action*: string

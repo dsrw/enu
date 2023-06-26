@@ -92,8 +92,8 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
       root.walk_tree proc(unit: Unit) = unit.local_flags -= Highlight
       state.pop_flag ReticleVisible
 
-  self.global_flags.untrack_on_destroy:
-    state.flags.changes:
+  self.local_flags.untrack_on_destroy:
+    state.local_flags.changes:
       debug "state flag changed", zid, changes = change.changes,
           item = change.item, unit = self.id, zen_id = self.flags.id
 

@@ -14,7 +14,7 @@ const groups = @[
 
 proc resolve_flags(self: GameState) =
   debug "resolving flags", flags = self.flags.value, wants = self.wants.value
-  var result: set[StateFlags]
+  var result: set[LocalStateFlags]
   for flag in self.wants:
     for group in groups:
       if flag in group:
@@ -38,13 +38,18 @@ proc resolve_flags(self: GameState) =
     if EditorVisible in result or DocsVisible in result:
       result.excl(MouseCaptured)
 
+  if Playing in result:
+    result.excl(BlockTargetVisible)
+    result.excl(EditorVisible)
+    result.incl(ReticleVisible)
+
   if MouseCaptured notin result:
     result.excl(ReticleVisible)
 
   debug "resolved flags", flags = result
-  self.flags.value = result
+  self.local_flags.value = result
 
-proc replace_flags*(self: GameState, flags: varargs[StateFlags]) =
+proc replace_flags*(self: GameState, flags: varargs[LocalStateFlags]) =
   for flag in flags:
     for group in groups:
       if flag in group:
@@ -54,37 +59,37 @@ proc replace_flags*(self: GameState, flags: varargs[StateFlags]) =
           self.wants += flag
   self.resolve_flags
 
-proc replace_flag*(self: GameState, flag: StateFlags) =
+proc replace_flag*(self: GameState, flag: LocalStateFlags) =
   self.replace_flags flag
 
-proc push_flags*(self: GameState, flags: varargs[StateFlags]) =
+proc push_flags*(self: GameState, flags: varargs[LocalStateFlags]) =
   for flag in flags:
     if flag notin self.wants:
       self.wants += flag
   self.resolve_flags
 
-proc push_flag*(self: GameState, flag: StateFlags) =
+proc push_flag*(self: GameState, flag: LocalStateFlags) =
   self.push_flags flag
 
-proc pop_flags*(self: GameState, flags: varargs[StateFlags]) =
+proc pop_flags*(self: GameState, flags: varargs[LocalStateFlags]) =
   for flag in flags:
     self.wants -= flag
 
   self.resolve_flags
 
-proc pop_flag*(self: GameState, flag: StateFlags) =
+proc pop_flag*(self: GameState, flag: LocalStateFlags) =
   self.pop_flags flag
 
-proc set_flag*(self: GameState, flag: StateFlags, value: bool) =
+proc set_flag*(self: GameState, flag: LocalStateFlags, value: bool) =
   if value:
     self.push_flag flag
   else:
     self.pop_flag flag
 
-proc `+=`*(self: ZenSet[StateFlags], flag: StateFlags) {.error:
+proc `+=`*(self: ZenSet[LocalStateFlags], flag: LocalStateFlags) {.error:
   "Use `push_flag`, `pop_flag` and `replace_flag`".}
 
-proc `-=`*(self: ZenSet[StateFlags], flag: StateFlags) {.error:
+proc `-=`*(self: ZenSet[LocalStateFlags], flag: LocalStateFlags) {.error:
   "Use `push_flag`, `pop_flag` and `replace_flag`".}
 
 proc selected_color*(self: GameState): Color =
@@ -111,7 +116,8 @@ proc init*(_: type GameState): GameState =
   let flags = {TrackChildren, SyncLocal}
   let self = GameState(
     player: ZenValue[Player].init(flags = flags),
-    flags: Zen.init(set[StateFlags], flags = flags),
+    local_flags: Zen.init(set[LocalStateFlags], flags = flags),
+    global_flags: Zen.init(set[GlobalStateFlags], id = "state_global_flags"),
     units: Zen.init(seq[Unit], id = "root_units"),
     open_unit: ZenValue[Unit].init(flags = flags),
     config: ZenValue[Config].init(id = "config", flags = flags),
@@ -119,7 +125,7 @@ proc init*(_: type GameState): GameState =
     gravity: -80.0,
     console: ConsoleModel(log: Zen.init(seq[string], flags = flags)),
     open_sign: ZenValue[Sign].init(flags = flags),
-    wants: ZenSeq[StateFlags].init(flags = flags)
+    wants: ZenSeq[LocalStateFlags].init(flags = flags)
   )
   result = self
   self.open_unit.changes:
@@ -128,7 +134,7 @@ proc init*(_: type GameState): GameState =
     elif added:
       self.pop_flag EditorVisible
 
-  self.flags.changes:
+  self.local_flags.changes:
     if EditorVisible.added:
       self.push_flag EditorFocused
     elif EditorVisible.removed:
@@ -150,35 +156,35 @@ when is_main_module:
 
   state.push_flag ReticleVisible
   check:
-    ReticleVisible notin state.flags
-    BlockTargetVisible notin state.flags
-    CommandMode notin state.flags
-    MouseCaptured notin state.flags
+    ReticleVisible notin state.local_flags
+    BlockTargetVisible notin state.local_flags
+    CommandMode notin state.local_flags
+    MouseCaptured notin state.local_flags
 
   state.push_flag MouseCaptured
   check:
-    ReticleVisible in state.flags
-    MouseCaptured in state.flags
-    BlockTargetVisible notin state.flags
+    ReticleVisible in state.local_flags
+    MouseCaptured in state.local_flags
+    BlockTargetVisible notin state.local_flags
 
   state.replace_flag BlockTargetVisible
   check:
-    MouseCaptured in state.flags
-    BlockTargetVisible in state.flags
-    ReticleVisible notin state.flags
+    MouseCaptured in state.local_flags
+    BlockTargetVisible in state.local_flags
+    ReticleVisible notin state.local_flags
 
   state.pop_flag MouseCaptured
   state.push_flag ReticleVisible
   check:
-    ReticleVisible notin state.flags
-    BlockTargetVisible notin state.flags
-    CommandMode notin state.flags
-    MouseCaptured notin state.flags
+    ReticleVisible notin state.local_flags
+    BlockTargetVisible notin state.local_flags
+    CommandMode notin state.local_flags
+    MouseCaptured notin state.local_flags
 
-  var added {.threadvar.}: set[StateFlags]
-  var removed {.threadvar.}: set[StateFlags]
+  var added {.threadvar.}: set[LocalStateFlags]
+  var removed {.threadvar.}: set[LocalStateFlags]
 
-  state.flags.track proc(changes: auto) {.gcsafe.} =
+  state.local_flags.track proc(changes: auto) {.gcsafe.} =
     added = {}
     removed = {}
     for change in changes:
@@ -187,39 +193,39 @@ when is_main_module:
 
   state.push_flag CommandMode
   check:
-    ReticleVisible in state.flags
-    CommandMode in state.flags
-    MouseCaptured in state.flags
-    BlockTargetVisible notin state.flags
+    ReticleVisible in state.local_flags
+    CommandMode in state.local_flags
+    MouseCaptured in state.local_flags
+    BlockTargetVisible notin state.local_flags
 
   state.pop_flag CommandMode
 
   state.push_flag MouseCaptured
-  check MouseCaptured in state.flags
+  check MouseCaptured in state.local_flags
 
   state.open_unit.value = Unit()
-  check MouseCaptured notin state.flags
+  check MouseCaptured notin state.local_flags
 
   state.push_flag CommandMode
-  check MouseCaptured in state.flags
+  check MouseCaptured in state.local_flags
 
   state.pop_flag MouseCaptured
-  check MouseCaptured in state.flags
+  check MouseCaptured in state.local_flags
 
   state.open_unit.value = nil
-  check MouseCaptured in state.flags
+  check MouseCaptured in state.local_flags
 
   state.pop_flag CommandMode
-  check MouseCaptured notin state.flags
+  check MouseCaptured notin state.local_flags
 
   state.pop_flag EditorVisible
-  check MouseCaptured notin state.flags
+  check MouseCaptured notin state.local_flags
 
   state.push_flag MouseCaptured
-  check MouseCaptured in state.flags
+  check MouseCaptured in state.local_flags
 
   state.push_flag DocsVisible
-  check MouseCaptured notin state.flags
+  check MouseCaptured notin state.local_flags
 
   state.push_flag CommandMode
-  check MouseCaptured in state.flags
+  check MouseCaptured in state.local_flags

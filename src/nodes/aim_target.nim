@@ -9,9 +9,9 @@ gdobj AimTarget of Sprite3D:
   method ready*() =
     self.set_as_top_level(true)
     self.bind_signals "collider_exiting"
-    self.visible = BlockTargetVisible in state.flags
+    self.visible = BlockTargetVisible in state.local_flags
 
-    state.flags.watch(state.player.value):
+    state.local_flags.watch(state.player.value):
       if BlockTargetVisible.added:
         self.visible = true
       elif BlockTargetVisible.removed:
@@ -39,7 +39,7 @@ gdobj AimTarget of Sprite3D:
           self.target_model.global_flags.destroyed:
 
         self.target_model = nil
-      if ?self.target_model.local_flags and
+      elif ?self.target_model.local_flags and
           self.target_model.local_flags.destroyed:
 
         self.target_model = nil
@@ -50,7 +50,7 @@ gdobj AimTarget of Sprite3D:
         state.pop_flag BlockTargetVisible
       self.target_model = unit
       if not (unit == nil or (unit of Sign and not Sign(unit).zoomable.value) or
-        (God notin state.flags and (unit of Bot or unit of Build) and
+        (God notin state.local_flags and (unit of Bot or unit of Build) and
         Lock in Unit(unit).find_root.global_flags)):
 
         state.push_flag BlockTargetVisible

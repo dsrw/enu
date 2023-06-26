@@ -187,13 +187,16 @@ proc load_units(parent: Unit) =
       unit.global_flags -= ScriptInitializing
 
 proc unload_world*(worker: Worker) =
-  state.reloading = true
+  state.global_flags += LoadingWorld
+  state.push_flag LoadingScript
   state.pop_flag Playing
   state.units.clear_all
-  state.reloading = false
+  state.pop_flag LoadingScript
+  state.global_flags -= LoadingWorld
 
 proc load_world*(worker: Worker, world_dir: string) =
-  state.reloading = true
+  state.global_flags += LoadingWorld
+  state.push_flag LoadingScript
   var config = state.config.value
 
   config.world_dir = world_dir
@@ -224,4 +227,5 @@ proc load_world*(worker: Worker, world_dir: string) =
   worker.retry_failures = false
   dont_join = false
   state.dirty_units.clear
-  state.reloading = false
+  state.pop_flag LoadingScript
+  state.global_flags -= LoadingWorld

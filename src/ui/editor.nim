@@ -44,8 +44,8 @@ gdobj Editor of TextEdit:
         self.get_tree.set_input_as_handled()
 
   method unhandled_input*(event: InputEvent) =
-    if EditorFocused in state.flags and event.is_action_pressed("ui_cancel"):
-      if not (event of InputEventJoypadButton) or CommandMode notin state.flags:
+    if EditorFocused in state.local_flags and event.is_action_pressed("ui_cancel"):
+      if not (event of InputEventJoypadButton) or CommandMode notin state.local_flags:
         state.open_unit.value.code.value = Code.init(self.text)
         state.open_unit.value = nil
         self.get_tree().set_input_as_handled()
@@ -80,7 +80,7 @@ gdobj Editor of TextEdit:
     var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
     self.og_bg_color = stylebox.bg_color
 
-    state.flags.changes:
+    state.local_flags.changes:
       if ConsoleVisible.added:
         self.highlight_errors()
       elif ConsoleVisible.removed:
@@ -106,7 +106,7 @@ gdobj Editor of TextEdit:
           self.visible = true
           self.text = state.open_unit.value.code.value.nim
 
-          if CommandMode in state.flags:
+          if CommandMode in state.local_flags:
             self.modulate = dimmed_alpha
           else:
             self.modulate = solid_alpha
@@ -119,18 +119,18 @@ gdobj Editor of TextEdit:
         if ?change.item:
           Zen.thread_ctx.untrack(line_zid)
 
-    state.flags.changes:
+    state.local_flags.changes:
       if EditorFocused.added:
         self.grab_focus
       if CommandMode.added:
-        if EditorVisible in state.flags:
+        if EditorVisible in state.local_flags:
           state.open_unit.value.code.value = Code.init(self.text)
 
           self.modulate = dimmed_alpha
           self.release_focus
 
       elif CommandMode.removed:
-        if EditorVisible in state.flags:
+        if EditorVisible in state.local_flags:
           self.modulate = solid_alpha
           self.grab_focus
 

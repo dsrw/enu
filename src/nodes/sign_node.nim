@@ -14,7 +14,7 @@ gdobj SignNode of Spatial:
     if Visible in self.model.global_flags:
       self.visible = true
       self.material.params_blend_mode = spatial_material.BLEND_MODE_MIX
-    elif Visible notin self.model.global_flags and God in state.flags:
+    elif Visible notin self.model.global_flags and God in state.local_flags:
       self.visible = true
       self.material.params_blend_mode = spatial_material.BLEND_MODE_ADD
     else:
@@ -91,7 +91,7 @@ gdobj SignNode of Spatial:
 
         self.set_visibility
 
-    state.flags.watch:
+    state.local_flags.watch:
       if God.removed:
         self.set_visibility
 

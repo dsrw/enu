@@ -231,7 +231,7 @@ world: {state.config.value.world}
     self.stats = self.find_node("stats").as(Label)
     self.stats.visible = state.config.value.show_stats
 
-    state.flags.changes:
+    state.local_flags.changes:
       if MouseCaptured.added:
         let center = self.get_viewport().get_visible_rect().size * 0.5
         self.saved_mouse_position = self.get_viewport().get_mouse_position()
@@ -275,7 +275,7 @@ world: {state.config.value.world}
       state.config.value: world_dir = current_world
 
   method unhandled_input*(event: InputEvent) =
-    if EditorVisible in state.flags or ConsoleVisible in state.flags:
+    if EditorVisible in state.local_flags or ConsoleVisible in state.local_flags:
       if event.is_action_pressed("zoom_in"):
         self.set_font_size state.config.value.font_size + 1
       elif event.is_action_pressed("zoom_out"):
@@ -289,7 +289,7 @@ world: {state.config.value.world}
         # NOTE: alt+enter isn't being picked up on windows if the editor is
         # open. Needs investigation.
     if event.is_action_pressed("toggle_fullscreen") or (host_os == "windows" and
-        CommandMode in state.flags and EditorVisible in state.flags and
+        CommandMode in state.local_flags and EditorVisible in state.local_flags and
         event of InputEventKey and
         event.as(InputEventKey).scancode == KEY_ENTER):
 
@@ -311,14 +311,14 @@ world: {state.config.value.world}
     elif event.is_action_pressed("clear_console"):
       state.console.log.clear()
     elif event.is_action_pressed("toggle_console"):
-      state.set_flag ConsoleVisible, ConsoleVisible notin state.flags
+      state.set_flag ConsoleVisible, ConsoleVisible notin state.local_flags
     elif event.is_action_pressed("quit"):
       if host_os != "macosx":
         save_world(state.config.value.world_dir)
         self.get_tree().quit()
-    elif EditorVisible notin state.flags:
+    elif EditorVisible notin state.local_flags:
       if event.is_action_pressed("toggle_mouse_captured"):
-        state.set_flag MouseCaptured, MouseCaptured notin state.flags
+        state.set_flag MouseCaptured, MouseCaptured notin state.local_flags
         self.get_tree().set_input_as_handled()
 
     if event.is_action_pressed("toggle_code_mode"):

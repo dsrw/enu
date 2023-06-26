@@ -217,7 +217,7 @@ proc fire(self: Build) =
     skip_point = self.target_point + self.target_normal
     last_point = self.target_point
     self.draw(point, (Manual, state.selected_color))
-  elif state.tool.value == PlaceBot and EditorVisible in state.flags and
+  elif state.tool.value == PlaceBot and EditorVisible in state.local_flags and
     state.bot_at(global_point).is_nil:
 
     let transform = Transform.init(origin = global_point)
@@ -382,7 +382,7 @@ proc init*(_: type Build,
 method main_thread_init*(self: Build) =
   self.local_flags.watch:
     if Hover.added and state.tool.value == CodeMode:
-      if Playing notin state.flags:
+      if Playing notin state.local_flags:
         let root = self.find_root(true)
         root.walk_tree proc(unit: Unit) = unit.local_flags += Highlight
     elif Hover.removed:
@@ -398,9 +398,9 @@ method main_thread_init*(self: Build) =
           self.target_normal == draw_normal and
           length <= 5 and self.target_point != skip_point:
 
-        if SecondaryDown in state.flags:
+        if SecondaryDown in state.local_flags:
           self.remove
-        elif PrimaryDown in state.flags:
+        elif PrimaryDown in state.local_flags:
           self.fire
 
     if change.item in {TargetMoved, Hover} and state.tool.value == PlaceBot:
@@ -409,7 +409,7 @@ method main_thread_init*(self: Build) =
       else:
         state.pop_flag BlockTargetVisible
 
-  state.flags.watch:
+  state.local_flags.watch:
     if Hover in self.local_flags:
       if PrimaryDown.added:
         state.draw_unit_id = self.id
@@ -427,9 +427,10 @@ method on_collision*(self: Build, partner: Model, normal: Vector3) =
     self.script_ctx.timer = get_mono_time()
 
 method off_collision*(self: Unit, partner: Model) =
-  for collision in self.collisions.value.dup:
-    if collision.id == partner.id:
-      self.collisions -= collision
+  if self.collisions.valid:
+    for collision in self.collisions.value.dup:
+      if collision.id == partner.id:
+        self.collisions -= collision
 
   if ?self.script_ctx:
     self.script_ctx.timer = get_mono_time()

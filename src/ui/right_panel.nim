@@ -31,7 +31,7 @@ gdobj RightPanel of MarginContainer:
         change.item.markdown.untrack(self.zid)
         state.pop_flags DocsFocused, DocsVisible
 
-    state.flags.changes:
+    state.local_flags.changes:
       if DocsVisible.added:
         self.label.visible = true
       elif DocsVisible.removed:
@@ -44,8 +44,8 @@ gdobj RightPanel of MarginContainer:
         self.modulate = solid_alpha
 
   method unhandled_input*(event: InputEvent) =
-    if DocsFocused in state.flags and event.is_action_pressed("ui_cancel"):
-      if not (event of InputEventJoypadButton) or CommandMode notin state.flags:
+    if DocsFocused in state.local_flags and event.is_action_pressed("ui_cancel"):
+      if not (event of InputEventJoypadButton) or CommandMode notin state.local_flags:
         state.open_sign.value = nil
         self.get_tree().set_input_as_handled()
 

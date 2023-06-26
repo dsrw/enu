@@ -9,8 +9,8 @@ gdobj Console of RichTextLabel:
     default_mouse_filter: int64
 
   proc init*() =
-    state.flags.changes:
-      self.visible = ConsoleVisible in state.flags
+    state.local_flags.changes:
+      self.visible = ConsoleVisible in state.local_flags
 
     state.console.log.changes:
       if added:
@@ -23,7 +23,7 @@ gdobj Console of RichTextLabel:
     self.default_mouse_filter = self.mouse_filter
 
   method ready*() =
-    state.flags.changes:
+    state.local_flags.changes:
       if MouseCaptured.added:
         self.mouse_filter = MOUSE_FILTER_IGNORE
       elif MouseCaptured.removed:

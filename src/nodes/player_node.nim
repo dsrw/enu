@@ -60,7 +60,7 @@ gdobj PlayerNode of KinematicBody:
     boosted = false
 
   proc flying(): bool =
-    Flying in state.flags
+    Flying in state.local_flags
 
   proc flying(value: bool) =
     state.set_flag Flying, value
@@ -117,9 +117,13 @@ gdobj PlayerNode of KinematicBody:
 
     self.position_start = self.camera_rig.translation
     state.nodes.player = self
-    state.flags.watch:
+    state.local_flags.watch:
       if MouseCaptured.removed:
         self.skip_next_mouse_move = true
+
+    state.global_flags.watch:
+      if LoadingWorld.added:
+        self.model.colliders.clear
 
     self.model.transform.watch:
       if added:
@@ -135,7 +139,7 @@ gdobj PlayerNode of KinematicBody:
         self.velocity = change.item
 
   proc current_raycast*: RayCast =
-    if MouseCaptured in state.flags:
+    if MouseCaptured in state.local_flags:
       self.aim_ray
     else:
       self.world_ray
@@ -143,7 +147,7 @@ gdobj PlayerNode of KinematicBody:
   method process*(delta: float) =
     self.model.velocity.pause self.velocity_zid:
       self.model.velocity.value = self.velocity
-    if EditorVisible notin state.flags or CommandMode in state.flags:
+    if EditorVisible notin state.local_flags or CommandMode in state.local_flags:
       var transform = self.camera_rig.global_transform
       transform.origin = self.global_transform.origin + self.position_start
 
@@ -163,7 +167,7 @@ gdobj PlayerNode of KinematicBody:
         self.model.rotation.value = rad_to_deg r.y
 
     let ray_length = if state.tool.value == CodeMode: 200.0 else: 100.0
-    if MouseCaptured notin state.flags:
+    if MouseCaptured notin state.local_flags:
       let
         mouse_pos = self.get_viewport().get_mouse_position() *
           float state.scale_factor
@@ -179,7 +183,7 @@ gdobj PlayerNode of KinematicBody:
       self.aim_target.update(self.aim_ray)
 
   method physics_process*(delta: float) =
-    if CommandMode in state.flags and self.command_timer > 0:
+    if CommandMode in state.local_flags and self.command_timer > 0:
       self.command_timer -= delta
       if self.command_timer <= 0:
         state.pop_flag CommandMode
@@ -187,7 +191,7 @@ gdobj PlayerNode of KinematicBody:
     const forward_rotation = deg_to_rad(-90.0)
     let
       process_input =
-        EditorVisible notin state.flags or CommandMode in state.flags
+        EditorVisible notin state.local_flags or CommandMode in state.local_flags
       input_direction =
           if process_input: self.get_input_direction() else: vec3()
 
@@ -254,18 +258,18 @@ gdobj PlayerNode of KinematicBody:
       if event.axis == JOY_ANALOG_L2 or event.axis == JOY_ANALOG_R2:
         return
 
-    if event of InputEventMouseMotion and MouseCaptured in state.flags:
+    if event of InputEventMouseMotion and MouseCaptured in state.local_flags:
       if not self.skip_next_mouse_move:
         self.input_relative += event.as(InputEventMouseMotion).relative()
       else:
         self.skip_next_mouse_move = false
-    if EditorVisible in state.flags and not self.skip_release and
+    if EditorVisible in state.local_flags and not self.skip_release and
       (event of InputEventJoypadButton or event of InputEventJoypadMotion):
 
       let active_input = self.has_active_input(event.device.int)
-      if CommandMode in state.flags and not active_input:
+      if CommandMode in state.local_flags and not active_input:
         self.command_timer = input_command_timeout
-      elif CommandMode in state.flags and active_input:
+      elif CommandMode in state.local_flags and active_input:
         self.command_timer = 0.0
       elif active_input:
         self.command_timer = 0.0
@@ -279,7 +283,7 @@ gdobj PlayerNode of KinematicBody:
 
       if toggle:
         self.jump_time = nil_time
-        if Playing in state.flags:
+        if Playing in state.local_flags:
           self.flying(false)
         else:
           self.flying(not self.flying)
@@ -320,9 +324,9 @@ gdobj PlayerNode of KinematicBody:
         state.update_action_index(-1)
 
     if event.is_action_pressed("fire"):
-      if EditorVisible in state.flags:
+      if EditorVisible in state.local_flags:
         self.skip_release = true
-      if Playing notin state.flags:
+      if Playing notin state.local_flags:
         state.push_flag PrimaryDown
     elif event.is_action_released("fire"):
       self.skip_release = false

@@ -318,7 +318,7 @@ proc `rotation=`(self: Unit, degrees: float) =
 
 proc seen(self: Worker, target: Unit, distance: float): bool =
   return false
-  if target == state.player.value and Flying in state.flags:
+  if target == state.player.value and Flying in state.local_flags:
     return false
   let unit = self.active_unit
   if unit of Build:
@@ -433,19 +433,19 @@ proc restore(self: Build, name: string) =
 # Player binding
 
 proc playing(self: Unit): bool =
-  Playing in state.flags
+  Playing in state.local_flags
 
 proc `playing=`*(self: Unit, value: bool) =
   state.set_flag Playing, value
 
 proc god(self: Unit): bool =
-  God in state.flags
+  God in state.local_flags
 
 proc `god=`*(self: Unit, value: bool) =
   state.set_flag God, value
 
 proc flying(self: Unit): bool =
-  Flying in state.flags
+  Flying in state.local_flags
 
 proc `flying=`*(self: Unit, value: bool) =
   state.set_flag Flying, value
@@ -620,7 +620,8 @@ proc load_script_and_dependents(self: Worker, unit: Unit) =
   var units_to_reload: HashSet[Unit]
 
   units_to_reload.incl unit
-  state.reloading = true
+  state.global_flags += LoadingWorld
+  state.push_flag LoadingScript
   self.retry_failures = true
 
   for other in state.units.value:
@@ -647,7 +648,8 @@ proc load_script_and_dependents(self: Worker, unit: Unit) =
 
   self.retry_failed_scripts()
   self.retry_failures = false
-  state.reloading = false
+  state.pop_flag LoadingScript
+  state.global_flags -= LoadingWorld
 
 proc script_file_for(self: Unit): string =
   if self.id == state.player.value.id:
@@ -672,7 +674,7 @@ proc change_code(self: Worker, unit: Unit, code: Code) =
 
   unit.reset()
   state.pop_flag ConsoleVisible
-  if not state.reloading and code.nim.strip == "":
+  if LoadingScript notin state.local_flags and code.nim.strip == "":
     self.interpreter.reset_module(unit.script_ctx.module_name)
     debug "reset module", module = unit.script_ctx.module_name
     unit.script_ctx.running = false
@@ -681,7 +683,7 @@ proc change_code(self: Worker, unit: Unit, code: Code) =
     unit.script_ctx.script = ""
   elif code.nim.strip != "":
     debug "loading unit", unit_id = unit.id
-    if not state.reloading and not self.retry_failures:
+    if LoadingScript notin state.local_flags and not self.retry_failures:
       write_file(unit.script_ctx.script, code.nim)
       if not self.interpreter.is_nil:
         self.load_script_and_dependents(unit)
@@ -772,7 +774,7 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
       if ?unit.script_ctx:
         unit.script_ctx.running = false
         unit.script_ctx.callback = nil
-        if not state.reloading and not ?unit.clone_of:
+        if LoadingScript notin state.local_flags and not ?unit.clone_of:
           remove_file unit.script_ctx.script
           remove_dir unit.data_dir
 

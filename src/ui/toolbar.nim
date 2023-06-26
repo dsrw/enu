@@ -20,7 +20,7 @@ gdobj Toolbar of HBoxContainer:
     self.preview_maker = self.get_node("../PreviewMaker") as PreviewMaker
     assert not self.preview_maker.is_nil
 
-    state.flags.changes:
+    state.local_flags.changes:
       if Playing.added:
         self.visible = false
       if Playing.removed:

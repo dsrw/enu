@@ -89,7 +89,7 @@ gdobj BuildNode of VoxelTerrain:
 
       for material in self.model.shared.value.materials:
         material.shader = shader
-    elif Visible notin self.model.global_flags and God in state.flags:
+    elif Visible notin self.model.global_flags and God in state.local_flags:
       self.visible = true
 
       for material in self.model.shared.value.materials:
@@ -128,7 +128,7 @@ gdobj BuildNode of VoxelTerrain:
       elif Highlight.removed:
         self.set_glow self.model.glow.value
 
-    state.flags.watch:
+    state.local_flags.watch:
       if change.item == God:
         self.set_visibility
 
