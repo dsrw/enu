@@ -423,17 +423,12 @@ method main_thread_init*(self: Build) =
 
 method on_collision*(self: Build, partner: Model, normal: Vector3) =
   self.collisions.add (partner.id, normal)
-  if ?self.script_ctx:
-    self.script_ctx.timer = get_mono_time()
 
 method off_collision*(self: Unit, partner: Model) =
   if self.collisions.valid:
     for collision in self.collisions.value.dup:
       if collision.id == partner.id:
         self.collisions -= collision
-
-  if ?self.script_ctx:
-    self.script_ctx.timer = get_mono_time()
 
 method clone*(self: Build, clone_to: Unit, id: string): Unit =
   var transform = clone_to.transform.value
