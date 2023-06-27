@@ -97,7 +97,7 @@ proc maybe_join_previous_build(self: Build,
 
 proc expand_bounds_to_chunk(self: Build, chunk_id: Vector3) =
   let range = chunk_id * ChunkSize
-  let min = range - ChunkSize
+  let min = range - ChunkSize - vec3(1, 1, 1)
   let max = range + ChunkSize
   if max notin self.bounds.value:
     self.bounds.value = self.bounds.value.expand(max)
