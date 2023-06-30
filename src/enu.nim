@@ -8,5 +8,4 @@ import ui / [editor, console, toolbar, action_button, preview_maker,
 import nodes / [player_node, aim_target, selection_area, bot_node, ground_node,
                 build_node, sign_node]
 
-import pkg / model_citizen
-Zen.system_init
+Zen.bootstrap

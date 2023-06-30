@@ -13,7 +13,7 @@ const groups = @[
 ]
 
 proc resolve_flags(self: GameState) =
-  debug "resolving flags", flags = self.flags.value, wants = self.wants.value
+  debug "resolving flags", flags = self.local_flags.value, wants = self.wants.value
   var result: set[LocalStateFlags]
   for flag in self.wants:
     for group in groups:

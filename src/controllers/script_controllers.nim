@@ -665,12 +665,10 @@ proc change_code(self: Worker, unit: Unit, code: Code) =
   if ?unit.script_ctx and unit.script_ctx.running and not ?unit.clone_of:
     unit.collect_garbage
 
-  if ?unit.shared:
-    var all_edits = unit.shared.value.edits
-    for id, edits in unit.shared.value.edits:
-      if id != unit.id and edits.len == 0:
-        all_edits.del id
-    unit.shared.value.edits = all_edits
+  var edits = unit.shared.value.edits
+  for id in edits.value.keys:
+    if id != unit.id and edits[id].len == 0:
+      edits.del id
 
   unit.reset()
   state.pop_flag ConsoleVisible
@@ -812,6 +810,11 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
     state.units.add player
     player.script_ctx.interpreter = worker.interpreter
     worker.load_script_and_dependents(player)
+
+  state.global_flags.changes:
+    if LoadingWorld.added:
+      state.open_sign.value = nil
+      state.open_unit.value = nil
 
   const max_time = (1.0 / 30.0).seconds
   const min_time = (1.0 / 120.0).seconds

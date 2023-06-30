@@ -80,7 +80,7 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
 
   self.local_flags.watch:
     debug "self flag changed", zid, changes = change.changes,
-        item = change.item, unit = self.id, zen_id = self.flags.id
+        item = change.item, unit = self.id, zen_id = self.local_flags.id
 
     if Hover.added:
       state.push_flag ReticleVisible
@@ -95,7 +95,7 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
   self.local_flags.untrack_on_destroy:
     state.local_flags.changes:
       debug "state flag changed", zid, changes = change.changes,
-          item = change.item, unit = self.id, zen_id = self.flags.id
+          item = change.item, unit = self.id, zen_id = self.local_flags.id
 
       if Hover in self.local_flags:
         if PrimaryDown.added and state.tool.value == CodeMode:

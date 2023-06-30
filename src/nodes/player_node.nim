@@ -166,21 +166,22 @@ gdobj PlayerNode of KinematicBody:
       self.model.rotation.pause(self.rotation_zid):
         self.model.rotation.value = rad_to_deg r.y
 
-    let ray_length = if state.tool.value == CodeMode: 200.0 else: 100.0
-    if MouseCaptured notin state.local_flags:
-      let
-        mouse_pos = self.get_viewport().get_mouse_position() *
-          float state.scale_factor
-        cast_from = self.camera.project_ray_origin(mouse_pos)
-        cast_to = self.aim_ray.translation +
-            self.camera.project_ray_normal(mouse_pos) * ray_length
+    if LoadingWorld notin state.global_flags:
+      let ray_length = if state.tool.value == CodeMode: 200.0 else: 100.0
+      if MouseCaptured notin state.local_flags:
+        let
+          mouse_pos = self.get_viewport().get_mouse_position() *
+            float state.scale_factor
+          cast_from = self.camera.project_ray_origin(mouse_pos)
+          cast_to = self.aim_ray.translation +
+              self.camera.project_ray_normal(mouse_pos) * ray_length
 
-      self.world_ray.cast_to = cast_to
-      self.world_ray.translation = cast_from
-      self.aim_target.update(self.world_ray)
-    else:
-      self.aim_ray.cast_to = vec3(0, 0, -ray_length)
-      self.aim_target.update(self.aim_ray)
+        self.world_ray.cast_to = cast_to
+        self.world_ray.translation = cast_from
+        self.aim_target.update(self.world_ray)
+      else:
+        self.aim_ray.cast_to = vec3(0, 0, -ray_length)
+        self.aim_target.update(self.aim_ray)
 
   method physics_process*(delta: float) =
     if CommandMode in state.local_flags and self.command_timer > 0:

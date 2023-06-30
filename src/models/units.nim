@@ -4,9 +4,10 @@ from pkg / core / godotcoretypes import Basis
 import core, models / [states, colors], libs / interpreters
 
 proc init_shared*(self: Unit) =
+  assert ?self.shared
   if ?self.parent:
     self.shared = self.parent.shared
-  else:
+  elif not ?self.shared.value:
     self.shared.init
     var shared = Shared(id: self.id & "-shared")
     shared.init_zen_fields
@@ -30,6 +31,7 @@ proc init_unit*[T: Unit](self: T) =
     errors = ScriptErrors.init
     current_line = ZenValue[int].init
     collisions = ZenSeq[(string, Vector3)].init
+    shared = ZenValue[Shared].init
 
   self.init_shared
   self.global_flags += Visible
@@ -114,16 +116,22 @@ method off_collision*(self: Model, partner: Model) {.base, gcsafe.} =
 proc destroy*[T: Unit](self: T) =
   assert ?self
 
-  if self.shared.valid and ?self.shared.value:
+  # :( Parent isn't set properly for instances on the main thread
+  if self.parent == nil and "instance" notin self.id:
     let shared = self.shared.value
-    self.shared.value = nil
     shared.edits.destroy
+    self.shared.value = nil
+    self.shared.destroy
     Zen.thread_ctx.free(shared)
+  else:
+    self.shared = nil
+
   for field in self[].fields:
     when field is Zen:
       # :(
       if ?field and not field.destroyed:
         field.destroy
+
   Zen.thread_ctx.free(self)
 
 proc clear_all*(units: ZenSeq[Unit]) =
