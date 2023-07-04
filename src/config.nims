@@ -1,6 +1,5 @@
 --threads:on
 --mm:orc
---panics:on
 
 --warning:"LockLevel:off"
 --warning:"UseBase:off"
@@ -27,6 +26,7 @@ else:
 
 switch("path", this_dir())
 switch("path", this_dir() & "/../generated")
+switch("path", this_dir() & "/../vmlib/enu")
 
 when with_dir(this_dir(), system.file_exists("user_config.nims")):
   include "user_config.nims"

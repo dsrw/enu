@@ -1,46 +1,48 @@
-import types
+import types, bridge_utils
 
 # NOTE: overridden by ScriptController. Only for tests.
 var current_active_unit: Unit
-proc register_active*(self: Unit) = current_active_unit = self
-proc active_unit*(): Unit = current_active_unit
-# /NOTE
+proc register_active_impl(self: Unit) = current_active_unit = self
+proc active_unit_impl(): Unit = current_active_unit
 
-proc write_stack_trace*() = discard
-proc id*(self: Unit): string = discard
-proc position*(self: Unit): Vector3 = discard
-proc local_position*(self: Unit): Vector3 = discard
-proc start_position*(self: Unit): Vector3 = discard
-proc speed*(self: Unit): float = discard
-proc `speed=`*(self: Unit, speed: float) = discard
-proc scale*(self: Unit): float = discard
-proc `scale=`*(self: Unit, scale: float) = discard
-proc glow*(self: Unit): float = discard
-proc `glow=`*(self: Unit, energy: float) = discard
-proc global*(self: Unit): bool = discard
-proc `global=`*(self: Unit, global: bool) = discard
-proc rotation*(self: Unit): float = discard
-proc `rotation=`*(self: Unit, degrees: float) = discard
-proc hit*(self: Unit, node: Unit): Vector3 = discard
-proc `velocity=`*(self: Unit, velocity: Vector3) = discard
-proc velocity*(self: Unit): Vector3 = discard
-proc color*(self: Unit): Colors = discard
-proc `color=`*(self: Unit, color: Colors) = discard
-proc seen*(node: Unit, less_than = 100.0): bool = discard
-proc show*(self: Unit): bool = discard
-proc `show=`*(self: Unit, value: bool) = discard
-proc frame_created*(self: Unit): int = discard
-proc lock*(self: Unit): bool = discard
-proc `lock=`*(self: Unit, value: bool) = discard
-proc reset*(self: Unit, clear = false) = discard
-proc press_action*(name: string) = discard
+proc register_active*(self: Unit) = register_active_impl(self)
+proc active_unit*(): Unit = active_unit_impl()
 
-# TODO: These should be in base_bridge_private, but are currently needed outside of base_api.
-proc echo_console*(msg: string) = discard
-proc exit*(exit_code = 0, msg = "") = discard
-proc new_instance*(src, dest: Unit) = discard
-proc exec_instance*(self: Unit) = discard
-proc wake*(self: Unit) = discard
-proc link_dependency*(dep: not Unit) = discard
-proc create_new*(self: Unit) = discard
-proc frame_count*(): int = discard
+bindings:
+  proc write_stack_trace*()
+  proc id*(self: Unit): string
+  proc position*(self: Unit): Vector3
+  proc local_position*(self: Unit): Vector3
+  proc start_position*(self: Unit): Vector3
+  proc speed*(self: Unit): float
+  proc `speed=`*(self: Unit, speed: float)
+  proc scale*(self: Unit): float
+  proc `scale=`*(self: Unit, scale: float)
+  proc glow*(self: Unit): float
+  proc `glow=`*(self: Unit, energy: float)
+  proc global*(self: Unit): bool
+  proc `global=`*(self: Unit, global: bool)
+  proc rotation*(self: Unit): float
+  proc `rotation=`*(self: Unit, degrees: float)
+  proc hit*(self: Unit, node: Unit): Vector3
+  proc `velocity=`*(self: Unit, velocity: Vector3)
+  proc velocity*(self: Unit): Vector3
+  proc color*(self: Unit): Colors
+  proc `color=`*(self: Unit, color: Colors)
+  proc seen*(node: Unit, less_than = 100.0): bool
+  proc show*(self: Unit): bool
+  proc `show=`*(self: Unit, value: bool)
+  proc frame_created*(self: Unit): int
+  proc lock*(self: Unit): bool
+  proc `lock=`*(self: Unit, value: bool)
+  proc reset*(self: Unit, clear = false)
+  proc press_action*(name: string)
+
+  # TODO: These should be in base_bridge_private, but are currently needed outside of base_api.
+  proc echo_console*(msg: string)
+  proc exit*(exit_code = 0, msg = "")
+  proc new_instance*(src, dest: Unit)
+  proc exec_instance*(self: Unit)
+  proc wake*(self: Unit)
+  proc create_new*(self: Unit)
+  proc frame_count*(): int

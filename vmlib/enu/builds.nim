@@ -1,11 +1,13 @@
 import std / [strutils]
-import types, base_api
+import types, base_api, bridge_utils
 
-proc drawing*(self: Build): bool = discard
-proc `drawing=`*(self: Build, drawing: bool) = discard
-proc initial_position(self: Build): Vector3 = discard
-
-proc all_builds(): seq[Build] = discard
+bindings:
+  proc drawing*(self: Build): bool
+  proc `drawing=`*(self: Build, drawing: bool)
+  proc initial_position(self: Build): Vector3
+  proc all_builds(): seq[Build]
+  proc save*(self: Build, name = "default")
+  proc restore*(self: Build, name = "default")
 
 proc all*(_: type Build): seq[Build] = all_builds()
 
@@ -23,6 +25,3 @@ proc fill_square*(self: Build, length = 1) =
       self.forward(length - l, 2)
       self.right(1, 2)
 
-proc save*(self: Build, name = "default") = discard
-
-proc restore*(self: Build, name = "default") = discard

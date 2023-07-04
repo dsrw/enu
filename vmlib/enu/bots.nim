@@ -1,11 +1,11 @@
 import std / [strutils, math]
-import types, base_api
+import types, base_api, bridge_utils
 
-proc all_bots(): seq[Bot] = discard
+bindings:
+  proc all_bots(): seq[Bot]
+  proc play*(self: Bot, animation_name: string)
 
 proc all*(_: type Bot): seq[Bot] = all_bots()
-
-proc play*(self: Bot, animation_name: string) = discard
 
 proc walk*(self: Bot) =
   self.speed = 1.0

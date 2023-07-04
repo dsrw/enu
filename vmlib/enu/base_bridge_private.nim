@@ -1,19 +1,18 @@
-import types
+import types, bridge_utils
 
-proc link_dependency_impl*(dep: Unit) = discard
-proc action_running*(self: Unit): bool = discard
-proc `action_running=`*(self: Unit, value: bool) = discard
-proc yield_script*(self: Unit) = discard
+proc link_dependency_impl*(dep: Unit) =
+  raise_assert "link_dependency_impl must be implemented by host"
 
-proc begin_move*(
-  self: Unit, direction: Vector3, steps: float, move_mode: int
-) = discard
+bindings:
+  proc action_running*(self: Unit): bool
+  proc `action_running=`*(self: Unit, value: bool)
+  proc yield_script*(self: Unit)
+  proc begin_move*(self: Unit, direction: Vector3, steps: float, move_mode: int)
+  proc begin_turn*(
+      self: Unit, axis: Vector3, steps: float, lean: bool, move_mode: int)
 
-proc begin_turn*(
-  self: Unit, axis: Vector3, steps: float, lean: bool, move_mode: int) = discard
-
-proc sleep_impl*(seconds = 1.0) = discard
-proc `position=impl`*(self: Unit, position: Vector3) = discard
+  proc sleep_impl*(seconds = 1.0)
+  proc position_set*(self: Unit, position: Vector3)
 
 proc new_markdown_sign_impl*(
   self: Unit, instance: Sign, markdown: string, title = "", width = 1.0,

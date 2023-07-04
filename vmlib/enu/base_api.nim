@@ -5,12 +5,14 @@ import types, state_machine, base_bridge, base_bridge_private
 export base_bridge
 template f*(body): untyped = fmt(body)
 
-proc `position=`*(self: Unit, position: Vector3) = self.`position=impl`(position)
-proc `position=`*(self: Unit, unit: Unit) = self.`position=impl`(unit.position)
+proc `position=`*(self: Unit, position: Vector3) = self.position_set(position)
+proc `position=`*(self: Unit, unit: Unit) = self.position_set(unit.position)
 
 proc link_dependency*(dep: Unit) =
   if not dep.is_nil:
     link_dependency_impl(dep)
+
+proc link_dependency*(dep: not Unit) = discard
 
 proc `seed=`*(self: Unit, seed: int) =
   private_access Unit

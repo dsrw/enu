@@ -35,7 +35,7 @@ proc to_node(tree: ref tuple|ref object): PNode =
 
 proc to_result(val: float): BiggestFloat = BiggestFloat(val)
 proc to_result(val: SomeOrdinal or enum or bool): BiggestInt = BiggestInt(val)
-proc to_result(val: Vector3 or string): PNode = val.to_node
+proc to_result(val: Vector3 or string or tuple): PNode = val.to_node
 proc to_result(val: PNode): PNode = result = val
 
 macro bind_procs(self: Worker,
@@ -51,6 +51,7 @@ macro bind_procs(self: Worker,
       symbol = bind_sym($proc_ref)
       proc_impl = (if symbol.kind == nnkSym: symbol else: symbol[0]).get_impl
       proc_name = proc_impl[0].str_val
+      proc_impl_name = proc_name.replace("=", "_set") & "_impl"
       return_node = proc_impl[3][0]
       arg_nodes = proc_impl[3][1..^1]
 
@@ -87,7 +88,11 @@ macro bind_procs(self: Worker,
 
     result.add quote do:
       mixin implement_routine
-      `self`.interpreter.implement_routine "*", `module_name`, `proc_name`,
+      `self`.interpreter.implement_routine "*", `module_name`, `proc_impl_name`,
           proc(a {.inject.}: VmArgs) {.gcsafe.} =
 
-        `call`
+        debug "calling routine", name = `proc_name`
+        try:
+          `call`
+        except Exception as e:
+          script_engine.last_exception = e

@@ -5,7 +5,8 @@ import pkg / core / [vector3, basis, aabb, godotbase]
 import pkg / compiler / passes {.all.}
 import pkg / compiler / ast
 import pkg / model_citizen
-import models/colors, libs / [eval]
+import models / colors, libs / [eval]
+import shared / errors
 
 export Vector3, Transform, vector3, basis, AABB, aabb
 export godotbase except print
@@ -213,5 +214,6 @@ type
     unit_map: Table[PNode, Unit]
     node_map: Table[Unit, PNode]
     failed: seq[tuple[unit: Unit, e: ref VMQuit]]
+    last_exception*: ref Exception
 
   NodeController* = ref object

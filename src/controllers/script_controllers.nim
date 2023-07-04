@@ -10,6 +10,7 @@ import godotapi / [spatial, ray_cast, voxel_terrain]
 import core, models /
   [states, bots, builds, units, colors, signs, players]
 import libs / [interpreters, eval]
+import shared / errors
 
 from pkg / compiler / vm {.all.} import stack_trace_aux
 
@@ -48,6 +49,10 @@ proc init*(_: type ScriptCtx, owner: Unit, clone_of: Unit = nil,
     timer: MonoTime.high
   )
 
+proc get_last_error(self: Worker): ErrorData =
+  result = self.last_exception.from_exception
+  self.last_exception = nil
+
 proc map_unit(self: Worker, unit: Unit, pnode: PNode) =
   debug "mapping pnode ", hash = pnode.hash, unit = unit.id
   self.unit_map[pnode] = unit
@@ -59,7 +64,7 @@ proc unmap_unit(self: Worker, unit: Unit) =
     self.unit_map.del self.node_map[unit]
     self.node_map.del unit
 
-proc link_dependency_impl(self: Worker, dep: Unit) =
+proc link_dependency(self: Worker, dep: Unit) =
   let dep = dep.find_root
   let active = self.active_unit.find_root
   debug "linking dependency", dependency = dep.script_ctx.module_name,
@@ -75,7 +80,8 @@ proc write_stack_trace(self: Worker) =
 
 proc get_unit(self: Worker, a: VmArgs, pos: int): Unit {.gcsafe.} =
   let pnode = a.get_node(pos)
-  assert pnode in self.unit_map
+  if pnode notin self.unit_map:
+    raise NilAccessDefect.init("Unit is nil")
   {.gcsafe.}:
     result = self.unit_map[pnode]
 
@@ -232,7 +238,7 @@ proc start_position(self: Unit): Vector3 =
   else:
     self.start_transform.origin.global_from(self.parent)
 
-proc `position=impl`(self: Unit, position: Vector3) =
+proc position_set(self: Unit, position: Vector3) =
   var position = position
   if self of Player and position.y <= 0:
     position.y = 0.1
@@ -940,6 +946,8 @@ proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
   # binding.nim is expecting a var called `result`. Fix this.
   var result = controller
 
+  result.bind_procs "bridge_utils", get_last_error
+
   result.bind_procs "base_bridge",
     register_active, echo_console, new_instance, exec_instance, hit, exit,
     global, `global=`, position, local_position, rotation, `rotation=`, id,
@@ -949,8 +957,8 @@ proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
     press_action
 
   result.bind_procs "base_bridge_private",
-    link_dependency_impl, action_running, `action_running=`, yield_script,
-    begin_turn, begin_move, sleep_impl, `position=impl`, new_markdown_sign_impl
+    link_dependency, action_running, `action_running=`, yield_script,
+    begin_turn, begin_move, sleep_impl, position_set, new_markdown_sign_impl
 
   result.bind_procs "bots",
     play, all_bots
