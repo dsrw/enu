@@ -946,9 +946,9 @@ proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
   # binding.nim is expecting a var called `result`. Fix this.
   var result = controller
 
-  result.bridge_procs "vm_bridge_utils", get_last_error
+  result.bridged_from_vm "vm_bridge_utils", get_last_error
 
-  result.bridge_procs "base_bridge",
+  result.bridged_from_vm "base_bridge",
     register_active, echo_console, new_instance, exec_instance, hit, exit,
     global, `global=`, position, local_position, rotation, `rotation=`, id,
     glow, `glow=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`,
@@ -956,21 +956,21 @@ proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
     write_stack_trace, show, `show=`, frame_created, lock, `lock=`, reset,
     press_action
 
-  result.bridge_procs "base_bridge_private",
+  result.bridged_from_vm "base_bridge_private",
     link_dependency, action_running, `action_running=`, yield_script,
     begin_turn, begin_move, sleep_impl, position_set, new_markdown_sign_impl
 
-  result.bridge_procs "bots",
+  result.bridged_from_vm "bots",
     play, all_bots
 
-  result.bridge_procs "builds",
+  result.bridged_from_vm "builds",
     drawing, `drawing=`, initial_position, save, restore, all_builds
 
-  result.bridge_procs "signs",
+  result.bridged_from_vm "signs",
     markdown, `markdown=`, title, `title=`, height, `height=`, width, `width=`,
     size, `size=`, open, `open=`
 
-  result.bridge_procs "players",
+  result.bridged_from_vm "players",
     playing, `playing=`, god, `god=`, flying, `flying=`, tool, `tool=`,
     coding, `coding=`
 

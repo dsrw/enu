@@ -1,7 +1,7 @@
 import std / [strutils, math]
 import types, base_api, vm_bridge_utils
 
-bindings:
+bridged_to_host:
   proc all_bots(): seq[Bot]
   proc play*(self: Bot, animation_name: string)
 

@@ -1,7 +1,7 @@
 import std / [strutils, math]
 import types, base_api, vm_bridge_utils
 
-bindings:
+bridged_to_host:
   proc markdown*(self: Sign): string = discard
   proc `markdown=`*(self: Sign, value: string) = discard
 

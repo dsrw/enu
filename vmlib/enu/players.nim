@@ -3,7 +3,7 @@ import types, base_api, vm_bridge_utils
 let player* = PlayerType()
 register_active(player)
 
-bindings:
+bridged_to_host:
   proc tool*(self: PlayerType): Tools = discard
   proc `tool=`*(self: PlayerType, value: Tools) = discard
 

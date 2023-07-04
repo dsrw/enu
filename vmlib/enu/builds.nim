@@ -1,7 +1,7 @@
 import std / [strutils]
 import types, base_api, vm_bridge_utils
 
-bindings:
+bridged_to_host:
   proc drawing*(self: Build): bool
   proc `drawing=`*(self: Build, drawing: bool)
   proc initial_position(self: Build): Vector3

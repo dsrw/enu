@@ -20,7 +20,7 @@ proc get_name(node: NimNode): string =
     else:
       raise_assert "Can't handle " & $node.kind
 
-macro bindings*(body: untyped): untyped =
+macro bridged_to_host*(body: untyped): untyped =
   result = new_stmt_list()
   var defs = new_stmt_list()
   var calls = new_stmt_list()
@@ -60,7 +60,7 @@ when is_main_module:
 
   proc check_errors = discard
 
-  bindings:
+  bridged_to_host:
     proc write_stack_trace*()
     proc id*(self: Unit): string
     proc position*(self: Unit): Vector3

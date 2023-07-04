@@ -3,7 +3,7 @@ import types, vm_bridge_utils
 proc link_dependency_impl*(dep: Unit) =
   raise_assert "link_dependency_impl must be implemented by host"
 
-bindings:
+bridged_to_host:
   proc action_running*(self: Unit): bool
   proc `action_running=`*(self: Unit, value: bool)
   proc yield_script*(self: Unit)

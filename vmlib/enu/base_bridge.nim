@@ -8,7 +8,7 @@ proc active_unit_impl(): Unit = current_active_unit
 proc register_active*(self: Unit) = register_active_impl(self)
 proc active_unit*(): Unit = active_unit_impl()
 
-bindings:
+bridged_to_host:
   proc write_stack_trace*()
   proc id*(self: Unit): string
   proc position*(self: Unit): Vector3
