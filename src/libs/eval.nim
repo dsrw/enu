@@ -111,19 +111,22 @@ else:
         return false
     else:
       s = stream
+
+    when defined(nimsuggest):
+      let filename = toFullPathConsiderDirty(graph.config, fileIdx).string
+      msgs.setHash(graph.config, fileIdx, $sha1.secureHashFile(filename))
+
     while true:
       openParser(p, fileIdx, s, graph.cache, graph.config)
 
-      if not partOfStdlib(module) or module.name.s == "distros":
+      if not belongsToStdlib(graph, module) or (belongsToStdlib(graph, module) and module.name.s == "distros"):
         # XXX what about caching? no processing then? what if I change the
         # modules to include between compilation runs? we'd need to track that
         # in ROD files. I think we should enable this feature only
         # for the interactive mode.
         if module.name.s != "nimscriptapi":
-          processImplicits graph, graph.config.implicitImports, nkImportStmt,
-            a, module
-          processImplicits graph, graph.config.implicitIncludes,
-            nkIncludeStmt, a, module
+          processImplicits graph, graph.config.implicitImports, nkImportStmt, a, module
+          processImplicits graph, graph.config.implicitIncludes, nkIncludeStmt, a, module
 
       while true:
         if graph.stopCompile(): break
@@ -171,7 +174,6 @@ else:
       # They are responsible for closing the rod files. See `cbackend.nim`.
       closeRodFile(graph, module)
     result = true
-
 
 # from nimeval. Added moduleName
 proc selectUniqueSymbol*(i: Interpreter; name: string;
