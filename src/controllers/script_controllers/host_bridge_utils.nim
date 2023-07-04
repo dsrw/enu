@@ -38,7 +38,7 @@ proc to_result(val: SomeOrdinal or enum or bool): BiggestInt = BiggestInt(val)
 proc to_result(val: Vector3 or string or tuple): PNode = val.to_node
 proc to_result(val: PNode): PNode = result = val
 
-macro bind_procs(self: Worker,
+macro bridge_procs(self: Worker,
     module_name: string, proc_refs: varargs[untyped]): untyped =
 
   result = new_stmt_list()

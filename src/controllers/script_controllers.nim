@@ -22,7 +22,7 @@ proc retry_failed_scripts*(self: Worker) {.gcsafe.}
 
 import models / serializers
 
-include script_controllers/bindings
+include script_controllers / host_bridge_utils
 
 const
   advance_step* = 0.5.seconds
@@ -946,9 +946,9 @@ proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
   # binding.nim is expecting a var called `result`. Fix this.
   var result = controller
 
-  result.bind_procs "bridge_utils", get_last_error
+  result.bridge_procs "vm_bridge_utils", get_last_error
 
-  result.bind_procs "base_bridge",
+  result.bridge_procs "base_bridge",
     register_active, echo_console, new_instance, exec_instance, hit, exit,
     global, `global=`, position, local_position, rotation, `rotation=`, id,
     glow, `glow=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`,
@@ -956,21 +956,21 @@ proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
     write_stack_trace, show, `show=`, frame_created, lock, `lock=`, reset,
     press_action
 
-  result.bind_procs "base_bridge_private",
+  result.bridge_procs "base_bridge_private",
     link_dependency, action_running, `action_running=`, yield_script,
     begin_turn, begin_move, sleep_impl, position_set, new_markdown_sign_impl
 
-  result.bind_procs "bots",
+  result.bridge_procs "bots",
     play, all_bots
 
-  result.bind_procs "builds",
+  result.bridge_procs "builds",
     drawing, `drawing=`, initial_position, save, restore, all_builds
 
-  result.bind_procs "signs",
+  result.bridge_procs "signs",
     markdown, `markdown=`, title, `title=`, height, `height=`, width, `width=`,
     size, `size=`, open, `open=`
 
-  result.bind_procs "players",
+  result.bridge_procs "players",
     playing, `playing=`, god, `god=`, flying, `flying=`, tool, `tool=`,
     coding, `coding=`
 

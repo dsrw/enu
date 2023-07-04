@@ -1,4 +1,4 @@
-import types, base_api, bridge_utils
+import types, base_api, vm_bridge_utils
 
 let player* = PlayerType()
 register_active(player)

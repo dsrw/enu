@@ -1,4 +1,4 @@
-import types, bridge_utils
+import types, vm_bridge_utils
 
 proc link_dependency_impl*(dep: Unit) =
   raise_assert "link_dependency_impl must be implemented by host"

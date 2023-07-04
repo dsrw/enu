@@ -1,5 +1,5 @@
 import std / [strutils, math]
-import types, base_api, bridge_utils
+import types, base_api, vm_bridge_utils
 
 bindings:
   proc markdown*(self: Sign): string = discard

@@ -1,4 +1,4 @@
-import types, bridge_utils
+import types, vm_bridge_utils
 
 # NOTE: overridden by ScriptController. Only for tests.
 var current_active_unit: Unit
