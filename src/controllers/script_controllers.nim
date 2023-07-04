@@ -373,7 +373,7 @@ proc drop_transform(unit: Unit): Transform =
   else:
     raise ObjectConversionDefect.init("Unknown unit type")
 
-proc new_markdown_sign_impl(self: Worker,
+proc new_markdown_sign(self: Worker,
   unit: Unit, pnode: PNode, markdown: string, title: string, width: float,
   height: float, size: int, zoomable: bool, billboard: bool): Unit =
 
@@ -958,7 +958,7 @@ proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
 
   result.bridged_from_vm "base_bridge_private",
     link_dependency, action_running, `action_running=`, yield_script,
-    begin_turn, begin_move, sleep_impl, position_set, new_markdown_sign_impl
+    begin_turn, begin_move, sleep_impl, position_set, new_markdown_sign
 
   result.bridged_from_vm "bots",
     play, all_bots

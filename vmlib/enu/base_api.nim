@@ -425,7 +425,7 @@ proc md*(self: Unit,
   zoomable = true, billboard = false): Sign {.discardable.} =
 
   result = Sign()
-  self.new_markdown_sign_impl(result, markdown, title, width, height, size,
+  self.new_markdown_sign(result, markdown, title, width, height, size,
     zoomable, billboard)
 
 template md*(markdown: string,

@@ -14,6 +14,6 @@ bridged_to_host:
   proc sleep_impl*(seconds = 1.0)
   proc position_set*(self: Unit, position: Vector3)
 
-proc new_markdown_sign_impl*(
-  self: Unit, instance: Sign, markdown: string, title = "", width = 1.0,
-  height = 1.0, size = 32, zoomable = true, billboard = false) = discard
+  proc new_markdown_sign*(self: Unit, instance: Sign, markdown: string,
+      title = "", width = 1.0, height = 1.0, size = 32, zoomable = true,
+      billboard = false)
