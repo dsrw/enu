@@ -149,10 +149,10 @@ proc save_world*(world_dir: string) =
       jsonutils.to_json(world).pretty
 
   debug "Saving", unit_count = state.dirty_units.len
-  let units = state.dirty_units
-  state.dirty_units.clear
-  for unit in units:
-    unit.save
+  for unit in state.units:
+    if Dirty in unit.local_flags:
+      unit.save
+      unit.local_flags -= Dirty
 
 proc load_units(parent: Unit) =
   let opts = JOptions(allow_missing_keys: true)
@@ -226,6 +226,7 @@ proc load_world*(worker: Worker, world_dir: string) =
   worker.retry_failed_scripts()
   worker.retry_failures = false
   dont_join = false
-  state.dirty_units.clear
+  for unit in state.units:
+    unit.local_flags -= Dirty
   state.pop_flag LoadingScript
   state.global_flags -= LoadingWorld

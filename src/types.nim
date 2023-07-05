@@ -35,7 +35,7 @@ type
     Global, Visible, Lock, Ready, ScriptInitializing
 
   LocalModelFlags* = enum
-    Hover, TargetMoved, Highlight
+    Hover, TargetMoved, Highlight, Dirty
 
   ConsoleModel* = ref object
     log*: ZenSeq[string]
@@ -46,7 +46,6 @@ type
     global_flags*: ZenSet[GlobalStateFlags]
     config*: ZenValue[Config]
     open_unit*: ZenValue[Unit]
-    dirty_units*: HashSet[Unit]
     tool*: ZenValue[Tools]
     gravity*: float
     nodes*: tuple[

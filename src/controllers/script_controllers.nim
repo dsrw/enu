@@ -725,7 +725,7 @@ proc watch_units(self: Worker,
       body(unit, change, added, removed)
       if added:
         if not ?unit.clone_of:
-          state.dirty_units.incl unit
+          unit.local_flags += Dirty
         # FIXME: this is being set for the main thread in node_controller
         unit.parent = parent
         unit.collisions.track proc(changes: seq[Change[(string, Vector3)]]) =
