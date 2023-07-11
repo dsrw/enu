@@ -3,7 +3,7 @@ import types
 import base_api, macro_helpers
 
 const me_props = ["seed", "global", "lock"]
-const target_props = ["position", "start_position", "speed", "scale", "glow", 
+const target_props = ["position", "start_position", "speed", "scale", "glow",
                       "global", "seed", "color", "height", "show"]
 
 proc params_to_assignments(nodes: seq[NimNode]): NimNode =
@@ -228,6 +228,8 @@ macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[u
   when compiles(parse_stmt(file_name, file_name)):
     var ast = parse_stmt(file_name.static_read, file_name).transform_proc_lists
   else:
+    # Just for tests running in Nim <= 1.6. Enu VM and Nim 2.0 can take both
+    # Nim code and a file name.
     var ast = parse_stmt(file_name.static_read).transform_proc_lists
   var (script_start, name_node) = pop_name_node(ast)
   result = new_stmt_list()

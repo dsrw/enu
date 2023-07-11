@@ -18,7 +18,8 @@ proc init*(_: type Interpreter, script_dir, vmlib: string): Interpreter =
   let std_paths = STDLIB_PATHS.map_it join_path(vmlib, "stdlib", it)
   let source_paths = std_paths & join_path(vmlib, "enu") & @[script_dir]
   {.gcsafe.}:
-    result = create_interpreter("base_api.nim", source_paths)
+    result = create_interpreter("base_api.nim", source_paths, defines =
+        @{"nimscript": "true", "nimconfig": "true"})
 
 proc pause*(ctx: ScriptCtx) =
   ctx.pause_requested = true

@@ -95,4 +95,6 @@ macro bridged_from_vm(self: Worker,
         try:
           `call`
         except Exception as e:
+          error "Exception calling into host", kind = $e.type, msg = e.msg
+          echo e.get_stack_trace()
           script_engine.last_exception = e

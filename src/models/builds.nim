@@ -333,7 +333,6 @@ method reset*(self: Build) =
         self.chunks[chunk_id].del(vec)
         if self.chunks[chunk_id].len == 0:
           self.chunks.del(chunk_id)
-    #Zen.thread_ctx.recv
 
   self.units.clear()
   self.draw(vec3(), (Computed, self.start_color))

@@ -102,6 +102,8 @@ proc get_sign(self: Worker, a: VmArgs, pos: int): Sign =
 
 proc to_node(self: Worker, unit: Unit): PNode =
   if ?unit:
+    if unit notin self.node_map:
+      raise_assert \"unit `{unit.id}` not in node_map"
     self.node_map[unit]
   else:
     ast.new_node(nkNilLit)
