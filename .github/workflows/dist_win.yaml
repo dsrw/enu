@@ -9,12 +9,14 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Install Nim and build deps
-        run: choco install nim yasm innosetup rcedit zip
+      - name: Install Nim
+        run: choco install nim --version=1.6.14
+      - name: Install build deps
+        run: choco install yasm innosetup rcedit zip
       - name: Install scons
         run: python -m pip install scons
       - name: Update path
-        run: echo "${HOME}/.nimble/bin;C:\tools\Nim\nim-1.6.12\bin;C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        run: echo "${HOME}/.nimble/bin;C:\tools\Nim\nim-1.6.14\bin;C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Install Nimble 0.14.2
         run: nimble install -y nimble@0.14.2
       - name: Install nimble deps
