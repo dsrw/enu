@@ -5,8 +5,6 @@ jobs:
   build:
     runs-on: windows-2022
     steps:
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
       - name: Check out repository code
         uses: actions/checkout@v3
         with:
@@ -51,6 +49,9 @@ jobs:
           cd ..
           rm mesa -Recurse
         if: steps.prereq-cache.outputs.cache-hit != 'true'
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
 
       - name: Dist
         run: nimble dist_package
