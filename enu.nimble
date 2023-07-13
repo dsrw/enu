@@ -26,7 +26,7 @@ bin = @["enu" & lib_ext]
 if (NimMajor, NimMinor) >= (1, 7):
   requires "https://github.com/dsrw/Nim#c07ccfebf"
 else:
-  requires "https://github.com/dsrw/Nim#ce81661"
+  requires "https://github.com/dsrw/Nim#b7cf2e6"
 
 requires "nim >= 1.6.10",
   "https://github.com/dsrw/godot-nim#892c482",
