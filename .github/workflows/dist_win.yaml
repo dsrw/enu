@@ -50,6 +50,9 @@ jobs:
           rm mesa -Recurse
         if: steps.prereq-cache.outputs.cache-hit != 'true'
 
+      # - name: Setup tmate session
+      #   uses: mxschmitt/action-tmate@v3
+
       - name: Dist
         run: nimble dist_package
       - uses: actions/upload-artifact@v3
