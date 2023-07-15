@@ -144,11 +144,11 @@ proc save*(unit: Unit) =
       unit.save
 
 proc save_world*(world_dir: string) =
+  debug "saving world"
   let world = WorldInfo(enu_version: enu_version, format_version: "v0.9.1")
   write_file world_dir / "world.json",
       jsonutils.to_json(world).pretty
 
-  debug "Saving", unit_count = state.dirty_units.len
   for unit in state.units:
     if Dirty in unit.local_flags:
       unit.save
