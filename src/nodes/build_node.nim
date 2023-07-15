@@ -145,9 +145,9 @@ gdobj BuildNode of VoxelTerrain:
         self.transform = change.item
 
   method process(delta: float) =
-    if ?self.model:
+    if ?self.model and self.model.code.value.owner == state.worker_ctx_name:
       self.model.transform.pause self.transform_zid:
-       self.model.transform.value = self.transform
+        self.model.transform.value = self.transform
 
   proc setup* =
     let was_skipping_join = dont_join

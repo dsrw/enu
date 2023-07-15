@@ -150,8 +150,9 @@ gdobj BotNode of KinematicBody:
 
   method process(delta: float) =
     if ?self.model:
-      self.model.transform.pause self.transform_zid:
-        self.model.transform.value = self.transform
+      if self.model.code.value.owner == state.worker_ctx_name:
+        self.model.transform.pause self.transform_zid:
+          self.model.transform.value = self.transform
       if self.model of Bot:
         let bot = Bot(self.model)
         if bot.velocity.value.length > 0:
