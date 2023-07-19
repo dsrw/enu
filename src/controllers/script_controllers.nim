@@ -754,10 +754,12 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
 
   Zen.thread_ctx = worker_ctx
   ctx.subscribe(Zen.thread_ctx)
-  let server_address = main_thread_state.config.value.server_address
-  let server = ?listen_address or not ?server_address
 
   state = GameState.init_from(main_thread_state)
+  let server_address = main_thread_state.config.value.server_address
+  if ?listen_address or not ?server_address:
+    state.push_flag Server
+
   state.config = ZenValue[Config](Zen.thread_ctx["config"])
   state.console = ConsoleModel.init_from(main_thread_state.console)
   state.worker_ctx_name = worker_ctx.id
@@ -795,10 +797,10 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
   let player = state.player.value
   # add player before interpreter is initialized to get to an interactive
   # state quicker
-  if server:
+  if Server in state.local_flags:
     state.units.add player
   worker.init_interpreter("")
-  if server:
+  if Server in state.local_flags:
     var world_dir = state.config.value.world_dir
     player.script_ctx.interpreter = worker.interpreter
     worker.load_script_and_dependents(player)

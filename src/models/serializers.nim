@@ -144,15 +144,18 @@ proc save*(unit: Unit) =
       unit.save
 
 proc save_world*(world_dir: string) =
-  debug "saving world"
-  let world = WorldInfo(enu_version: enu_version, format_version: "v0.9.1")
-  write_file world_dir / "world.json",
-      jsonutils.to_json(world).pretty
+  if Server in state.local_flags:
+    debug "saving world"
+    let world = WorldInfo(enu_version: enu_version, format_version: "v0.9.1")
+    write_file world_dir / "world.json",
+        jsonutils.to_json(world).pretty
 
-  for unit in state.units:
-    if Dirty in unit.local_flags:
-      unit.save
-      unit.local_flags -= Dirty
+    for unit in state.units:
+      if Dirty in unit.local_flags:
+        unit.save
+        unit.local_flags -= Dirty
+  else:
+    debug "not server. Skipping save."
 
 proc load_units(parent: Unit) =
   let opts = JOptions(allow_missing_keys: true)

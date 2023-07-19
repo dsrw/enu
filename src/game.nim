@@ -71,7 +71,7 @@ world: {state.config.value.world}
       self.rescale()
     if time > self.save_at:
       self.save_at = time + auto_save_interval
-      #save_world(state.config.value.world_dir)
+      save_world(state.config.value.world_dir)
 
     if state.queued_action != "":
       var ev = gdnew[InputEventAction]()
