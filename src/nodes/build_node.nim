@@ -25,21 +25,21 @@ gdobj BuildNode of VoxelTerrain:
     self.bind_signals self, "block_loaded", "block_unloaded"
     self.default_view_distance = self.max_view_distance.int
 
-  # proc prepare_materials =
-  #   if self.model.shared.value.materials.len == 0:
-  #     # generate our own copy of the library materials, so we can manipulate
-  #     # them without impacting other builds.
-  #     for i in 0..int.high:
-  #       let m = self.get_material(i)
-  #       if m.is_nil:
-  #         break
-  #       else:
-  #         let m = m.duplicate.as(ShaderMaterial)
-  #         m.set_shader_param("emission_energy", default_glow.to_variant)
-  #         self.model.shared.value.materials.add(m)
-  #
-  #   for i, material in self.model.shared.value.materials:
-  #     self.set_material(i, material)
+  proc prepare_materials =
+    if self.model.shared.value.materials.len == 0:
+      # generate our own copy of the library materials, so we can manipulate
+      # them without impacting other builds.
+      for i in 0..int.high:
+        let m = self.get_material(i)
+        if m.is_nil:
+          break
+        else:
+          let m = m.duplicate.as(ShaderMaterial)
+          m.set_shader_param("emission_energy", default_glow.to_variant)
+          self.model.shared.value.materials.add(m)
+
+    for i, material in self.model.shared.value.materials:
+      self.set_material(i, material)
 
   proc draw(location: Vector3, color: Color) =
     self.get_voxel_tool.set_voxel(location, ord color.action_index)
@@ -169,6 +169,7 @@ gdobj BuildNode of VoxelTerrain:
       self.collision_layer = layer
 
     self.model.sight_ray = self.get_node("SightRay") as RayCast
+    self.prepare_materials()
 
 proc init*(_: type BuildNode): BuildNode =
   if build_scene.is_nil:
