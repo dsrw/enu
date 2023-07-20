@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Run Client" type="CLionExternalRunConfiguration" factoryName="Application" PROGRAM_PARAMS="--verbose scenes/game.tscn" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$ProjectFileDir$/app" PASS_PARENT_ENVS_2="true" PROJECT_NAME="enu" TARGET_NAME="nimble build" CONFIG_NAME="nimble build" RUN_PATH="$PROJECT_DIR$/vendor/godot/bin/godot.osx.opt.tools.arm64">
+  <configuration default="false" name="Run Client" type="CLionExternalRunConfiguration" factoryName="Application" PROGRAM_PARAMS="scenes/game.tscn" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$ProjectFileDir$/app" PASS_PARENT_ENVS_2="true" PROJECT_NAME="enu" TARGET_NAME="nimble build" CONFIG_NAME="nimble build" RUN_PATH="$PROJECT_DIR$/vendor/godot/bin/godot.osx.opt.tools.arm64">
     <method v="2" />
   </configuration>
 </component>
