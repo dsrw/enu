@@ -1,4 +1,7 @@
 name start_spot
-sleep 3
+
+while maze.building:
+  sleep 0.5
+
 player.position = start_spot
 player.rotation = 180

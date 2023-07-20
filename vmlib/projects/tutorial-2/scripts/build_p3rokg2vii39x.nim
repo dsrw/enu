@@ -53,7 +53,9 @@ move me
   player.playing = false
 
 loop:
-  nil -> explore
+  nil -> sleep
+  if not maze.building:
+    sleep -> explore
   if charge_player:
     (explore, hunt, attack) ==> charge
     charge_player = false

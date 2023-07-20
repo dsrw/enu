@@ -1,3 +1,5 @@
+name maze(building = true)
+
 speed = 0
 seed = 1
 
@@ -35,3 +37,5 @@ turn left
         roof_sides = {1, 2, 3, 4}
       else:
         roof_sides = {2, 3}
+
+building = false
