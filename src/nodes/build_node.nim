@@ -144,7 +144,11 @@ gdobj BuildNode of VoxelTerrain:
     self.model.sight_query.watch:
       if added:
         var query = change.item
+        # disable collisions during query so ray doesn't collide with us.
+        let collision_layer = self.collision_layer
+        self.collision_layer = 0
         query.run(self.model)
+        self.collision_layer = collision_layer
         self.model.sight_query.value = query
 
   method process(delta: float) =

@@ -321,14 +321,15 @@ proc `rotation=`(self: Unit, degrees: float) =
 proc sees(self: Worker, unit: Unit, target: Unit, distance: float): Future[bool] =
   result = Future.init(bool, "sees")
 
-  # if target == state.player.value and Flying in state.local_flags:
-  #   result.complete(false)
-  #   return
+  if target == state.player.value and Flying in state.local_flags:
+    result.complete(false)
+    return
 
   if unit of Build or unit of Bot:
     unit.sight_query.value = SightQuery(target: target, distance: distance)
   else:
     result.complete(false)
+    return
 
   let future = result
   unit.script_ctx.callback = proc(delta: float, timeout: MonoTime): TaskStates =
@@ -339,6 +340,7 @@ proc sees(self: Worker, unit: Unit, target: Unit, distance: float): Future[bool]
     else:
       result = Running
 
+  unit.script_ctx.last_ran = MonoTime.default
   self.pause_script()
 
 proc wake(self: Unit) =
@@ -830,6 +832,7 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
     let wait_until = frame_start + min_time
 
     Zen.thread_ctx.recv
+    inc state.frame_count
     for ctx_name in Zen.thread_ctx.unsubscribed:
       var i  = 0
       while i < state.units.len:

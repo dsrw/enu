@@ -154,6 +154,7 @@ gdobj BotNode of KinematicBody:
   proc setup* =
     self.set_color(self.model.color.value)
     self.track_changes
+    self.model.sight_ray = self.get_node("SightRay") as RayCast
 
   method process(delta: float) =
     if ?self.model:

@@ -1,13 +1,9 @@
-
-
-
-
 let copy = """
 
   # Inky: Isolation
-  
+
   `Inky: Isolation` is a simple survivial game created in Enu. You can see how it was made in the video [Inky: Isolation. A 90 minute game built with Enu and Nim](https://youtu.be/9e9sLsmsu_o)
-  
+
   Click to [RESTART](nim://restart())
 
 """
