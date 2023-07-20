@@ -1,4 +1,4 @@
-import std / [tables, monotimes, sets, options]
+import std / [tables, monotimes, sets, options, asyncfutures]
 import godotapi / [spatial, ray_cast]
 import pkg/core/godotcoretypes except Color
 import pkg / core / [vector3, basis, aabb, godotbase]
@@ -83,6 +83,11 @@ type
 
   ScriptErrors* = ZenSeq[tuple[msg: string, info: TLineInfo, location: string]]
 
+  SightQuery* = object
+    target*: Unit
+    distance*: float
+    answer*: Option[bool]
+
   Unit* = ref object of Model
     parent*: Unit
     units*: ZenSeq[Unit]
@@ -105,6 +110,7 @@ type
     zids* {.zen_ignore.}: seq[ZID]
     errors*: ScriptErrors
     current_line*: ZenValue[int]
+    sight_query*: ZenValue[SightQuery]
 
   Player* = ref object of Unit
     colliders*: HashSet[Model]

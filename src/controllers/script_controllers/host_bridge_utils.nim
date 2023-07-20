@@ -38,6 +38,10 @@ proc to_result(val: SomeOrdinal or enum or bool): BiggestInt = BiggestInt(val)
 proc to_result(val: Vector3 or string or tuple): PNode = val.to_node
 proc to_result(val: PNode): PNode = result = val
 
+proc await_future[T](future: Future[T], a: VmArgs) =
+  future.add_callback proc(future: Future[T]) =
+    set_result(a, to_result(future.read))
+
 macro bridged_from_vm(self: Worker,
     module_name: string, proc_refs: varargs[untyped]): untyped =
 
@@ -77,7 +81,7 @@ macro bridged_from_vm(self: Worker,
           new_call(bind_sym(getter), ident"a", new_lit(pos))
 
     var call = new_call(proc_ref, args)
-    if return_node.kind == nnkSym:
+    if return_node.kind == nnk_sym:
       if return_node.str_val in ["Unit", "Bot", "Build", "Sign"]:
         call = new_call(bind_sym"set_result", ident"a",
             new_call(bind_sym"to_node", ident"script_engine", call))
@@ -85,6 +89,10 @@ macro bridged_from_vm(self: Worker,
       else:
         call = new_call(bind_sym"set_result", ident"a",
             new_call(bind_sym"to_result", call))
+    elif return_node.kind == nnk_bracket_expr and return_node.len == 2 and
+        return_node[0].str_val == "Future":
+
+      call = new_call(bind_sym"await_future", call, ident"a")
 
     result.add quote do:
       mixin implement_routine

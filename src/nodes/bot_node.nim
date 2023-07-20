@@ -5,6 +5,7 @@ import godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
                    input_event, animation_player, resource_loader, packed_scene,
                    spatial_material]
 import globals, core, models / [states, colors]
+import ./ queries
 
 gdobj BotNode of KinematicBody:
   var
@@ -143,6 +144,12 @@ gdobj BotNode of KinematicBody:
     self.transform_zid = self.model.transform.watch:
       if added:
         self.transform = change.item
+
+    self.model.sight_query.watch:
+      if added:
+        var query = change.item
+        query.run(self.model)
+        self.model.sight_query.value = query
 
   proc setup* =
     self.set_color(self.model.color.value)

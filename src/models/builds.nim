@@ -379,6 +379,8 @@ proc init*(_: type Build,
   result = self
 
 method main_thread_init*(self: Build) =
+  proc_call main_thread_init(Unit(self))
+
   self.local_flags.watch:
     if Hover.added and state.tool.value == CodeMode:
       if Playing notin state.local_flags:

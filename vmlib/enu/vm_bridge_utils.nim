@@ -63,39 +63,3 @@ when is_main_module:
   bridged_to_host:
     proc write_stack_trace*()
     proc id*(self: Unit): string
-    proc position*(self: Unit): Vector3
-    proc local_position*(self: Unit): Vector3
-    proc start_position*(self: Unit): Vector3
-    proc speed*(self: Unit): float
-    proc `speed=`*(self: Unit, speed: float)
-    proc scale*(self: Unit): float
-    proc `scale=`*(self: Unit, scale: float)
-    proc glow*(self: Unit): float
-    proc `glow=`*(self: Unit, energy: float)
-    proc global*(self: Unit): bool
-    proc `global=`*(self: Unit, global: bool)
-    proc rotation(self: Unit): float
-    proc `rotation=`(self: Unit, degrees: float)
-    proc hit*(self: Unit, node: Unit): Vector3
-    proc `velocity=`*(self: Unit, velocity: Vector3)
-    proc velocity*(self: Unit): Vector3
-    proc color*(self: Unit): Colors
-    proc `color=`*(self: Unit, color: Colors)
-    proc seen*(node: Unit, less_than = 100.0): bool
-    proc show*(self: Unit): bool
-    proc `show=`*(self: Unit, value: bool)
-    proc frame_created*(self: Unit): int
-    proc lock*(self: Unit): bool
-    proc `lock=`*(self: Unit, value: bool)
-    proc reset*(self: Unit, clear = false)
-    proc press_action*(name: string)
-
-    # TODO: These should be in base_bridge_private, but are currently needed outside of base_api.
-    proc echo_console*(msg: string)
-    proc exit*(exit_code = 0, msg = "")
-    proc new_instance*(src, dest: Unit)
-    proc exec_instance*(self: Unit)
-    proc wake*(self: Unit)
-    proc link_dependency*(dep: not Unit)
-    proc create_new*(self: Unit)
-    proc frame_count*()

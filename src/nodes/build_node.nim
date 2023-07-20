@@ -1,8 +1,9 @@
 import std / [tables, bitops]
-import pkg/godot except print, Color
+import pkg / godot except print, Color
 import godotapi / [node, voxel_terrain, voxel_mesher_blocky, voxel_tool,
-       voxel_library, shader_material,resource_loader, packed_scene]
-import core, models / [builds, colors, states], globals
+       voxel_library, shader_material,resource_loader, packed_scene, ray_cast]
+import core, models / [units, builds, colors, states], globals
+import ./ queries
 
 const
   highlight_glow = 1.0
@@ -139,6 +140,12 @@ gdobj BuildNode of VoxelTerrain:
     self.transform_zid = self.model.transform.watch:
       if added:
         self.transform = change.item
+
+    self.model.sight_query.watch:
+      if added:
+        var query = change.item
+        query.run(self.model)
+        self.model.sight_query.value = query
 
   method process(delta: float) =
     if ?self.model and self.model.code.value.owner == state.worker_ctx_name:

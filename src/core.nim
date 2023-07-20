@@ -2,7 +2,7 @@ import types
 export types
 
 import pkg / model_citizen / utils
-import std / [sequtils, strutils, sugar, macros]
+import std / [sequtils, strutils, sugar, macros, asyncfutures]
 export utils, sequtils, strutils, sugar
 
 ### Globals ###
@@ -152,6 +152,9 @@ when not defined(no_godot):
       godot.print msg
 
 # misc
+
+proc init*(_: type Future, T: type, proc_name = ""): Future[T] =
+  return new_future[T](proc_name)
 
 import pkg / core / transforms
 export transforms

@@ -8,6 +8,8 @@ proc active_unit_impl(): Unit = current_active_unit
 proc register_active*(self: Unit) = register_active_impl(self)
 proc active_unit*(): Unit = active_unit_impl()
 
+proc sees_impl*(self: Unit, target: Unit, less_than = 100.0): bool = discard
+
 bridged_to_host:
   proc write_stack_trace*()
   proc id*(self: Unit): string
@@ -29,7 +31,6 @@ bridged_to_host:
   proc velocity*(self: Unit): Vector3
   proc color*(self: Unit): Colors
   proc `color=`*(self: Unit, color: Colors)
-  proc seen*(node: Unit, less_than = 100.0): bool
   proc show*(self: Unit): bool
   proc `show=`*(self: Unit, value: bool)
   proc frame_created*(self: Unit): int

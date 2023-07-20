@@ -32,9 +32,16 @@ proc init_unit*[T: Unit](self: T) =
     current_line = ZenValue[int].init
     collisions = ZenSeq[(string, Vector3)].init
     shared = ZenValue[Shared].init
+    sight_query = ZenValue[SightQuery].init(flags = {SyncLocal})
 
   self.init_shared
   self.global_flags += Visible
+
+proc position*(self: Unit): Vector3 =
+  if Global in self.global_flags:
+    self.transform.origin
+  else:
+    self.transform.origin.global_from(self.parent)
 
 proc find_root*(self: Unit, all_clones = false): Unit =
   result = self

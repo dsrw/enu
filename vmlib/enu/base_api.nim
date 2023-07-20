@@ -100,6 +100,19 @@ template d*(steps = 1.0) = enu_target.down(steps)
 template f*(steps = 1.0) = enu_target.forward(steps)
 template b*(steps = 1.0) = enu_target.back(steps)
 
+template see*(target: Unit, less_than = 100.0): bool =
+  enu_target.see(target, less_than)
+
+## alias of `see`
+template sees*(target: Unit, less_than = 100.0): bool =
+  enu_target.see(target, less_than)
+
+proc sees*(self: Unit, target: Unit, less_than = 100.0): bool =
+  sees_impl(self, target, less_than)
+
+proc see*(self: Unit, target: Unit, less_than = 100.0): bool =
+  sees(self, target, less_than)
+
 proc forward*(self: Unit, value: PositionOffset, move_mode: int) =
   let steps = self.local_position.z - value.position.z + value.offset
   wait self.begin_move(FORWARD, steps, move_mode)

@@ -1,6 +1,6 @@
 import std /
   [os, macros, sugar, sets, strutils, times, monotimes, sequtils, importutils,
-  tables, options, math, re, hashes, random]
+  tables, options, math, re, hashes, random, asyncfutures]
 import locks except Lock
 import pkg / godot except print
 import pkg / compiler / vm except get_int
@@ -228,12 +228,6 @@ proc `lock=`(self: Unit, value: bool) =
 proc local_position(self: Unit): Vector3 =
   self.transform.origin
 
-proc position(self: Unit): Vector3 =
-  if Global in self.global_flags:
-    self.transform.origin
-  else:
-    self.transform.origin.global_from(self.parent)
-
 proc start_position(self: Unit): Vector3 =
   if Global in self.global_flags:
     self.start_transform.origin
@@ -324,26 +318,28 @@ proc `rotation=`(self: Unit, degrees: float) =
     t.origin = self.transform.value.origin
   self.transform.value = t
 
-proc seen(self: Worker, target: Unit, distance: float): bool =
-  return false
-  if target == state.player.value and Flying in state.local_flags:
-    return false
-  let unit = self.active_unit
-  if unit of Build:
-    let ray = Build(unit).sight_ray
-    let node = VoxelTerrain(Build(unit).node)
-    let target_position = target.position.local_to(unit)
-    let angle = target_position - ray.transform.origin
-    if angle.length <= distance and angle.normalized.z <= -0.3:
-      ray.cast_to = angle
-      var old_layer = node.collision_layer
-      node.collision_layer = 0
-      ray.force_raycast_update
-      if ray.is_colliding:
-        let collider = ray.get_collider as Spatial
-        if collider == target.node:
-          result = true
-      node.collision_layer = old_layer
+proc sees(self: Worker, unit: Unit, target: Unit, distance: float): Future[bool] =
+  result = Future.init(bool, "sees")
+
+  # if target == state.player.value and Flying in state.local_flags:
+  #   result.complete(false)
+  #   return
+
+  if unit of Build or unit of Bot:
+    unit.sight_query.value = SightQuery(target: target, distance: distance)
+  else:
+    result.complete(false)
+
+  let future = result
+  unit.script_ctx.callback = proc(delta: float, timeout: MonoTime): TaskStates =
+    let query = unit.sight_query.value
+    if ?query.answer:
+      future.complete(query.answer.get)
+      result = Done
+    else:
+      result = Running
+
+  self.pause_script()
 
 proc wake(self: Unit) =
   self.script_ctx.timer = get_mono_time()
@@ -956,7 +952,7 @@ proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
     register_active, echo_console, new_instance, exec_instance, hit, exit,
     global, `global=`, position, local_position, rotation, `rotation=`, id,
     glow, `glow=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`,
-    active_unit, color, `color=`, seen, start_position, wake, frame_count,
+    active_unit, color, `color=`, sees, start_position, wake, frame_count,
     write_stack_trace, show, `show=`, frame_created, lock, `lock=`, reset,
     press_action
 
