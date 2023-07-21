@@ -111,6 +111,7 @@ type
     errors*: ScriptErrors
     current_line*: ZenValue[int]
     sight_query*: ZenValue[SightQuery]
+    eval*: ZenValue[string]
 
   Player* = ref object of Unit
     colliders*: HashSet[Model]
@@ -125,7 +126,7 @@ type
     width*, height*: ZenValue[float]
     size*: ZenValue[int]
     billboard*, zoomable*: ZenValue[bool]
-    owner*: Unit
+    owner*: ZenValue[Unit]
 
   VoxelKind* = enum
     Hole, Manual, Computed

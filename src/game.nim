@@ -346,7 +346,9 @@ world: {state.config.value.world}
 
   method on_meta_clicked(url: string) =
     if url.starts_with("nim://"):
-      discard
-      #self.script_controller.eval(url[6..^1])
+      assert ?state.open_sign.value
+
+      state.open_sign.value.owner.value.eval.value = url[6..^1]
+
     elif shell_open(url) != godotcoretypes.Error.OK:
       logger("err", \"Unable to open url {url}")

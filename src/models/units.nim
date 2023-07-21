@@ -33,6 +33,7 @@ proc init_unit*[T: Unit](self: T) =
     collisions = ZenSeq[(string, Vector3)].init
     shared = ZenValue[Shared].init
     sight_query = ZenValue[SightQuery].init(flags = {SyncLocal})
+    eval = ZenValue[string].init(flags = {SyncLocal})
 
   self.init_shared
   self.global_flags += Visible
@@ -122,6 +123,10 @@ method off_collision*(self: Model, partner: Model) {.base, gcsafe.} =
 
 proc destroy*[T: Unit](self: T) =
   assert ?self
+
+  if self of Sign:
+    # :( Sign(self) will fail to compile if T is a Build or a Bot.
+    Sign(Unit(self)).owner.value = nil
 
   # :( Parent isn't set properly for instances on the main thread
   if self.parent == nil and "instance" notin self.id:

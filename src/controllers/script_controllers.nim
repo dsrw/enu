@@ -665,6 +665,16 @@ proc script_file_for(self: Unit): string =
   else:
     ""
 
+proc eval(self: Worker, unit: Unit, code: string) =
+  let active = self.active_unit
+  self.active_unit = unit
+  defer:
+    self.active_unit = active
+
+  unit.script_ctx.timeout_at = get_mono_time() + script_timeout
+  {.gcsafe.}:
+    discard unit.script_ctx.eval(code)
+
 proc change_code(self: Worker, unit: Unit, code: Code) =
   debug "code changing", unit = unit.id
   unit.errors.clear
@@ -703,6 +713,11 @@ proc watch_code(self: Worker, unit: Unit) =
     if added or touched:
       if change.item.owner == "" or change.item.owner == Zen.thread_ctx.id:
         self.change_code(unit, change.item)
+
+  unit.eval.changes:
+    if added or touched and change.item != "":
+      self.eval(unit, change.item)
+      unit.eval.value = ""
 
   if unit.script_ctx.is_nil:
     unit.script_ctx = ScriptCtx.init(owner = unit,
@@ -861,15 +876,6 @@ proc extract_file_info(msg: string): tuple[name: string, info: TLineInfo] =
   if msg =~ re"unhandled exception: (.*)\((\d+), (\d+)\)":
     result = (matches[0], TLineInfo(line: matches[1].parse_int.uint16, col:
         matches[2].parse_int.int16))
-
-proc eval*(self: Worker, code: string) =
-  let active = self.active_unit
-  self.active_unit = state.open_sign.value.owner
-  defer:
-    self.active_unit = active
-
-  self.active_unit.script_ctx.timeout_at = get_mono_time() + script_timeout
-  discard self.active_unit.script_ctx.eval(code)
 
 proc init*(T: type ScriptController): ScriptController =
   result = ScriptController()
