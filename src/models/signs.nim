@@ -9,18 +9,18 @@ proc init*(_: type Sign,
   let title = if title == "": markdown else: title
   var self = Sign(
     id: "sign_" & generate_id(),
-    markdown: Zen.init(markdown),
-    title: Zen.init(title),
-    glow: ZenValue[float].init,
-    width: Zen.init(width),
-    height: Zen.init(height),
-    size: Zen.init(size),
-    billboard: ZenValue[bool].init(billboard),
-    zoomable: ZenValue[bool].init(zoomable),
+    markdown: ~markdown,
+    title: ~title,
+    glow: ~0.0,
+    width: ~width,
+    height: ~height,
+    size: ~size,
+    billboard: ~billboard,
+    zoomable: ~zoomable,
     frame_created: state.frame_count,
     color: Zen.init(action_colors[black]),
     start_transform: transform,
-    owner: Zen.init(owner)
+    owner: ~owner
   )
   self.init_unit
 

@@ -162,26 +162,8 @@ export transforms
 import godotapi / [spatial]
 import pkg / godot
 
-proc from_flatty*[N: NimGodotObject](s: string, i: var int, n: N) =
-  discard
-
-proc to_flatty*[N: NimGodotObject](s: var string, n: N) =
-  discard
-
-proc from_flatty*(s: string, i: var int, n: var ScriptCtx) =
-  discard
-
-proc to_flatty*(s: var string, n: ScriptCtx) =
-  discard
-
 import pkg / model_citizen
-export model_citizen except `%`
-
-Zen.register_type(Player)
-Zen.register_type(Build)
-Zen.register_type(Sign)
-Zen.register_type(Bot)
-Zen.register_type(Shared)
+export model_citizen
 
 proc global_from*(self: Vector3, unit: Unit): Vector3 =
   result = self

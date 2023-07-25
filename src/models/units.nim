@@ -19,21 +19,21 @@ proc init_shared*(self: Unit) =
 
 proc init_unit*[T: Unit](self: T) =
   with self:
-    units = Zen.init(seq[Unit])
-    transform = Zen.init(self.start_transform)
-    global_flags = ZenSet[GlobalModelFlags].init
-    local_flags = ZenSet[LocalModelFlags].init(flags = {SyncLocal})
-    code = ZenValue[Code].init
-    velocity = ZenValue[Vector3].init
-    scale = Zen.init(1.0)
-    glow = ZenValue[float].init
-    color = Zen.init(self.start_color)
+    units = ~seq[Unit]
+    transform = ~self.start_transform
+    global_flags = ~set[GlobalModelFlags]
+    local_flags = Zen.init(set[LocalModelFlags], flags = {SyncLocal})
+    code = ~Code
+    velocity = ~Vector3
+    scale = ~1.0
+    glow = ~float
+    color = ~self.start_color
     errors = ScriptErrors.init
-    current_line = ZenValue[int].init
-    collisions = ZenSeq[(string, Vector3)].init
-    shared = ZenValue[Shared].init
-    sight_query = ZenValue[SightQuery].init(flags = {SyncLocal})
-    eval = ZenValue[string].init(flags = {SyncLocal})
+    current_line = ~0
+    collisions = ~seq[(string, Vector3)]
+    shared = ~Shared
+    sight_query = Zen.init(SightQuery, flags = {SyncLocal})
+    eval = Zen.init("", flags = {SyncLocal})
 
   self.init_shared
   self.global_flags += Visible

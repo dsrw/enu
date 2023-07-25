@@ -3,17 +3,18 @@ import godotapi / [spatial, ray_cast]
 import pkg/core/godotcoretypes except Color
 import pkg / core / [vector3, basis, aabb, godotbase]
 import pkg / compiler / passes {.all.}
-import pkg / compiler / ast
-import pkg / model_citizen
+import pkg / compiler / [ast, lineinfos]
+import pkg / [model_citizen]
 import models / colors, libs / [eval]
 import shared / errors
+
+from pkg / godot import NimGodotObject
 
 export Vector3, Transform, vector3, basis, AABB, aabb
 export godotbase except print
 export Interpreter
 
 type
-
   LocalStateFlags* = enum
     CommandMode, EditorVisible, ConsoleVisible,
     BlockTargetVisible, ReticleVisible, DocsVisible, MouseCaptured,
@@ -223,3 +224,21 @@ type
     last_exception*: ref Exception
 
   NodeController* = ref object
+
+proc from_flatty*[N: NimGodotObject](s: string, i: var int, n: N) =
+  discard
+
+proc to_flatty*[N: NimGodotObject](s: var string, n: N) =
+  discard
+
+proc from_flatty*(s: string, i: var int, n: var ScriptCtx) =
+  discard
+
+proc to_flatty*(s: var string, n: ScriptCtx) =
+  discard
+
+Zen.register(Player)
+Zen.register(Build)
+Zen.register(Sign)
+Zen.register(Bot)
+Zen.register(Shared)

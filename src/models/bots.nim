@@ -66,7 +66,7 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
   var self = Bot(
     id: id,
     start_transform: transform,
-    animation: Zen.init("auto"),
+    animation: ~"auto",
     speed: 1.0,
     clone_of: clone_of,
     start_color: action_colors[black],
