@@ -2,7 +2,7 @@ import godotapi / [text_edit, scene_tree, node, input_event, input_event_key,
                          rich_text_label, global_constants]
 import godot
 import std / strutils
-import core, models / states
+import core
 
 gdobj Console of RichTextLabel:
   var

@@ -47,7 +47,7 @@ gdobj Game of Node:
     Zen.thread_ctx.recv(max_duration = (1.0 / 60.0).seconds)
     inc state.frame_count
     let time = get_mono_time()
-    if state.config.value.show_stats:
+    if state.config.show_stats:
       let fps = get_monitor(TIME_FPS)
 
       let vram = get_monitor(RENDER_VIDEO_MEM_USED)
@@ -62,7 +62,7 @@ scale_factor: {state.scale_factor}
 vram: {vram}
 units: {unit_count}
 zen objects: {Zen.thread_ctx.len}
-world: {state.config.value.world}
+world: {state.config.world}
 
       """
 
@@ -71,7 +71,7 @@ world: {state.config.value.world}
       self.rescale()
     if time > self.save_at:
       self.save_at = time + auto_save_interval
-      save_world(state.config.value.world_dir)
+      save_world(state.config.world_dir)
 
     if state.queued_action != "":
       var ev = gdnew[InputEventAction]()
@@ -83,14 +83,14 @@ world: {state.config.value.world}
 
   proc rescale*() =
     let vp = self.get_viewport().size
-    state.scale_factor = sqrt(state.config.value.mega_pixels *
+    state.scale_factor = sqrt(state.config.mega_pixels *
         1_000_000.0 / (vp.x * vp.y))
 
     self.scaled_viewport.size = vp * state.scale_factor
 
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
-      save_world(state.config.value.world_dir)
+      save_world(state.config.world_dir)
       self.get_tree().quit()
     if what == main_loop.NOTIFICATION_WM_ABOUT:
       alert \"Enu {enu_version}\n\n© 2023 Scott Wadden", "Enu"
@@ -149,7 +149,7 @@ world: {state.config.value.world}
 
     let env_listen_address = get_env("ENU_LISTEN_ADDRESS")
 
-    state.config.value:
+    state.config_value.value:
       work_dir = get_user_data_dir()
       font_size = uc.font_size ||= (20 * screen_scale).int
       dock_icon_size = uc.dock_icon_size ||= 100 * screen_scale
@@ -170,22 +170,22 @@ world: {state.config.value.world}
 
     state.set_flag(God, uc.god_mode ||= false)
 
-    set_window_fullscreen state.config.value.start_full_screen
+    set_window_fullscreen state.config.start_full_screen
 
     self.add_platform_input_actions()
 
     when defined(dist):
       let exe_dir = parent_dir get_executable_path()
       if host_os == "macosx":
-        state.config.value:
+        state.config_value.value:
           lib_dir = join_path(exe_dir.parent_dir, "Resources", "vmlib")
 
       elif host_os == "windows":
-        state.config.value:
+        state.config_value.value:
           lib_dir = join_path(exe_dir, "vmlib")
 
       elif host_os == "linux":
-        state.config.value:
+        state.config_value.value:
           lib_dir = join_path(exe_dir.parent_dir, "lib", "vmlib")
 
     self.node_controller = NodeController.init
@@ -196,7 +196,7 @@ world: {state.config.value.world}
 
   proc set_font_size(size: int) =
     var user_config = self.load_user_config()
-    state.config.value:
+    state.config_value.value:
       font_size = size
 
     user_config.font_size = some(size)
@@ -221,15 +221,15 @@ world: {state.config.value.world}
 
     self.bind_signals(self.get_viewport(), "size_changed")
     assert not self.scaled_viewport.is_nil
-    if state.config.value.mega_pixels >= 1.0:
+    if state.config.mega_pixels >= 1.0:
       self.scaled_viewport.get_texture.flags = FLAG_FILTER
 
     self.get_tree().auto_accept_quit = false
-    self.set_font_size state.config.value.font_size
+    self.set_font_size state.config.font_size
 
     self.reticle = self.find_node("Reticle").as(Control)
     self.stats = self.find_node("stats").as(Label)
-    self.stats.visible = state.config.value.show_stats
+    self.stats.visible = state.config.show_stats
 
     state.local_flags.changes:
       if MouseCaptured.added:
@@ -252,7 +252,7 @@ world: {state.config.value.world}
     self.rescale_at = get_mono_time()
 
   proc switch_world(diff: int) =
-    var config = state.config.value
+    var config = state.config
     if diff != 0:
       var world = config.world
       let prefix = config.world_prefix & "-"
@@ -267,19 +267,19 @@ world: {state.config.value.world}
       user_config.world = some(config.world)
       self.save_user_config(user_config)
       config.world_dir = join_path(config.work_dir, config.world)
-      state.config.value = config
+      state.config = config
     else:
       # force a reload of the current world
-      let current_world = state.config.value.world_dir
-      state.config.value: world_dir = ""
-      state.config.value: world_dir = current_world
+      let current_world = state.config.world_dir
+      state.config_value.value: world_dir = ""
+      state.config_value.value: world_dir = current_world
 
   method unhandled_input*(event: InputEvent) =
     if EditorVisible in state.local_flags or ConsoleVisible in state.local_flags:
       if event.is_action_pressed("zoom_in"):
-        self.set_font_size state.config.value.font_size + 1
+        self.set_font_size state.config.font_size + 1
       elif event.is_action_pressed("zoom_out"):
-        self.set_font_size state.config.value.font_size - 1
+        self.set_font_size state.config.font_size - 1
     else:
       if event.is_action_pressed("next"):
         state.update_action_index(1)
@@ -314,7 +314,7 @@ world: {state.config.value.world}
       state.set_flag ConsoleVisible, ConsoleVisible notin state.local_flags
     elif event.is_action_pressed("quit"):
       if host_os != "macosx":
-        save_world(state.config.value.world_dir)
+        save_world(state.config.world_dir)
         self.get_tree().quit()
     elif EditorVisible notin state.local_flags:
       if event.is_action_pressed("toggle_mouse_captured"):
@@ -322,33 +322,33 @@ world: {state.config.value.world}
         self.get_tree().set_input_as_handled()
 
     if event.is_action_pressed("toggle_code_mode"):
-      if state.tool.value != CodeMode:
-        self.last_tool = state.tool.value
-        state.tool.value = CodeMode
+      if state.tool != CodeMode:
+        self.last_tool = state.tool
+        state.tool = CodeMode
       else:
-        state.tool.value = self.last_tool
+        state.tool = self.last_tool
     elif event.is_action_pressed("mode_1"):
-      state.tool.value = CodeMode
+      state.tool = CodeMode
     elif event.is_action_pressed("mode_2"):
-      state.tool.value = BlueBlock
+      state.tool = BlueBlock
     elif event.is_action_pressed("mode_3"):
-      state.tool.value = RedBlock
+      state.tool = RedBlock
     elif event.is_action_pressed("mode_4"):
-      state.tool.value = GreenBlock
+      state.tool = GreenBlock
     elif event.is_action_pressed("mode_5"):
-      state.tool.value = BlackBlock
+      state.tool = BlackBlock
     elif event.is_action_pressed("mode_6"):
-      state.tool.value = WhiteBlock
+      state.tool = WhiteBlock
     elif event.is_action_pressed("mode_7"):
-      state.tool.value = BrownBlock
+      state.tool = BrownBlock
     elif event.is_action_pressed("mode_8"):
-      state.tool.value = PlaceBot
+      state.tool = PlaceBot
 
   method on_meta_clicked(url: string) =
     if url.starts_with("nim://"):
-      assert ?state.open_sign.value
+      assert ?state.open_sign
 
-      state.open_sign.value.owner.value.eval.value = url[6..^1]
+      state.open_sign.owner.eval = url[6..^1]
 
     elif shell_open(url) != godotcoretypes.Error.OK:
       logger("err", \"Unable to open url {url}")

@@ -3,7 +3,7 @@ import godotapi / [spatial, resource_loader, packed_scene, collision_shape,
                    mesh_instance, quad_mesh, spatial_material, viewport,
                    style_box_flat]
 import ui / markdown_label
-import core, models / [states]
+import core
 
 gdobj SignNode of Spatial:
   var model*: Sign
@@ -33,55 +33,55 @@ gdobj SignNode of Spatial:
     proc resize =
       debug "sign resize", sign = self.model.id
       var
-        ratio = self.model.width.value / self.model.height.value
+        ratio = self.model.width / self.model.height
         size = vec2(viewport.size.x, viewport.size.x / ratio)
 
-      quad.size = vec2(self.model.width.value, self.model.height.value)
-      shape.scale = vec3(self.model.width.value, self.model.height.value, 1)
+      quad.size = vec2(self.model.width, self.model.height)
+      shape.scale = vec3(self.model.width, self.model.height, 1)
       var t = mesh.transform
-      t.origin.x = self.model.width.value / -2 + 0.5
-      t.origin.y = self.model.height.value / -2 + 0.5
+      t.origin.x = self.model.width / -2 + 0.5
+      t.origin.y = self.model.height / -2 + 0.5
       mesh.transform = t
       viewport.size = size
       label.rect_size = size
 
       var stylebox = label.og_label.get_stylebox("normal") as StyleBoxFlat
 
-      stylebox.content_margin_left = 80 / self.model.width.value
-      label.size = int(float(self.model.size.value) / self.model.width.value)
+      stylebox.content_margin_left = 80 / self.model.width
+      label.size = int(float(self.model.size) / self.model.width)
 
     resize()
     self.material.params_billboard_mode =
-      if self.model.billboard.value:
+      if self.model.billboard:
         BILLBOARD_FIXED_Y
       else:
         BILLBOARD_DISABLED
 
-    label.markdown = self.model.title.value
+    label.markdown = self.model.title
     label.update
 
-    self.model.title.watch:
+    self.model.title_value.watch:
       if added or touched:
         if change.item == "":
-          label.markdown = self.model.markdown.value
+          label.markdown = self.model.markdown
         else:
           label.markdown = change.item
         resize()
         label.update
 
-    self.model.markdown.watch:
+    self.model.markdown_value.watch:
       if added or touched:
-        if self.model.title.value == "":
+        if self.model.title == "":
           label.markdown = change.item
           resize()
           label.update
 
-    self.model.glow.watch:
+    self.model.glow_value.watch:
       if added:
         self.material.emission_energy = change.item
 
-    self.transform = self.model.transform.value
-    self.model.transform.watch:
+    self.transform = self.model.transform
+    self.model.transform_value.watch:
       if added:
         self.transform = change.item
 

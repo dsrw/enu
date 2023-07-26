@@ -4,36 +4,36 @@ from pkg / core / godotcoretypes import Basis
 import core, models / [states, colors], libs / interpreters
 
 proc init_shared*(self: Unit) =
-  assert ?self.shared
+  assert ?self.shared_value
   if ?self.parent:
     self.shared = self.parent.shared
-  elif not ?self.shared.value:
-    self.shared.init
+  elif not ?self.shared:
+    self.shared_value.init
     var shared = Shared(id: self.id & "-shared")
     shared.init_zen_fields
-    self.shared.value = shared
+    self.shared = shared
 
-  if self.id notin self.shared.value.edits:
+  if self.id notin self.shared.edits:
     let table = init_table[Vector3, VoxelInfo]()
-    self.shared.value.edits[self.id] = table
+    self.shared.edits[self.id] = table
 
 proc init_unit*[T: Unit](self: T) =
   with self:
     units = ~seq[Unit]
-    transform = ~self.start_transform
+    transform_value = ~self.start_transform
     global_flags = ~set[GlobalModelFlags]
-    local_flags = Zen.init(set[LocalModelFlags], flags = {SyncLocal})
-    code = ~Code
-    velocity = ~Vector3
-    scale = ~1.0
-    glow = ~float
-    color = ~self.start_color
+    local_flags = ~(set[LocalModelFlags], flags = {SyncLocal})
+    code_value = ~Code
+    velocity_value = ~Vector3
+    scale_value = ~1.0
+    glow_value = ~float
+    color_value = ~self.start_color
     errors = ScriptErrors.init
-    current_line = ~0
+    current_line_value = ~0
     collisions = ~seq[(string, Vector3)]
-    shared = ~Shared
-    sight_query = Zen.init(SightQuery, flags = {SyncLocal})
-    eval = Zen.init("", flags = {SyncLocal})
+    shared_value = ~Shared
+    sight_query_value = ~(SightQuery, flags = {SyncLocal})
+    eval_value = ~("", flags = {SyncLocal})
 
   self.init_shared
   self.global_flags += Visible
@@ -68,7 +68,7 @@ proc walk_tree*(root: Unit, callback: proc(unit: Unit) {.gcsafe.}) =
 
 proc data_dir*(self: Unit): string =
   if self.parent.is_nil:
-    state.config.value.data_dir / self.id
+    state.config.data_dir / self.id
   else:
     self.parent.data_dir / self.id
 
@@ -97,8 +97,8 @@ method reset*(self: Unit) {.base, gcsafe.} =
   discard
 
 method collect_garbage*(self: Unit) {.base, gcsafe.} =
-  var edits = self.shared.value.edits
-  for id, edit in self.shared.value.edits:
+  var edits = self.shared.edits
+  for id, edit in self.shared.edits:
     for loc, voxel in edit:
       if voxel.kind == Hole and voxel.color == action_colors[eraser]:
         var locations = edits[id]
@@ -110,7 +110,7 @@ method collect_garbage*(self: Unit) {.base, gcsafe.} =
         var locations = edits[id]
         locations[loc] = voxel
         edits[id] = locations
-  self.shared.value.edits = edits
+  self.shared.edits = edits
 
 method ensure_visible*(self: Unit) {.base, gcsafe.} =
   discard
@@ -126,14 +126,14 @@ proc destroy*[T: Unit](self: T) =
 
   if self of Sign:
     # :( Sign(self) will fail to compile if T is a Build or a Bot.
-    Sign(Unit(self)).owner.value = nil
+    Sign(Unit(self)).owner = nil
 
   # :( Parent isn't set properly for instances on the main thread
   if self.parent == nil and "instance" notin self.id:
-    let shared = self.shared.value
+    let shared = self.shared
     shared.edits.destroy
-    self.shared.value = nil
-    self.shared.destroy
+    self.shared = nil
+    self.shared_value.destroy
     Zen.thread_ctx.free(shared)
   else:
     self.shared = nil

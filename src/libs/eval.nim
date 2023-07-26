@@ -1,8 +1,10 @@
-include compiler / nimeval
 import compiler / [syntaxes, reorder]
 import compiler / passes {.all.}
-
 import compiler / msgs
+
+{.warning[UnusedImport]: off.}
+include compiler / nimeval
+
 export Interpreter, VmArgs, PCtx, PStackFrame, TLineInfo
 
 # adapted from

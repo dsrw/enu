@@ -2,7 +2,7 @@ import std / [tables, bitops]
 import pkg / godot except print, Color
 import godotapi / [node, voxel_terrain, voxel_mesher_blocky, voxel_tool,
        voxel_library, shader_material,resource_loader, packed_scene, ray_cast]
-import core, models / [units, builds, colors, states], globals
+import core, models / [units, builds, colors], globals
 import ./ queries
 
 const
@@ -26,7 +26,7 @@ gdobj BuildNode of VoxelTerrain:
     self.default_view_distance = self.max_view_distance.int
 
   proc prepare_materials =
-    if self.model.shared.value.materials.len == 0:
+    if self.model.shared.materials.len == 0:
       # generate our own copy of the library materials, so we can manipulate
       # them without impacting other builds.
       for i in 0..int.high:
@@ -36,9 +36,9 @@ gdobj BuildNode of VoxelTerrain:
         else:
           let m = m.duplicate.as(ShaderMaterial)
           m.set_shader_param("emission_energy", default_glow.to_variant)
-          self.model.shared.value.materials.add(m)
+          self.model.shared.materials.add(m)
 
-    for i, material in self.model.shared.value.materials:
+    for i, material in self.model.shared.materials:
       self.set_material(i, material)
 
   proc draw(location: Vector3, color: Color) =
@@ -84,23 +84,23 @@ gdobj BuildNode of VoxelTerrain:
     if Visible in self.model.global_flags:
       self.visible = true
 
-      for material in self.model.shared.value.materials:
+      for material in self.model.shared.materials:
         material.shader = shader
     elif Visible notin self.model.global_flags and God in state.local_flags:
       self.visible = true
 
-      for material in self.model.shared.value.materials:
+      for material in self.model.shared.materials:
         material.shader = hidden_shader
     else:
       self.visible = false
 
   proc track_changes() =
-    self.model.glow.watch:
+    self.model.glow_value.watch:
       if added:
         self.set_glow(change.item)
 
-    self.bounds = self.model.bounds.value
-    self.model.bounds.watch:
+    self.bounds = self.model.bounds
+    self.model.bounds_value.watch:
       if added:
         debug "changing bounds", new = change.item
         self.bounds = change.item
@@ -123,25 +123,25 @@ gdobj BuildNode of VoxelTerrain:
       if Highlight.added:
         self.set_glow highlight_glow
       elif Highlight.removed:
-        self.set_glow self.model.glow.value
+        self.set_glow self.model.glow
 
     state.local_flags.watch:
       if change.item == God:
         self.set_visibility
 
-    self.model.scale.watch:
+    self.model.scale_value.watch:
       if added:
         let scale = change.item
         self.scale = vec3(scale, scale, scale)
-        self.model.transform.pause self.transform_zid:
-          self.model.transform.value = self.transform
+        self.model.transform_value.pause self.transform_zid:
+          self.model.transform = self.transform
         self.max_view_distance = int(self.default_view_distance.float / scale)
 
-    self.transform_zid = self.model.transform.watch:
+    self.transform_zid = self.model.transform_value.watch:
       if added:
         self.transform = change.item
 
-    self.model.sight_query.watch:
+    self.model.sight_query_value.watch:
       if added:
         var query = change.item
         # disable collisions during query so ray doesn't collide with us.
@@ -149,12 +149,12 @@ gdobj BuildNode of VoxelTerrain:
         self.collision_layer = 0
         query.run(self.model)
         self.collision_layer = collision_layer
-        self.model.sight_query.value = query
+        self.model.sight_query = query
 
   method process(delta: float) =
-    if ?self.model and self.model.code.value.owner == state.worker_ctx_name:
-      self.model.transform.pause self.transform_zid:
-        self.model.transform.value = self.transform
+    if ?self.model and self.model.code.owner == state.worker_ctx_name:
+      self.model.transform_value.pause self.transform_zid:
+        self.model.transform = self.transform
 
   proc setup* =
     let was_skipping_join = dont_join

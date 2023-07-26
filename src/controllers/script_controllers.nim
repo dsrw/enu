@@ -240,9 +240,9 @@ proc position_set(self: Unit, position: Vector3) =
     position.y = 0.1
 
   if Global in self.global_flags:
-    self.transform.origin = position
+    self.transform_value.origin = position
   else:
-    self.transform.origin = position.local_to(self.parent)
+    self.transform_value.origin = position.local_to(self.parent)
 
 proc speed(self: Unit): float =
   self.speed
@@ -251,28 +251,28 @@ proc `speed=`(self: Unit, speed: float) =
   self.speed = speed
 
 proc scale(self: Unit): float =
-  self.scale.value
+  self.scale
 
 proc `scale=`(self: Unit, scale: float) =
-  self.scale.value = scale
+  types.`scale=`(self, scale)
 
 proc glow(self: Unit): float =
-  self.glow.value
+  self.glow
 
 proc `glow=`(self: Unit, glow: float) =
-  self.glow.value = glow
+  types.`glow=`(self, glow)
 
 proc velocity(self: Unit): Vector3 =
-  self.velocity.value
+  self.velocity
 
 proc `velocity=`(self: Unit, velocity: Vector3) =
-  self.velocity.value = velocity
+  types.`velocity=`(self, velocity)
 
 proc color(self: Unit): Colors =
-  action_index self.color.value
+  action_index self.color_value.value
 
 proc `color=`(self: Unit, color: Colors) =
-  self.color.value = action_colors[color]
+  types.`color=`(self, action_colors[color])
 
 proc show(self: Unit): bool =
   Visible in self.global_flags
@@ -297,7 +297,7 @@ proc rotation(self: Unit): float =
     vec3(v.x.nm, v.y.nm, v.z.nm)
 
   if self of Player:
-    result = Player(self).rotation.value
+    result = Player(self).rotation
   else:
     let e = self.transform.basis.orthonormalized.get_euler
 
@@ -309,31 +309,31 @@ proc rotation(self: Unit): float =
 proc `rotation=`(self: Unit, degrees: float) =
   var t = Transform.init
   if self of Player:
-    Player(self).rotation.touch degrees
+    Player(self).rotation_value.touch degrees
     t.origin = self.transform.origin
   else:
     t = Transform.init
-    var s = self.scale.value
+    var s = self.scale
     t = t.rotated(UP, deg_to_rad(degrees)).scaled(vec3(s, s, s))
-    t.origin = self.transform.value.origin
-  self.transform.value = t
+    t.origin = self.transform.origin
+  self.transform = t
 
 proc sees(self: Worker, unit: Unit, target: Unit, distance: float): Future[bool] =
   result = Future.init(bool, "sees")
 
-  if target == state.player.value and Flying in state.local_flags:
+  if target == state.player and Flying in state.local_flags:
     result.complete(false)
     return
 
   if unit of Build or unit of Bot:
-    unit.sight_query.value = SightQuery(target: target, distance: distance)
+    unit.sight_query = SightQuery(target: target, distance: distance)
   else:
     result.complete(false)
     return
 
   let future = result
   unit.script_ctx.callback = proc(delta: float, timeout: MonoTime): TaskStates =
-    let query = unit.sight_query.value
+    let query = unit.sight_query
     if ?query.answer:
       future.complete(query.answer.get)
       result = Done
@@ -366,7 +366,7 @@ proc drop_transform(unit: Unit): Transform =
   if unit of Bot:
     result = Transform.init
   elif unit of Build:
-    result = Build(unit).draw_transform.value
+    result = Build(unit).draw_transform
     result.origin = result.origin.snapped(vec3(1, 1, 1))
     result = result.translated(FORWARD * 0.51)
     result.origin = result.origin - (FORWARD + LEFT + DOWN) * 0.5
@@ -397,7 +397,7 @@ proc reset(self: Unit, clear: bool) =
 # Bot bindings
 
 proc play(self: Bot, animation_name: string) =
-  self.animation.value = animation_name
+  self.animation = animation_name
 
 proc all_units(T: type Unit, self: Worker): PNode =
   var node = ast.new_node(nkBracketExpr)
@@ -430,10 +430,10 @@ proc initial_position(self: Build): Vector3 =
 
 proc save(self: Build, name: string) =
   self.save_points[name] =
-      (self.draw_transform.value, self.color.value, self.drawing)
+      (self.draw_transform, self.color_value.value, self.drawing)
 
 proc restore(self: Build, name: string) =
-  (self.draw_transform.value, self.color.value, self.drawing) =
+  (self.draw_transform, self.color_value.value, self.drawing) =
       self.save_points[name]
 
 # Player binding
@@ -457,59 +457,59 @@ proc `flying=`*(self: Unit, value: bool) =
   state.set_flag Flying, value
 
 proc tool(self: Unit): int =
-  int(state.tool.value)
+  int(state.tool)
 
 proc `tool=`(self: Unit, value: int) =
-  state.tool.value = Tools(value)
+  state.tool = Tools(value)
 
 # Sign bindings
 proc title(self: Sign): string =
-  self.title.value
+  self.title
 
 proc `title=`(self: Sign, value: string) =
-  self.title.value = value
+  types.`title=`(self, value)
 
 proc markdown(self: Sign): string =
-  self.markdown.value
+  self.markdown
 
 proc `markdown=`(self: Sign, value: string) =
-  self.markdown.value = value
+  types.`markdown=`(self, value)
 
 proc width(self: Sign): float =
-  self.width.value
+  self.width
 
 proc `width=`(self: Sign, value: float) =
-  self.width.value = value
-  self.title.touch self.title.value
+  types.`width=`(self, value)
+  self.title_value.touch self.title
 
 proc height(self: Sign): float =
-  self.height.value
+  self.height
 
 proc `height=`(self: Sign, value: float) =
-  self.height.value = value
-  self.title.touch self.title.value
+  types.`height=`(self, value)
+  self.title_value.touch self.title
 
 proc size(self: Sign): int =
-  self.size.value
+  self.size
 
 proc `size=`(self: Sign, value: int) =
-  self.size.value = value
-  self.title.touch self.title.value
+  types.`size=`(self, value)
+  self.title_value.touch self.title
 
 proc open(self: Sign): bool =
-  state.open_sign.value == self
+  state.open_sign == self
 
 proc `open=`(self: Sign, value: bool) =
   if value:
-    state.open_sign.value = self
+    state.open_sign = self
   elif not value and self.open:
-    state.open_sign.value = nil
+    state.open_sign = nil
 
 proc coding(self: Unit): Unit =
-  state.open_unit.value
+  state.open_unit
 
 proc `coding=`(self: Unit, value: Unit) =
-  state.open_unit.value = value
+  state.open_unit = value
 
 # End of bindings
 
@@ -525,7 +525,7 @@ proc script_error(self: Worker, unit: Unit, e: ref VMQuit) =
 proc advance_unit(self: Worker, unit: Unit, timeout: MonoTime): bool =
   let ctx = unit.script_ctx
   if ?ctx and ctx.running:
-    unit.current_line.value = ctx.current_line.line.int
+    unit.current_line = ctx.current_line.line.int
     if unit of Build:
       let unit = Build(unit)
       unit.voxels_remaining_this_frame += unit.voxels_per_frame
@@ -553,7 +553,7 @@ proc advance_unit(self: Worker, unit: Unit, timeout: MonoTime): bool =
         if not ctx.running and not ?unit.clone_of:
           unit.collect_garbage
           unit.ensure_visible
-          unit.current_line.value = 0
+          unit.current_line = 0
 
         result = ctx.running and task_state == NextTask
 
@@ -650,7 +650,7 @@ proc load_script_and_dependents(self: Worker, unit: Unit) =
 
   for other in units_to_reload:
     if other != unit:
-      other.code.touch Code.init(other.code.value.nim)
+      other.code_value.touch Code.init(other.code.nim)
 
   self.retry_failed_scripts()
   self.retry_failures = false
@@ -658,10 +658,10 @@ proc load_script_and_dependents(self: Worker, unit: Unit) =
   state.global_flags -= LoadingWorld
 
 proc script_file_for(self: Unit): string =
-  if self.id == state.player.value.id:
-    state.config.value.lib_dir & "/enu/players.nim"
+  if self.id == state.player.id:
+    state.config.lib_dir & "/enu/players.nim"
   elif not ?self.clone_of:
-    state.config.value.script_dir / self.id & ".nim"
+    state.config.script_dir / self.id & ".nim"
   else:
     ""
 
@@ -681,7 +681,7 @@ proc change_code(self: Worker, unit: Unit, code: Code) =
   if ?unit.script_ctx and unit.script_ctx.running and not ?unit.clone_of:
     unit.collect_garbage
 
-  var edits = unit.shared.value.edits
+  var edits = unit.shared.edits
   for id in edits.value.keys:
     if id != unit.id and edits[id].len == 0:
       edits.del id
@@ -704,20 +704,20 @@ proc change_code(self: Worker, unit: Unit, code: Code) =
       else:
         # We load the player before we init the interpreter to get to an
         # interactive state quicker. Otherwise this shouldn't ever be nil.
-        assert unit.id == state.player.value.id
+        assert unit.id == state.player.id
     else:
       self.load_script(unit)
 
 proc watch_code(self: Worker, unit: Unit) =
-  unit.code.changes:
+  unit.code_value.changes:
     if added or touched:
       if change.item.owner == "" or change.item.owner == Zen.thread_ctx.id:
         self.change_code(unit, change.item)
 
-  unit.eval.changes:
+  unit.eval_value.changes:
     if added or touched and change.item != "":
       self.eval(unit, change.item)
-      unit.eval.value = ""
+      unit.eval = ""
 
   if unit.script_ctx.is_nil:
     unit.script_ctx = ScriptCtx.init(owner = unit,
@@ -760,7 +760,7 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
   let (ctx, main_thread_state) = params
   worker_lock.acquire
 
-  var listen_address = main_thread_state.config.value.listen_address
+  var listen_address = main_thread_state.config.listen_address
   let worker_ctx = ZenContext.init(id = \"work-{generate_id()}",
       chan_size = 1000, buffer = true,
       listen_address = listen_address)
@@ -769,17 +769,17 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
   ctx.subscribe(Zen.thread_ctx)
 
   state = GameState.init_from(main_thread_state)
-  let server_address = main_thread_state.config.value.server_address
+  let server_address = main_thread_state.config.server_address
   if ?listen_address or not ?server_address:
     state.push_flag Server
 
-  state.config = ZenValue[Config](Zen.thread_ctx["config"])
+  state.config_value = ZenValue[Config](Zen.thread_ctx["config"])
   state.console = ConsoleModel.init_from(main_thread_state.console)
   state.worker_ctx_name = worker_ctx.id
   main_thread_state.worker_ctx_name = worker_ctx.id
 
-  state.player.value = Player.init
-  state.player.value.color.value = state.config.value.player_color
+  state.player = Player.init
+  state.player.color = state.config.player_color
 
   work_done.signal
   worker_lock.release
@@ -807,19 +807,19 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
       unit.zids = @[]
       unit.destroy
 
-  let player = state.player.value
+  let player = state.player
   # add player before interpreter is initialized to get to an interactive
   # state quicker
   if Server in state.local_flags:
     state.units.add player
   worker.init_interpreter("")
   if Server in state.local_flags:
-    var world_dir = state.config.value.world_dir
+    var world_dir = state.config.world_dir
     player.script_ctx.interpreter = worker.interpreter
     worker.load_script_and_dependents(player)
 
     worker.load_world(world_dir)
-    state.config.changes:
+    state.config_value.changes:
       if added:
         if change.item.world_dir != world_dir:
           if world_dir != "":
@@ -836,8 +836,8 @@ proc launch_worker(params: (ZenContext, GameState)) {.gcsafe.} =
 
   state.global_flags.changes:
     if LoadingWorld.added:
-      state.open_sign.value = nil
-      state.open_unit.value = nil
+      state.open_sign = nil
+      state.open_unit = nil
 
   const max_time = (1.0 / 30.0).seconds
   const min_time = (1.0 / 120.0).seconds
@@ -887,8 +887,8 @@ proc init*(T: type ScriptController): ScriptController =
 proc init_interpreter[T](self: Worker, _: T) {.gcsafe.} =
   private_access ScriptCtx
 
-  var interpreter = Interpreter.init(state.config.value.script_dir,
-      state.config.value.lib_dir)
+  var interpreter = Interpreter.init(state.config.script_dir,
+      state.config.lib_dir)
 
   let controller = self
 
@@ -991,7 +991,7 @@ when is_main_module:
     var b = Bot.init
     let c = ScriptController.init
     state.units.add b
-    b.code.value = Code.init """
+    b.code = Code.init """
       forward 1
     """.dedent
   main()

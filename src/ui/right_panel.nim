@@ -17,18 +17,18 @@ gdobj RightPanel of MarginContainer:
   method ready* =
     self.label = self.find_node("MarkdownLabel") as MarkdownLabel
 
-    state.open_sign.changes:
+    state.open_sign_value.changes:
       if added and change.item != nil:
         state.push_flags DocsVisible, DocsFocused
         var sign = change.item
-        self.label.markdown = sign.markdown.value
+        self.label.markdown = sign.markdown
         self.label.update
-        self.zid = sign.markdown.changes:
+        self.zid = sign.markdown_value.changes:
           if added:
             self.label.markdown = change.item
             self.label.update
       if removed and change.item != nil:
-        change.item.markdown.untrack(self.zid)
+        change.item.markdown_value.untrack(self.zid)
         state.pop_flags DocsFocused, DocsVisible
 
     state.local_flags.changes:
@@ -46,7 +46,7 @@ gdobj RightPanel of MarginContainer:
   method unhandled_input*(event: InputEvent) =
     if DocsFocused in state.local_flags and event.is_action_pressed("ui_cancel"):
       if not (event of InputEventJoypadButton) or CommandMode notin state.local_flags:
-        state.open_sign.value = nil
+        state.open_sign = nil
         self.get_tree().set_input_as_handled()
 
 

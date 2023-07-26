@@ -18,11 +18,11 @@ method on_begin_move*(self: Bot, direction: Vector3, steps: float,
   result = proc(delta: float, _: MonoTime): TaskStates =
     duration += delta
     if duration >= finish_time:
-      self.velocity.touch(vec3())
-      self.transform.origin = self.transform.origin.snapped(vec3(0.1, 0.1, 0.1))
+      self.velocity_value.touch(vec3())
+      self.transform_value.origin = self.transform.origin.snapped(vec3(0.1, 0.1, 0.1))
       return Done
     else:
-      self.velocity.touch(moving * self.speed)
+      self.velocity_value.touch(moving * self.speed)
       return Running
 
 method on_begin_turn*(self: Bot, axis: Vector3, degrees: float, lean: bool,
@@ -34,13 +34,13 @@ method on_begin_turn*(self: Bot, axis: Vector3, degrees: float, lean: bool,
   var final_basis = self.transform.basis.rotated(UP, deg_to_rad(degrees))
   result = proc(delta: float, _: MonoTime): TaskStates =
     duration += delta
-    self.transform.basis = self.transform.basis.rotated(UP,
+    self.transform_value.basis = self.transform.basis.rotated(UP,
         deg_to_rad(degrees * delta * self.speed))
 
     if duration <= 1.0 / self.speed:
       Running
     else:
-      self.transform.basis = final_basis
+      self.transform_value.basis = final_basis
       Done
 
 proc bot_at*(state: GameState, position: Vector3): Bot =
@@ -49,15 +49,15 @@ proc bot_at*(state: GameState, position: Vector3): Bot =
       return Bot(unit)
 
 proc reset_state*(self: Bot) =
-  self.transform.value = self.start_transform
+  self.transform = self.start_transform
 
 method reset*(self: Bot) =
   self.reset_state
   self.speed = 1
-  self.color.value = self.start_color
-  self.animation.touch "auto"
+  self.color = self.start_color
+  self.animation_value.touch "auto"
   self.global_flags += Visible
-  self.velocity.value = vec3()
+  self.velocity = vec3()
   self.units.clear()
 
 proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
@@ -66,7 +66,7 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
   var self = Bot(
     id: id,
     start_transform: transform,
-    animation: ~"auto",
+    animation_value: ~"auto",
     speed: 1.0,
     clone_of: clone_of,
     start_color: action_colors[black],
@@ -84,7 +84,7 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
 
     if Hover.added:
       state.push_flag ReticleVisible
-      if state.tool.value in {CodeMode, PlaceBot}:
+      if state.tool in {CodeMode, PlaceBot}:
         let root = self.find_root(true)
         root.walk_tree proc(unit: Unit) = unit.local_flags += Highlight
     elif Hover.removed:
@@ -98,10 +98,10 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
           item = change.item, unit = self.id, zen_id = self.local_flags.id
 
       if Hover in self.local_flags:
-        if PrimaryDown.added and state.tool.value == CodeMode:
+        if PrimaryDown.added and state.tool == CodeMode:
           let root = self.find_root(true)
-          state.open_unit.value = root
-        if SecondaryDown.added and state.tool.value == PlaceBot:
+          state.open_unit = root
+        if SecondaryDown.added and state.tool == PlaceBot:
           if self.parent.is_nil:
             state.units -= self
           else:
@@ -109,7 +109,7 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
   result = self
 
 method clone*(self: Bot, clone_to: Unit, id: string): Unit =
-  var transform = clone_to.transform.value
+  var transform = clone_to.transform
   result = Bot.init(id = id, transform = transform, clone_of = self,
       parent = clone_to)
 
@@ -117,6 +117,6 @@ method on_collision*(self: Unit, partner: Model, normal: Vector3) =
   self.collisions.add (partner.id, normal)
 
 method off_collision*(self: Unit, partner: Model) =
-  for collision in self.collisions.value.dup:
+  for collision in self.collisions.dup:
     if collision.id == partner.id:
       self.collisions -= collision

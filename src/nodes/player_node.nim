@@ -125,16 +125,15 @@ gdobj PlayerNode of KinematicBody:
       if LoadingWorld.added:
         self.model.colliders.clear
 
-    self.model.transform.watch:
+    self.model.transform_value.watch:
       if added:
         self.transform = change.item
 
-    assert not self.model.rotation.is_nil, "Rotation is nil"
-    self.rotation_zid = self.model.rotation.watch:
+    self.rotation_zid = self.model.rotation_value.watch:
       if added or touched:
         self.camera_rig.rotation = vec3(0, deg_to_rad change.item, 0)
 
-    self.velocity_zid = self.model.velocity.watch:
+    self.velocity_zid = self.model.velocity_value.watch:
       if added:
         self.velocity = change.item
 
@@ -145,8 +144,8 @@ gdobj PlayerNode of KinematicBody:
       self.world_ray
 
   method process*(delta: float) =
-    self.model.velocity.pause self.velocity_zid:
-      self.model.velocity.value = self.velocity
+    self.model.velocity_value.pause self.velocity_zid:
+      self.model.velocity = self.velocity
     if EditorVisible notin state.local_flags or CommandMode in state.local_flags:
       var transform = self.camera_rig.global_transform
       transform.origin = self.global_transform.origin + self.position_start
@@ -163,11 +162,11 @@ gdobj PlayerNode of KinematicBody:
       r.y = wrap(r.y, -PI, PI)
       self.camera_rig.rotation = r
 
-      self.model.rotation.pause(self.rotation_zid):
-        self.model.rotation.value = rad_to_deg r.y
+      self.model.rotation_value.pause(self.rotation_zid):
+        self.model.rotation = rad_to_deg r.y
 
     if LoadingWorld notin state.global_flags:
-      let ray_length = if state.tool.value == CodeMode: 200.0 else: 100.0
+      let ray_length = if state.tool == CodeMode: 200.0 else: 100.0
       if MouseCaptured notin state.local_flags:
         let
           mouse_pos = self.get_viewport().get_mouse_position() *
@@ -212,10 +211,10 @@ gdobj PlayerNode of KinematicBody:
     var velocity = self.calculate_velocity(self.velocity, move_direction,
                                            delta, self.flying, self.running)
 
-    self.model.input_direction.value = input_direction
+    self.model.input_direction = input_direction
     self.velocity = self.move_and_slide(velocity, UP)
 
-    self.model.transform.value = self.transform
+    self.model.transform = self.transform
 
     let collisions = collect:
       for i in 0..(self.get_slide_count - 1):
@@ -313,7 +312,7 @@ gdobj PlayerNode of KinematicBody:
       self.running = self.always_run
 
     if event of InputEventPanGesture and
-      state.tool.value notin {CodeMode, PlaceBot}:
+      state.tool notin {CodeMode, PlaceBot}:
 
       let pan = event as InputEventPanGesture
       self.pan_delta += pan.delta.y

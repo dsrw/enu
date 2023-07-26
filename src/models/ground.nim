@@ -5,7 +5,7 @@ var add_to {.threadvar.}: Build
 proc fire(self: Ground, append = false) {.gcsafe.} =
   state.draw_unit_id = "ground"
   let point = (self.target_point - vec3(0.5, 0, 0.5)).trunc
-  if state.tool.value notin {CodeMode, PlaceBot}:
+  if state.tool notin {CodeMode, PlaceBot}:
     if not append:
       add_to = state.units.find_first(point.surrounding)
     if ?add_to:
@@ -17,14 +17,14 @@ proc fire(self: Ground, append = false) {.gcsafe.} =
 
       state.units += add_to
 
-  elif state.tool.value == PlaceBot and state.bot_at(self.target_point).is_nil:
+  elif state.tool == PlaceBot and state.bot_at(self.target_point).is_nil:
     var t = Transform.init(origin = self.target_point)
     state.units += Bot.init(transform = t)
 
 proc init*(_: type Ground, node: Spatial): Ground =
   let self = Ground(
-    global_flags: ZenSet[GlobalModelFlags].init,
-    local_flags: ZenSet[LocalModelFlags].init(flags = {SyncLocal}),
+    global_flags: ~set[GlobalModelFlags],
+    local_flags: ~(set[LocalModelFlags], {SyncLocal})
   )
 
   state.local_flags.changes:

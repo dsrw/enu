@@ -11,13 +11,13 @@ gdobj AimTarget of Sprite3D:
     self.bind_signals "collider_exiting"
     self.visible = BlockTargetVisible in state.local_flags
 
-    state.local_flags.watch(state.player.value):
+    state.local_flags.watch(state.player):
       if BlockTargetVisible.added:
         self.visible = true
       elif BlockTargetVisible.removed:
         self.visible = false
 
-    state.tool.watch(state.player.value):
+    state.tool_value.watch(state.player):
       # tool changed. Retarget.
       if self.target_model != nil:
         self.target_model.local_flags -= Hover
@@ -50,7 +50,7 @@ gdobj AimTarget of Sprite3D:
         state.pop_flag BlockTargetVisible
       self.target_model = unit
       # :(
-      if not (unit == nil or (unit of Sign and not Sign(unit).zoomable.value) or
+      if not (unit == nil or (unit of Sign and not Sign(unit).zoomable) or
         (God notin state.local_flags and (unit of Bot or unit of Build) and
         Lock in Unit(unit).find_root.global_flags)):
         unit.local_flags += Hover

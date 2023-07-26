@@ -1,6 +1,6 @@
 import godotapi / [h_box_container, scene_tree, button, image_texture]
 import pkg / [godot]
-import core, models / [states]
+import core
 import globals, ui/preview_maker
 
 type
@@ -26,7 +26,7 @@ gdobj Toolbar of HBoxContainer:
       if Playing.removed:
         self.visible = true
 
-    self.zid = state.tool.changes:
+    self.zid = state.tool_value.changes:
       if added:
         let b = self.get_child(int(change.item)) as Button
         b.set_pressed true
@@ -54,13 +54,13 @@ gdobj Toolbar of HBoxContainer:
         self.preview_result = some (color: obj, preview: preview)
 
   method on_action_changed*(button_name: string) =
-    state.tool.pause(self.zid):
+    state.tool_value.pause(self.zid):
       case button_name[7..^1]:
-      of "code": state.tool.value = CodeMode
-      of "blue": state.tool.value = BlueBlock
-      of "red": state.tool.value = RedBlock
-      of "green": state.tool.value = GreenBlock
-      of "black": state.tool.value = BlackBlock
-      of "white": state.tool.value = WhiteBlock
-      of "brown": state.tool.value = BrownBlock
-      of "bot": state.tool.value = PlaceBot
+      of "code": state.tool = CodeMode
+      of "blue": state.tool = BlueBlock
+      of "red": state.tool = RedBlock
+      of "green": state.tool = GreenBlock
+      of "black": state.tool = BlackBlock
+      of "white": state.tool = WhiteBlock
+      of "brown": state.tool = BrownBlock
+      of "bot": state.tool = PlaceBot

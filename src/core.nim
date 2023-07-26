@@ -159,7 +159,6 @@ proc init*(_: type Future, T: type, proc_name = ""): Future[T] =
 import pkg / core / transforms
 export transforms
 
-import godotapi / [spatial]
 import pkg / godot
 
 import pkg / model_citizen
@@ -169,14 +168,14 @@ proc global_from*(self: Vector3, unit: Unit): Vector3 =
   result = self
   var unit = unit
   while unit != nil:
-    result += unit.transform.value.origin
+    result += unit.transform.origin
     unit = unit.parent
 
 proc local_to*(self: Vector3, unit: Unit): Vector3 =
   result = self
   var unit = unit
   while unit != nil:
-    result -= unit.transform.value.origin
+    result -= unit.transform.origin
     unit = unit.parent
 
 proc `+=`*(self: ZenValue[string], str: string) =
@@ -208,13 +207,13 @@ proc init*(_: type Code, nim: string): Code =
   Code(owner: state.worker_ctx_name, nim: nim)
 
 proc update_action_index*(state: GameState, change: int) =
-  var index = int(state.tool.value) + change
+  var index = int(state.tool) + change
   if index < 0:
     index = int Tools.high
   elif index > int Tools.high:
     index = int Tools.low
 
-  state.tool.value = Tools(index)
+  state.tool = Tools(index)
 
 template watch*(zen: Zen, unit: untyped, body: untyped) =
   when unit is Unit:

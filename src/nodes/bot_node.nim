@@ -4,7 +4,7 @@ import pkg / [chroma]
 import godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
                    input_event, animation_player, resource_loader, packed_scene,
                    spatial_material]
-import globals, core, models / [states, colors]
+import globals, core, models / [colors]
 import ./ queries
 
 gdobj BotNode of KinematicBody:
@@ -53,7 +53,7 @@ gdobj BotNode of KinematicBody:
     SpatialMaterial(self.material).albedo_color = adjusted
 
   proc set_visibility =
-    var color = self.model.color.value
+    var color = self.model.color
     if Visible in self.model.global_flags:
       self.visible = true
       self.set_color(color)
@@ -82,7 +82,7 @@ gdobj BotNode of KinematicBody:
         self.animation_player.play("run", custom_blend = 0.1)
 
   proc track_changes() =
-    self.model.glow.watch:
+    self.model.glow_value.watch:
       if added:
         if change.item >= 1.0:
           self.highlight()
@@ -108,11 +108,11 @@ gdobj BotNode of KinematicBody:
     var velocity_zid: ZID
     if self.model of Bot:
       let bot = Bot(self.model)
-      velocity_zid = bot.velocity.watch:
+      velocity_zid = bot.velocity_value.watch:
         if touched:
-          if bot.animation.value == "auto":
+          if bot.animation == "auto":
             self.set_walk_animation(change.item.length, false)
-      bot.animation.watch:
+      bot.animation_value.watch:
         if added or touched and change.item in ["", "auto"]:
           self.animation_player.play("idle")
         elif added:
@@ -120,51 +120,51 @@ gdobj BotNode of KinematicBody:
 
     elif self.model of Player:
       let player = Player(self.model)
-      player.rotation.watch:
+      player.rotation_value.watch:
         if added:
           self.skin.rotation_degrees = (change.item + 180.0) * UP
 
-      player.velocity.watch:
+      player.velocity_value.watch:
         if added:
           var velocity = change.item.length
           self.set_walk_animation(change.item.length,
-              player.input_direction.value.z > 0.0)
+              player.input_direction.z > 0.0)
 
-    self.model.scale.watch:
+    self.model.scale_value.watch:
       if added:
         let scale = change.item
         self.scale = vec3(scale, scale, scale)
-        self.model.transform.pause(self.transform_zid):
-          self.model.transform.value = self.transform
+        self.model.transform_value.pause(self.transform_zid):
+          self.model.transform = self.transform
 
-    self.model.color.watch:
+    self.model.color_value.watch:
       if added:
         self.set_color(change.item)
 
-    self.transform_zid = self.model.transform.watch:
+    self.transform_zid = self.model.transform_value.watch:
       if added:
         self.transform = change.item
 
-    self.model.sight_query.watch:
+    self.model.sight_query_value.watch:
       if added:
         var query = change.item
         query.run(self.model)
-        self.model.sight_query.value = query
+        self.model.sight_query = query
 
   proc setup* =
-    self.set_color(self.model.color.value)
+    self.set_color(self.model.color)
     self.track_changes
     self.model.sight_ray = self.get_node("SightRay") as RayCast
 
   method process(delta: float) =
     if ?self.model:
-      if self.model.code.value.owner == state.worker_ctx_name:
-        self.model.transform.pause self.transform_zid:
-          self.model.transform.value = self.transform
+      if self.model.code.owner == state.worker_ctx_name:
+        self.model.transform_value.pause self.transform_zid:
+          self.model.transform = self.transform
       if self.model of Bot:
         let bot = Bot(self.model)
-        if bot.velocity.value.length > 0:
-          discard self.move_and_slide(self.model.velocity.value, UP)
+        if bot.velocity.length > 0:
+          discard self.move_and_slide(self.model.velocity, UP)
 
 var bot_scene {.threadvar.}: PackedScene
 proc init*(_: type BotNode): BotNode =

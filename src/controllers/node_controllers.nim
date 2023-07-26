@@ -1,4 +1,4 @@
-import std / [os, tables, typetraits]
+import std / [tables, typetraits]
 import pkg/godot except print
 import godotapi / [node, spatial]
 import core, models, nodes / [bot_node, build_node, sign_node, player_node]
@@ -40,7 +40,7 @@ proc add_to_scene(unit: Unit) =
       node = T.init
     unit.node = node
     node.model = unit
-    node.transform = unit.transform.value
+    node.transform = unit.transform
     if node.owner != nil:
       raise_assert \"{T.name} node shouldn't be owned. unit = {unit.id}"
     unit.node.visible = Visible in unit.global_flags and
@@ -64,10 +64,10 @@ proc add_to_scene(unit: Unit) =
   elif unit of Player:
     let player = Player(unit)
     # TODO: PlayerNode should work for connected players as well
-    if player.id == state.player.value.id:
+    if player.id == state.player.id:
       player.add(PlayerNode, parent_node)
     else:
-      player.start_transform = player.transform.value
+      player.start_transform = player.transform
       player.add(BotNode, state.nodes.data)
   else:
     raise_assert "unknown unit type for " & unit.id
@@ -82,11 +82,11 @@ proc set_global(unit: Unit, global: bool) =
   if global:
     state.nodes.data.add_child(unit.node)
     unit.node.owner = state.nodes.data
-    unit.transform.origin = unit.transform.origin + unit.start_transform.origin
+    unit.transform_value.origin = unit.transform.origin + unit.start_transform.origin
   else:
     unit.parent.node.add_child(unit.node)
     unit.node.owner = unit.parent.node
-    unit.transform.origin = unit.transform.origin - unit.start_transform.origin
+    unit.transform_value.origin = unit.transform.origin - unit.start_transform.origin
 
 proc reset_nodes() =
   current_build = nil

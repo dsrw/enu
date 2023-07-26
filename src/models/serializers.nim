@@ -98,7 +98,7 @@ proc to_json_hook(self: Build): JsonNode =
     "id": self.id,
     "start_transform": jsonutils.to_json(self.start_transform),
     "start_color": jsonutils.to_json(self.start_color),
-    "edits": jsonutils.to_json(self.shared.value.edits)
+    "edits": jsonutils.to_json(self.shared.edits)
   }
 
 proc from_json_hook(self: var Build, json: JsonNode) =
@@ -109,16 +109,16 @@ proc from_json_hook(self: var Build, json: JsonNode) =
   if load_chunks:
     var edit = init_table[Vector3, VoxelInfo]()
     edit.from_json(json["chunks"])
-    self.shared.value.edits[self.id] = edit
+    self.shared.edits[self.id] = edit
   else:
-    self.shared.value.edits.from_json(json["edits"])
+    self.shared.edits.from_json(json["edits"])
 
 proc to_json_hook(self: Bot): JsonNode {.gcsafe.} =
   %* {
     "id": self.id,
     "start_transform": jsonutils.to_json(self.start_transform),
     "start_color": jsonutils.to_json(self.start_color),
-    "edits": jsonutils.to_json(self.shared.value.edits)
+    "edits": jsonutils.to_json(self.shared.edits)
   }
 
 proc from_json_hook(self: var Bot, json: JsonNode) =
@@ -126,7 +126,7 @@ proc from_json_hook(self: var Bot, json: JsonNode) =
       json["start_transform"].json_to(Transform))
 
   if not load_chunks:
-    self.shared.value.edits.from_json(json["edits"])
+    self.shared.edits.from_json(json["edits"])
 
 proc save*(unit: Unit) =
   if not ?unit.clone_of:
@@ -163,7 +163,7 @@ proc load_units(parent: Unit) =
     if ?parent:
       parent.data_dir
     else:
-      state.config.value.data_dir
+      state.config.data_dir
   for dir in walk_dirs(path / "*"):
     let unit_id = dir.split_path.tail
     let data_file = read_file(dir / unit_id & ".json").parse_json
@@ -185,7 +185,7 @@ proc load_units(parent: Unit) =
       Build(unit).restore_edits
 
     if file_exists(unit.script_ctx.script):
-      unit.code.value = Code.init(read_file(unit.script_ctx.script))
+      unit.code = Code.init(read_file(unit.script_ctx.script))
     else:
       unit.global_flags -= ScriptInitializing
 
@@ -200,7 +200,7 @@ proc unload_world*(worker: Worker) =
 proc load_world*(worker: Worker, world_dir: string) =
   state.global_flags += LoadingWorld
   state.push_flag LoadingScript
-  var config = state.config.value
+  var config = state.config
 
   config.world_dir = world_dir
   config.data_dir = join_path(config.world_dir, "data")
@@ -214,7 +214,7 @@ proc load_world*(worker: Worker, world_dir: string) =
   create_dir(config.data_dir)
   create_dir(config.script_dir)
 
-  state.config.value = config
+  state.config = config
 
   let world_file = world_dir / "world.json"
   debug "loading ", world_file

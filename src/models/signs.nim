@@ -9,31 +9,31 @@ proc init*(_: type Sign,
   let title = if title == "": markdown else: title
   var self = Sign(
     id: "sign_" & generate_id(),
-    markdown: ~markdown,
-    title: ~title,
-    glow: ~0.0,
-    width: ~width,
-    height: ~height,
-    size: ~size,
-    billboard: ~billboard,
-    zoomable: ~zoomable,
+    markdown_value: ~markdown,
+    title_value: ~title,
+    glow_value: ~0.0,
+    width_value: ~width,
+    height_value: ~height,
+    size_value: ~size,
+    billboard_value: ~billboard,
+    zoomable_value: ~zoomable,
     frame_created: state.frame_count,
-    color: Zen.init(action_colors[black]),
+    color_value: ~action_colors[black],
     start_transform: transform,
-    owner: ~owner
+    owner_value: ~owner
   )
   self.init_unit
 
   state.local_flags.watch:
     if PrimaryDown.added and Hover in self.local_flags:
-      state.open_sign.value = self
+      state.open_sign = self
 
   self.local_flags.watch:
     if Hover.added:
-      self.glow.value = 1
+      self.glow = 1
       state.push_flag ReticleVisible
     elif Hover.removed:
-      self.glow.value = 0
+      self.glow = 0
       state.pop_flag ReticleVisible
 
   result = self

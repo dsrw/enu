@@ -32,7 +32,7 @@ gdobj Editor of TextEdit:
       if event.scancode == KEY_ENTER:
         self.indent_new_line()
       if event.scancode == KEY_SEMICOLON and
-          state.config.value.semicolon_as_colon:
+          state.config.semicolon_as_colon:
 
         self.insert_text_at_cursor(":")
         self.get_tree.set_input_as_handled()
@@ -46,8 +46,8 @@ gdobj Editor of TextEdit:
   method unhandled_input*(event: InputEvent) =
     if EditorFocused in state.local_flags and event.is_action_pressed("ui_cancel"):
       if not (event of InputEventJoypadButton) or CommandMode notin state.local_flags:
-        state.open_unit.value.code.value = Code.init(self.text)
-        state.open_unit.value = nil
+        state.open_unit.code = Code.init(self.text)
+        state.open_unit = nil
         self.get_tree().set_input_as_handled()
 
   proc configure_highlighting =
@@ -65,8 +65,8 @@ gdobj Editor of TextEdit:
 
   proc highlight_errors =
     self.clear_executing_line()
-    if ?state.open_unit.value:
-      for err in state.open_unit.value.errors:
+    if ?state.open_unit:
+      for err in state.open_unit.errors:
         self.set_line_as_marked(int64(err.info.line - 1), true)
 
   proc `executing_line=`*(line: int) =
@@ -89,22 +89,22 @@ gdobj Editor of TextEdit:
         self.grab_focus
 
     var line_zid: ZID
-    state.open_unit.changes:
+    state.open_unit_value.changes:
       if added:
         let unit = change.item
         if unit.is_nil:
           self.release_focus()
           self.visible = false
         else:
-          line_zid = unit.current_line.changes:
+          line_zid = unit.current_line_value.changes:
             if added:
               # only update the executing line if the code hasn't been changed.
-              if self.text == state.open_unit.value.code.value.nim:
+              if self.text == state.open_unit.code.nim:
                 self.executing_line = change.item - 1
               else:
                 self.clear_executing_line()
           self.visible = true
-          self.text = state.open_unit.value.code.value.nim
+          self.text = state.open_unit.code.nim
 
           if CommandMode in state.local_flags:
             self.modulate = dimmed_alpha
@@ -113,7 +113,7 @@ gdobj Editor of TextEdit:
             self.grab_focus()
           self.clear_errors()
           self.highlight_errors()
-          let line = unit.current_line.value - 1
+          let line = unit.current_line - 1
           self.executing_line = line
       if removed:
         if ?change.item:
@@ -124,7 +124,7 @@ gdobj Editor of TextEdit:
         self.grab_focus
       if CommandMode.added:
         if EditorVisible in state.local_flags:
-          state.open_unit.value.code.value = Code.init(self.text)
+          state.open_unit.code = Code.init(self.text)
 
           self.modulate = dimmed_alpha
           self.release_focus

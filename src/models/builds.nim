@@ -1,5 +1,5 @@
 import std / [hashes, tables, sets, options, sequtils, math, wrapnils,
-  monotimes, sugar, deques, macros, os]
+  monotimes, sugar, deques, macros]
 import godotapi / spatial
 import core, models / [states, bots, colors, units]
 const ChunkSize = vec3(16, 16, 16)
@@ -83,10 +83,10 @@ proc maybe_join_previous_build(self: Build,
       for position in position.global_from(self).surrounding:
         if position.local_to(partner) in partner:
           var source, dest: Build
-          if partner.code.value.nim.strip == "":
+          if partner.code.nim.strip == "":
             source = partner
             dest = self
-          elif self.code.value.nim.strip == "":
+          elif self.code.nim.strip == "":
             source = self
             dest = partner
 
@@ -99,13 +99,13 @@ proc expand_bounds_to_chunk(self: Build, chunk_id: Vector3) =
   let range = chunk_id * ChunkSize
   let min = range - ChunkSize - vec3(1, 1, 1)
   let max = range + ChunkSize
-  if max notin self.bounds.value:
-    self.bounds.value = self.bounds.value.expand(max)
-  if min notin self.bounds.value:
-    self.bounds.value = self.bounds.value.expand(min)
+  if max notin self.bounds:
+    self.bounds = self.bounds.expand(max)
+  if min notin self.bounds:
+    self.bounds = self.bounds.expand(min)
 
 proc reset_bounds*(self: Build) =
-  self.bounds.value = init_aabb(vec3(), vec3(-1, -1, -1))
+  self.bounds = init_aabb(vec3(), vec3(-1, -1, -1))
 
   for chunk_id, chunk in self.chunks:
     self.expand_bounds_to_chunk(chunk_id)
@@ -124,8 +124,8 @@ proc del_voxel(self: Build, position: Vector3) =
   self.chunks[buffer].del position
 
 proc restore_edits*(self: Build) =
-  if self.id in self.shared.value.edits:
-    for loc, info in self.shared.value.edits[self.id]:
+  if self.id in self.shared.edits:
+    for loc, info in self.shared.edits[self.id]:
       assert info.kind in [Manual, Hole]
       if info.kind != Hole:
         self.add_voxel(loc, info)
@@ -134,30 +134,30 @@ proc restore_edits*(self: Build) =
         if buffer in self.chunks and loc in self.chunks[buffer]:
           var info = info
           info.color = self.chunks[buffer][loc].color
-          var locations = self.shared.value.edits[self.id]
+          var locations = self.shared.edits[self.id]
           locations[loc] = info
-          self.shared.value.edits[self.id] = locations
+          self.shared.edits[self.id] = locations
           self.chunks[buffer].destroy
           self.chunks[buffer].del loc
 
 proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) {.gcsafe.} =
   if voxel.kind == Computed:
-    if position in self.shared.value.edits[self.id]:
-      var edit = self.shared.value.edits[self.id][position]
+    if position in self.shared.edits[self.id]:
+      var edit = self.shared.edits[self.id][position]
       if edit.kind == Hole:
         # We're using color as a flag to indicate that the hole is active
         edit.color = voxel.color
-        var locations = self.shared.value.edits[self.id]
+        var locations = self.shared.edits[self.id]
         locations[position] = edit
-        self.shared.value.edits[self.id] = locations
+        self.shared.edits[self.id] = locations
         return
       elif edit.kind == Manual and edit.color == voxel.color:
-        var locations = self.shared.value.edits[self.id]
+        var locations = self.shared.edits[self.id]
         locations.del position
-        self.shared.value.edits[self.id] = locations
+        self.shared.edits[self.id] = locations
     elif ? self.clone_of and position in
-        self.clone_of.shared.value.edits[self.clone_of.id] and
-        self.clone_of.shared.value.edits[self.clone_of.id][position].kind ==
+        self.clone_of.shared.edits[self.clone_of.id] and
+        self.clone_of.shared.edits[self.clone_of.id][position].kind ==
            Hole:
 
       return
@@ -165,14 +165,14 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) {.gcsafe.} =
       self.add_voxel(position, voxel)
 
   else:
-    if self.id notin self.shared.value.edits:
-      self.shared.value.edits[self.id] = init_table[Vector3, VoxelInfo]()
+    if self.id notin self.shared.edits:
+      self.shared.edits[self.id] = init_table[Vector3, VoxelInfo]()
     var voxel = voxel
     if voxel.kind == Hole and position in self:
       voxel.color = self.voxel_info(position).color
-    var locations = self.shared.value.edits[self.id]
+    var locations = self.shared.edits[self.id]
     locations[position] = voxel
-    self.shared.value.edits[self.id] = locations
+    self.shared.edits[self.id] = locations
     if voxel.kind != Hole:
       self.add_voxel(position, voxel)
     else:
@@ -187,10 +187,10 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) {.gcsafe.} =
 proc drop_block(self: Build) =
   if self.drawing:
     var p = self.draw_transform.origin.snapped(vec3(1, 1, 1))
-    self.draw(p, (Computed, self.color.value))
+    self.draw(p, (Computed, self.color))
 
 proc remove(self: Build) =
-  if state.tool.value notin {CodeMode, PlaceBot}:
+  if state.tool notin {CodeMode, PlaceBot}:
     state.skip_block_paint = true
     draw_normal = self.target_normal
     let point = self.target_point - self.target_normal -
@@ -210,21 +210,21 @@ proc remove(self: Build) =
 
 proc fire(self: Build) =
   let global_point = self.target_point.global_from(self)
-  if state.tool.value notin {CodeMode, PlaceBot}:
+  if state.tool notin {CodeMode, PlaceBot}:
     state.skip_block_paint = true
     draw_normal = self.target_normal
     let point = (self.target_point + (self.target_normal * 0.5)).floor
     skip_point = self.target_point + self.target_normal
     last_point = self.target_point
     self.draw(point, (Manual, state.selected_color))
-  elif state.tool.value == PlaceBot and EditorVisible in state.local_flags and
+  elif state.tool == PlaceBot and EditorVisible in state.local_flags and
     state.bot_at(global_point).is_nil:
 
     let transform = Transform.init(origin = global_point)
     state.units += Bot.init(transform = transform)
-  elif state.tool.value == CodeMode:
+  elif state.tool == CodeMode:
     let root = self.find_root(true)
-    state.open_unit.value = root
+    state.open_unit = root
 
 proc is_moving(self: Build, move_mode: int): bool =
   move_mode == 2
@@ -237,17 +237,17 @@ method on_begin_move*(self: Build,
     let steps = steps.float
     var duration = 0.0
     let
-      moving = self.transform.basis.xform(direction) / self.scale.value
+      moving = self.transform.basis.xform(direction) / self.scale
       finish = self.transform.origin + moving * steps
       finish_time = 1.0 / self.speed * steps
 
     result = proc(delta: float, _: MonoTime): TaskStates =
       duration += delta
       if duration >= finish_time:
-        self.transform.origin = finish
+        self.transform_value.origin = finish
         return Done
       else:
-        self.transform.origin = self.transform.origin +
+        self.transform_value.origin = self.transform.origin +
             (moving * self.speed * delta)
 
         return Running
@@ -264,11 +264,11 @@ method on_begin_move*(self: Build,
           get_mono_time() < timeout:
 
         if steps < 1:
-          self.draw_transform.value =
-            self.draw_transform.value.translated(direction * steps)
+          self.draw_transform =
+            self.draw_transform.translated(direction * steps)
         else:
-          self.draw_transform.value =
-            self.draw_transform.value.translated(direction)
+          self.draw_transform =
+            self.draw_transform.translated(direction)
         inc count
         self.voxels_remaining_this_frame -= 1
         self.drop_block()
@@ -291,38 +291,38 @@ method on_begin_turn*(self: Build,
     self.voxels_per_frame = 0
     var duration = 0.0
     let axis = self.transform.basis.orthonormalized.xform(axis)
-    let scale = self.scale.value
-    var final_transform = self.transform.value
+    let scale = self.scale
+    var final_transform = self.transform
     final_transform.basis = final_transform.basis.rotated(axis,
         deg_to_rad(degrees)).orthonormalized.scaled(vec3(scale, scale, scale))
 
     result = proc(delta: float, _: MonoTime): TaskStates =
       duration += delta
-      self.transform.basis = self.transform.basis.rotated(axis,
+      self.transform_value.basis = self.transform.basis.rotated(axis,
           deg_to_rad(degrees * delta * self.speed))
 
       if duration <= 1.0 / self.speed:
         Running
       else:
-        self.transform.value = final_transform
+        self.transform = final_transform
         Done
   else:
     let axis = self.draw_transform.basis.xform(axis)
-    self.draw_transform.basis =
+    self.draw_transform_value.basis =
         self.draw_transform.basis.rotated(axis, deg_to_rad(degrees))
 
-    self.draw_transform.value = self.draw_transform.value.orthonormalized()
+    self.draw_transform = self.draw_transform.orthonormalized()
 
 proc reset_state*(self: Build) =
-  self.draw_transform.value = Transform.init
-  self.transform.value = self.start_transform
+  self.draw_transform = Transform.init
+  self.transform = self.start_transform
 
 method reset*(self: Build) =
   debug "resetting build", id = self.id
-  self.transform.value = self.start_transform
-  self.color.value = self.start_color
+  self.transform = self.start_transform
+  self.color = self.start_color
   self.speed = 1
-  self.scale.value = 1
+  self.scale = 1
   self.global_flags += Visible
   self.reset_state()
 
@@ -359,12 +359,12 @@ proc init*(_: type Build,
 
   var self = Build(
     id: id,
-    chunks: ZenTable[Vector3, Chunk].init(flags = {SyncLocal, SyncRemote}),
+    chunks: ~(Table[Vector3, Chunk], {SyncLocal, SyncRemote}),
     start_transform: transform,
-    draw_transform: ~Transform.init,
+    draw_transform_value: ~Transform.init,
     start_color: color,
     drawing: true,
-    bounds: ~init_aabb(vec3(), vec3(-1, -1, -1)),
+    bounds_value: ~init_aabb(vec3(), vec3(-1, -1, -1)),
     speed: 1.0,
     clone_of: clone_of,
     bot_collisions: bot_collisions,
@@ -382,7 +382,7 @@ method main_thread_init*(self: Build) =
   proc_call main_thread_init(Unit(self))
 
   self.local_flags.watch:
-    if Hover.added and state.tool.value == CodeMode:
+    if Hover.added and state.tool == CodeMode:
       if Playing notin state.local_flags:
         let root = self.find_root(true)
         root.walk_tree proc(unit: Unit) = unit.local_flags += Highlight
@@ -404,7 +404,7 @@ method main_thread_init*(self: Build) =
         elif PrimaryDown in state.local_flags:
           self.fire
 
-    if change.item in {TargetMoved, Hover} and state.tool.value == PlaceBot:
+    if change.item in {TargetMoved, Hover} and state.tool == PlaceBot:
       if self.target_normal == UP:
         state.push_flag BlockTargetVisible
       else:
@@ -432,10 +432,10 @@ method off_collision*(self: Unit, partner: Model) =
         self.collisions -= collision
 
 method clone*(self: Build, clone_to: Unit, id: string): Unit =
-  var transform = clone_to.transform.value
+  var transform = clone_to.transform
   var global = true
   if clone_to of Build:
-    transform = Build(clone_to).draw_transform.value
+    transform = Build(clone_to).draw_transform
     global = false
 
   # we need this off for Potato Zombies, but on for the
@@ -445,8 +445,8 @@ method clone*(self: Build, clone_to: Unit, id: string): Unit =
       global = global, color = self.start_color,
       bot_collisions = bot_collisions, parent = clone_to)
 
-  for loc, info in self.shared.value.edits[self.id]:
-    if info.kind != Hole and loc notin clone.shared.value.edits[clone.id]:
+  for loc, info in self.shared.edits[self.id]:
+    if info.kind != Hole and loc notin clone.shared.edits[clone.id]:
       clone.add_voxel(loc, info)
 
   clone.restore_edits

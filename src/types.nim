@@ -1,4 +1,4 @@
-import std / [tables, monotimes, sets, options, asyncfutures]
+import std / [tables, monotimes, sets, options, macros]
 import godotapi / [spatial, ray_cast]
 import pkg/core/godotcoretypes except Color
 import pkg / core / [vector3, basis, aabb, godotbase]
@@ -6,7 +6,6 @@ import pkg / compiler / passes {.all.}
 import pkg / compiler / [ast, lineinfos]
 import pkg / [model_citizen]
 import models / colors, libs / [eval]
-import shared / errors
 
 from pkg / godot import NimGodotObject
 
@@ -45,16 +44,16 @@ type
     local_flags*: ZenSet[LocalStateFlags]
     wants*: ZenSeq[LocalStateFlags]
     global_flags*: ZenSet[GlobalStateFlags]
-    config*: ZenValue[Config]
-    open_unit*: ZenValue[Unit]
-    tool*: ZenValue[Tools]
+    config_value*: ZenValue[Config]
+    open_unit_value*: ZenValue[Unit]
+    tool_value*: ZenValue[Tools]
     gravity*: float
     nodes*: tuple[
       game: Node,
       data: Node,
       player: Node
     ]
-    player*: ZenValue[Player]
+    player_value*: ZenValue[Player]
     units*: ZenSeq[Unit]
     ground*: Ground
     draw_unit_id*: string
@@ -62,7 +61,7 @@ type
     paused*: bool
     frame_count*: int
     skip_block_paint*: bool
-    open_sign*: ZenValue[Sign]
+    open_sign_value*: ZenValue[Sign]
     queued_action*: string
     scale_factor*: float
     worker_ctx_name*: string
@@ -93,41 +92,41 @@ type
     parent*: Unit
     units*: ZenSeq[Unit]
     start_transform*: Transform
-    scale*: ZenValue[float]
-    glow*: ZenValue[float]
+    scale_value*: ZenValue[float]
+    glow_value*: ZenValue[float]
     speed*: float
-    code*: ZenValue[Code]
+    code_value*: ZenValue[Code]
     script_ctx*: ScriptCtx
     disabled*: bool
-    velocity*: ZenValue[Vector3]
-    transform*: ZenValue[Transform]
+    velocity_value*: ZenValue[Vector3]
+    transform_value*: ZenValue[Transform]
     clone_of*: Unit
     collisions*: ZenSeq[tuple[id: string, normal: Vector3]]
-    shared*: ZenValue[Shared]
+    shared_value*: ZenValue[Shared]
     start_color*: Color
-    color*: ZenValue[Color]
+    color_value*: ZenValue[Color]
     sight_ray*: RayCast
     frame_created*: int
     zids* {.zen_ignore.}: seq[ZID]
     errors*: ScriptErrors
-    current_line*: ZenValue[int]
-    sight_query*: ZenValue[SightQuery]
-    eval*: ZenValue[string]
+    current_line_value*: ZenValue[int]
+    sight_query_value*: ZenValue[SightQuery]
+    eval_value*: ZenValue[string]
 
   Player* = ref object of Unit
     colliders*: HashSet[Model]
-    rotation*: ZenValue[float]
-    input_direction*: ZenValue[Vector3]
+    rotation_value*: ZenValue[float]
+    input_direction_value*: ZenValue[Vector3]
 
   Bot* = ref object of Unit
-    animation*: ZenValue[string]
+    animation_value*: ZenValue[string]
 
   Sign* = ref object of Unit
-    markdown*, title*: ZenValue[string]
-    width*, height*: ZenValue[float]
-    size*: ZenValue[int]
-    billboard*, zoomable*: ZenValue[bool]
-    owner*: ZenValue[Unit]
+    markdown_value*, title_value*: ZenValue[string]
+    width_value*, height_value*: ZenValue[float]
+    size_value*: ZenValue[int]
+    billboard_value*, zoomable_value*: ZenValue[bool]
+    owner_value*: ZenValue[Unit]
 
   VoxelKind* = enum
     Hole, Manual, Computed
@@ -140,13 +139,13 @@ type
 
   Build* = ref object of Unit
     chunks*: ZenTable[Vector3, Chunk]
-    draw_transform*: ZenValue[Transform]
+    draw_transform_value*: ZenValue[Transform]
     voxels_per_frame*: float
     voxels_remaining_this_frame*: float
     drawing*: bool
     save_points*:
       Table[string, tuple[position: Transform, color: Color, drawing: bool]]
-    bounds*: ZenValue[AABB]
+    bounds_value*: ZenValue[AABB]
     bot_collisions*: bool
 
   Config* = object
@@ -242,3 +241,4 @@ Zen.register(Build)
 Zen.register(Sign)
 Zen.register(Bot)
 Zen.register(Shared)
+Zen.build_accessors(GameState)

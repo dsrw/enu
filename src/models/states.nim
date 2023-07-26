@@ -13,7 +13,7 @@ const groups = @[
 ]
 
 proc resolve_flags(self: GameState) =
-  debug "resolving flags", flags = self.local_flags.value, wants = self.wants.value
+  debug "resolving flags", flags = self.local_flags, wants = self.wants
   var result: set[LocalStateFlags]
   for flag in self.wants:
     for group in groups:
@@ -22,7 +22,7 @@ proc resolve_flags(self: GameState) =
           result.excl f
     result.incl flag
 
-  if self.tool.value == CodeMode:
+  if self.tool == CodeMode:
     for flag in groups[1]:
       result.excl(flag)
     result.incl(ReticleVisible)
@@ -93,7 +93,7 @@ proc `-=`*(self: ZenSet[LocalStateFlags], flag: LocalStateFlags) {.error:
   "Use `push_flag`, `pop_flag` and `replace_flag`".}
 
 proc selected_color*(self: GameState): Color =
-  action_colors[Colors(ord self.tool.value)]
+  action_colors[Colors(ord self.tool)]
 
 proc logger*(level, msg: string) =
   if level == "err":
@@ -115,20 +115,20 @@ proc err*(self: GameState, args: varargs[string, `$`]) =
 proc init*(_: type GameState): GameState =
   let flags = {TrackChildren, SyncLocal}
   let self = GameState(
-    player: ZenValue[Player].init(flags = flags),
-    local_flags: Zen.init(set[LocalStateFlags], flags = flags),
-    global_flags: Zen.init(set[GlobalStateFlags], id = "state_global_flags"),
-    units: Zen.init(seq[Unit], id = "root_units"),
-    open_unit: ZenValue[Unit].init(flags = flags),
-    config: ZenValue[Config].init(id = "config", flags = flags),
-    tool: Zen.init(BlueBlock, flags = flags),
+    player_value: ~(Player, flags),
+    local_flags: ~(set[LocalStateFlags], flags),
+    global_flags: ~(set[GlobalStateFlags], id = "state_global_flags"),
+    units: ~(seq[Unit], id = "root_units"),
+    open_unit_value: ~(Unit, flags),
+    config_value: ~(Config, flags, id = "config"),
+    tool_value: ~(BlueBlock, flags),
     gravity: -80.0,
-    console: ConsoleModel(log: Zen.init(seq[string], flags = flags)),
-    open_sign: ZenValue[Sign].init(flags = flags),
-    wants: ZenSeq[LocalStateFlags].init(flags = flags)
+    console: ConsoleModel(log: ~(seq[string], flags)),
+    open_sign_value: ~(Sign, flags),
+    wants: ~(seq[LocalStateFlags], flags)
   )
   result = self
-  self.open_unit.changes:
+  self.open_unit_value.changes:
     if added and change.item != nil:
       self.push_flag EditorVisible
     elif added:
@@ -203,7 +203,7 @@ when is_main_module:
   state.push_flag MouseCaptured
   check MouseCaptured in state.local_flags
 
-  state.open_unit.value = Unit()
+  state.open_unit = Unit()
   check MouseCaptured notin state.local_flags
 
   state.push_flag CommandMode
@@ -212,7 +212,7 @@ when is_main_module:
   state.pop_flag MouseCaptured
   check MouseCaptured in state.local_flags
 
-  state.open_unit.value = nil
+  state.open_unit = nil
   check MouseCaptured in state.local_flags
 
   state.pop_flag CommandMode

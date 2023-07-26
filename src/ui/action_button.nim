@@ -4,7 +4,7 @@ import ".." / [core, globals]
 
 gdobj ActionButton of Button:
   method ready*() =
-    let dock_icon_size = state.config.value.dock_icon_size
+    let dock_icon_size = state.config.dock_icon_size
     self.rect_min_size = vec2(dock_icon_size, dock_icon_size)
     for style in ["hover", "pressed", "focus", "normal"]:
       var stylebox = self.get_stylebox(style).as(StyleBoxFlat)
