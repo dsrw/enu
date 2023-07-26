@@ -251,22 +251,10 @@ proc `speed=`(self: Unit, speed: float) =
   self.speed = speed
 
 proc scale(self: Unit): float =
-  self.scale
+  types.scale(self)
 
 proc `scale=`(self: Unit, scale: float) =
   types.`scale=`(self, scale)
-
-proc glow(self: Unit): float =
-  self.glow
-
-proc `glow=`(self: Unit, glow: float) =
-  types.`glow=`(self, glow)
-
-proc velocity(self: Unit): Vector3 =
-  self.velocity
-
-proc `velocity=`(self: Unit, velocity: Vector3) =
-  types.`velocity=`(self, velocity)
 
 proc color(self: Unit): Colors =
   action_index self.color_value.value
@@ -284,7 +272,7 @@ proc `show=`(self: Unit, value: bool) =
     self.global_flags -= Visible
 
 proc rotation(self: Unit): float =
-  # TODO: fix this
+  #  :(  fix this
   proc nm(f: float): float =
     if f.is_equal_approx(0):
       return 0
@@ -463,34 +451,13 @@ proc `tool=`(self: Unit, value: int) =
   state.tool = Tools(value)
 
 # Sign bindings
-proc title(self: Sign): string =
-  self.title
-
-proc `title=`(self: Sign, value: string) =
-  types.`title=`(self, value)
-
-proc markdown(self: Sign): string =
-  self.markdown
-
-proc `markdown=`(self: Sign, value: string) =
-  types.`markdown=`(self, value)
-
-proc width(self: Sign): float =
-  self.width
-
 proc `width=`(self: Sign, value: float) =
   types.`width=`(self, value)
   self.title_value.touch self.title
 
-proc height(self: Sign): float =
-  self.height
-
 proc `height=`(self: Sign, value: float) =
   types.`height=`(self, value)
   self.title_value.touch self.title
-
-proc size(self: Sign): int =
-  self.size
 
 proc `size=`(self: Sign, value: int) =
   types.`size=`(self, value)
