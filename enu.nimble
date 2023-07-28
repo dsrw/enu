@@ -10,7 +10,6 @@ const
   api_json = "api.json"
   generator = "tools/build_helpers"
   godot_build_url = "https://docs.godotengine.org/en/stable/development/compiling/index.html"
-  gcc_dlls = ["libgcc_s_seh-1.dll", "libwinpthread-1.dll"]
   nim_dlls = ["pcre64.dll"]
   godot_opts = "target=release_debug"
 
@@ -166,8 +165,6 @@ proc mingw_path: string =
 
 proc gen_binding_and_copy_stdlib(target = target) =
   if host_os == "windows":
-    # Assumes mingw
-    find_and_copy_dlls mingw_path(), join_path("app", "_dlls"), gcc_dlls
     find_and_copy_dlls get_current_compiler_exe().parent_dir, join_path("vendor", "godot", "bin"), nim_dlls
   mk_dir generated_dir
   exec &"{godot_bin(target)} --verbose --gdnative-generate-json-api {join_path generated_dir, api_json}"
@@ -243,7 +240,6 @@ task dist_package, "Build distribution binaries":
 
     exec "nimble build -d:release -d:dist"
     cp_file "app/_dlls/enu.dll", root & "/enu.dll"
-    find_and_copy_dlls mingw_path(), root, gcc_dlls
     find_and_copy_dlls get_current_compiler_exe().parent_dir, root, nim_dlls
     copy_vmlib "vmlib", root & "/vmlib"
     exec &"iscc /DVersion={git_version} installer/enu.iss"

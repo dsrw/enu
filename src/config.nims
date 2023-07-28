@@ -1,5 +1,8 @@
---threads:on
---mm:orc
+--threads:"on"
+--mm:"orc"
+--tls_emulation:"off"
+if host_os == "windows":
+  --pass_l:"-static"
 
 --warning:"LockLevel:off"
 --warning:"UseBase:off"
