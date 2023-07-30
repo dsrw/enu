@@ -1,5 +1,7 @@
 --threads:on
 --mm:orc
+--tls_emulation:off
+--pass_l:"-static"
 
 --warning:"LockLevel:off"
 --warning:"UseBase:off"
