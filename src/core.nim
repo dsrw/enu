@@ -2,8 +2,8 @@ import types
 export types
 
 import pkg / model_citizen / utils
-import std / [sequtils, strutils, sugar, macros, asyncfutures]
-export utils, sequtils, strutils, sugar
+import std / [sequtils, strutils, sugar, macros, asyncfutures, importutils]
+export utils, sequtils, strutils, sugar, importutils
 
 ### Globals ###
 

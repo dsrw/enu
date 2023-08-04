@@ -1,9 +1,9 @@
-import compiler / [syntaxes, reorder]
+import std / options
+import compiler / [syntaxes, reorder, vmdef, msgs]
 import compiler / passes {.all.}
-import compiler / msgs
 
 {.warning[UnusedImport]: off.}
-include compiler / nimeval
+include compiler / [nimeval]
 
 export Interpreter, VmArgs, PCtx, PStackFrame, TLineInfo
 
@@ -309,11 +309,13 @@ proc eval*(i: Interpreter, a: var TPassContextArray, fileName, code: string) =
 
 proc config*(i: Interpreter): ConfigRef = i.graph.config
 
-proc registerExitHook*(i: Interpreter, hook: proc (c: PCtx, pc: int, tos: PStackFrame)) =
+proc `exit_hook=`*(i: Interpreter, hook: proc (c: PCtx, pc: int, tos: PStackFrame)) =
   (PCtx i.graph.vm).exitHook = hook
 
-proc registerEnterHook*(i: Interpreter, hook: proc (c: PCtx, pc: int, tos: PStackFrame, instr: TInstr)) =
+proc `enter_hook=`*(i: Interpreter, hook: proc (c: PCtx, pc: int, tos: PStackFrame, instr: TInstr)) =
   (PCtx i.graph.vm).enterHook = hook
 
-proc registerLeaveHook*(i: Interpreter, hook: proc (c: PCtx, pc: int, tos: PStackFrame, instr: TInstr)) =
-  (PCtx i.graph.vm).leaveHook = hook
+proc `error_hook=`*(i: Interpreter, hook: proc(config: ConfigRef,
+    info: TLineInfo; msg: string, severity: Severity) {.gcsafe.}) =
+
+  i.registerErrorHook(hook)

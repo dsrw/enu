@@ -1,7 +1,7 @@
 import system except write_file
 import std / [json, jsonutils, sugar, tables, strutils, os]
 import core, models
-import controllers / script_controllers
+import controllers / script_controllers / scripting
 
 var load_chunks {.threadvar.}: bool
 
