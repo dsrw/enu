@@ -1,0 +1,9 @@
+[nimib]
+src_dir = "book"
+home_dir = "build"
+
+[nimibook]
+language = "en-us"
+title = "Enu"
+description = "Build, together"
+default_theme = "dark"

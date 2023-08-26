@@ -37,7 +37,8 @@ requires "nim >= 1.6.10",
   "chroma",
   "markdown",
   "chronicles",
-  "dotenv"
+  "dotenv",
+  "nimibook"
 
 proc godot_bin(target = target): string =
   result = this_dir() & &"/vendor/godot/bin/godot.{target}.opt.tools.{cpu}{exe_ext}"

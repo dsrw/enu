@@ -1,4 +1,4 @@
-# Parts of an Enu Program
+# Coding Enu!!
 
 Enu is programmed with a language called [Nim](https://nim-lang.org). This tutorial teach some of the 
 basics of Nim, as well as a few special features that are unique to Enu.
@@ -12,7 +12,7 @@ general information, such as the author of the code and when it was written.
 They start with a `#` sign. Everything else on the line is ignored.
 
 ```nim
-# Copyright Scott Wadden, 2022
+# Copyright Scott Wadden, 2023
 
 var last_row = false # we only want to change colors on the last row
 ```
