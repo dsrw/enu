@@ -4,7 +4,7 @@ import enuib
 nb_init(theme = use_enu)
 nb_text: """
 
-## Random numbers
+# Random numbers
 
 Generally, if an Enu command takes a number, it will be a `float`. However, `int` will auto-convert to `float`, and
 when a numeric `Range` is passed to something expecting a number, a random value within the range will be selected. So, even

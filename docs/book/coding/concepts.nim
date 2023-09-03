@@ -4,6 +4,8 @@ import enuib
 nb_init(theme = use_enu)
 nb_text: """
 
+# Core Concepts
+
 ## Units
 
 Entities/objects in Enu are referred to as units, and have a base type of `Unit`. Currently there are `Build` units
@@ -18,18 +20,24 @@ them.
 
 Enu uses a prototype based object system for units. To allow a unit to be a prototype, you give it a name:
 
-`name ghost`
+```nim
+name ghost
+```
 
 Then create a new instance in a different script with `.new`:
 
-`var ghost2 = ghost.new`
+```nim
+var ghost2 = ghost.new
+```
 
 You can also provide parameters, which can be overridden when creating a new instance:
 
-`name ghost(color = white, speed = 5, spookiness = 10)`
+```nim
+name ghost(color = white, speed = 5, spookiness = 10)
+```
 
 These become properties of the unit (ie `me.spookiness = 5`), but can be treated like variables in the unit's script
-due to auto `me` insertion (`spookiness = 200`{.ruby}).
+due to auto `me` insertion (`spookiness = 200`).
 
 To create a new instance with specific property values:
 

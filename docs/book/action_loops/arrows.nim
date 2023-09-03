@@ -4,6 +4,8 @@ import enuib
 nb_init(theme = use_enu)
 nb_text: """
 
+# Arrows
+
 ## `->` Little Switch Arrow
 
 Switches from one action to another, after the first action has finished running.

@@ -4,7 +4,7 @@ import enuib
 nb_init(theme = use_enu)
 nb_text: """
 
-## Child Loops
+# Child Loops
 
 Actions are generally just a simple lists of commands. It's fine to put logic in them, but anything complicated
 will quickly get unwieldy. Imagine we have a unit that performs two complicated actions, `find_treasure` and

@@ -29,6 +29,7 @@
   <link rel="stylesheet" href="{{ path_to_root }}assets/css/variables.css">
   <link rel="stylesheet" href="{{ path_to_root }}assets/css/general.css">
   <link rel="stylesheet" href="{{ path_to_root }}assets/css/chrome.css">
+  <link rel="stylesheet" href="{{ path_to_root }}assets/css/enu.css">
   {{#print_enable}}
     <link rel="stylesheet" href="{{ path_to_root }}assets/css/print.css"
         media="print">
@@ -157,24 +158,11 @@
           role="menu">
           <li role="none">
             <button role="menuitem" class="theme"
+                id="dark">{{#theme_option}}{{dark}}{{/theme_option}}</button>
+          </li>
+          <li role="none">
+            <button role="menuitem" class="theme"
                 id="light">{{#theme_option}}{{light}}{{/theme_option}}</button>
-          </li>
-          <li role="none">
-            <button role="menuitem" class="theme"
-                id="rust">{{#theme_option}}{{rust}}{{/theme_option}}</button>
-          </li>
-          <li role="none">
-            <button role="menuitem" class="theme"
-                id="coal">{{#theme_option}}{{coal}}{{/theme_option}}</button>
-          </li>
-          <li role="none">
-            <button role="menuitem" class="theme"
-                id="navy">{{#theme_option}}{{navy}}{{/theme_option}}</button>
-          </li>
-          <li role="none">
-            <button role="menuitem" class="theme"
-                id="ayu">{{#theme_option}}
-              Ayu!!!{{/theme_option}}</button>
           </li>
         </ul>
         {{#search_enabled}}

@@ -1,14 +1,22 @@
-## Demos
+# Demos
 
-[Inky: Isolation. A 90 minute game built with Enu and Nim](https://youtu.be/9e9sLsmsu_o)
+## Inky: Isolation. A 90 minute game built with Enu and Nim
 
-[Potato Zombies: Helping a 6 year old build a 3D game with Enu and Nim](https://fosdem.org/2022/schedule/event/nim_potatozombies/)
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/9e9sLsmsu_o?si=anystxG6UCk3b0W2" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
-[Building 3D Games with Enu 0.2 - NimConf 2021](https://youtu.be/ECJsq7BeZ8w)
+## Potato Zombies: Helping a 6 year old build a 3D game with Enu and Nim
 
-[Enu 0.1 demo video](https://youtu.be/upg77dMBGDE):
+Initially presented at [FOSDOM 2022](https://fosdem.org/2022/schedule/event/nim_potatozombies).
 
-[![Enu 0.1 Demo](media/screenshot_1.png)](https://youtu.be/upg77dMBGDE)
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/UqLy-4rP69I?si=Bk2Z6n6PoNbx7wkb" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+## Building 3D Games with Enu 0.2 - NimConf 2021
+
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/ECJsq7BeZ8w?si=PJ8uMbv17_ipU573" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+## Enu 0.1 Demo
+
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/upg77dMBGDE?si=tdRzgThXUUKf79b7" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 ### Outdated Demos
 

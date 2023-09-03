@@ -343,3 +343,10 @@ task dist_package, "Build distribution binaries":
 task dist, "Build distribution":
   dist_prereqs_task()
   dist_package_task()
+
+task docs, "Build docs":
+  cd "docs"
+  exec "rm -rf build"
+  exec "nim r book.nim init"
+  exec "nim r book.nim build"
+  exec "cp -r book/assets build"

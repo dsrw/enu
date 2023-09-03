@@ -1,4 +1,4 @@
-# Coding Enu!!
+# Coding Enu
 
 Enu is programmed with a language called [Nim](https://nim-lang.org). This tutorial teach some of the 
 basics of Nim, as well as a few special features that are unique to Enu.

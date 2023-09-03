@@ -4,7 +4,7 @@ import enuib
 nb_init(theme = use_enu)
 nb_text: """
 
-Shorthand Commands
+# Shorthand Commands
 
 Many Enu command also have a 1 letter alias. These are harder to read, but can reduce friction for folks new to
 typing.

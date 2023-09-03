@@ -1,4 +1,4 @@
-## Goals
+# Goals
 
 Enu is meant for anyone who wants to explore, experiment, or make games, but particular care has been taken to make
 it usable by younger people who may struggle with reading or typing. However, rather than bypassing the keyboard with

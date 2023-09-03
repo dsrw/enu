@@ -4,7 +4,7 @@ import enuib
 nb_init(theme = use_enu)
 nb_text: """
 
-## `loop`
+# Loops
 
 An Action Loop always has one and only one current action, which it will call repeatedly until you switch to some
 other action. The default action is `nil`. The first thing a loop must do is switch from `nil` to another action, using

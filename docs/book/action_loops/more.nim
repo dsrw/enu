@@ -4,7 +4,7 @@ import enuib
 nb_init(theme = use_enu)
 nb_text: """
 
-## More about Action Loops
+# More about Action Loops
 
 ### `as`
 
