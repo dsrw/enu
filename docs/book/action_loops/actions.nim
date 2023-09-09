@@ -38,7 +38,7 @@ However, at this point it's probably better to use a `proc`.
 
 # Action Loops
 
-*Note for Nimians: Action Loops are state machines, and any proc can be a state. If the proc has a return value it will
+*Note for Nimions: Action Loops are state machines, and any proc can be a state. If the proc has a return value it will
 be discarded.*
 
 Action Loops can help control the complexity of the logic for your units. They allow you to run complicated lists of

@@ -345,8 +345,14 @@ task dist, "Build distribution":
   dist_package_task()
 
 task docs, "Build docs":
-  cd "docs"
-  exec "rm -rf build"
-  exec "nim r book.nim init"
-  exec "nim r book.nim build"
-  exec "cp -r book/assets build"
+  exec "rm -rf dist/docs"
+  with_dir "docs":
+    exec "nim r book.nim init"
+    exec "nim r book.nim build"
+  exec "cp -r docs/book/assets dist/docs"
+  exec "cp media/*.{png,webp} dist/docs/assets"
+
+task export_docs, "Build docs and copy them to ../enu-site/docs":
+  docs_task()
+  exec "rm -rf ../enu-site/docs"
+  exec "cp -r dist/docs ../enu-site"

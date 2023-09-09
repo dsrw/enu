@@ -8,15 +8,15 @@ export pathutils, pretty
 const document* = hl_html static_read("./book/template.html.mustache")
 
 proc use_enu*(doc: var NbDoc) =
-  doc.context["path_to_root"] = doc.srcDirRel.string & "/" # I probably should make sure to have / at the end
+  doc.context["path_to_root"] = doc.src_dir_rel.string & "/" # I probably should make sure to have / at the end
 
   # templates are in memory
   doc.partials["document"] = document
   # if they need to be overriden a specific template folder should be created in nbSrcDir
-  doc.templateDirs = @[doc.srcDir.string / "templates"]
+  doc.template_dirs = @[doc.src_dir.string / "templates"]
 
   # book.json is publicly accessible (sort of a public static api)
-  let bookPath = doc.homeDir.string / "book.json"
+  let book_path = doc.home_dir.string / "book.json"
   # load book object
   var book = load(bookPath)
 
@@ -33,24 +33,24 @@ proc use_enu*(doc: var NbDoc) =
   doc.context["plausible_analytics_url"] = book.plausible_analytics_url
   doc.context["highlightJs"] = highlightJsTags
 
-  var thisEntry: Entry
+  var this_entry: Entry
   # process toc
   for i, entry in enumerate(book.toc.entries.mitems):
-    if normalizePath(entry.url) == normalizePath(doc.filename.replace('\\', '/')): # replace needed for windows
-      thisEntry = entry
-      entry.isActive = true
+    if normalize_path(entry.url) == normalize_path(doc.filename.replace('\\', '/')): # replace needed for windows
+      this_entry = entry
+      entry.is_active = true
       let
-        prevUrl = book.prevEntryUrl i
-        nextUrl = book.nextEntryUrl i
-      if prevUrl.len > 0:
-        doc.context["previous"] = prevUrl
-      if nextUrl.len > 0:
-        doc.context["next"] = nextUrl
+        prev_url = book.prev_entry_url i
+        next_url = book.next_entry_url i
+      if prev_url.len > 0:
+        doc.context["previous"] = prev_url
+      if next_url.len > 0:
+        doc.context["next"] = next_url
       break
   doc.partials["toc"] = render book.toc
 
   # html.head.title (what appears in the tab)
-  doc.context["title"] = thisEntry.title & " - " & book.title
+  doc.context["title"] = this_entry.title & " - " & book.title
 
 template load_md*(file) =
   const text = static_read file

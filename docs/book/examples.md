@@ -15,7 +15,7 @@ or:
   forward 10
   turn_right()
 ```
-![Square Example](/media/square_example.png)
+![Square Example](assets/square_example.png)
 Create a twisting tower:
 ```nim
 var
@@ -33,7 +33,7 @@ height.times:
   turn 5
   up 1
 ```
-![Tower Example](/media/tower_example.png)
+![Tower Example](assets/tower_example.png)
 
 Draw randomly:
 ```nim
@@ -44,7 +44,7 @@ forward 10
   turn -180..180
   up 0..2
 ```
-![Random Example](/media/random_example.png)
+![Random Example](assets/random_example.png)
 
 Set the color to blue randomly with a 1 in 50 chance. Otherwise set it to white:
 ```nim
@@ -57,7 +57,7 @@ or as a one-liner:
 ```nim
 color = if 1 in 50: blue else: white
 ```
-![Random Color Example](/media/random_color_example.png)
+![Random Color Example](assets/random_color_example.png)
 
 Move forward 10 times, cycling through colors:
 ```nim
@@ -65,4 +65,4 @@ Move forward 10 times, cycling through colors:
   color = cycle(red, black, blue)
   forward 1
 ```
-![Color Cycle Example](/media/cycle_example.png)
+![Color Cycle Example](assets/cycle_example.png)

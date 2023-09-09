@@ -12,27 +12,6 @@ body {
 }
 
 .dark {
-    normal: #F6F3E8;
-    /*> .hljs {*/
-    /*  display: block;*/
-    /*  overflow-x: auto;*/
-    /*  background: blue;*/
-    /*  color: #e6e1cf;*/
-    /*  padding: 0.5em;*/
-    /*}*/
-    normal: #F6F3E8;
-    comment: #7C7C7C;
-    entity: #FFD2A7;
-    keyword: #96CBFE;
-    operator: #EDEDED;
-    class: #FFFFB6;
-    storage: #CFCB90;
-    constant: #99CC99;
-    text: #A8FF60;
-    number: #FF73FD;
-    variable: #C6C5FE;
-    invalid: #FD5FF;
-
     --bg: #0b0517;
     --fg: #F6F3E8;
 
