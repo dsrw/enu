@@ -9,8 +9,13 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Install Nim and build deps
+      - name: Install build deps
         run: brew install nim scons yasm
+      - name: Install nim
+        run: |
+          curl -LO https://github.com/nim-lang/nightlies/releases/download/2023-06-27-version-1-6-71ba2e7f3c5815d956b1ae0341b0743242b8fec6/nim-1.6.14-macosx_x64.tar.xz
+          tar xzf nim-1.6.14-macosx_x64.tar.xz
+          echo "$(pwd)/nim-1.6.14/bin" >> $GITHUB_PATH
       - name: Update path
         run: echo "$HOME/.nimble/bin" >> $GITHUB_PATH
       - name: Install Nimble 0.14.2
