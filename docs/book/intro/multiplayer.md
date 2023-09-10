@@ -8,7 +8,7 @@ completely insecure (see below).
 
 ## Warning!
 
-Enu's multiplayer is insecure. A bad actor could delete or steal your data by
-connecting to your Enu server, or if you connect to theirs. This will be fixed,
-but for now it's important to only connect to Enu players you trust, or to use
-a device with no important data.
+Enu's multiplayer is completely insecure! A bad actor could delete or steal your 
+data by connecting to your Enu server, or if you connect to theirs. This will be 
+fixed, but for now it's important to only connect with Enu players you trust, or 
+to use a device with no important data.
