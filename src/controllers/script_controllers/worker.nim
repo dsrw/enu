@@ -97,6 +97,11 @@ proc watch_code(self: Worker, unit: Unit) =
     if added or touched:
       if change.item.owner == "" or change.item.owner == Zen.thread_ctx.id:
         self.change_code(unit, change.item)
+      elif Server in state.local_flags:
+        if change.item.nim == "":
+          remove_file unit.script_ctx.script
+        else:
+          write_file(unit.script_ctx.script, change.item.nim)
 
   unit.eval_value.changes:
     if added or touched and change.item != "":
@@ -215,6 +220,10 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
     Zen.thread_ctx.subscribe(server_address)
     state.units.add player
     player.script_ctx.interpreter = worker.interpreter
+    let tmp_path = join_path(state.config.work_dir, "tmp")
+    create_dir tmp_path
+    state.config_value.value:
+      script_dir = tmp_path
     worker.load_script_and_dependents(player)
 
   var running = true
