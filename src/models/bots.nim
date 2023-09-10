@@ -53,7 +53,7 @@ proc reset_state*(self: Bot) =
 
 method reset*(self: Bot) =
   self.reset_state
-  self.speed = 1
+  self.speed = 5
   self.color = self.start_color
   self.animation_value.touch "auto"
   self.global_flags += Visible

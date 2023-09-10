@@ -68,7 +68,7 @@ gdobj BotNode of KinematicBody:
     if velocity <= 0.1:
       self.animation_player.playback_speed = 0.5
       self.animation_player.play("idle", custom_blend = 0.5)
-    elif velocity <= 5:
+    elif velocity < 5:
       self.animation_player.playback_speed = velocity / 2
       if backwards:
         self.animation_player.play_backwards("walk", custom_blend = 0.1)
