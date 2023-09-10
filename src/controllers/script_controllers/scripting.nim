@@ -155,7 +155,6 @@ proc load_script_and_dependents*(self: Worker, unit: Unit) =
   var units_to_reload: HashSet[Unit]
 
   units_to_reload.incl unit
-  state.global_flags += LoadingWorld
   state.push_flag LoadingScript
   self.retry_failures = true
 
@@ -184,7 +183,6 @@ proc load_script_and_dependents*(self: Worker, unit: Unit) =
   self.retry_failed_scripts()
   self.retry_failures = false
   state.pop_flag LoadingScript
-  state.global_flags -= LoadingWorld
 
 proc script_file_for*(self: Unit): string =
   if self.id == state.player.id:
