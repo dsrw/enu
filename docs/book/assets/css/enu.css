@@ -6,6 +6,10 @@
   color: #96CBFE;
 }
 
+.dark h2, h3 {
+  margin-top: 1em;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 16pt;
