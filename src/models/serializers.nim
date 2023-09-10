@@ -1,4 +1,3 @@
-import system except write_file
 import std / [json, jsonutils, sugar, tables, strutils, os]
 import core, models
 import controllers / script_controllers / scripting
@@ -7,19 +6,6 @@ var load_chunks {.threadvar.}: bool
 
 type WorldInfo = object
   enu_version, format_version: string
-
-proc write_file(path, text: string) =
-  let tmp = path & ".tmp"
-  let previous = path & ".previous"
-  system.write_file(tmp, text)
-  debug "wrote tmp file", tmp
-  if path.file_exists:
-    if previous.file_exists:
-      previous.remove_file
-    move_file path, previous
-    debug "moved", src = path, dest = previous
-  move_file tmp, path
-  debug "moved", src = tmp, dest = path
 
 proc to_json_hook(self: Color): JsonNode =
   result = if self == action_colors[eraser]:
@@ -151,9 +137,10 @@ proc save_world*(world_dir: string) =
         jsonutils.to_json(world).pretty
 
     for unit in state.units:
-      if Dirty in unit.local_flags:
+      if Dirty in unit.global_flags:
         unit.save
-        unit.local_flags -= Dirty
+        unit.global_flags -= Dirty
+
   else:
     debug "not server. Skipping save."
 
@@ -230,6 +217,6 @@ proc load_world*(worker: Worker, world_dir: string) =
   worker.retry_failures = false
   dont_join = false
   for unit in state.units:
-    unit.local_flags -= Dirty
+    unit.global_flags -= Dirty
   state.pop_flag LoadingScript
   state.global_flags -= LoadingWorld

@@ -165,6 +165,7 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) {.gcsafe.} =
       self.add_voxel(position, voxel)
 
   else:
+    self.global_flags += Dirty
     if self.id notin self.shared.edits:
       self.shared.edits[self.id] = init_table[Vector3, VoxelInfo]()
     var voxel = voxel

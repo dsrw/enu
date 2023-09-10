@@ -24,8 +24,6 @@ type
     player_color: Option[colortypes.Color]
     channel_size: Option[int]
 
-const auto_save_interval = 30.seconds
-
 if file_exists(".env"):
   dotenv.overload()
 
@@ -39,7 +37,6 @@ gdobj Game of Node:
     last_tool = BlueBlock
     saved_mouse_position: Vector2
     rescale_at = get_mono_time()
-    save_at = get_mono_time() + auto_save_interval
     node_controller: NodeController
     script_controller: ScriptController
 
@@ -69,9 +66,6 @@ world: {state.config.world}
     if time > self.rescale_at:
       self.rescale_at = MonoTime.high
       self.rescale()
-    if time > self.save_at:
-      self.save_at = time + auto_save_interval
-      save_world(state.config.world_dir)
 
     if state.queued_action != "":
       var ev = gdnew[InputEventAction]()
@@ -90,8 +84,7 @@ world: {state.config.world}
 
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
-      save_world(state.config.world_dir)
-      self.get_tree().quit()
+      state.push_flag Quitting
     if what == main_loop.NOTIFICATION_WM_ABOUT:
       alert \"Enu {enu_version}\n\n© 2023 Scott Wadden", "Enu"
 
@@ -232,6 +225,8 @@ world: {state.config.world}
     self.stats.visible = state.config.show_stats
 
     state.local_flags.changes:
+      if Quit.added:
+        self.get_tree().quit()
       if MouseCaptured.added:
         let center = self.get_viewport().get_visible_rect().size * 0.5
         self.saved_mouse_position = self.get_viewport().get_mouse_position()
@@ -314,8 +309,7 @@ world: {state.config.world}
       state.set_flag ConsoleVisible, ConsoleVisible notin state.local_flags
     elif event.is_action_pressed("quit"):
       if host_os != "macosx":
-        save_world(state.config.world_dir)
-        self.get_tree().quit()
+        state.push_flag Quitting
     elif EditorVisible notin state.local_flags:
       if event.is_action_pressed("toggle_mouse_captured"):
         state.set_flag MouseCaptured, MouseCaptured notin state.local_flags

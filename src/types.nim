@@ -19,7 +19,7 @@ type
     BlockTargetVisible, ReticleVisible, DocsVisible, MouseCaptured,
     PrimaryDown, SecondaryDown, EditorFocused, ConsoleFocused, DocsFocused,
     Playing, Flying, God,
-    LoadingScript, Server
+    LoadingScript, Server, Quitting, Quit
 
   GlobalStateFlags* = enum
     LoadingWorld
@@ -32,10 +32,10 @@ type
     Running, Done, NextTask
 
   GlobalModelFlags* = enum
-    Global, Visible, Lock, Ready, ScriptInitializing
+    Global, Visible, Lock, Ready, ScriptInitializing, Dirty
 
   LocalModelFlags* = enum
-    Hover, TargetMoved, Highlight, Dirty
+    Hover, TargetMoved, Highlight
 
   ConsoleModel* = ref object
     log*: ZenSeq[string]

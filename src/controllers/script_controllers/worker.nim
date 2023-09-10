@@ -1,4 +1,5 @@
-import std / [locks, times, os, random]
+import std / [locks, os, random]
+import std / times except seconds
 import core, models, models / [serializers], libs / [interpreters, eval]
 import ./ [defs, host_bridge, scripting]
 
@@ -122,8 +123,6 @@ proc watch_units(self: Worker,
       let removed = Removed in change.changes
       body(unit, change, added, removed)
       if added:
-        if not ?unit.clone_of:
-          unit.local_flags += Dirty
         # FIXME: this is being set for the main thread in node_controller
         unit.parent = parent
         unit.collisions.track proc(changes: seq[Change[(string, Vector3)]]) =
@@ -218,14 +217,24 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
     player.script_ctx.interpreter = worker.interpreter
     worker.load_script_and_dependents(player)
 
+  var running = true
   state.global_flags.changes:
     if LoadingWorld.added:
       state.open_sign = nil
       state.open_unit = nil
 
+  state.local_flags.changes:
+    if Quitting.added:
+      save_world(state.config.world_dir)
+      state.push_flag Quit
+      running = false
+
   const max_time = (1.0 / 30.0).seconds
   const min_time = (1.0 / 120.0).seconds
-  while true:
+  const auto_save_interval = 30.seconds
+  var save_at = get_mono_time() + auto_save_interval
+
+  while running:
     let frame_start = get_mono_time()
     let timeout = frame_start + max_time
     let wait_until = frame_start + min_time
@@ -251,6 +260,10 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
         if Ready in unit.global_flags:
           if worker.advance_unit(unit, timeout):
             to_process.add(unit)
+
+    if get_mono_time() > save_at:
+      save_world(state.config.world_dir)
+      save_at = get_mono_time() + auto_save_interval
 
     let frame_end = get_mono_time()
     if frame_end < wait_until:
