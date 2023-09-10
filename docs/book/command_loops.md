@@ -1,8 +1,6 @@
-# Action Loops
+# Command Loops
 
-Action loops let you control the behavior of a unit in a (somewhat) straightforward way. At least I think it's straightforward. You might disagree.
-
-They look like this:
+Command loops are how you control the behavior of units. They look like this:
 
 ```nim
 - boogie:
@@ -17,10 +15,13 @@ They look like this:
 
 loop:
   nil -> shake
+  
   if player.near:
     shake -> boogie
+    
   elif player.far(50):
     (rest, boogie) -> shake
+    
   elif player.far(200):
     (boogie, shake) -> rest
 ```

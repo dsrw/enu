@@ -8,7 +8,8 @@ nb_text: """
 
 ## `->` Little Switch Arrow
 
-Switches from one action to another, after the first action has finished running.
+Switches from one command to another, after the first command has finished
+running.
 
 ```nim
 draw_box -> draw_stairs
@@ -16,7 +17,8 @@ draw_box -> draw_stairs
 
 ## `==>` Big Switch Arrow
 
-Switches from one action to another immediately. Will interrupt the running action.
+Switches from one command to another immediately. Will interrupt the running
+command.
 
 ```nim
 if player.near:

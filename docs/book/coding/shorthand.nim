@@ -6,8 +6,8 @@ nb_text: """
 
 # Shorthand Commands
 
-Many Enu command also have a 1 letter alias. These are harder to read, but can reduce friction for folks new to
-typing.
+Many Enu command also have a 1 letter alias. These are harder to read, but can
+reduce friction for folks new to typing.
 
 The aliases are:
 
@@ -17,7 +17,8 @@ The aliases are:
 - `r` - `right`
 - `u` - `up`
 - `d` - `down`
-- `t` - `turn`. Can be combined with shorthand directions, so `turn right` can be expressed as `t r`
+- `t` - `turn`. Can be combined with shorthand directions, so `turn right` can
+  be expressed as `t r`
 - `o` - `while true:` (o was selected because its shape is a loop)
 - `x` - `times`. `5.x:` will run a code block 5 times.
 

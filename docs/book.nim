@@ -2,31 +2,27 @@ import nimibook
 
 var book = init_book_with_toc:
   section "Introduction", "intro":
-    entry "Goals", "intro/goals"
-    entry "Demos", "intro/demos"
+    entry "Examples", "intro/examples"
     entry "Install or Build", "intro/building"
-
-  section "Basics", "basics":
-    entry "Controls and Usage", "basics/controls"
-    entry "Programming", "basics/programming"
-    entry "Config", "basics/config"
+    entry "Controls and Usage", "intro/controls"
+    entry "Multiplayer (Experimental)", "intro/multiplayer"
+    entry "Config", "intro/config"
 
   section "Coding Enu", "coding":
     entry "Concepts", "coding/concepts"
-    entry "Commands", "coding/commands"
+    entry "Built-in Commands", "coding/commands"
     entry "Shorthand Commands", "coding/shorthand"
     entry "Random Numbers", "coding/random_numbers"
 
-  section "Action Loops", "action_loops":
-    entry "Actions", "action_loops/actions"
-    entry "Loops", "action_loops/loops"
-    entry "Arrows", "action_loops/arrows"
-    entry "Child Loops", "action_loops/child_loops"
-    entry "More About Action Loops", "action_loops/more"
+  section "Command Loops", "command_loops":
+    entry "Writing Commands", "command_loops/commands"
+    entry "Arrows", "command_loops/arrows"
+    entry "Loops", "command_loops/loops"
+    entry "Child Loops", "command_loops/child_loops"
+    entry "More About Command Loops", "command_loops/more"
 
-  section "Examples", "examples":
-    entry "Shapes", "example/shapes"
-
+  entry "Goals", "goals"
+  entry "Demos", "demos"
   entry "TODO", "todo"
 
 nimibook_cli(book)
