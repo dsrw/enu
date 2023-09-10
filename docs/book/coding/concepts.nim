@@ -18,6 +18,8 @@ can be auto-inserted when accessing properties of the unit. For example,
 `me.speed = 10` would commonly be written as `speed = 10`. There are probably
 bugs with this behavior.  Please report them.
 
+`Unit` will be renamed to `Thing` at some point in the future.
+
 ## Prototypes
 
 Enu uses a prototype based object system for units. To allow a unit to be a

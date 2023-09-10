@@ -39,7 +39,7 @@ default point isn't properly centered for most builds, making it difficult to
 rotate builds nicely. Enu 0.3 will use the draw point for the pivot point, 
 allowing it to be moved, and will shift everything over 0.5m, allowing most 
 builds to rotate in a balanced way. There will also be a command to move the 
-draw point (and thus the pivot point) in the exact center of a build.
+draw point (and thus the pivot point) to the exact center of a build.
 
 ### REPL
 

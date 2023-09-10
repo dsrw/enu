@@ -47,8 +47,8 @@ want to allow switching from a variety of commands.
 
 - `others -> some_command` - Same as `any`, but it excludes the target command.
 
-- `(command1, command2)` - Multiple from cmmands can be supported by putting
-  them in a tuple.
+- `(command1, command2)` - Switch from multiple commands by listing them in a
+  tuple.
 
 - `(any, -command2, -command3)` - Switch from any command except `command2` and
   `command3`.
@@ -57,8 +57,9 @@ want to allow switching from a variety of commands.
 
 A command loops will run whenever the current command finishes. In addition,
 command loops will run every 0.5 seconds, and when something "interesting"
-happens. Currently only the start and end of a collision with the player
-will cause the loop to be run immediately, but this will be expanded.
+happens. Currently only the start and end of a collision with the player is
+"interesting" and will cause the loop to be run immediately, but this will be
+expanded.
 
 When using child loops, the top level loop runs first, then walks down the stack
 of loops until the current loop is reached.
