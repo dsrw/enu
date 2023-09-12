@@ -30,8 +30,6 @@ gdobj MarkdownLabel of ScrollContainer:
     container: Node
     og_text_edit: TextEdit
     og_label*: RichTextLabel
-    og_text_edit_color: Color
-    og_label_color: Color
     needs_margin = false
     resized = false
     local_default_font: DynamicFont
@@ -93,6 +91,12 @@ gdobj MarkdownLabel of ScrollContainer:
     result.add_color_region("\"", "\"", ir_black[text], false)
     result.add_color_region("#", "\n", comment_color, true)
     result.add_color_region("#[", "]#", comment_color, false)
+    if not ?self.current_label:
+      # Don't add borders if the only thing in our doc is code
+      var stylebox = result.get_stylebox("normal").duplicate.as(StyleBoxFlat)
+      stylebox.border_color = stylebox.bg_color
+      result.add_stylebox_override("normal", stylebox)
+      result.add_stylebox_override("read_only", stylebox)
 
   method ready() =
     self.bind_signals(self, "resized")
@@ -101,9 +105,6 @@ gdobj MarkdownLabel of ScrollContainer:
     self.og_label = self.container.get_node("RichTextLabel") as RichTextLabel
     self.container.remove_child self.og_text_edit
     self.container.remove_child self.og_label
-    self.og_text_edit_color = self.og_text_edit.stylebox.bg_color
-
-    self.og_label_color = self.og_label.stylebox.bg_color
 
     # clone fonts so they can be resized without impacting other labels
 
@@ -132,6 +133,9 @@ gdobj MarkdownLabel of ScrollContainer:
     var list_position = list_position
     for t in token.children:
       debug "rendering markdown token", token = t, type = t.base_type
+      if not ?self.current_label and not (t of CodeBlock):
+        self.add_label
+
       var label = self.current_label
       if self.needs_margin and not (t of CodeBlock):
         label.newline
@@ -225,7 +229,7 @@ gdobj MarkdownLabel of ScrollContainer:
         self.container.remove_child(child)
         child.queue_free
 
-      self.add_label()
+      self.current_label = nil
       self.old_markdown = self.markdown
       var root = Document()
       discard markdown(self.markdown.dedent, root=root)

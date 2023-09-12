@@ -22,3 +22,21 @@ method on_begin_turn*(self: Player, direction: Vector3, degrees: float,
 
 method collect_garbage*(self: Player) =
   discard
+
+proc open_code*(self: Player): string =
+  for unit in self.units:
+    if unit of Sign:
+      let unit = Sign(unit)
+      return unit.markdown
+
+proc `open_code=`*(self: Player, code: string) =
+  for unit in self.units:
+    if unit of Sign:
+      let unit = Sign(unit)
+      if code == "":
+        unit.global_flags -= Visible
+      else:
+        let markdown = "```nim\n" & code & "\n```"
+        unit.markdown = markdown
+        unit.global_flags += Visible
+      return

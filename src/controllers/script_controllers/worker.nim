@@ -226,11 +226,13 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
       script_dir = tmp_path
     worker.load_script_and_dependents(player)
 
+  var sign = Sign.init("", "", width = 3, height = 2.05, owner = state.player,
+    size = 244, zoomable = true, billboard = true, transform = Transform.init(origin = vec3(0, 3, 0)))
+
+  state.player.units += sign
+  sign.global_flags -= Visible
+
   var running = true
-  state.global_flags.changes:
-    if LoadingWorld.added:
-      state.open_sign = nil
-      state.open_unit = nil
 
   state.local_flags.changes:
     if Quitting.added:
@@ -254,6 +256,10 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
       var i  = 0
       while i < state.units.len:
         if state.units[i].id == \"player-{ctx_name}":
+          var player = Player(state.units[i])
+          if player.units.len > 0:
+            Sign(player.units[0]).owner = nil
+            player.units.clear
           state.units.del i
         else:
           i += 1

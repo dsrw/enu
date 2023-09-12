@@ -75,6 +75,9 @@ gdobj Editor of TextEdit:
     else:
       self.clear_executing_line()
 
+  method on_text_changed*() =
+    state.player.open_code = self.text
+
   method ready* =
     self.bind_signals(self, "text_changed")
     var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
@@ -95,6 +98,7 @@ gdobj Editor of TextEdit:
         if unit.is_nil:
           self.release_focus()
           self.visible = false
+          state.player.open_code = ""
         else:
           line_zid = unit.current_line_value.changes:
             if added:
@@ -105,6 +109,7 @@ gdobj Editor of TextEdit:
                 self.clear_executing_line()
           self.visible = true
           self.text = state.open_unit.code.nim
+          state.player.open_code = self.text
 
           if CommandMode in state.local_flags:
             self.modulate = dimmed_alpha

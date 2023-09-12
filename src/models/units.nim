@@ -144,12 +144,16 @@ proc destroy*[T: Unit](self: T) =
       if ?field and not field.destroyed:
         field.destroy
 
+  if state.open_unit == self:
+    state.open_unit = nil
+  if Unit(state.open_sign) == self:
+    state.open_sign = nil
   Zen.thread_ctx.free(self)
 
 proc clear_all*(units: ZenSeq[Unit]) =
   var roots = units.value
   for unit in roots:
-    unit.walk_tree proc(unit: Unit) =
-      unit.units.clear
     if not (unit of Player):
+      unit.walk_tree proc(unit: Unit) =
+        unit.units.clear
       units -= unit

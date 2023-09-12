@@ -1,5 +1,5 @@
 import godotapi / spatial
-import core, states, bots, builds, models / colors
+import core, states, bots, builds, models / [colors, units]
 
 proc init*(_: type Sign,
     markdown: string, title = "", owner: Unit, transform = Transform.init,
@@ -23,6 +23,10 @@ proc init*(_: type Sign,
     owner_value: ~owner
   )
   self.init_unit
+  result = self
+
+method main_thread_init*(self: Sign) =
+  proc_call main_thread_init(Unit(self))
 
   state.local_flags.watch:
     if PrimaryDown.added and Hover in self.local_flags:
@@ -30,10 +34,8 @@ proc init*(_: type Sign,
 
   self.local_flags.watch:
     if Hover.added:
-      self.glow = 1
+      self.local_flags += Highlight
       state.push_flag ReticleVisible
     elif Hover.removed:
-      self.glow = 0
+      self.local_flags -= Highlight
       state.pop_flag ReticleVisible
-
-  result = self

@@ -53,7 +53,7 @@ gdobj SignNode of Spatial:
     resize()
     self.material.params_billboard_mode =
       if self.model.billboard:
-        BILLBOARD_FIXED_Y
+        BILLBOARD_ENABLED
       else:
         BILLBOARD_DISABLED
 
@@ -94,6 +94,26 @@ gdobj SignNode of Spatial:
     state.local_flags.watch:
       if God.removed:
         self.set_visibility
+
+    self.model.local_flags.watch:
+      if Highlight.added:
+        self.material.emission_energy = 1.0
+      elif Highlight.removed:
+        self.material.emission_energy = self.model.glow
+
+  method process*(delta: float) =
+    # If we only billboard the material, the collision surface doesn't move
+    # so highlighting the sign is weird from some angles. Align the mesh to the
+    # camera, along with billboarding the material. The mesh doesn't line-up
+    # with the billboard 100%, but it's pretty close.
+    if ?self.model and self.model.billboard:
+      let camera = self.get_viewport.get_camera
+      if ?camera:
+        let camera_origin = camera.global_transform.origin
+        let cross = UP.cross(self.global_transform.origin - camera_origin)
+
+        if cross != vec3():
+          self.look_at(camera_origin, UP)
 
 var sign_scene {.threadvar.}: PackedScene
 proc init*(_: type SignNode): SignNode =

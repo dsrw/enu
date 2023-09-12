@@ -77,7 +77,23 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
   self.init_unit
 
   if global: self.global_flags += Global
+  result = self
 
+method clone*(self: Bot, clone_to: Unit, id: string): Unit =
+  var transform = clone_to.transform
+  result = Bot.init(id = id, transform = transform, clone_of = self,
+      parent = clone_to)
+
+method on_collision*(self: Unit, partner: Model, normal: Vector3) =
+  self.collisions.add (partner.id, normal)
+
+method off_collision*(self: Unit, partner: Model) =
+  for collision in self.collisions.dup:
+    if collision.id == partner.id:
+      self.collisions -= collision
+
+method main_thread_init*(self: Bot) =
+  proc_call main_thread_init(Unit(self))
   self.local_flags.watch:
     debug "self flag changed", zid, changes = change.changes,
         item = change.item, unit = self.id, zen_id = self.local_flags.id
@@ -106,17 +122,3 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
             state.units -= self
           else:
             self.parent.units -= self
-  result = self
-
-method clone*(self: Bot, clone_to: Unit, id: string): Unit =
-  var transform = clone_to.transform
-  result = Bot.init(id = id, transform = transform, clone_of = self,
-      parent = clone_to)
-
-method on_collision*(self: Unit, partner: Model, normal: Vector3) =
-  self.collisions.add (partner.id, normal)
-
-method off_collision*(self: Unit, partner: Model) =
-  for collision in self.collisions.dup:
-    if collision.id == partner.id:
-      self.collisions -= collision
