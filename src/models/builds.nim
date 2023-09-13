@@ -379,8 +379,8 @@ proc init*(_: type Build,
   self.reset()
   result = self
 
-method main_thread_init*(self: Build) =
-  proc_call main_thread_init(Unit(self))
+method main_thread_joined*(self: Build) =
+  proc_call main_thread_joined(Unit(self))
 
   self.local_flags.watch:
     if Hover.added and state.tool == CodeMode:

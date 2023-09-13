@@ -15,7 +15,9 @@ proc remove_from_scene(unit: Unit) =
 
   unit.global_flags -= Ready
 
-  for child in unit.units:
+  let units = unit.units.value
+  unit.units.clear
+  for child in units:
     child.remove_from_scene()
   unit.parent = nil
   if unit.node of BuildNode:
@@ -50,7 +52,7 @@ proc add_to_scene(unit: Unit) =
     unit.node.owner = parent_node
     when compiles(node.setup):
       node.setup
-    unit.main_thread_init
+    unit.main_thread_joined
     unit.global_flags += Ready
 
   let parent_node = if Global in unit.global_flags:

@@ -25,8 +25,8 @@ proc init*(_: type Sign,
   self.init_unit
   result = self
 
-method main_thread_init*(self: Sign) =
-  proc_call main_thread_init(Unit(self))
+method main_thread_joined*(self: Sign) =
+  proc_call main_thread_joined(Unit(self))
 
   state.local_flags.watch:
     if PrimaryDown.added and Hover in self.local_flags:

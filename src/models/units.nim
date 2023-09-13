@@ -75,7 +75,9 @@ proc data_dir*(self: Unit): string =
 proc data_file*(self: Unit): string =
   self.data_dir / self.id & ".json"
 
-method main_thread_init*(self: Unit) {.base, gcsafe.} = discard
+method main_thread_joined*(self: Unit) {.base, gcsafe.} = discard
+
+method worker_thread_joined*(self: Unit) {.base, gcsafe.} = discard
 
 method on_begin_move*(self: Unit, direction: Vector3, steps: float,
     move_mode: int): Callback {.base, gcsafe.} =
@@ -148,6 +150,7 @@ proc destroy*[T: Unit](self: T) =
     state.open_unit = nil
   if Unit(state.open_sign) == self:
     state.open_sign = nil
+
   Zen.thread_ctx.free(self)
 
 proc clear_all*(units: ZenSeq[Unit]) =

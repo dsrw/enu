@@ -173,6 +173,7 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
 
   worker.for_all_units:
     if added:
+      unit.worker_thread_joined
       worker.watch_code unit
 
     if removed:

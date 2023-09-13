@@ -92,8 +92,28 @@ method off_collision*(self: Unit, partner: Model) =
     if collision.id == partner.id:
       self.collisions -= collision
 
-method main_thread_init*(self: Bot) =
-  proc_call main_thread_init(Unit(self))
+method worker_thread_joined*(self: Bot) =
+  state.local_flags.watch:
+    debug "state flag changed", zid, changes = change.changes,
+        item = change.item, unit = self.id, zen_id = self.local_flags.id
+
+    if Hover in self.local_flags:
+      if PrimaryDown.added and state.tool == CodeMode:
+        let root = self.find_root(true)
+        state.open_unit = root
+      if SecondaryDown.added and state.tool == PlaceBot:
+        # :(
+        for unit in self.units:
+          if unit of Sign:
+            var sign = Sign(unit)
+            if sign.owner == self:
+              sign.owner = nil
+
+        if self.parent.is_nil:
+          state.units -= self
+        else:
+          self.parent.units -= self
+
   self.local_flags.watch:
     debug "self flag changed", zid, changes = change.changes,
         item = change.item, unit = self.id, zen_id = self.local_flags.id
@@ -107,18 +127,3 @@ method main_thread_init*(self: Bot) =
       let root = self.find_root(true)
       root.walk_tree proc(unit: Unit) = unit.local_flags -= Highlight
       state.pop_flag ReticleVisible
-
-  self.local_flags.untrack_on_destroy:
-    state.local_flags.changes:
-      debug "state flag changed", zid, changes = change.changes,
-          item = change.item, unit = self.id, zen_id = self.local_flags.id
-
-      if Hover in self.local_flags:
-        if PrimaryDown.added and state.tool == CodeMode:
-          let root = self.find_root(true)
-          state.open_unit = root
-        if SecondaryDown.added and state.tool == PlaceBot:
-          if self.parent.is_nil:
-            state.units -= self
-          else:
-            self.parent.units -= self

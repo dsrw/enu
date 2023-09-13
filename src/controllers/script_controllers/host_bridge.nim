@@ -1,4 +1,4 @@
-import std / [os, macros, math, asyncfutures]
+import std / [os, macros, math, asyncfutures, hashes]
 import locks except Lock
 import pkg / godot except print
 import pkg / compiler / vm except get_int

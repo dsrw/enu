@@ -14,7 +14,6 @@
 --define:"nim_type_names"
 --define:"chronicles_enabled=on"
 --define:"chronicles_log_level=INFO"
---define:"chronicles_disabled_topics=model_citizen"
 --define:"chronicles_sinks=textlines[dynamic]"
 
 if defined(release):
