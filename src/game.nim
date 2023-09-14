@@ -1,4 +1,4 @@
-import std / [monotimes, os, jsonutils, json, math, locks]
+import std / [monotimes, os, jsonutils, json, math, locks, random]
 import pkg / [godot]
 from dotenv import nil
 import godotapi / [input, input_event, gd_os, node, scene_tree, packed_scene,
@@ -141,7 +141,7 @@ world: {state.config.world}
     assert not state.is_nil
 
     let env_listen_address = get_env("ENU_LISTEN_ADDRESS")
-
+    randomize()
     state.config_value.value:
       work_dir = get_user_data_dir()
       font_size = uc.font_size ||= (20 * screen_scale).int
@@ -157,7 +157,7 @@ world: {state.config.world}
 
       server_address = uc.server_address ||= ""
       listen_address = env_listen_address || (uc.listen_address ||= "")
-      player_color = uc.player_color ||= action_colors[black]
+      player_color = uc.player_color ||= color(rand(1.0), rand(1.0), rand(1.0))
       channel_size = uc.channel_size ||= chan_size
       world_dir = join_path(value.work_dir, value.world)
 
