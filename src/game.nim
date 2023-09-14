@@ -225,7 +225,7 @@ world: {state.config.world}
     self.stats.visible = state.config.show_stats
 
     state.local_flags.changes:
-      if Quit.added:
+      if Quitting.removed:
         self.get_tree().quit()
       if MouseCaptured.added:
         let center = self.get_viewport().get_visible_rect().size * 0.5

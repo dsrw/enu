@@ -19,7 +19,7 @@ type
     BlockTargetVisible, ReticleVisible, DocsVisible, MouseCaptured,
     PrimaryDown, SecondaryDown, EditorFocused, ConsoleFocused, DocsFocused,
     Playing, Flying, God,
-    LoadingScript, Server, Quitting, Quit
+    LoadingScript, Server, Quitting
 
   GlobalStateFlags* = enum
     LoadingWorld

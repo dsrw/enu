@@ -240,7 +240,7 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
   state.local_flags.changes:
     if Quitting.added:
       save_world(state.config.world_dir)
-      state.push_flag Quit
+      state.pop_flag Quitting
       running = false
 
   const max_time = (1.0 / 30.0).seconds
