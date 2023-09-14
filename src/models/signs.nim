@@ -4,7 +4,7 @@ import core, states, bots, builds, models / [colors, units]
 proc init*(_: type Sign,
     markdown: string, title = "", owner: Unit, transform = Transform.init,
     width = 1.0, height = 1.0, size = 32, billboard = false,
-    zoomable = true): Sign =
+    zoomable = true, text_only = false): Sign =
 
   let title = if title == "": markdown else: title
   var self = Sign(
@@ -20,7 +20,8 @@ proc init*(_: type Sign,
     frame_created: state.frame_count,
     color_value: ~action_colors[black],
     start_transform: transform,
-    owner_value: ~owner
+    owner_value: ~owner,
+    text_only: text_only
   )
   self.init_unit
   result = self

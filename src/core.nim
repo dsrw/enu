@@ -149,7 +149,10 @@ when not defined(no_godot):
 
   default_chronicles_stream.output.writer =
     proc (logLevel: LogLevel, msg: LogOutputStr) {.gcsafe.} =
-      godot.print msg
+      when defined(release):
+        godot.print msg
+      else:
+        echo msg
 
 # misc
 

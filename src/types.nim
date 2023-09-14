@@ -35,7 +35,7 @@ type
     Global, Visible, Lock, Ready, ScriptInitializing, Dirty
 
   LocalModelFlags* = enum
-    Hover, TargetMoved, Highlight
+    Hover, TargetMoved, Highlight, Hide
 
   ConsoleModel* = ref object
     log*: ZenSeq[string]
@@ -117,6 +117,7 @@ type
     colliders*: HashSet[Model]
     rotation_value*: ZenValue[float]
     input_direction_value*: ZenValue[Vector3]
+    cursor_position_value*: ZenValue[tuple[line: int, col: int]]
 
   Bot* = ref object of Unit
     animation_value*: ZenValue[string]
@@ -127,6 +128,7 @@ type
     size_value*: ZenValue[int]
     billboard_value*, zoomable_value*: ZenValue[bool]
     owner_value*: ZenValue[Unit]
+    text_only*: bool
 
   VoxelKind* = enum
     Hole, Manual, Computed

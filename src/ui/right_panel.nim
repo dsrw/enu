@@ -10,6 +10,12 @@ proc set_filter(self: Control, filter: int64) =
     if child of Control:
       set_filter(Control(child), filter)
 
+proc md(self: Sign, md: string): string =
+  if self.text_only:
+    "```nim\n" & md & "\n```"
+  else:
+    md
+
 gdobj RightPanel of MarginContainer:
   var label: MarkdownLabel
   var zid: ZID
@@ -21,11 +27,11 @@ gdobj RightPanel of MarginContainer:
       if added and change.item != nil:
         state.push_flags DocsVisible, DocsFocused
         var sign = change.item
-        self.label.markdown = sign.markdown
+        self.label.markdown = md(sign, sign.markdown)
         self.label.update
         self.zid = sign.markdown_value.changes:
           if added:
-            self.label.markdown = change.item
+            self.label.markdown = md(sign, change.item)
             self.label.update
       if removed and change.item != nil:
         change.item.markdown_value.untrack(self.zid)

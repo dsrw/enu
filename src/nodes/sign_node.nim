@@ -1,8 +1,8 @@
 import pkg / [godot]
 import godotapi / [spatial, resource_loader, packed_scene, collision_shape,
-                   mesh_instance, quad_mesh, spatial_material, viewport,
-                   style_box_flat]
-import ui / markdown_label
+    mesh_instance, quad_mesh, spatial_material, viewport, style_box_flat,
+    text_edit]
+import ui / [markdown_label, editor]
 import core
 
 gdobj SignNode of Spatial:
@@ -11,7 +11,9 @@ gdobj SignNode of Spatial:
   var material: SpatialMaterial
 
   proc set_visibility =
-    if Visible in self.model.global_flags:
+    if Hide in self.model.local_flags:
+      self.visible = false
+    elif Visible in self.model.global_flags:
       self.visible = true
       self.material.params_blend_mode = spatial_material.BLEND_MODE_MIX
     elif Visible notin self.model.global_flags and God in state.local_flags:
@@ -23,12 +25,21 @@ gdobj SignNode of Spatial:
   proc setup* =
     debug "sign setup", sign = self.model.id
     var
-      label = self.find_node("MarkdownLabel") as MarkdownLabel
+      label = self.get_node("Viewport/MarkdownLabel") as MarkdownLabel
+      text_edit = self.get_node("Viewport/TextEdit") as TextEdit
       shape = self.find_node("CollisionShape") as CollisionShape
       mesh = self.find_node("MeshInstance") as MeshInstance
       viewport = self.find_node("Viewport") as Viewport
       quad = mesh.mesh as QuadMesh
+
     self.material = mesh.get_active_material(0) as SpatialMaterial
+    text_edit.configure_highlighting
+
+    for child in text_edit.get_children:
+      let child = child.as_object(Node)
+      if child of ScrollBar or child of HScrollBar:
+        # hide scrollbars
+        ScrollBar(child).rect_scale = vec2()
 
     proc resize =
       debug "sign resize", sign = self.model.id
@@ -50,6 +61,9 @@ gdobj SignNode of Spatial:
       stylebox.content_margin_left = 80 / self.model.width
       label.size = int(float(self.model.size) / self.model.width)
 
+      text_edit.visible = self.model.text_only
+      label.visible = not self.model.text_only
+
     resize()
     self.material.params_billboard_mode =
       if self.model.billboard:
@@ -57,8 +71,14 @@ gdobj SignNode of Spatial:
       else:
         BILLBOARD_DISABLED
 
-    label.markdown = self.model.title
-    label.update
+    if self.model.text_only:
+      text_edit.text = self.model.markdown
+    else:
+      if self.model.title == "":
+        label.markdown = self.model.markdown
+      else:
+        label.markdown = self.model.title
+      label.update
 
     self.model.title_value.watch:
       if added or touched:
@@ -72,7 +92,10 @@ gdobj SignNode of Spatial:
     self.model.markdown_value.watch:
       if added or touched:
         if self.model.title == "":
-          label.markdown = change.item
+          if self.model.text_only:
+            text_edit.text = change.item
+          else:
+            label.markdown = change.item
           resize()
           label.update
 

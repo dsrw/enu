@@ -2,7 +2,7 @@ import std / [lists, algorithm, tables]
 import pkg / [godot, markdown]
 import godotapi / [rich_text_label, scroll_container, text_edit, theme,
                    dynamic_font, dynamic_font_data, style_box_flat, main_loop]
-import core, globals
+import core, globals, ui / editor
 import models / colors except Color
 
 export scroll_container
@@ -87,10 +87,7 @@ gdobj MarkdownLabel of ScrollContainer:
 
   proc add_text_edit(): TextEdit =
     result = self.og_text_edit.duplicate as TextEdit
-    result.add_color_region("\"\"\"", "\"\"\"", ir_black[normal], false)
-    result.add_color_region("\"", "\"", ir_black[text], false)
-    result.add_color_region("#", "\n", comment_color, true)
-    result.add_color_region("#[", "]#", comment_color, false)
+    result.configure_highlighting
     if not ?self.current_label:
       # Don't add borders if the only thing in our doc is code
       var stylebox = result.get_stylebox("normal").duplicate.as(StyleBoxFlat)

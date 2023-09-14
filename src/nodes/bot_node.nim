@@ -3,8 +3,8 @@ import pkg/godot except print
 import pkg / [chroma]
 import godotapi / [scene_tree, kinematic_body, material, mesh_instance, spatial,
                    input_event, animation_player, resource_loader, packed_scene,
-                   spatial_material]
-import globals, core, models / [colors]
+                   spatial_material, text_edit]
+import globals, core, models / [colors], ui / markdown_label
 import ./ queries
 
 gdobj BotNode of KinematicBody:
@@ -129,6 +129,12 @@ gdobj BotNode of KinematicBody:
           var velocity = change.item.length
           self.set_walk_animation(change.item.length,
               player.input_direction.z > 0.0)
+
+      player.cursor_position_value.watch:
+        if added:
+          let editor = self.get_node("SignNode/Viewport/TextEdit") as TextEdit
+          editor.cursor_set_line(change.item.line, true)
+          editor.cursor_set_column(change.item.col, true)
 
     self.model.scale_value.watch:
       if added:

@@ -6,6 +6,15 @@ import godotapi / [text_edit, scene_tree, node, input_event, global_constants,
 import core, globals
 import models except Color
 
+proc configure_highlighting*(self: TextEdit) =
+  # strings
+  self.add_color_region("\"", "\"", ir_black[text], false)
+  self.add_color_region("\"\"\"", "\"\"\"", ir_black[text], false)
+  # block comments
+  self.add_color_region("#[", "]#", ir_black[comment], false)
+  # line comments
+  self.add_color_region("#", "\n", ir_black[comment], true)
+
 gdobj Editor of TextEdit:
   var
     comment_color* {.gdExport.} = init_color(0.5, 0.5, 0.5)
@@ -50,15 +59,6 @@ gdobj Editor of TextEdit:
         state.open_unit = nil
         self.get_tree().set_input_as_handled()
 
-  proc configure_highlighting =
-    # strings
-    self.add_color_region("\"", "\"", ir_black[text], false)
-    self.add_color_region("\"\"\"", "\"\"\"", ir_black[text], false)
-    # block comments
-    self.add_color_region("#[", "]#", self.comment_color, false)
-    # line comments
-    self.add_color_region("#", "\n", self.comment_color, true)
-
   proc clear_errors =
     for i in 0..<self.get_line_count():
       self.set_line_as_marked(i, false)
@@ -78,8 +78,12 @@ gdobj Editor of TextEdit:
   method on_text_changed*() =
     state.player.open_code = self.text
 
+  method on_cursor_changed*() =
+    state.player.cursor_position =
+      (int self.cursor_get_line, int self.cursor_get_column)
+
   method ready* =
-    self.bind_signals(self, "text_changed")
+    self.bind_signals(self, "text_changed", "cursor_changed")
     var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
     self.og_bg_color = stylebox.bg_color
 

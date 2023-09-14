@@ -228,10 +228,12 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
     worker.load_script_and_dependents(player)
 
   var sign = Sign.init("", "", width = 3, height = 2.05, owner = state.player,
-    size = 244, zoomable = true, billboard = true, transform = Transform.init(origin = vec3(0, 3, 0)))
+      size = 244, zoomable = true, billboard = true, text_only = true,
+      transform = Transform.init(origin = vec3(0, 3, 0)))
 
   state.player.units += sign
   sign.global_flags -= Visible
+  sign.local_flags += Hide
 
   var running = true
 

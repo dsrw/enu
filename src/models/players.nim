@@ -7,7 +7,8 @@ proc init*(_: type Player): Player =
     id: \"player-{Zen.thread_ctx.id}",
     rotation_value: ~0.0,
     start_transform: Transform.init(origin = vec3(0, 1, 0)),
-    input_direction_value: ~Vector3
+    input_direction_value: ~Vector3,
+    cursor_position_value: ~((0, 0))
   )
   result.init_unit
   result.global_flags += Global
@@ -36,7 +37,6 @@ proc `open_code=`*(self: Player, code: string) =
       if code == "":
         unit.global_flags -= Visible
       else:
-        let markdown = "```nim\n" & code & "\n```"
-        unit.markdown = markdown
+        unit.markdown = code
         unit.global_flags += Visible
       return

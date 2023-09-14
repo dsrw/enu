@@ -1,7 +1,20 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=11 format=2]
 
+[ext_resource path="res://themes/mono.otf" type="DynamicFontData" id=1]
 [ext_resource path="res://components/MarkdownLabel.tscn" type="PackedScene" id=5]
 [ext_resource path="res://components/SignNode.gdns" type="Script" id=7]
+
+[sub_resource type="DynamicFont" id=19]
+size = 110
+font_data = ExtResource( 1 )
+
+[sub_resource type="StyleBoxFlat" id=20]
+bg_color = Color( 0, 0, 0, 0 )
+border_color = Color( 1, 0.45098, 0.992157, 1 )
+
+[sub_resource type="StyleBoxFlat" id=21]
+bg_color = Color( 0, 0, 0, 0.839216 )
+border_color = Color( 1, 0.45098, 0.992157, 1 )
 
 [sub_resource type="QuadMesh" id=18]
 resource_local_to_scene = true
@@ -45,6 +58,28 @@ size_flags_horizontal = 1
 size_flags_vertical = 1
 scroll_horizontal_enabled = false
 scroll_vertical_enabled = false
+
+[node name="TextEdit" type="TextEdit" parent="Viewport"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_bottom = 2.0
+custom_colors/selection_color = Color( 0.207843, 0, 0.321569, 1 )
+custom_colors/executing_line_color = Color( 0.0392157, 0, 0.168627, 1 )
+custom_colors/font_color_readonly = Color( 0.878431, 0.878431, 0.878431, 1 )
+custom_fonts/font = SubResource( 19 )
+custom_styles/read_only = SubResource( 20 )
+custom_styles/normal = SubResource( 21 )
+always_draw_caret = true
+indent_size = 2
+readonly = true
+syntax_highlighting = true
+show_line_numbers = true
+smooth_scrolling = true
+caret_blink = true
+caret_moving_by_right_click = false
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="MeshInstance" type="MeshInstance" parent="."]
 transform = Transform( -1, 0, -1.50996e-07, 0, 1, 0, 1.50996e-07, 0, -1, 0, 0, 0 )
