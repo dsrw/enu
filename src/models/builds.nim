@@ -333,6 +333,7 @@ method reset*(self: Build) =
       if info.kind == Computed:
         self.chunks[chunk_id].del(vec)
         if self.chunks[chunk_id].len == 0:
+          self.chunks[chunk_id].destroy
           self.chunks.del(chunk_id)
 
   self.units.clear()
