@@ -86,9 +86,9 @@ proc get_var*(self: ScriptCtx, var_name: string, module_name: string): PNode =
   self.interpreter.get_global_value(sym)
 
 proc resume*(self: ScriptCtx): bool =
-  assert not self.ctx.is_nil
-  assert self.pc > 0
-  assert not self.tos.is_nil
+  ensure not self.ctx.is_nil
+  ensure self.pc > 0
+  ensure not self.tos.is_nil
 
   trace "resuming", script = self.file_name, module = self.module_name
   result = try:

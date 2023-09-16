@@ -126,7 +126,7 @@ proc del_voxel(self: Build, position: Vector3) =
 proc restore_edits*(self: Build) =
   if self.id in self.shared.edits:
     for loc, info in self.shared.edits[self.id]:
-      assert info.kind in [Manual, Hole]
+      ensure info.kind in [Manual, Hole]
       if info.kind != Hole:
         self.add_voxel(loc, info)
       else:
@@ -324,19 +324,19 @@ method reset*(self: Build) =
   self.color = self.start_color
   self.speed = 1
   self.scale = 1
+
+  self.global_flags += Resetting
   self.global_flags += Visible
   self.reset_state()
 
   let chunks = self.chunks.value
   for chunk_id, chunk in chunks:
-    for vec, info in chunk.value:
-      if info.kind == Computed:
-        self.chunks[chunk_id].del(vec)
-        if self.chunks[chunk_id].len == 0:
-          self.chunks[chunk_id].destroy
-          self.chunks.del(chunk_id)
+    self.chunks.del(chunk_id)
+    chunk.destroy
 
   self.units.clear()
+  self.global_flags -= Resetting
+  self.restore_edits
   self.draw(vec3(), (Computed, self.start_color))
 
 method ensure_visible*(self: Build) =
@@ -461,9 +461,9 @@ when is_main_module:
   var b = Build.init
 
   b.draw vec3(1, 1, 1), (Computed, Color())
-  check vec3(1, 1, 1) in b.chunks[vec3(0, 0, 0)]
+  ensure vec3(1, 1, 1) in b.chunks[vec3(0, 0, 0)]
   b.draw vec3(17, 17, 17), (Computed, Color())
-  check vec3(17, 17, 17) in b.chunks[vec3(1, 1, 1)]
+  ensure vec3(17, 17, 17) in b.chunks[vec3(1, 1, 1)]
   var c = Build.init(transform = Transform(origin: vec3(5, 5, 5)))
   c.parent = b
 

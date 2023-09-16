@@ -18,7 +18,7 @@ proc advance_unit(self: Worker, unit: Unit, timeout: MonoTime): bool =
       let unit = Build(unit)
       unit.voxels_remaining_this_frame += unit.voxels_per_frame
     try:
-      assert self.active_unit.is_nil
+      ensure self.active_unit.is_nil
       var task_state = NextTask
 
       let now = get_mono_time()
@@ -88,7 +88,7 @@ proc change_code(self: Worker, unit: Unit, code: Code) =
       else:
         # We load the player before we init the interpreter to get to an
         # interactive state quicker. Otherwise this shouldn't ever be nil.
-        assert unit.id == state.player.id
+        ensure unit.id == state.player.id
     else:
       self.load_script(unit)
 

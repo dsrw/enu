@@ -20,6 +20,7 @@ gdobj BuildNode of VoxelTerrain:
     active_chunks: Table[Vector3, ZID]
     transform_zid: ZID
     default_view_distance: int
+    chunks_zid: ZID
 
   proc init*() =
     self.bind_signals self, "block_loaded", "block_unloaded"
@@ -94,6 +95,21 @@ gdobj BuildNode of VoxelTerrain:
     else:
       self.visible = false
 
+  proc track_chunks() =
+    self.chunks_zid = self.model.chunks.watch:
+      let id = change.item.key
+      if id in self.active_chunks:
+        if added:
+          self.track_chunk(change.item.key)
+        elif removed:
+          self.active_chunks[id] = empty_zid
+
+  proc untrack_chunks() =
+    Zen.thread_ctx.untrack(self.chunks_zid)
+    for chunk_id, zid in self.active_chunks:
+      Zen.thread_ctx.untrack(zid)
+      self.active_chunks[chunk_id] = empty_zid
+
   proc track_changes() =
     self.model.glow_value.watch:
       if added:
@@ -105,19 +121,23 @@ gdobj BuildNode of VoxelTerrain:
         debug "changing bounds", new = change.item
         self.bounds = change.item
 
-    self.model.chunks.watch:
-      let id = change.item.key
-      if id in self.active_chunks:
-        if added:
-          self.track_chunk(change.item.key)
-        elif removed:
-          self.active_chunks[id] = empty_zid
+    self.track_chunks()
 
     self.model.global_flags.watch:
       if (change.item == Visible and ScriptInitializing notin
           self.model.global_flags) or ScriptInitializing.removed:
 
         self.set_visibility
+
+      elif Resetting.added:
+        self.untrack_chunks()
+        let model = self.model
+        self.generator = nil
+        self.stream = nil
+
+      elif Resetting.removed:
+        self.generator = gdnew[VoxelGeneratorFlat]()
+        self.track_chunks()
 
     self.model.local_flags.watch:
       if Highlight.added:

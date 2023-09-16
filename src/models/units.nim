@@ -4,7 +4,7 @@ from pkg / core / godotcoretypes import Basis
 import core, models / [states, colors], libs / interpreters
 
 proc init_shared*(self: Unit) =
-  assert ?self.shared_value
+  ensure ?self.shared_value
   if ?self.parent:
     self.shared = self.parent.shared
   elif not ?self.shared:
@@ -82,15 +82,15 @@ method worker_thread_joined*(self: Unit) {.base, gcsafe.} = discard
 method on_begin_move*(self: Unit, direction: Vector3, steps: float,
     move_mode: int): Callback {.base, gcsafe.} =
 
-  raise_assert "override me"
+  fail "override me"
 
 method on_begin_turn*(self: Unit, direction: Vector3, degrees: float,
     lean: bool, move_mode: int): Callback {.base, gcsafe.} =
 
-  raise_assert "override me"
+  fail "override me"
 
 method clone*(self: Unit, clone_to: Unit, id: string): Unit {.base, gcsafe.} =
-  raise_assert "override me"
+  fail "override me"
 
 method code_template*(self: Unit, imports: string): string {.base, gcsafe.} =
   read_file self.script_ctx.script
@@ -124,7 +124,7 @@ method off_collision*(self: Model, partner: Model) {.base, gcsafe.} =
   discard
 
 proc destroy*[T: Unit](self: T) =
-  assert ?self
+  ensure ?self
 
   if self of Sign:
     # :( Sign(self) will fail to compile if T is a Build or a Bot.

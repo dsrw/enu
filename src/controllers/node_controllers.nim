@@ -5,7 +5,7 @@ import core, models, nodes / [bot_node, build_node, sign_node, player_node]
 
 proc remove_from_scene(unit: Unit) =
   debug "removing unit", unit = unit.id
-  assert ?unit.node
+  ensure ?unit.node
   if unit == previous_build: previous_build = nil
   if unit == current_build: current_build = nil
 
@@ -44,7 +44,7 @@ proc add_to_scene(unit: Unit) =
     node.model = unit
     node.transform = unit.transform
     if node.owner != nil:
-      raise_assert \"{T.name} node shouldn't be owned. unit = {unit.id}"
+      fail \"{T.name} node shouldn't be owned. unit = {unit.id}"
     unit.node.visible = Visible in unit.global_flags and
         ScriptInitializing notin unit.global_flags
 
@@ -72,7 +72,7 @@ proc add_to_scene(unit: Unit) =
       player.start_transform = player.transform
       player.add(BotNode, state.nodes.data)
   else:
-    raise_assert "unknown unit type for " & unit.id
+    fail "unknown unit type for " & unit.id
 
   for child in unit.units:
     child.parent = unit

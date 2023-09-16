@@ -15,9 +15,9 @@ gdobj PreviewMaker of Viewport:
     self.camera = self.find_node("Camera") as Camera
     self.cube = self.find_node("Cube") as MeshInstance
     self.bot = self.find_node("bot") as Spatial
-    assert not self.camera.is_nil
-    assert not self.cube.is_nil
-    assert not self.bot.is_nil
+    ensure not self.camera.is_nil
+    ensure not self.cube.is_nil
+    ensure not self.bot.is_nil
 
   method process*(delta: float) =
     if not self.skip_next and not self.callback.is_nil:

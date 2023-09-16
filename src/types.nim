@@ -14,6 +14,7 @@ export godotbase except print
 export Interpreter
 
 type
+  EnuError* = object of CatchableError
   LocalStateFlags* = enum
     CommandMode, EditorVisible, ConsoleVisible,
     BlockTargetVisible, ReticleVisible, DocsVisible, MouseCaptured,
@@ -32,7 +33,7 @@ type
     Running, Done, NextTask
 
   GlobalModelFlags* = enum
-    Global, Visible, Lock, Ready, ScriptInitializing, Dirty
+    Global, Visible, Lock, Ready, ScriptInitializing, Dirty, Resetting
 
   LocalModelFlags* = enum
     Hover, TargetMoved, Highlight, Hide
