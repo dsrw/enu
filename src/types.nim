@@ -66,6 +66,7 @@ type
     queued_action*: string
     scale_factor*: float
     worker_ctx_name*: string
+    world_name_value*: ZenValue[string]
 
   Model* = ref object of RootObj
     id*: string

@@ -125,7 +125,8 @@ proc init*(_: type GameState): GameState =
     gravity: -80.0,
     console: ConsoleModel(log: ~(seq[string], flags)),
     open_sign_value: ~(Sign, flags),
-    wants: ~(seq[LocalStateFlags], flags)
+    wants: ~(seq[LocalStateFlags], flags),
+    world_name_value: ~("", id = "world_name")
   )
   result = self
   self.open_unit_value.changes:

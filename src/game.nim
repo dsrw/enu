@@ -59,7 +59,7 @@ scale_factor: {state.scale_factor}
 vram: {vram}
 units: {unit_count}
 zen objects: {Zen.thread_ctx.len}
-world: {state.config.world}
+world: {state.world_name}
 
       """
 
@@ -188,12 +188,13 @@ world: {state.config.world}
       self.save_user_config(uc)
 
   proc set_font_size(size: int) =
-    var user_config = self.load_user_config()
-    state.config_value.value:
-      font_size = size
+    if state.config.font_size != size:
+      var user_config = self.load_user_config()
+      state.config_value.value:
+        font_size = size
 
-    user_config.font_size = some(size)
-    self.save_user_config(user_config)
+      user_config.font_size = some(size)
+      self.save_user_config(user_config)
 
     let
       theme_holder = self.find_node("LeftPanel").as(Container)
@@ -259,6 +260,7 @@ world: {state.config.world}
       num += diff
       var user_config = self.load_user_config()
       config.world = prefix & $num
+      state.world_name = config.world
       user_config.world = some(config.world)
       self.save_user_config(user_config)
       config.world_dir = join_path(config.work_dir, config.world)

@@ -208,6 +208,7 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
     worker.load_script_and_dependents(player)
 
     worker.load_world(world_dir)
+    state.world_name = state.config.world
     state.config_value.changes:
       if added:
         if change.item.world_dir != world_dir:
