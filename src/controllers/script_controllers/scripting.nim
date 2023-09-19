@@ -6,7 +6,7 @@ import pkg / compiler / [lineinfos, renderer, msgs, vmdef]
 import godotapi / [spatial, ray_cast, voxel_terrain]
 import core, models / [states, bots, builds, units, signs, players]
 import libs / [interpreters, eval]
-import ./ defs
+import ./ vars
 
 proc init*(_: type ScriptCtx, owner: Unit, clone_of: Unit = nil,
    interpreter: Interpreter): ScriptCtx =

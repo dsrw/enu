@@ -42,7 +42,7 @@ proc from_json_hook(self: var Vector3, json: JsonNode) =
   self.y = json[1].get_float
   self.z = json[2].get_float
 
-proc to_json_hook(shared_edits: ZenTable[string, Table[Vector3, VoxelInfo]]):
+proc to_json_hook(shared_edits: ZenTable[string, ZenTable[Vector3, VoxelInfo]]):
     JsonNode =
 
   let edits = collect:
@@ -55,24 +55,25 @@ proc to_json_hook(shared_edits: ZenTable[string, Table[Vector3, VoxelInfo]]):
 
   result = jsonutils.to_json(edits)
 
-proc from_json_hook(self: var Table[Vector3, VoxelInfo],
+proc from_json_hook(self: var ZenTable[Vector3, VoxelInfo],
     json: JsonNode) {.gcsafe.} =
 
   ensure load_chunks
+  self = ~Table[Vector3, VoxelInfo]
   for chunks in json:
     for chunk in chunks[1]:
       let location = chunk[0].json_to(Vector3)
       let info = chunk[1].json_to(VoxelInfo)
       self[location] = info
 
-proc from_json_hook(self: var ZenTable[string, Table[Vector3, VoxelInfo]],
+proc from_json_hook(self: var ZenTable[string, ZenTable[Vector3, VoxelInfo]],
     json: JsonNode) =
 
   ensure not load_chunks
   for id, edits in json:
     for edit in edits:
       if id notin self:
-        self[id] = init_table[Vector3, VoxelInfo]()
+        self[id] = ~Table[Vector3, VoxelInfo]
       let location = edit[0].json_to(Vector3)
       let info = edit[1].json_to(VoxelInfo)
       var locations = self[id]
@@ -93,7 +94,7 @@ proc from_json_hook(self: var Build, json: JsonNode) =
       json["start_transform"].json_to(Transform), color = color)
 
   if load_chunks:
-    var edit = init_table[Vector3, VoxelInfo]()
+    var edit = ~Table[Vector3, VoxelInfo]()
     edit.from_json(json["chunks"])
     self.shared.edits[self.id] = edit
   else:

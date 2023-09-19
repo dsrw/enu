@@ -1,7 +1,7 @@
 import std / [locks, os, random]
 import std / times except seconds
 import core, models, models / [serializers], libs / [interpreters, eval]
-import ./ [defs, host_bridge, scripting]
+import ./ [vars, host_bridge, scripting]
 
 var
   worker_lock: locks.Lock
@@ -254,7 +254,7 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
     let timeout = frame_start + max_time
     let wait_until = frame_start + min_time
 
-    Zen.thread_ctx.recv
+    Zen.thread_ctx.boop
     inc state.frame_count
     for ctx_name in Zen.thread_ctx.unsubscribed:
       var i  = 0
@@ -272,13 +272,20 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
     state.units.value.walk_tree proc(unit: Unit) = to_process.add unit
     to_process.shuffle
 
+    var batched: HashSet[Unit]
+
     while to_process.len > 0 and get_mono_time() < timeout:
       let units = to_process
       to_process = @[]
       for unit in units:
         if Ready in unit.global_flags:
+          if unit.batch_changes:
+           batched.incl unit
           if worker.advance_unit(unit, timeout):
             to_process.add(unit)
+
+    for unit in batched:
+      unit.apply_changes
 
     if get_mono_time() > save_at:
       save_world(state.config.world_dir)

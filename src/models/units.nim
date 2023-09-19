@@ -14,7 +14,7 @@ proc init_shared*(self: Unit) =
     self.shared = shared
 
   if self.id notin self.shared.edits:
-    let table = init_table[Vector3, VoxelInfo]()
+    let table = ~Table[Vector3, VoxelInfo]
     self.shared.edits[self.id] = table
 
 proc init_unit*[T: Unit](self: T) =
@@ -79,6 +79,10 @@ method main_thread_joined*(self: Unit) {.base, gcsafe.} = discard
 
 method worker_thread_joined*(self: Unit) {.base, gcsafe.} = discard
 
+method batch_changes*(self: Unit): bool {.base, gcsafe.} = discard
+
+method apply_changes*(self: Unit) {.base, gcsafe.} = discard
+
 method on_begin_move*(self: Unit, direction: Vector3, steps: float,
     move_mode: int): Callback {.base, gcsafe.} =
 
@@ -99,20 +103,16 @@ method reset*(self: Unit) {.base, gcsafe.} =
   discard
 
 method collect_garbage*(self: Unit) {.base, gcsafe.} =
-  var edits = self.shared.edits
-  for id, edit in self.shared.edits:
-    for loc, voxel in edit:
+  for id, chunk in self.shared.edits.value:
+    var cleaned_chunk = chunk
+    for loc, voxel in chunk.value:
       if voxel.kind == Hole and voxel.color == action_colors[eraser]:
-        var locations = edits[id]
-        locations.del(loc)
-        edits[id] = locations
+        cleaned_chunk.del(loc)
       elif voxel.kind == Hole:
         var voxel = voxel
         voxel.color = action_colors[eraser]
-        var locations = edits[id]
-        locations[loc] = voxel
-        edits[id] = locations
-  self.shared.edits = edits
+        cleaned_chunk[loc] = voxel
+    self.shared.edits[id] = cleaned_chunk
 
 method ensure_visible*(self: Unit) {.base, gcsafe.} =
   discard

@@ -117,7 +117,15 @@ proc add_voxel(self: Build, position: Vector3, voxel: VoxelInfo) =
     self.chunks[buffer] = Chunk.init
     self.expand_bounds_to_chunk(buffer)
 
-  self.chunks[buffer][position] = voxel
+  if self.batching:
+    if position notin self.chunks[buffer] or
+        self.chunks[buffer][position] != voxel:
+
+      if buffer notin self.batched_voxels:
+        self.batched_voxels[buffer] = init_table[Vector3, VoxelInfo]()
+      self.batched_voxels[buffer][position] = voxel
+  else:
+    self.chunks[buffer][position] = voxel
 
 proc del_voxel(self: Build, position: Vector3) =
   let buffer = position.buffer
@@ -126,7 +134,7 @@ proc del_voxel(self: Build, position: Vector3) =
 proc restore_edits*(self: Build) =
   if self.id in self.shared.edits:
     for loc, info in self.shared.edits[self.id]:
-      ensure info.kind in [Manual, Hole]
+      ensure info.kind in {Manual, Hole}
       if info.kind != Hole:
         self.add_voxel(loc, info)
       else:
@@ -167,7 +175,7 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) {.gcsafe.} =
   else:
     self.global_flags += Dirty
     if self.id notin self.shared.edits:
-      self.shared.edits[self.id] = init_table[Vector3, VoxelInfo]()
+      self.shared.edits[self.id] = ~Table[Vector3, VoxelInfo]
     var voxel = voxel
     if voxel.kind == Hole and position in self:
       voxel.color = self.voxel_info(position).color
@@ -230,8 +238,20 @@ proc fire(self: Build) =
 proc is_moving(self: Build, move_mode: int): bool =
   move_mode == 2
 
+method batch_changes*(self: Build): bool =
+  if not self.batching:
+    self.batching = true
+    result = true
+
+method apply_changes*(self: Build) =
+  if self.batching:
+    for buffer, chunk in self.batched_voxels:
+      self.chunks[buffer] += chunk
+    self.batched_voxels.clear
+    self.batching = false
+
 method on_begin_move*(self: Build,
-      direction: Vector3, steps: float, move_mode: int): Callback =
+    direction: Vector3, steps: float, move_mode: int): Callback =
 
   let move = self.is_moving(move_mode)
   if move:
@@ -363,7 +383,7 @@ proc init*(_: type Build,
     id: id,
     chunks: ~(Table[Vector3, Chunk], {SyncLocal, SyncRemote}),
     start_transform: transform,
-    draw_transform_value: ~Transform.init,
+    draw_transform_value: ~(Transform.init, flags = {}),
     start_color: color,
     drawing: true,
     bounds_value: ~init_aabb(vec3(), vec3(-1, -1, -1)),

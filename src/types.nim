@@ -81,7 +81,7 @@ type
   Shared* = ref object of RootObj
     id*: string
     materials*: seq[ShaderMaterial]
-    edits*: ZenTable[string, Table[Vector3, VoxelInfo]]
+    edits*: ZenTable[string, ZenTable[Vector3, VoxelInfo]]
 
   ScriptErrors* = ZenSeq[tuple[msg: string, info: TLineInfo, location: string]]
 
@@ -151,6 +151,8 @@ type
       Table[string, tuple[position: Transform, color: Color, drawing: bool]]
     bounds_value*: ZenValue[AABB]
     bot_collisions*: bool
+    batching*: bool
+    batched_voxels*: Table[Vector3, Table[Vector3, VoxelInfo]]
 
   Config* = object
     font_size*: int

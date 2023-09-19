@@ -41,7 +41,7 @@ gdobj Game of Node:
     script_controller: ScriptController
 
   method process*(delta: float) =
-    Zen.thread_ctx.recv(max_duration = (1.0 / 60.0).seconds)
+    Zen.thread_ctx.boop(max_duration = (1.0 / 60.0).seconds)
     inc state.frame_count
     let time = get_mono_time()
     if state.config.show_stats:

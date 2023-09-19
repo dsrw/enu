@@ -11,7 +11,7 @@ import core, models / [states, bots, builds, units, colors, signs]
 import libs / [interpreters, eval]
 import shared / errors
 
-import ./ [defs, scripting]
+import ./ [vars, scripting]
 include ./ host_bridge_utils
 
 proc get_last_error(self: Worker): ErrorData =
