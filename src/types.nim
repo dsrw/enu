@@ -200,6 +200,7 @@ type
     dependents*: HashSet[string]
     pass_context*: TPassContextArray
     last_ran*: MonoTime
+    file_index*: int
 
   VMError* = object of CatchableError
   QuitKind* = enum

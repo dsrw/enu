@@ -68,6 +68,7 @@ proc init_interpreter*[T](self: Worker, _: T) {.gcsafe.} =
       ctx.exit_code = error_code
       raise (ref VMQuit)(info: info, msg: msg, location: loc)
 
+  var count: byte = 0
   interpreter.enter_hook = proc(c: PCtx, pc: int, tos: PStackFrame, instr: TInstr) =
     ensure ?controller
     ensure ?controller.active_unit
@@ -75,28 +76,36 @@ proc init_interpreter*[T](self: Worker, _: T) {.gcsafe.} =
 
     let ctx = controller.active_unit.script_ctx
     let info = c.debug[pc]
-    let now = get_mono_time()
-    if ctx.timeout_at < now:
-      let duration = script_timeout
-      raise (ref VMQuit)(info: info, kind: Timeout,
-        msg: \"Timeout. Script {ctx.script} executed for too long without " &
-            \"yielding: {duration}")
+    inc count
+    if count == 255:
+      # don't call get_mono_time for every instruction for a 5-10% speedup.
+      count = 0
+      let now = get_mono_time()
+      if ctx.timeout_at < now:
 
-    if ctx.previous_line != info:
-      let config = interpreter.config
-      if info.file_index.int >= 0 and
-          info.file_index.int < config.m.file_infos.len:
+        let duration = script_timeout
+        raise (ref VMQuit)(info: info, kind: Timeout,
+          msg: \"Timeout. Script {ctx.script} executed for too long without " &
+              \"yielding: {duration}")
 
-        let file_name =
-            config.m.file_infos[info.file_index.int].full_path.string
+    # We don't care about the line info if we're not in our enu script.
+    # Store the file index the first time we hit our file and only change
+    # current_line/previous_line if the current instruction has that index.
+    if ctx.file_index == -1 and info.file_index.int >= 0 and
+        info.file_index.int < interpreter.config.m.file_infos.len:
+      let file_name =
+        interpreter.config.m.file_infos[info.file_index.int].full_path.string
+      if file_name == ctx.file_name:
+        ctx.file_index = info.file_index.int
 
-        if file_name == ctx.file_name:
-          (ctx.previous_line, ctx.current_line) = (ctx.current_line, info)
+    elif ctx.file_index == info.file_index.int:
+      if ctx.previous_line != info:
+        (ctx.previous_line, ctx.current_line) = (ctx.current_line, info)
 
-    ctx.ctx = c
-    ctx.pc = pc
-    ctx.tos = tos
     if ctx.pause_requested:
+      ctx.ctx = c
+      ctx.pc = pc
+      ctx.tos = tos
       ctx.pause_requested = false
       raise VMPause.new_exception("vm paused")
 
@@ -116,6 +125,7 @@ proc load_script*(self: Worker, unit: Unit, timeout = script_timeout) =
         ""
       let code = unit.code_template(imports)
       ctx.timeout_at = get_mono_time() + timeout
+      ctx.file_index = -1
       info "loading script", script = ctx.script
       ctx.load(ctx.script, code)
 
