@@ -215,6 +215,9 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
           if world_dir != "":
             save_world(world_dir)
           worker.unload_world()
+          if ResettingVM in state.local_flags:
+            worker.init_interpreter("")
+            worker.bridge_to_vm
           world_dir = change.item.world_dir
           if world_dir != "":
             worker.load_world(world_dir)

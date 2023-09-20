@@ -311,9 +311,12 @@ world: {state.world_name}
     elif event.is_action_released("command_mode"):
       state.pop_flag CommandMode
     elif event.is_action_pressed("save_and_reload"):
-      self.switch_world(0)
-      self.get_tree().set_input_as_handled()
       state.pop_flag Playing
+      state.push_flag ResettingVM
+      self.switch_world(0)
+      state.pop_flag ResettingVM
+      self.get_tree().set_input_as_handled()
+
     elif event.is_action_pressed("pause"):
       state.paused = not state.paused
     elif event.is_action_pressed("clear_console"):
