@@ -1,9 +1,9 @@
 #? stdtmpl
 #proc build_code_template(file_name, imports: string): string =
+import system except echo, quit
 import std / [strutils]
-import types, class_macros, players, state_machine, base_api, bots, builds, 
+import types, class_macros, players, state_machine, base_api, bots, builds,
        signs, builds_private
-include overrides
 
 let instance_global_by_default = false
 var move_mode = 1

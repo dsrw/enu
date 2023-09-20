@@ -4,6 +4,12 @@ import types, state_machine, base_bridge, base_bridge_private
 
 export base_bridge
 
+proc echo*(args: varargs[string, `$`]) =
+  echo_console(args.join)
+
+proc quit*(code = 0, msg = "") =
+  exit(code, msg)
+
 proc `position=`*(self: Unit, position: Vector3) = self.position_set(position)
 proc `position=`*(self: Unit, unit: Unit) = self.position_set(unit.position)
 
