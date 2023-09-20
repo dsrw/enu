@@ -132,8 +132,6 @@ world: {state.world_name}
       else:
         get_screen_dpi(-1).float / 96.0
 
-    echo "Screen size: ", get_screen_size(-1), " scale ", screen_scale
-
     var initial_user_config = self.load_user_config()
 
     var chan_size = initial_user_config.channel_size || 5000
