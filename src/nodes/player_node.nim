@@ -27,21 +27,23 @@ proc handle_collisions(self: Player, collisions:
 let
   angle_x_min = -PI / 2.25
   angle_x_max = PI / 2.25
-  max_speed = 100.0
-  move_speed = 500.0
   jump_impulse = 10.0
   fly_toggle = 0.3.seconds
   float_time = 0.3.seconds
-  run_toggle = 0.3.seconds
-  sensitivity_gamepad = vec2(2.5, 2.5)
-  sensitivity_mouse = vec2(0.005, -0.005)
+  alt_speed_toggle = 0.3.seconds
   nil_time = MonoTime.none
   input_command_timeout = 0.25
 
-# NOTE: Most of this needs to be moved into player model
+var
+  gamepad_sensitivity: Vector2
+  mouse_sensitivity: Vector2
+
+# :( Most of this needs to be moved into player model
 gdobj PlayerNode of KinematicBody:
   var
-    running, always_run, skip_release, skip_next_mouse_move, jump_down: bool
+    alt_speed, alt_walk_speed_locked, alt_fly_speed_locked, skip_release,
+        skip_next_mouse_move, jump_down: bool
+
     aim_ray, world_ray, down_ray: RayCast
     jump_time, run_time: Option[MonoTime]
 
@@ -83,17 +85,21 @@ gdobj PlayerNode of KinematicBody:
          get_action_strength("move_back") - get_action_strength("move_front"))
 
   proc calculate_velocity(velocity_current: Vector3, move_direction: Vector3,
-                          delta: float, flying, running: bool): Vector3 =
-    var speed = vec3(move_speed)
-    if running: speed *= vec3(2)
-    if flying: speed *= vec3(3, 2, 3)
+                          delta: float, flying, alt_speed: bool): Vector3 =
+    let speed =
+      if not flying and not (alt_speed xor self.alt_walk_speed_locked):
+        vec3(state.config.walk_speed)
+      elif not flying and (alt_speed xor self.alt_walk_speed_locked):
+        vec3(state.config.alt_walk_speed)
+      elif flying and not (alt_speed xor self.alt_fly_speed_locked):
+        vec3(state.config.fly_speed)
+      else:
+        vec3(state.config.alt_fly_speed)
 
     result = move_direction * delta * speed
-    if result.length() > max_speed:
-      result = result.normalized() * max_speed
 
     if not flying:
-      let float_time = if running:
+      let float_time = if alt_speed:
         float_time + float_time
       else:
         float_time
@@ -117,6 +123,13 @@ gdobj PlayerNode of KinematicBody:
 
     self.position_start = self.camera_rig.translation
     state.nodes.player = self
+
+    let x = state.config.mouse_sensitivity / 1000.0
+    mouse_sensitivity = vec2(x, -x)
+    gamepad_sensitivity = vec2(state.config.gamepad_sensitivity)
+    if state.config.invert_gamepad_y_axis:
+      gamepad_sensitivity.y = -gamepad_sensitivity.y
+
     state.local_flags.watch:
       if MouseCaptured.removed:
         self.skip_next_mouse_move = true
@@ -153,10 +166,10 @@ gdobj PlayerNode of KinematicBody:
       var look_direction = self.get_look_direction()
 
       if self.input_relative.length() > 0:
-        self.update_rotation(self.input_relative * sensitivity_mouse)
+        self.update_rotation(self.input_relative * mouse_sensitivity)
         self.input_relative = vec2()
       elif look_direction.length() > 0:
-        self.update_rotation(look_direction * sensitivity_gamepad * delta)
+        self.update_rotation(look_direction * gamepad_sensitivity * delta)
 
       var r = self.camera_rig.rotation
       r.y = wrap(r.y, -PI, PI)
@@ -209,7 +222,7 @@ gdobj PlayerNode of KinematicBody:
     move_direction += up
 
     var velocity = self.calculate_velocity(self.velocity, move_direction,
-                                           delta, self.flying, self.running)
+                                           delta, self.flying, self.alt_speed)
 
     self.model.input_direction = input_direction
     self.velocity = self.move_and_slide(velocity, UP)
@@ -300,16 +313,19 @@ gdobj PlayerNode of KinematicBody:
     if event.is_action_pressed("run"):
       let
         time = get_mono_time()
-        toggle = ?self.run_time and time < self.run_time.get + run_toggle
+        toggle = ?self.run_time and time < self.run_time.get + alt_speed_toggle
 
       if toggle:
         self.run_time = nil_time
-        self.always_run = not self.always_run
+        if self.flying:
+          self.alt_fly_speed_locked = not self.alt_fly_speed_locked
+        else:
+          self.alt_walk_speed_locked = not self.alt_walk_speed_locked
       else:
         self.run_time = some time
-      self.running = not self.always_run
+      self.alt_speed = true
     elif event.is_action_released("run"):
-      self.running = self.always_run
+      self.alt_speed = false
 
     if event of InputEventPanGesture and
       state.tool notin {CodeMode, PlaceBot}:

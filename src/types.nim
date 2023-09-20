@@ -173,6 +173,13 @@ type
     player_color*: Color
     channel_size*: int
     work_dir*: string
+    walk_speed*: int
+    fly_speed*: int
+    alt_walk_speed*: int
+    alt_fly_speed*: int
+    mouse_sensitivity*: float
+    gamepad_sensitivity*: float
+    invert_gamepad_y_axis*: bool
 
   Code* = object
     owner*: string

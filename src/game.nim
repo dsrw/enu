@@ -23,6 +23,13 @@ type
     server_address: Option[string]
     player_color: Option[colortypes.Color]
     channel_size: Option[int]
+    walk_speed*: Option[int]
+    fly_speed*: Option[int]
+    alt_walk_speed*: Option[int]
+    alt_fly_speed*: Option[int]
+    mouse_sensitivity*: Option[float]
+    gamepad_sensitivity*: Option[float]
+    invert_gamepad_y_axis*: Option[bool]
 
 if file_exists(".env"):
   dotenv.overload()
@@ -160,6 +167,13 @@ world: {state.world_name}
       player_color = uc.player_color ||= color(rand(1.0), rand(1.0), rand(1.0))
       channel_size = uc.channel_size ||= chan_size
       world_dir = join_path(value.work_dir, value.world)
+      walk_speed = uc.walk_speed ||= 500
+      fly_speed = uc.fly_speed ||= 1500
+      alt_walk_speed = uc.alt_walk_speed ||= 1000
+      alt_fly_speed = uc.alt_fly_speed ||= 250
+      mouse_sensitivity = uc.mouse_sensitivity ||= 5.0
+      gamepad_sensitivity = uc.gamepad_sensitivity ||= 2.5
+      invert_gamepad_y_axis = uc.invert_gamepad_y_axis ||= false
 
     state.set_flag(God, uc.god_mode ||= false)
 
@@ -184,8 +198,7 @@ world: {state.world_name}
     self.node_controller = NodeController.init
     self.script_controller = ScriptController.init
 
-    if uc != initial_user_config:
-      self.save_user_config(uc)
+    self.save_user_config(uc)
 
   proc set_font_size(size: int) =
     if state.config.font_size != size:

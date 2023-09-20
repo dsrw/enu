@@ -69,7 +69,7 @@ proc optional_get*[T](self: var HashSet[T], key: T): Option[T] =
 
 ### Vector3 ###
 
-import core/godotcoretypes, core/vector3, math
+import core/godotcoretypes, core/vector3, core/vector2, math
 
 const
   UP* = vec3(0, 1, 0)
@@ -84,6 +84,9 @@ proc vec3*(x, y, z: int): Vector3 {.inline.} =
 
 proc vec3*(x: int | float): Vector3 {.inline.} =
   vec3(x, x, x)
+
+proc vec2*(x: int | float): Vector2 {.inline.} =
+  vec2(x, x)
 
 proc trunc*(self: Vector3): Vector3 {.inline.} =
   vec3(trunc(self.x), trunc(self.y), trunc(self.z))
