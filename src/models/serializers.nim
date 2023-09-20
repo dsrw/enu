@@ -1,5 +1,6 @@
 import std / [json, jsonutils, sugar, tables, strutils, os]
-import core, models
+import core except to_json
+import models
 import controllers / script_controllers / scripting
 
 var load_chunks {.threadvar.}: bool
@@ -27,9 +28,6 @@ proc from_json_hook(self: var Color, json: JsonNode) =
         return
     self = hex.parse_html_hex
 
-proc to_json_hook(self: VoxelInfo): JsonNode  =
-  %* [self.kind.ord, jsonutils.to_json(self.color)]
-
 proc from_json_hook(self: var VoxelInfo, json: JsonNode) =
   self.kind = VoxelKind(json[0].get_int)
   self.color = json[1].json_to(Color)
@@ -41,19 +39,6 @@ proc from_json_hook(self: var Vector3, json: JsonNode) =
   self.x = json[0].get_float
   self.y = json[1].get_float
   self.z = json[2].get_float
-
-proc to_json_hook(shared_edits: ZenTable[string, ZenTable[Vector3, VoxelInfo]]):
-    JsonNode =
-
-  let edits = collect:
-    for id, edits in shared_edits:
-      if edits.len > 0:
-        let edit = collect:
-          for loc, info in edits:
-            (loc, info)
-        {id: edit}
-
-  result = jsonutils.to_json(edits)
 
 proc from_json_hook(self: var ZenTable[Vector3, VoxelInfo],
     json: JsonNode) {.gcsafe.} =
@@ -80,13 +65,15 @@ proc from_json_hook(self: var ZenTable[string, ZenTable[Vector3, VoxelInfo]],
       locations[location] = info
       self[id] = locations
 
-proc to_json_hook(self: Build): JsonNode =
-  %* {
-    "id": self.id,
-    "start_transform": jsonutils.to_json(self.start_transform),
-    "start_color": jsonutils.to_json(self.start_color),
-    "edits": jsonutils.to_json(self.shared.edits)
-  }
+proc from_json_hook(self: var Transform, json: JsonNode) =
+  self = Transform.init(origin = json["origin"].json_to(Vector3))
+  let elements = if json["basis"].kind == JObject:
+    # old way
+    json["basis"]["elements"]
+  else:
+    # new way
+    json["basis"]
+  self.basis.elements.from_json(elements)
 
 proc from_json_hook(self: var Build, json: JsonNode) =
   let color = json["start_color"].json_to(Color)
@@ -100,14 +87,6 @@ proc from_json_hook(self: var Build, json: JsonNode) =
   else:
     self.shared.edits.from_json(json["edits"])
 
-proc to_json_hook(self: Bot): JsonNode {.gcsafe.} =
-  %* {
-    "id": self.id,
-    "start_transform": jsonutils.to_json(self.start_transform),
-    "start_color": jsonutils.to_json(self.start_color),
-    "edits": jsonutils.to_json(self.shared.edits)
-  }
-
 proc from_json_hook(self: var Bot, json: JsonNode) =
   self = Bot.init(id = json["id"].json_to(string), transform =
       json["start_transform"].json_to(Transform))
@@ -115,13 +94,54 @@ proc from_json_hook(self: var Bot, json: JsonNode) =
   if not load_chunks:
     self.shared.edits.from_json(json["edits"])
 
+proc `$`(self: Color): string =
+  $json_utils.to_json(self)
+
+proc `$`(self: VoxelInfo): string  =
+  \"[{self.kind.ord}, \"{self.color}\"]"
+
+proc `$`(self: Vector3): string =
+  \"[{self.x}, {self.y}, {self.z}]"
+
+proc `$`(self: tuple[voxel: Vector3, info: VoxelInfo]): string =
+  \"[{self.voxel}, [{int self.info.kind}, {self.info.color}]]"
+
+proc `$`(self: ZenTable[string, ZenTable[Vector3, VoxelInfo]]): string =
+  let edits = collect:
+    for id, edit in self.value:
+      let json = collect:
+        for voxel, info in edit.value:
+          $(voxel, info)
+      let elements = json.join(",\n").indent(2)
+      \"\"{id}\": [\n{elements}\n]"
+  result = edits.join(",\n")
+
+proc `$`(self: Unit): string =
+  let elements = self.start_transform.basis.elements.map_it($it).join(",\n")
+  let edits = $self.shared.edits
+  result = \"""
+
+{{
+  "id": "{self.id}",
+  "start_transform": {{
+    "basis": [
+{elements.indent(6)}
+    ],
+    "origin": {self.start_transform.origin}
+  }},
+  "start_color": {self.start_color},
+  "edits": {{
+{edits.indent(4)}
+  }}
+}}
+
+  """
+
 proc save*(unit: Unit) =
   if not ?unit.clone_of:
     let data =
-      if unit of Build:
-        jsonutils.to_json(Build(unit)).pretty
-      elif unit of Bot:
-        jsonutils.to_json(Bot(unit)).pretty
+      if unit of Build or unit of Bot:
+        $unit
       else:
         return
     create_dir unit.data_dir
@@ -133,7 +153,7 @@ proc save*(unit: Unit) =
 proc save_world*(world_dir: string) =
   if Server in state.local_flags:
     debug "saving world"
-    let world = WorldInfo(enu_version: enu_version, format_version: "v0.9.1")
+    let world = WorldInfo(enu_version: enu_version, format_version: "v0.9.2")
     write_file world_dir / "world.json",
         jsonutils.to_json(world).pretty
 
