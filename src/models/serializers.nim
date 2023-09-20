@@ -83,17 +83,10 @@ proc from_json_hook(self: var Bot, json: JsonNode) =
     self.shared.edits.from_json(json["edits"])
 
 proc `$`(self: Color): string =
-  result = if self == action_colors[eraser]:
-    "\"\""
-  else:
-    for i, color in Colors.enum_fields:
-      if self == action_colors[Colors(i)]:
-        return \"\"{color}\""
-    \"\"{self.to_html_hex}\""
+  $json_utils.to_json(self)
 
 proc `$`(self: VoxelInfo): string  =
   \"[{self.kind.ord}, \"{self.color}\"]"
-
 
 proc `$`(self: Vector3): string =
   \"[{self.x}, {self.y}, {self.z}]"
