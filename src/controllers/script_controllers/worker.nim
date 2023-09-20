@@ -154,8 +154,8 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
   ctx.subscribe(Zen.thread_ctx)
 
   state = GameState.init_from(main_thread_state)
-  let server_address = main_thread_state.config.server_address
-  if ?listen_address or not ?server_address:
+  let connect_address = main_thread_state.config.connect_address
+  if ?listen_address or not ?connect_address:
     state.push_flag Server
 
   state.config_value = ZenValue[Config](Zen.thread_ctx["config"])
@@ -219,7 +219,7 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
           if world_dir != "":
             worker.load_world(world_dir)
   else:
-    Zen.thread_ctx.subscribe(server_address)
+    Zen.thread_ctx.subscribe(connect_address)
     state.units.add player
     player.script_ctx.interpreter = worker.interpreter
     let tmp_path = join_path(state.config.work_dir, "tmp")

@@ -20,7 +20,7 @@ type
     start_full_screen: Option[bool]
     semicolon_as_colon: Option[bool]
     listen_address: Option[string]
-    server_address: Option[string]
+    connect_address: Option[string]
     player_color: Option[colortypes.Color]
     channel_size: Option[int]
     walk_speed*: Option[int]
@@ -160,7 +160,7 @@ world: {state.world_name}
       lib_dir = join_path(get_executable_path().parent_dir(), "..", "..", "..",
           "vmlib")
 
-      server_address = uc.server_address ||= ""
+      connect_address = uc.connect_address ||= ""
       listen_address = env_listen_address || (uc.listen_address ||= "")
       player_color = uc.player_color ||= color(rand(1.0), rand(1.0), rand(1.0))
       channel_size = uc.channel_size ||= chan_size

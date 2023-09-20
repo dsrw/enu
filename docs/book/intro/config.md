@@ -36,8 +36,8 @@ a few configurable options:
   server. Optionally you can add a `:` and a port number. Empty by default. Will
   use port `9632` if none is specified.
 
-- `server_address`: Set this to an IP or host name to connect to a server. 
-  Optionally you can add a `:` and a port number. Empty by default. Will use 
+- `connect_address`: An IP or host name of an Enu instance with `listen_address` 
+  set. Optionally include a `:` and a port number. Empty by default. Will use 
   port `9632` if none is specified.
 
 - `player_color`: The color of your avatar when in multiplayer. Set to a hex
@@ -80,7 +80,7 @@ a few configurable options:
   "start_full_screen": false,
   "semicolon_as_colon": false,
   "listen_address": "",
-  "server_address": "",
+  "connect_address": "",
   "player_color": "#6495ED",
   "channel_size": 5000,
   "walk_speed": 500,

@@ -169,7 +169,7 @@ type
     semicolon_as_colon*: bool
     world_prefix*: string
     listen_address*: string
-    server_address*: string
+    connect_address*: string
     player_color*: Color
     channel_size*: int
     work_dir*: string
