@@ -10,8 +10,11 @@ a few configurable options:
 - `dock_icon_size`: Size of the icons in the dock. DPI is currently ignored, so 
   hidpi screens will require a higher number.
 
+- `world_prefix`: The base name that Enu will use when creating or loading
+  a new level. Set to `tutorial` by default.
+
 - `world`: The world/project to load. Change this to create a new world. By
-  default, this will be the `base_name` plus `-` and a number. Set to 
+  default, this will be the `world_prefix` plus `-` and a number. Set to 
   `tutorial-1` by default.
 
 - `show_stats`: Show FPS and other stats. `false` by default.
@@ -28,9 +31,6 @@ a few configurable options:
 - `semicolon_as_colon`: Both `;` and `:` will be interpreted as `:`, allowing
   `:` to be typed without shift. Sometimes useful for new typists. `false` by
   default.
-
-- `world_prefix`: The base name that Enu will use when creating or loading
-  a new level. Set to `tutorial` by default.
 
 - `listen_address`: Set this to something reasonable, like `0.0.0.0`, to be a 
   server. Optionally you can add a `:` and a port number. Empty by default. Will
@@ -72,13 +72,13 @@ a few configurable options:
 {
   "font_size": 38,
   "dock_icon_size": 193.75,
+  "world_prefix": "tutorial",
   "world": "tutorial-1",
   "show_stats": true,
   "god_mode": false,
   "mega_pixels": 5.0,
   "start_full_screen": false,
   "semicolon_as_colon": false,
-  "world_prefix": "tutorial",
   "listen_address": "",
   "server_address": "",
   "player_color": "#6495ED",
