@@ -1,0 +1,29 @@
+{
+  "id": "build_vqjjelaren7pa",
+  "start_transform": {
+    "basis": [
+      [1.0, 0.0, 0.0],
+      [0.0, 1.0, 0.0],
+      [0.0, 0.0, 1.0]
+    ],
+    "origin": [1.0, 0.0, 30.0]
+  },
+  "start_color": "green",
+  "edits": {
+    "build_6nwjb54dqof5g_build_vqjjelaren7pa_instance_3": [
+      
+    ],
+    "build_6nwjb54dqof5g_build_vqjjelaren7pa_instance_2": [
+      
+    ],
+    "build_6nwjb54dqof5g_build_vqjjelaren7pa_instance_1": [
+      
+    ],
+    "build_6nwjb54dqof5g_build_vqjjelaren7pa_instance_4": [
+      
+    ],
+    "build_vqjjelaren7pa": [
+      
+    ]
+  }
+}

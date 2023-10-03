@@ -5,10 +5,20 @@ import godotapi / [spatial, resource_loader, packed_scene, collision_shape,
 import ui / [markdown_label, editor]
 import core
 
+const
+  viewport_x = 1200
+  viewport_y = 1200
+
 gdobj SignNode of Spatial:
   var model*: Sign
   var zid: ZID
   var material: SpatialMaterial
+  var viewport: Viewport
+  var label: MarkdownLabel
+  var shape: CollisionShape
+  var quad: QuadMesh
+  var counter: int
+  var expanded: bool
 
   proc set_visibility =
     if Hide in self.model.local_flags:
@@ -22,15 +32,31 @@ gdobj SignNode of Spatial:
     else:
       self.visible = false
 
+  proc expand() =
+    self.label.rect_min_size = vec2(1200, 0)
+    self.label.rect_size = vec2(1200, 0)
+
+    # The markdown label has extra padding at the bottom. There's probably a 
+    # good reason for this and a way to remove it properly, but this gets
+    # the job done for now. 
+    let padding = self.model.size.float / (0.9 * self.model.width)
+    let rect = vec2(self.label.rect_size.x, self.label.rect_size.y - padding)
+
+    let ratio = rect.y / rect.x
+    self.viewport.size = rect
+    self.quad.size = vec2(self.model.width, self.model.width * ratio)
+    self.shape.scale = vec3(self.model.width, self.model.width * ratio, 1)
+
   proc setup* =
     debug "sign setup", sign = self.model.id
-    var
-      label = self.get_node("Viewport/MarkdownLabel") as MarkdownLabel
-      text_edit = self.get_node("Viewport/TextEdit") as TextEdit
-      shape = self.find_node("CollisionShape") as CollisionShape
-      mesh = self.find_node("MeshInstance") as MeshInstance
-      viewport = self.find_node("Viewport") as Viewport
-      quad = mesh.mesh as QuadMesh
+
+    var mesh = self.get_node("MeshInstance") as MeshInstance
+    self.viewport = self.get_node("Viewport") as Viewport
+    self.label = self.viewport.get_node("MarkdownLabel") as MarkdownLabel
+    self.shape = mesh.get_node("SignBody/CollisionShape") as CollisionShape
+    self.quad = mesh.mesh as QuadMesh
+
+    var text_edit = self.viewport.get_node("TextEdit") as TextEdit
 
     self.material = mesh.get_active_material(0) as SpatialMaterial
     text_edit.configure_highlighting
@@ -43,26 +69,34 @@ gdobj SignNode of Spatial:
 
     proc resize =
       debug "sign resize", sign = self.model.id
+
       var
         ratio = self.model.width / self.model.height
-        size = vec2(viewport.size.x, viewport.size.x / ratio)
+        size = vec2(viewport_x, viewport_y / ratio)
+        
+      self.expanded = false
 
-      quad.size = vec2(self.model.width, self.model.height)
-      shape.scale = vec3(self.model.width, self.model.height, 1)
-      var t = mesh.transform
-      t.origin.x = self.model.width / -2 + 0.5
-      t.origin.y = self.model.height / -2 + 0.5
-      mesh.transform = t
-      viewport.size = size
-      label.rect_size = size
+      if self.model.height == 0.0:
+        self.quad.size = vec2(self.model.width, self.quad.size.y)
+        self.shape.scale = vec3(self.model.width, self.quad.size.y, 1)
+      else:
+        self.quad.size = vec2(self.model.width, self.model.height)
+        self.shape.scale = vec3(self.model.width, self.model.height, 1)
+        self.label.rect_size = size
 
-      var stylebox = label.og_label.get_stylebox("normal") as StyleBoxFlat
+        var t = mesh.transform
+        t.origin.x = self.model.width / -2 + 0.5
+        t.origin.y = self.model.height / -2 + 0.5
+        mesh.transform = t
+        self.viewport.size = size
+
+      var stylebox = self.label.og_label.get_stylebox("normal") as StyleBoxFlat
 
       stylebox.content_margin_left = 80 / self.model.width
-      label.size = int(float(self.model.size) / self.model.width)
+      self.label.size = int(float(self.model.size) / self.model.width)
 
       text_edit.visible = self.model.text_only
-      label.visible = not self.model.text_only
+      self.label.visible = not self.model.text_only
 
     resize()
     self.material.params_billboard_mode =
@@ -72,32 +106,19 @@ gdobj SignNode of Spatial:
         BILLBOARD_DISABLED
 
     if self.model.text_only:
-      text_edit.text = self.model.markdown
+      text_edit.text = self.model.message
     else:
-      if self.model.title == "":
-        label.markdown = self.model.markdown
-      else:
-        label.markdown = self.model.title
-      label.update
+      self.label.markdown = self.model.message
+      self.label.update
 
-    self.model.title_value.watch:
+    self.model.message_value.watch:
       if added or touched:
-        if change.item == "":
-          label.markdown = self.model.markdown
+        if self.model.text_only:
+          text_edit.text = change.item
         else:
-          label.markdown = change.item
+          self.label.markdown = change.item
         resize()
-        label.update
-
-    self.model.markdown_value.watch:
-      if added or touched:
-        if self.model.title == "":
-          if self.model.text_only:
-            text_edit.text = change.item
-          else:
-            label.markdown = change.item
-          resize()
-          label.update
+        self.label.update
 
     self.model.glow_value.watch:
       if added:
@@ -124,19 +145,26 @@ gdobj SignNode of Spatial:
       elif Highlight.removed:
         self.material.emission_energy = self.model.glow
 
+  method physics_process*(delta: float) =
+    if ?self.model and self.model.height == 0.0 and not self.expanded:
+      self.expand()
+      self.expanded = true
+
   method process*(delta: float) =
     # If we only billboard the material, the collision surface doesn't move
     # so highlighting the sign is weird from some angles. Align the mesh to the
     # camera, along with billboarding the material. The mesh doesn't line-up
     # with the billboard 100%, but it's pretty close.
-    if ?self.model and self.model.billboard:
-      let camera = self.get_viewport.get_camera
-      if ?camera:
-        let camera_origin = camera.global_transform.origin
-        let cross = UP.cross(self.global_transform.origin - camera_origin)
+    # if ?self.model:
+    #   if self.model.billboard:
+    #     let camera = self.get_viewport.get_camera
+    #     if ?camera:
+    #       let camera_origin = camera.global_transform.origin
+    #       let cross = UP.cross(self.global_transform.origin - camera_origin)
 
-        if cross != vec3():
-          self.look_at(camera_origin, UP)
+    #       if cross != vec3():
+    #         self.look_at(camera_origin, UP)
+    discard
 
 var sign_scene {.threadvar.}: PackedScene
 proc init*(_: type SignNode): SignNode =

@@ -58,9 +58,9 @@ proc init_interpreter*[T](self: Worker, _: T) {.gcsafe.} =
 
       if file_name.get_file_info != ctx.file_name.get_file_info:
         (file_name, info) = extract_file_info msg
-        msg = msg.replace(re"unhandled exception:.*\) Error\: ", "")
-      else:
-        msg = msg.replace(re"(?ms);.*", "")
+      #  msg = msg.replace(re"unhandled exception:.*\) Error\: ", "")
+      #else:
+      #  msg = msg.replace(re"(?ms);.*", "")
 
       var loc = \"{file_name}({int info.line},{int info.col})"
       error "vm error", msg, file = ctx.file_name
@@ -211,4 +211,3 @@ proc eval*(self: Worker, unit: Unit, code: string) =
   unit.script_ctx.timeout_at = get_mono_time() + script_timeout
   {.gcsafe.}:
     discard unit.script_ctx.eval(code)
-

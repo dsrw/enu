@@ -1,0 +1,17 @@
+{
+  "id": "bot_vaj50e3nnf2ko",
+  "start_transform": {
+    "basis": [
+      [1.0, 0.0, 0.0],
+      [0.0, 1.0, 0.0],
+      [0.0, 0.0, 1.0]
+    ],
+    "origin": [11.5, 0.0, -11.5]
+  },
+  "start_color": "black",
+  "edits": {
+    "bot_vaj50e3nnf2ko": [
+      
+    ]
+  }
+}

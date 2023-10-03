@@ -438,23 +438,6 @@ proc go*(unit: Unit) =
 proc even*(self: int): bool = self mod 2 == 0
 proc odd*(self: int): bool = not self.even
 
-proc md*(self: Unit,
-  markdown: string, title = "", width = 1.0, height = 1.0, size = 32,
-  zoomable = true, billboard = false): Sign {.discardable.} =
-
-  result = Sign()
-  self.new_markdown_sign(result, markdown, title, width, height, size,
-    zoomable, billboard)
-
-template md*(markdown: string,
-  title = "", height = 1.0, width = 1.0, size = 32, zoomable = true,
-  billboard = false): Sign =
-
-  enu_target.md(markdown, title, width, height, size, zoomable, billboard)
-
-template reset*(clear = false) =
-  enu_target.reset(clear)
-
 template `\`*(s: string): string =
   var f = fmt(s)
   f.remove_prefix("\n")
@@ -470,3 +453,10 @@ template `?`*(self: string): bool = self != ""
 template `?`*[T](self: open_array[T]): bool = self.len > 0
 template `?`*[T](self: set[T]): bool = self.card > 0
 template `?`*[T](self: HashSet[T]): bool = self.card > 0
+
+proc `or`*[T: not bool](a, b: T): T =
+  if ?a: result = a
+  else: result = b
+
+template reset*(clear = false) =
+  enu_target.reset(clear)

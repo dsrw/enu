@@ -1,0 +1,17 @@
+{
+  "id": "build_3ug9co55jso8w",
+  "start_transform": {
+    "basis": [
+      [1.0, 0.0, 0.0],
+      [0.0, 1.0, 0.0],
+      [0.0, 0.0, 1.0]
+    ],
+    "origin": [-6.0, 0.0, 10.0]
+  },
+  "start_color": "green",
+  "edits": {
+    "build_3ug9co55jso8w": [
+      
+    ]
+  }
+}

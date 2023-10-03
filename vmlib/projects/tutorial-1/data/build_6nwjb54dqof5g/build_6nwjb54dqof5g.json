@@ -1,0 +1,17 @@
+{
+  "id": "build_6nwjb54dqof5g",
+  "start_transform": {
+    "basis": [
+      [1.0, 0.0, 0.0],
+      [0.0, 1.0, 0.0],
+      [0.0, 0.0, 1.0]
+    ],
+    "origin": [0.0, 0.0, 18.0]
+  },
+  "start_color": "blue",
+  "edits": {
+    "build_6nwjb54dqof5g": [
+      
+    ]
+  }
+}

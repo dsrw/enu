@@ -1,8 +1,9 @@
 name Maze(finished = false, won = false)
 lock = true
 
+
 proc make_sign: Sign =
-  md("` `", title="", width=10.0, height=3.0, size=2600, zoomable = false)
+  say("` `", width = 10.0, height = 3.0, size = 2600)
 
 drawing = true
 if not is_instance:
@@ -75,7 +76,9 @@ color = black
 up 1
 
 turn 180
-
+color = brown
+up 1
+quit()
 var start_sign1 = make_sign()
 
 left 9
@@ -103,7 +106,7 @@ proc scroller(sign: Sign, msg: string, pause = 0, len = msg.len): proc() =
     else:
       counter = 0 
       current = current[1..^1] & current[0]
-      sign.title = "`" & current[0..(len - 1)].strip(leading = false) & "`"
+      sign.message = "`" & current[0..(len - 1)].strip(leading = false) & "`"
 
 var start_scroller1 = start_sign1.scroller(" START HERE! ", 0, 7)
 

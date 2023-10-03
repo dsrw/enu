@@ -125,10 +125,12 @@ method off_collision*(self: Model, partner: Model) {.base, gcsafe.} =
 
 proc destroy*[T: Unit](self: T) =
   ensure ?self
-
   if self of Sign:
     # :( Sign(self) will fail to compile if T is a Build or a Bot.
     Sign(Unit(self)).owner = nil
+  for unit in self.units:
+    if unit of Sign:
+      Sign(Unit(unit)).owner = nil
 
   # :( Parent isn't set properly for instances on the main thread
   if self.parent == nil and "instance" notin self.id:

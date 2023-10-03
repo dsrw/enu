@@ -257,3 +257,28 @@ template value*(self: ZenValue, body: untyped) {.dirty.} =
     with value:
       body
     self.value = value
+
+template time_it*(name: string, body: untyped) =
+  let start = get_mono_time()
+  body
+  let finish = get_mono_time()
+  echo "Time taken: ", finish - start
+
+
+macro stats*(proc_def: untyped): untyped =
+  proc_def.expect_kind(nnk_proc_def)
+  
+  let proc_name = proc_def[0].to_str_lit
+  
+  var body = proc_def.body
+  body = quote do:
+    let start_time = get_mono_time()
+    let proc_name = `proc_name`
+
+    `body`
+
+    let finish_time = get_mono_time()
+    echo "%% `", proc_name, "` time: ", finish_time - start_time
+  
+  proc_def.body = body
+  return proc_def

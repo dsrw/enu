@@ -28,7 +28,7 @@ proc open_code*(self: Player): string =
   for unit in self.units:
     if unit of Sign:
       let unit = Sign(unit)
-      return unit.markdown
+      return unit.message
 
 proc `open_code=`*(self: Player, code: string) =
   for unit in self.units:
@@ -37,6 +37,6 @@ proc `open_code=`*(self: Player, code: string) =
       if code == "":
         unit.global_flags -= Visible
       else:
-        unit.markdown = code
+        unit.message = code
         unit.global_flags += Visible
       return
