@@ -13,7 +13,8 @@ var state* {.threadvar.}: GameState
 ### Sugar ###
 
 from sugar import dup, dump, collect
-import std / [with, sets, times, monotimes, tables]
+import std / [with, sets, monotimes, tables]
+import std / times except seconds
 import pkg / [pretty, flatty]
 
 export with, sets, tables, pretty, flatty
@@ -26,13 +27,6 @@ import pkg / chronicles
 export chronicles
 
 template nim_filename*: string = instantiation_info(full_paths = true).filename
-
-### times ###
-
-export monotimes
-
-proc seconds*(s: float): Duration {.inline.} =
-  init_duration(milliseconds = int(s * 1000))
 
 ### options ###
 

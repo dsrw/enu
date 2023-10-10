@@ -18,6 +18,7 @@ type
     advance_state_machine*: proc(): bool
     rng: Rand
     seed: int
+    sign*: Sign
 
   PositionOffset* = object
     position*: Vector3

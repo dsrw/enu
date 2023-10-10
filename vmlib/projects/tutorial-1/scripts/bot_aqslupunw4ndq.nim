@@ -3,11 +3,8 @@ color = white
 
 var test_mode = false
 
-var sign = md("# Welcome to Enu!", size = 460, billboard = true)
-
 var bot_id = ""
 var maze: MazeType
-sign.show = false
 
 proc get_bot: Bot =
   # each time the code for the bot is reloaded we need to
@@ -19,36 +16,27 @@ proc get_bot: Bot =
     elif not test_mode and bot.id == bot_id:
       return bot
 
-proc say(title = "", width = 0.0, height = 0.0, body = "") =
-  if ?width: sign.width = width
-  if ?height: sign.height = height
-  if ?body: sign.markdown = body
-  if ?title: sign.title = title
-  sign.show = true
-
 - setup:
   reset()
   position = position + LEFT
   speed = 10
   turn player
-  sign.position = position + (UP * 2.0) + (LEFT * 1.2)
 
 - approach:
   sleep 2
-  say "- Hi!", 1.5, 0.5
+  say "# - Hi!", width = 1.0
   sleep 2
   forward 8
   turn player
   sleep 1
 
-  say "- Welcome to **Enu**!", 4.0, 0.6
+  say "- Welcome to **Enu**!", width = 2.0
   sleep 1.5
-  say "- Click this text for a short tutorial.", 3.5, 1.5
-
+  say "- Click this text for a short tutorial.", "# Welcome to Enu!"
   while not sign.open: turn(player)
 
 - movement_info:
-  say "...", 0.5, 0.5, """
+  say "# . . .", """
 
 # Welcome to Enu!
 
@@ -74,13 +62,13 @@ controller, or by holding down `alt/option (⌥)` on your keyboard.
 
 Sneak behind the `Bot` to continue the tutorial.
 
-  """
+  """, width = 0.6
 
   while me.angle_to(player).abs notin 150..210:
     sleep 0.5
 
 - flying_info:
-  say "- Good!", 2.0, 0.5, """
+  say "- Good!", """
 
 # Jumping and Flying
 
@@ -96,7 +84,7 @@ ever get yourself stuck you can probably fly your way out.
 
 Jump, fly, then returning to the ground to continue the tutorial.
 
-  """
+  """, width = 1.4
 
   speed = 1
   turn player
@@ -104,16 +92,16 @@ Jump, fly, then returning to the ground to continue the tutorial.
   while not player.flying: sleep()
 
 - flying_done:
-  say "- Now drop!", 3.0, 0.5
+  say "- Now drop!"
   while player.flying: sleep()
 
 - good_job:
   sign.open = false
-  say "- Good Job!", 3.0, 0.5, "# Good Job!"
+  say "- Good Job!", "# Good Job!"
   sleep 2
 
 - tool_info:
-  say "- Switch to `Place Bot`", 3.0, 1.0, """
+  say "- Switch to `Place Bot`", """
 
 # Changing tools
 
@@ -131,14 +119,14 @@ friendly robots. Tools `2` - `7` are the `blue`, `red`, `green`, `black`,
 
 Select the `Place Bot` tool to continue the tutorial.
 
-  """
+  """, width = 2.5
 
   sign.open = true
   while player.tool != PlaceBot: sleep()
   sleep 0.5
 
 - bot_info:
-  say "- Place a `Bot`", 3.0, 0.6, """
+  say "- Place a `Bot`", """
 
 # Bots
 
@@ -149,13 +137,14 @@ They can be placed with the `left` mouse button or the `R1` gamepad trigger.
 
 Place a `Bot` on the ground to continue the tutorial.
 
-  """
+  """, width = 2.0
 
   sign.open = true
   var last_bot_frame = frame_count()
   var og_bot_count = Bot.all.len
 
-  while Bot.all.len <= og_bot_count: turn player
+  while Bot.all.len <= og_bot_count:
+    turn player
   for bot in Bot.all:
     if bot.frame_created > last_bot_frame:
       last_bot_frame = bot.frame_created
@@ -174,7 +163,7 @@ Place a `Bot` on the ground to continue the tutorial.
   sleep 1
 
 - code_info:
-  say "- Coding", 2.5, 0.5, """
+  say "- Coding", """
 
 # Coding Enu
 
@@ -193,7 +182,7 @@ Switch to the `Code` tool to continue the tutorial.
   sleep 0.5
 
 - open_code:
-  say(body = """
+  sign.more = """
 
 # Coding Enu
 
@@ -202,7 +191,7 @@ on it with the `left` mouse button, or `R1` on the controller
 
 Open the code for your `Bot` to continue the tutorial.
 
-  """)
+  """
 
   sign.open = true
   var bot = get_bot()
@@ -212,7 +201,7 @@ Open the code for your `Bot` to continue the tutorial.
   sleep 0.5
 
 - bot_navigation:
-  say(body = """
+  sign.more = """
 
 # Coding Bots
 
@@ -248,7 +237,7 @@ turn left
 Good luck! We'll conclude this tutorial when your `Bot` goes past the
 `FINISH HERE!` sign at the end of the course.
 
-  """)
+  """
 
   sign.open = true
   var bot = get_bot()
@@ -258,9 +247,9 @@ Good luck! We'll conclude this tutorial when your `Bot` goes past the
 
 - win:
   maze.won = true
-  say "- Great Job!", 3.0, 0.5, "# Great Job!"
+  say "- Great Job!", "# Great Job!"
   sleep 15
-  say "- All Done!", 2.5, 0.5, """
+  say "- All Done!", """
 
 # Great Job!
 

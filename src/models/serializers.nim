@@ -115,7 +115,7 @@ proc `$`(self: Unit): string =
     "basis": [
 {elements.indent(6)}
     ],
-    "origin": {self.start_transform.origin}
+    "origin": {$self.start_transform.origin}
   }},
   "start_color": {self.start_color},
   "edits": {{

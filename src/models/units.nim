@@ -1,4 +1,4 @@
-import std / [os, sugar, with, tables]
+import std / [os, with, tables]
 import godotapi / spatial
 from pkg / core / godotcoretypes import Basis
 import core, models / [states, colors], libs / interpreters
@@ -125,10 +125,12 @@ method off_collision*(self: Model, partner: Model) {.base, gcsafe.} =
 
 proc destroy*[T: Unit](self: T) =
   ensure ?self
-
   if self of Sign:
     # :( Sign(self) will fail to compile if T is a Build or a Bot.
     Sign(Unit(self)).owner = nil
+  for unit in self.units:
+    if unit of Sign:
+      Sign(Unit(unit)).owner = nil
 
   # :( Parent isn't set properly for instances on the main thread
   if self.parent == nil and "instance" notin self.id:
@@ -148,6 +150,7 @@ proc destroy*[T: Unit](self: T) =
 
   if state.open_unit == self:
     state.open_unit = nil
+
   if Unit(state.open_sign) == self:
     state.open_sign = nil
 

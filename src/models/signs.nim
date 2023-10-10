@@ -1,22 +1,19 @@
 import godotapi / spatial
 import core, states, bots, builds, models / [colors, units]
 
-proc init*(_: type Sign,
-    markdown: string, title = "", owner: Unit, transform = Transform.init,
-    width = 1.0, height = 1.0, size = 32, billboard = false,
-    zoomable = true, text_only = false): Sign =
+proc init*(_: type Sign, message: string, more = "", owner: Unit,
+    transform = Transform.init, width = 1.0, height = 1.0, size = 32,
+    billboard = false, text_only = false): Sign =
 
-  let title = if title == "": markdown else: title
   var self = Sign(
     id: "sign_" & generate_id(),
-    markdown_value: ~markdown,
-    title_value: ~title,
+    message_value: ~message,
+    more_value: ~more,
     glow_value: ~0.0,
     width_value: ~width,
     height_value: ~height,
     size_value: ~size,
     billboard_value: ~billboard,
-    zoomable_value: ~zoomable,
     frame_created: state.frame_count,
     color_value: ~action_colors[black],
     start_transform: transform,

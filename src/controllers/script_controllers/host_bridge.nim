@@ -328,19 +328,6 @@ proc drop_transform(unit: Unit): Transform =
   else:
     raise ObjectConversionDefect.init("Unknown unit type")
 
-proc new_markdown_sign(self: Worker,
-  unit: Unit, pnode: PNode, markdown: string, title: string, width: float,
-  height: float, size: int, zoomable: bool, billboard: bool): Unit =
-
-  result = Sign.init(
-    markdown, title = title, owner = self.active_unit,
-    transform = drop_transform(unit), width = width, height = height,
-    size = size, zoomable = zoomable, billboard = billboard)
-
-  info "creating sign", id = result.id
-  self.map_unit(result, pnode)
-  unit.units.add(result)
-
 proc reset(self: Unit, clear: bool) =
   if clear:
     if self of Build: Build(self).reset()
@@ -418,17 +405,44 @@ proc `tool=`(self: Unit, value: int) =
   state.tool = Tools(value)
 
 # Sign bindings
+
+proc new_markdown_sign(self: Worker,
+    unit: Unit, pnode: PNode, message: string, more: string, width: float,
+    height: float, size: int, billboard: bool): Unit =
+
+  result = Sign.init(
+    message, more = more, owner = self.active_unit,
+    transform = drop_transform(unit), width = width, height = height,
+    size = size, billboard = billboard)
+
+  info "creating sign", id = result.id
+  self.map_unit(result, pnode)
+  unit.units.add(result)
+
+proc update_markdown_sign(self: Worker, unit: Sign, message: string,
+    more: string, width: float, height: float, size: int, billboard: bool) =
+
+  unit.width = width
+  unit.height = height
+  unit.size = size
+  unit.billboard = billboard
+  unit.more = more
+  unit.message = message
+
 proc `width=`(self: Sign, value: float) =
   types.`width=`(self, value)
-  self.title_value.touch self.title
+  self.message_value.touch self.message
 
 proc `height=`(self: Sign, value: float) =
   types.`height=`(self, value)
-  self.title_value.touch self.title
+  self.message_value.touch self.message
 
 proc `size=`(self: Sign, value: int) =
   types.`size=`(self, value)
-  self.title_value.touch self.title
+  self.message_value.touch self.message
+
+proc message(self: Sign): string =
+  self.message_value.value
 
 proc open(self: Sign): bool =
   state.open_sign == self
@@ -464,7 +478,8 @@ proc bridge_to_vm*(worker: Worker) =
 
   result.bridged_from_vm "base_bridge_private",
     link_dependency, action_running, `action_running=`, yield_script,
-    begin_turn, begin_move, sleep_impl, position_set, new_markdown_sign
+    begin_turn, begin_move, sleep_impl, position_set, new_markdown_sign,
+    update_markdown_sign
 
   result.bridged_from_vm "bots",
     play, all_bots
@@ -473,8 +488,8 @@ proc bridge_to_vm*(worker: Worker) =
     drawing, `drawing=`, initial_position, save, restore, all_builds
 
   result.bridged_from_vm "signs",
-    markdown, `markdown=`, title, `title=`, height, `height=`, width, `width=`,
-    size, `size=`, open, `open=`
+    message, `message=`, more, `more=`, height, `height=`, width, `width=`,
+    size, `size=`, open, `open=`, billboard, `billboard=`
 
   result.bridged_from_vm "players",
     playing, `playing=`, god, `god=`, flying, `flying=`, tool, `tool=`,

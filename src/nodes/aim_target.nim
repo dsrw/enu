@@ -50,7 +50,7 @@ gdobj AimTarget of Sprite3D:
         state.pop_flag BlockTargetVisible
       self.target_model = unit
       # :(
-      if not (unit == nil or (unit of Sign and not Sign(unit).zoomable) or
+      if not (unit == nil or (unit of Sign and Sign(unit).more == "") or
           (God notin state.local_flags and (unit of Bot or unit of Build) and
           Lock in Unit(unit).find_root.global_flags)):
 

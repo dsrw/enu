@@ -27,14 +27,14 @@ gdobj RightPanel of MarginContainer:
       if added and change.item != nil:
         state.push_flags DocsVisible, DocsFocused
         var sign = change.item
-        self.label.markdown = md(sign, sign.markdown)
+        self.label.markdown = md(sign, sign.more)
         self.label.update
-        self.zid = sign.markdown_value.changes:
+        self.zid = sign.more_value.changes:
           if added:
             self.label.markdown = md(sign, change.item)
             self.label.update
       if removed and change.item != nil:
-        change.item.markdown_value.untrack(self.zid)
+        change.item.more_value.untrack(self.zid)
         state.pop_flags DocsFocused, DocsVisible
 
     state.local_flags.changes:

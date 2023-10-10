@@ -20,10 +20,16 @@ type
     BlockTargetVisible, ReticleVisible, DocsVisible, MouseCaptured,
     PrimaryDown, SecondaryDown, EditorFocused, ConsoleFocused, DocsFocused,
     Playing, Flying, God,
-    LoadingScript, Server, Quitting
+    LoadingScript, Server, Quitting, ResettingVM
 
   GlobalStateFlags* = enum
     LoadingWorld
+
+  LocalModelFlags* = enum
+    Hover, TargetMoved, Highlight, Hide
+
+  GlobalModelFlags* = enum
+    Global, Visible, Lock, Ready, ScriptInitializing, Dirty, Resetting
 
   Tools* = enum
     CodeMode, BlueBlock, RedBlock, GreenBlock, BlackBlock, WhiteBlock,
@@ -32,11 +38,7 @@ type
   TaskStates* = enum
     Running, Done, NextTask
 
-  GlobalModelFlags* = enum
-    Global, Visible, Lock, Ready, ScriptInitializing, Dirty, Resetting
 
-  LocalModelFlags* = enum
-    Hover, TargetMoved, Highlight, Hide
 
   ConsoleModel* = ref object
     log*: ZenSeq[string]
@@ -125,10 +127,10 @@ type
     animation_value*: ZenValue[string]
 
   Sign* = ref object of Unit
-    markdown_value*, title_value*: ZenValue[string]
+    message_value*, more_value*: ZenValue[string]
     width_value*, height_value*: ZenValue[float]
     size_value*: ZenValue[int]
-    billboard_value*, zoomable_value*: ZenValue[bool]
+    billboard_value*: ZenValue[bool]
     owner_value*: ZenValue[Unit]
     text_only*: bool
 
