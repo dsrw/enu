@@ -28,7 +28,8 @@ proc params_to_ident_defs(nodes: seq[NimNode]): seq[NimNode] =
       elif node.kind == nnkExprColonExpr:
         result.add nnkIdentDefs.new_tree(node[0], node[1], new_empty_node())
       else:
-        error("expected `my_param = 1`, `my_param: int` kind: " & $node.kind, node)
+        error("expected `my_param = 1`, `my_param: int` kind: " & $node.kind,
+          node)
 
 proc params_to_properties(nodes: seq[NimNode]): NimNode =
   result = new_nim_node(kind = nnkRecList)
@@ -38,11 +39,14 @@ proc params_to_properties(nodes: seq[NimNode]): NimNode =
     let prop = node[0]
     if prop.str_val notin ["global", "speed", "color"]:
       if node.kind == nnkExprEqExpr:
-        result.add nnkIdentDefs.new_tree(node[0], new_call(ident"type", node[1]), empty)
+        result.add nnkIdentDefs.new_tree(node[0], new_call(ident"type",
+          node[1]), empty)
+
       elif node.kind == nnkExprColonExpr:
         result.add nnkIdentDefs.new_tree(node[0], node[1], empty)
       else:
-        error("expected `my_param = 1`, `my_param: int` kind: " & $node.kind, node)
+        error("expected `my_param = 1`, `my_param: int` kind: " & $node.kind,
+          node)
 
 proc params_to_accessors(type_name: NimNode, nodes: seq[NimNode]): NimNode =
   result = new_stmt_list()
@@ -69,7 +73,9 @@ proc params_to_accessors(type_name: NimNode, nodes: seq[NimNode]): NimNode =
             self.`getter` = value
             self.wake
 
-proc build_ctors(name_str: string, type_name: NimNode, params: seq[NimNode]): NimNode =
+proc build_ctors(name_str: string, type_name: NimNode, params: seq[NimNode]):
+  NimNode =
+
   var ctor_body = quote do:
     assert not instance.is_nil
     link_dependency(instance)
@@ -90,7 +96,9 @@ proc build_ctors(name_str: string, type_name: NimNode, params: seq[NimNode]): Ni
 
   var global = "global".ident
   if "global" notin var_names:
-    params &= new_ident_defs(global, new_empty_node(), ident"instance_global_by_default")
+    params &= new_ident_defs(global, new_empty_node(),
+      ident"instance_global_by_default")
+
   ctor_body.add quote do:
     result.global = `global`
 
@@ -120,14 +128,18 @@ proc build_ctors(name_str: string, type_name: NimNode, params: seq[NimNode]): Ni
     body = ctor_body
   )
 
-proc extract_class_info(name_node: NimNode): tuple[name: string, params: seq[NimNode]] =
+proc extract_class_info(name_node: NimNode): tuple[name: string,
+  params: seq[NimNode]] =
+
   result = if name_node.kind == nnkIdent:
       (name_node.str_val, @[])
     elif name_node.kind in [nnkCall, nnkCommand, nnkObjConstr]:
       name_node[0].expect_kind nnkIdent
       (name_node[0].str_val, name_node[1..^1])
     else:
-      error("expected `name my_name` or `name my_name(my_param1 = 1, my_param2 = 2, ...)`", name_node)
+      error("expected `name my_name` or `name my_name(my_param1 = 1, " &
+        "my_param2 = 2, ...)`", name_node)
+
       return
 
 proc build_class(name_node: NimNode, base_type: NimNode): NimNode =
@@ -137,7 +149,6 @@ proc build_class(name_node: NimNode, base_type: NimNode): NimNode =
     type_name = (name & "Type").to_upper_ascii.nim_ident_normalize.ident
     var_name = name.ident
     ctors = build_ctors(name, type_name, params)
-    controller_type = (name & "Controller").to_upper_ascii.nim_ident_normalize.ident
 
   result = new_stmt_list()
 
@@ -164,7 +175,9 @@ proc pop_name_node(ast: NimNode): tuple[start: NimNode, name_node: NimNode] =
   result.start = new_stmt_list()
   for i, node in ast:
     if node.kind in [nnkCommand, nnkCall]:
-      if node.len == 2 and node[1].kind in [nnkIdent, nnkCall, nnkObjConstr] and node[0].eq_ident(ident_name):
+      if node.len == 2 and node[1].kind in [nnkIdent, nnkCall, nnkObjConstr] and
+        node[0].eq_ident(ident_name):
+
         result.name_node = node[1]
         ast.del(i)
         break
@@ -172,11 +185,14 @@ proc pop_name_node(ast: NimNode): tuple[start: NimNode, name_node: NimNode] =
   for i, node in result.start:
    ast.del(i)
 
-proc visit_tree(parent: NimNode, convert: open_array[string], receiver: string, alias: ptr seq[NimNode]) =
+proc visit_tree(parent: NimNode, convert: open_array[string], receiver: string,
+  alias: ptr seq[NimNode]) =
+
   for i, node in parent:
     if node.kind in [nnkProcDef, nnkBlockStmt, nnkIfExpr, nnkIfStmt]:
-      # The alias list should only live as long as a scope. We need to make a new
-      # copy each time a scope is opened. The above list needs to be expanded.
+      # The alias list should only live as long as a scope. We need to make a
+      # new copy each time a scope is opened. The above list needs to be
+      # expanded.
       var alias = alias[]
       visit_tree(node, convert, receiver, addr alias)
     else:
@@ -186,7 +202,10 @@ proc visit_tree(parent: NimNode, convert: open_array[string], receiver: string, 
             alias[].add node
           elif i == 2 and node notin alias[]:
             parent[i] = new_dot_expr(ident receiver, node)
-        elif $node in convert and node notin alias[] and parent.kind != nnkExprEqExpr and not (parent.kind == nnkDotExpr and i == 1):
+        elif $node in convert and node notin alias[] and
+          parent.kind != nnk_expr_eq_expr and not
+          (parent.kind == nnk_dot_expr and i == 1):
+
           parent[i] = new_dot_expr(ident receiver, node)
       visit_tree(node, convert, receiver, alias)
 
@@ -209,12 +228,16 @@ proc build_proc(sig, body: NimNode, return_type = new_empty_node()): NimNode =
 
 proc transform_proc_lists(parent: NimNode): NimNode =
   for i, node in parent:
-    if parent.kind == nnkStmtList and node.kind == nnkPrefix and node[0] == ident"-":
+    if parent.kind == nnkStmtList and node.kind == nnkPrefix and
+      node[0] == ident"-":
+
       if node[1].kind in [nnkIdent, nnkCall]:
         let new_proc = build_proc(node[1], transform_proc_lists node[2])
         parent[i] = new_proc
       elif node[1].kind == nnkCommand:
-        let new_proc = build_proc(node[1][0], transform_proc_lists node[2], node[1][1])
+        let new_proc = build_proc(node[1][0], transform_proc_lists node[2],
+          node[1][1])
+
         parent[i] = new_proc
       else:
         parent[i] = transform_proc_lists(node)
@@ -222,7 +245,9 @@ proc transform_proc_lists(parent: NimNode): NimNode =
       parent[i] = transform_proc_lists(node)
   parent
 
-macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[untyped]): untyped =
+macro load_enu_script*(file_name: string, base_type: untyped,
+  convert: varargs[untyped]): untyped =
+
   var convert = convert.map_it($it)
   let file_name = file_name.str_val
   when compiles(parse_stmt(file_name, file_name)):
