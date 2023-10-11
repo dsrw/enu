@@ -8,6 +8,15 @@ var load_chunks {.threadvar.}: bool
 type WorldInfo = object
   enu_version, format_version: string
 
+proc to_json_hook(self: Color): JsonNode =
+  result = if self == action_colors[eraser]:
+    %""
+  else:
+    for i, color in Colors.enum_fields:
+      if self == action_colors[Colors(i)]:
+        return %color
+    %self.to_html_hex
+
 proc from_json_hook(self: var Color, json: JsonNode) =
   let hex = json.get_str
   if hex == "":
@@ -22,6 +31,9 @@ proc from_json_hook(self: var Color, json: JsonNode) =
 proc from_json_hook(self: var VoxelInfo, json: JsonNode) =
   self.kind = VoxelKind(json[0].get_int)
   self.color = json[1].json_to(Color)
+
+proc to_json_hook(self: Vector3): JsonNode =
+  %[self.x, self.y, self.z]
 
 proc from_json_hook(self: var Vector3, json: JsonNode) =
   self.x = json[0].get_float
@@ -83,17 +95,10 @@ proc from_json_hook(self: var Bot, json: JsonNode) =
     self.shared.edits.from_json(json["edits"])
 
 proc `$`(self: Color): string =
-  result = if self == action_colors[eraser]:
-    "\"\""
-  else:
-    for i, color in Colors.enum_fields:
-      if self == action_colors[Colors(i)]:
-        return \"\"{color}\""
-    \"\"{self.to_html_hex}\""
+  $json_utils.to_json(self)
 
 proc `$`(self: VoxelInfo): string  =
   \"[{self.kind.ord}, \"{self.color}\"]"
-
 
 proc `$`(self: Vector3): string =
   \"[{self.x}, {self.y}, {self.z}]"
