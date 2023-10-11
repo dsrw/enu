@@ -56,11 +56,14 @@ proc init_interpreter*[T](self: Worker, _: T) {.gcsafe.} =
       else:
         "???"
 
-      if file_name.get_file_info != ctx.file_name.get_file_info:
-        (file_name, info) = extract_file_info msg
-      #  msg = msg.replace(re"unhandled exception:.*\) Error\: ", "")
-      #else:
-      #  msg = msg.replace(re"(?ms);.*", "")
+      if file_exists(file_name):
+        if file_name.get_file_info != ctx.file_name.get_file_info:
+          (file_name, info) = extract_file_info msg
+          # msg = msg.replace(re"unhandled exception:.*\) Error\: ", "")
+        # else:
+          # msg = msg.replace(re"(?ms);.*", "")
+      else:
+        error "File not found handling error", file_name
 
       var loc = \"{file_name}({int info.line},{int info.col})"
       error "vm error", msg, file = ctx.file_name
