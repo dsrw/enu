@@ -8,12 +8,14 @@ let copy = """
 
 """
 right 3
+
+var sign1 = say(copy, more = copy, width = 4, height = 2, size = 200)
 up 1
-var sign1 = md(copy, width = 4, height = 2, size = 200)
 left 3
 turn 180
-var sign2 = md(copy, width = 4, height = 2, size = 200)
 down 1
+
+var sign2 = say(copy, more = copy, width = 4, height = 2, size = 200)
 left 3
 
 proc restart =
