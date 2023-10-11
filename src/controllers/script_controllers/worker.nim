@@ -220,6 +220,8 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
           if full_reset:
             worker.init_interpreter("")
             worker.bridge_to_vm
+            player.script_ctx.interpreter = worker.interpreter
+            worker.load_script_and_dependents(player)
           world_dir = change.item.world_dir
           if world_dir != "":
             worker.load_world(world_dir)
