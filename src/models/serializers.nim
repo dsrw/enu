@@ -145,7 +145,7 @@ proc save*(unit: Unit) =
     for unit in unit.units:
       unit.save
 
-proc save_world*(world_dir: string) =
+proc save_world*(world_dir: string, save_all = false) =
   if Server in state.local_flags:
     debug "saving world"
     let world = WorldInfo(enu_version: enu_version, format_version: "v0.9.2")
@@ -153,7 +153,7 @@ proc save_world*(world_dir: string) =
         jsonutils.to_json(world).pretty
 
     for unit in state.units:
-      if Dirty in unit.global_flags:
+      if save_all or Dirty in unit.global_flags:
         unit.save
         unit.global_flags -= Dirty
 
