@@ -116,6 +116,7 @@ proc load_script*(self: Worker, unit: Unit, timeout = script_timeout) =
   let ctx = unit.script_ctx
   try:
     self.active_unit = unit
+    unit.errors.clear
 
     if not state.paused:
       let module_name = ctx.script.split_file.name
