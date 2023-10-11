@@ -1,4 +1,4 @@
-import std / [macros, strformat, strutils, sugar, sequtils, genasts]
+import std / [macros, strutils, sequtils]
 import types
 import base_api, macro_helpers
 
@@ -263,4 +263,7 @@ macro load_enu_script*(file_name: string, base_type: untyped, convert: varargs[u
       var move_mode {.inject.} = 1
       include loops
       `inner`
+      # If a new instance doesn't ever yield the interpreter can crash. Unsure
+      # why, but probably fixable. Sleep before exit as a workaround.
+      sleep 0
     run_script(me, false)
