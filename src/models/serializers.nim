@@ -107,8 +107,9 @@ proc `$`(self: ZenTable[string, ZenTable[Vector3, VoxelInfo]]): string =
       let json = collect:
         for voxel, info in edit.value:
           $(voxel, info)
-      let elements = json.join(",\n").indent(2)
-      \"\"{id}\": [\n{elements}\n]"
+      if json.len > 0:
+        let elements = json.join(",\n").indent(2)
+        \"\"{id}\": [\n{elements}\n]"
   result = edits.join(",\n")
 
 proc `$`(self: Unit): string =
