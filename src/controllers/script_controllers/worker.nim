@@ -130,6 +130,7 @@ proc watch_units(self: Worker,
       if added:
         # FIXME: this is being set for the main thread in node_controller
         unit.parent = parent
+        unit.frame_created = state.frame_count
         unit.collisions.track proc(changes: seq[Change[(string, Vector3)]]) =
           unit.script_ctx.timer = get_mono_time()
         self.watch_units(unit.units, unit, body)

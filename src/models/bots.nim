@@ -70,8 +70,7 @@ proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
     speed: 1.0,
     clone_of: clone_of,
     start_color: action_colors[black],
-    parent: parent,
-    frame_created: state.frame_count
+    parent: parent
   )
 
   self.init_unit

@@ -29,29 +29,28 @@ turn right
 forward 10
 turn right
 forward 2
+
 save()
 
 color = red
-up 5
+up 4
 color = black
-up 1
-
 turn right
-var end_sign1 = make_sign()
-turn left
 
+var end_sign1 = make_sign()
+up 2
+turn left
 forward 9
 turn left
-
-var end_sign2 = make_sign()
-
 down 1
 left 9
 down 1
 right 9
 
+var end_sign2 = make_sign()
 color = red
 down 3
+
 restore()
 
 color = white
@@ -71,28 +70,24 @@ forward 2
 color = red
 left 1
 up 5
-color = black
-up 1
-
 turn 180
-color = brown
-up 1
 
 var start_sign1 = make_sign()
-
+color = black
+up 1
+color = brown
+up 1
+left 9
+down 1
+right 9
+down 1
 left 9
 turn 180
 
 var start_sign2 = make_sign()
 turn 180
-
-down 1
-right 9
-down 1
-left 9
 color = red
 down 4
-
 finished = true
 
 proc scroller(sign: Sign, msg: string, pause = 0, len = msg.len): proc() =

@@ -390,7 +390,6 @@ proc init*(_: type Build,
     speed: 1.0,
     clone_of: clone_of,
     bot_collisions: bot_collisions,
-    frame_created: state.frame_count,
     parent: parent
   )
 

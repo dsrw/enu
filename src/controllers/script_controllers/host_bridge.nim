@@ -453,8 +453,12 @@ proc `open=`(self: Sign, value: bool) =
   elif not value and self.open:
     state.open_sign = nil
 
-proc coding(self: Unit): Unit =
-  state.open_unit
+proc coding(self: Worker, unit: Unit): Unit =
+  if unit == state.player:
+    if state.open_unit notin self.node_map:
+      var node = self.node_map[self.active_unit].copy_tree
+      self.map_unit(state.open_unit, node)
+    result = state.open_unit
 
 proc `coding=`(self: Unit, value: Unit) =
   state.open_unit = value

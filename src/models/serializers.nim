@@ -162,6 +162,10 @@ proc load_units(parent: Unit) =
       state.config.data_dir
   for dir in walk_dirs(path / "*"):
     let unit_id = dir.split_path.tail
+    let file_name = dir / unit_id & ".json"
+    if not file_exists(file_name):
+      error "Missing unit file", file_name
+      continue
     let data_file = read_file(dir / unit_id & ".json").parse_json
     var unit: Unit
     if unit_id.starts_with("bot_"):

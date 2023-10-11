@@ -37,6 +37,7 @@ proc remove_from_scene(unit: Unit) =
 proc add_to_scene(unit: Unit) =
   debug "adding unit to scene", unit = unit.id
   proc add(unit: auto, T: type, parent_node: Node) =
+    unit.frame_created = state.frame_count
     var node = unit.node as T
     if node.is_nil:
       node = T.init
