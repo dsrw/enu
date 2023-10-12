@@ -38,8 +38,6 @@ type
   TaskStates* = enum
     Running, Done, NextTask
 
-
-
   ConsoleModel* = ref object
     log*: ZenSeq[string]
 

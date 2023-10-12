@@ -78,7 +78,6 @@ proc change_code(self: Worker, unit: Unit, code: Code) =
     unit.script_ctx.running = false
     remove_file unit.script_ctx.script
     self.module_names.excl unit.script_ctx.module_name
-    unit.script_ctx.script = ""
   elif code.nim.strip != "":
     debug "loading unit", unit_id = unit.id
     if LoadingScript notin state.local_flags and not self.retry_failures:
