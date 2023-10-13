@@ -5,7 +5,7 @@ import core, models, nodes / [bot_node, build_node, sign_node, player_node]
 
 proc remove_from_scene(unit: Unit) =
   debug "removing unit", unit = unit.id
-  ensure ?unit.node
+  assert ?unit.node
   if unit == previous_build: previous_build = nil
   if unit == current_build: current_build = nil
 

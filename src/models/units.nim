@@ -7,9 +7,9 @@ proc fix_parents*(self: Unit, parent: Unit) =
   self.parent = parent
   for unit in self.units:
     unit.fix_parents(self)
-    
+
 proc init_shared*(self: Unit) =
-  ensure ?self.shared_value
+  assert ?self.shared_value
   if ?self.parent:
     self.shared = self.parent.shared
   elif not ?self.shared:
@@ -132,7 +132,7 @@ method destroy*(self: Unit) {.base, gcsafe.} =
   fail "override me"
 
 proc destroy_impl*(self: Bot | Build | Sign) =
-  ensure ?self
+  assert ?self
 
   for unit in self.units:
     unit.destroy

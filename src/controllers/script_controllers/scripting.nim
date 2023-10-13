@@ -73,9 +73,9 @@ proc init_interpreter*[T](self: Worker, _: T) {.gcsafe.} =
 
   var count: byte = 0
   interpreter.enter_hook = proc(c: PCtx, pc: int, tos: PStackFrame, instr: TInstr) =
-    ensure ?controller
-    ensure ?controller.active_unit
-    ensure ?controller.active_unit.script_ctx
+    assert ?controller
+    assert ?controller.active_unit
+    assert ?controller.active_unit.script_ctx
 
     let ctx = controller.active_unit.script_ctx
     let info = c.debug[pc]

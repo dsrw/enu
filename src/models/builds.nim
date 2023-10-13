@@ -134,7 +134,7 @@ proc del_voxel(self: Build, position: Vector3) =
 proc restore_edits*(self: Build) =
   if self.id in self.shared.edits:
     for loc, info in self.shared.edits[self.id]:
-      ensure info.kind in {Manual, Hole}
+      assert info.kind in {Manual, Hole}
       if info.kind != Hole:
         self.add_voxel(loc, info)
       else:
@@ -483,9 +483,9 @@ when is_main_module:
   var b = Build.init
 
   b.draw vec3(1, 1, 1), (Computed, Color())
-  ensure vec3(1, 1, 1) in b.chunks[vec3(0, 0, 0)]
+  assert vec3(1, 1, 1) in b.chunks[vec3(0, 0, 0)]
   b.draw vec3(17, 17, 17), (Computed, Color())
-  ensure vec3(17, 17, 17) in b.chunks[vec3(1, 1, 1)]
+  assert vec3(17, 17, 17) in b.chunks[vec3(1, 1, 1)]
   var c = Build.init(transform = Transform(origin: vec3(5, 5, 5)))
   c.parent = b
 

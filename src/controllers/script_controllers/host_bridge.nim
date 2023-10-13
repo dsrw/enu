@@ -54,17 +54,17 @@ proc get_unit(self: Worker, a: VmArgs, pos: int): Unit {.gcsafe.} =
 
 proc get_bot(self: Worker, a: VmArgs, pos: int): Bot =
   let unit = self.get_unit(a, pos)
-  ensure not unit.is_nil and unit of Bot
+  assert not unit.is_nil and unit of Bot
   Bot(unit)
 
 proc get_build(self: Worker, a: VmArgs, pos: int): Build =
   let unit = self.get_unit(a, pos)
-  ensure not unit.is_nil and unit of Build
+  assert not unit.is_nil and unit of Build
   Build(unit)
 
 proc get_sign(self: Worker, a: VmArgs, pos: int): Sign =
   let unit = self.get_unit(a, pos)
-  ensure not unit.is_nil and unit of Sign
+  assert not unit.is_nil and unit of Sign
   Sign(unit)
 
 proc to_node(self: Worker, unit: Unit): PNode =
@@ -81,7 +81,7 @@ proc press_action(self: Worker, name: string) =
   state.queued_action = name
 
 proc register_active(self: Worker, pnode: PNode) =
-  ensure not self.active_unit.is_nil
+  assert not self.active_unit.is_nil
   self.map_unit(self.active_unit, pnode)
 
 proc new_instance(self: Worker, src: Unit, dest: PNode) =
@@ -89,7 +89,7 @@ proc new_instance(self: Worker, src: Unit, dest: PNode) =
       $(self.active_unit.units.len + 1)
 
   var clone = src.clone(self.active_unit, id)
-  ensure not clone.is_nil
+  assert not clone.is_nil
   clone.script_ctx = ScriptCtx.init(owner = clone, clone_of = src,
       interpreter = self.interpreter)
 
@@ -118,7 +118,7 @@ proc pause_script(self: Worker) =
 proc begin_turn(self: Worker, unit: Unit, direction: Vector3, degrees: float,
     lean: bool, move_mode: int): string =
 
-  ensure not degrees.is_nan
+  assert not degrees.is_nan
   var degrees = floor_mod(degrees, 360)
   let ctx = self.active_unit.script_ctx
   ctx.callback = unit.on_begin_turn(direction, degrees, lean, move_mode)

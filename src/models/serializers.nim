@@ -43,7 +43,7 @@ proc from_json_hook(self: var Vector3, json: JsonNode) =
 proc from_json_hook(self: var ZenTable[Vector3, VoxelInfo],
     json: JsonNode) {.gcsafe.} =
 
-  ensure load_chunks
+  assert load_chunks
   self = ~Table[Vector3, VoxelInfo]
   for chunks in json:
     for chunk in chunks[1]:
@@ -54,7 +54,7 @@ proc from_json_hook(self: var ZenTable[Vector3, VoxelInfo],
 proc from_json_hook(self: var ZenTable[string, ZenTable[Vector3, VoxelInfo]],
     json: JsonNode) =
 
-  ensure not load_chunks
+  assert not load_chunks
   for id, edits in json:
     for edit in edits:
       if id notin self:

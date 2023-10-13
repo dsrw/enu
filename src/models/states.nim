@@ -202,31 +202,31 @@ when is_main_module:
   state.pop_flag CommandMode
 
   state.push_flag MouseCaptured
-  ensure MouseCaptured in state.local_flags
+  assert MouseCaptured in state.local_flags
 
   state.open_unit = Unit()
-  ensure MouseCaptured notin state.local_flags
+  assert MouseCaptured notin state.local_flags
 
   state.push_flag CommandMode
-  ensure MouseCaptured in state.local_flags
+  assert MouseCaptured in state.local_flags
 
   state.pop_flag MouseCaptured
-  ensure MouseCaptured in state.local_flags
+  assert MouseCaptured in state.local_flags
 
   state.open_unit = nil
-  ensure MouseCaptured in state.local_flags
+  assert MouseCaptured in state.local_flags
 
   state.pop_flag CommandMode
-  ensure MouseCaptured notin state.local_flags
+  assert MouseCaptured notin state.local_flags
 
   state.pop_flag EditorVisible
-  ensure MouseCaptured notin state.local_flags
+  assert MouseCaptured notin state.local_flags
 
   state.push_flag MouseCaptured
-  ensure MouseCaptured in state.local_flags
+  assert MouseCaptured in state.local_flags
 
   state.push_flag DocsVisible
-  ensure MouseCaptured notin state.local_flags
+  assert MouseCaptured notin state.local_flags
 
   state.push_flag CommandMode
-  ensure MouseCaptured in state.local_flags
+  assert MouseCaptured in state.local_flags

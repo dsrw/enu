@@ -3,7 +3,7 @@ import godotapi / [ray_cast]
 import core, models / [units]
 
 proc run*(query: var SightQuery, source: Unit) =
-  ensure not ?query.answer
+  assert not ?query.answer
   query.answer = some(false)
 
   let ray = source.sight_ray

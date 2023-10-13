@@ -143,7 +143,7 @@ world: {state.world_name}
     state.nodes.game = self
 
     var uc = initial_user_config
-    ensure not state.is_nil
+    assert not state.is_nil
 
     let env_listen_address = get_env("ENU_LISTEN_ADDRESS")
     randomize()
@@ -220,12 +220,12 @@ world: {state.world_name}
 
   method ready* =
     state.nodes.data = state.nodes.game.find_node("Level").get_node("data")
-    ensure not state.nodes.data.is_nil
+    assert not state.nodes.data.is_nil
     self.scaled_viewport =
         self.get_node("ViewportContainer/Viewport") as Viewport
 
     self.bind_signals(self.get_viewport(), "size_changed")
-    ensure not self.scaled_viewport.is_nil
+    assert not self.scaled_viewport.is_nil
     if state.config.mega_pixels >= 1.0:
       self.scaled_viewport.get_texture.flags = FLAG_FILTER
 
@@ -356,7 +356,7 @@ world: {state.world_name}
 
   method on_meta_clicked(url: string) =
     if url.starts_with("nim://"):
-      ensure ?state.open_sign
+      assert ?state.open_sign
 
       state.open_sign.owner.eval = url[6..^1]
 
