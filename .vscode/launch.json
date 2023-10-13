@@ -4,10 +4,11 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
+
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Build and Debug Enu",
+      "name": "Client: Build and Debug",
       "program": "${workspaceFolder}/vendor/godot/bin/godot.osx.opt.tools.arm64",
       "windows": {
         "program": "${workspaceFolder}/vendor/godot/bin/godot.windows.opt.tools.64"
@@ -19,12 +20,30 @@
       "presentation": {
         "clear": true                        // <-- this line
       },
-      "console": "internalConsole"
+      "terminal": "external"
     },
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug Enu",
+      "name": "Host: Build and Debug",
+      "program": "${workspaceFolder}/vendor/godot/bin/godot.osx.opt.tools.arm64",
+      "env": {"ENU_LISTEN_ADDRESS": "0.0.0.0"},
+      "windows": {
+        "program": "${workspaceFolder}/vendor/godot/bin/godot.windows.opt.tools.64"
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}/app",
+      "preLaunchTask": "Build enu",
+      "initCommands": ["command source ${workspaceRoot}/.lldbinit"],
+      "presentation": {
+        "clear": true                        // <-- this line
+      },
+      "terminal": "external"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Client: Debug",
       "program": "${workspaceFolder}/vendor/godot/bin/godot.osx.opt.tools.arm64",
       "windows": {
         "program": "${workspaceFolder}/vendor/godot/bin/godot.windows.opt.tools.64"
@@ -35,6 +54,23 @@
       "presentation": {
         "clear": true                        // <-- this line
       }
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Host: Debug",
+      "program": "${workspaceFolder}/vendor/godot/bin/godot.osx.opt.tools.arm64",
+      "env": {"ENU_LISTEN_ADDRESS": "0.0.0.0"},
+      "windows": {
+        "program": "${workspaceFolder}/vendor/godot/bin/godot.windows.opt.tools.64"
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}/app",
+      "initCommands": ["command source ${workspaceRoot}/.lldbinit"],
+      "presentation": {
+        "clear": true                        // <-- this line
+      },
+      "terminal": "external"
     },
     {
       "type": "lldb",
