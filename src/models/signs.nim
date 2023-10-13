@@ -9,16 +9,16 @@ proc init*(_: type Sign, message: string, more = "", owner: Unit,
     id: "sign_" & generate_id(),
     message_value: ~message,
     more_value: ~more,
-    glow_value: ~0.0,
     width_value: ~width,
     height_value: ~height,
     size_value: ~size,
     billboard_value: ~billboard,
     frame_created: state.frame_count,
-    color_value: ~action_colors[black],
+    start_color: action_colors[black],
     start_transform: transform,
     owner_value: ~owner,
-    text_only: text_only
+    text_only: text_only,
+    parent: owner
   )
   self.init_unit
   result = self
@@ -37,3 +37,6 @@ method main_thread_joined*(self: Sign) =
     elif Hover.removed:
       self.local_flags -= Highlight
       state.pop_flag ReticleVisible
+
+method destroy*(self: Sign) =
+  self.destroy_impl

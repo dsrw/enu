@@ -3,6 +3,11 @@ import godotapi / spatial
 from pkg / core / godotcoretypes import Basis
 import core, models / [states, colors], libs / interpreters
 
+proc fix_parents*(self: Unit, parent: Unit) =
+  self.parent = parent
+  for unit in self.units:
+    unit.fix_parents(self)
+    
 proc init_shared*(self: Unit) =
   ensure ?self.shared_value
   if ?self.parent:
@@ -17,7 +22,7 @@ proc init_shared*(self: Unit) =
     let table = ~Table[Vector3, VoxelInfo]
     self.shared.edits[self.id] = table
 
-proc init_unit*[T: Unit](self: T) =
+proc init_unit*[T: Unit](self: T, shared = true) =
   with self:
     units = ~seq[Unit]
     transform_value = ~self.start_transform
@@ -123,25 +128,35 @@ method on_collision*(self: Model, partner: Model, normal: Vector3) {.base, gcsaf
 method off_collision*(self: Model, partner: Model) {.base, gcsafe.} =
   discard
 
-proc destroy*[T: Unit](self: T) =
-  ensure ?self
-  if self of Sign:
-    # :( Sign(self) will fail to compile if T is a Build or a Bot.
-    Sign(Unit(self)).owner = nil
-  for unit in self.units:
-    if unit of Sign:
-      Sign(Unit(unit)).owner = nil
+method destroy*(self: Unit) {.base, gcsafe.} =
+  fail "override me"
 
-  # :( Parent isn't set properly for instances on the main thread
-  if self.parent == nil and "instance" notin self.id:
+proc destroy_impl*(self: Bot | Build | Sign) =
+  ensure ?self
+
+  for unit in self.units:
+    unit.destroy
+
+  when self is Sign:
+    self.owner = nil
+
+  if self.parent == nil:
     let shared = self.shared
     shared.edits.destroy
     self.shared = nil
     self.shared_value.destroy
-    Zen.thread_ctx.free(shared)
+    if Zen.thread_ctx.can_free(shared).freeable:
+      Zen.thread_ctx.free(shared)
+    else:
+      fail \"can't free shared {shared.id} for unit {self.id}"
   else:
-    self.shared = nil
+    if self.id in self.shared.edits:
+      let edit = self.shared.edits[self.id]
+      self.shared.edits.del(self.id)
+      edit.destroy
+      self.shared = nil
 
+  self.parent = nil
   for field in self[].fields:
     when field is Zen:
       # :(
@@ -151,8 +166,9 @@ proc destroy*[T: Unit](self: T) =
   if state.open_unit == self:
     state.open_unit = nil
 
-  if Unit(state.open_sign) == self:
-    state.open_sign = nil
+  when self is Sign:
+    if state.open_sign == self:
+      state.open_sign = nil
 
   Zen.thread_ctx.free(self)
 

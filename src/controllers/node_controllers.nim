@@ -19,7 +19,7 @@ proc remove_from_scene(unit: Unit) =
   unit.units.clear
   for child in units:
     child.remove_from_scene()
-  unit.parent = nil
+
   if unit.node of BuildNode:
     BuildNode(unit.node).model = nil
   elif unit.node of BotNode:
@@ -30,9 +30,8 @@ proc remove_from_scene(unit: Unit) =
   debug "removing node", unit_id = unit.id
   unit.node = nil
 
-  if unit of Build: Build(unit).destroy
-  elif unit of Bot: Bot(unit).destroy
-  elif unit of Sign: Sign(unit).destroy
+  unit.destroy
+  unit.parent = nil
 
 proc add_to_scene(unit: Unit) =
   debug "adding unit to scene", unit = unit.id
@@ -103,7 +102,7 @@ proc find_nested_changes(parent: Change[Unit]) =
         find_nested_changes(change)
       elif Added in change.changes:
         # FIXME: this is being set for the worker thread in script_controller
-        change.item.parent = parent.item
+        change.item.fix_parents(parent.item)
         change.item.add_to_scene()
       elif Removed in change.changes:
         reset_nodes()

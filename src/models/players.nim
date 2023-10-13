@@ -10,7 +10,7 @@ proc init*(_: type Player): Player =
     input_direction_value: ~Vector3,
     cursor_position_value: ~((0, 0))
   )
-  result.init_unit
+  result.init_unit(shared = false)
   result.global_flags += Global
 
 method on_begin_turn*(self: Player, direction: Vector3, degrees: float,
@@ -40,3 +40,8 @@ proc `open_code=`*(self: Player, code: string) =
         unit.message = code
         unit.global_flags += Visible
       return
+
+method destroy*(self: Player) =
+  if self.units.len > 0:
+    Sign(self.units[0]).owner = nil
+    self.units.clear

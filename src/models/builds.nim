@@ -374,6 +374,9 @@ method ensure_visible*(self: Build) =
       self.start_color
     self.draw(vec3(), (Computed, color))
 
+method destroy*(self: Build) =
+  self.destroy_impl
+
 proc init*(_: type Build,
     id = "build_" & generate_id(), transform = Transform.init,
     color = default_color, clone_of: Unit = nil, global = true,

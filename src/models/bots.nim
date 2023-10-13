@@ -60,6 +60,9 @@ method reset*(self: Bot) =
   self.velocity = vec3()
   self.units.clear()
 
+method destroy*(self: Bot) =
+  self.destroy_impl
+
 proc init*(_: type Bot, id = "bot_" & generate_id(), transform = Transform.init,
     clone_of: Bot = nil, global = true, parent: Unit = nil): Bot =
 

@@ -31,7 +31,7 @@ else:
 requires "nim >= 1.6.10",
   "https://github.com/arnetheduck/nim-results#f3c666a",
   "https://github.com/dsrw/godot-nim#892c482",
-  "https://github.com/dsrw/model_citizen 0.18.6",
+  "https://github.com/dsrw/model_citizen 0.18.8",
   "https://github.com/dsrw/nanoid.nim 0.2.1",
   "cligen 1.6.0",
   "https://github.com/treeform/pretty",

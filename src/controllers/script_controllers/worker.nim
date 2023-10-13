@@ -68,7 +68,9 @@ proc change_code(self: Worker, unit: Unit, code: Code) =
   var edits = unit.shared.edits
   for id in edits.value.keys:
     if id != unit.id and edits[id].len == 0:
+      let edit = edits[id]
       edits.del id
+      edit.destroy
 
   unit.reset()
   state.pop_flag ConsoleVisible
@@ -128,7 +130,7 @@ proc watch_units(self: Worker,
       body(unit, change, added, removed)
       if added:
         # FIXME: this is being set for the main thread in node_controller
-        unit.parent = parent
+        unit.fix_parents(parent)
         unit.frame_created = state.frame_count
         unit.collisions.track proc(changes: seq[Change[(string, Vector3)]]) =
           unit.script_ctx.timer = get_mono_time()
@@ -267,9 +269,6 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
       while i < state.units.len:
         if state.units[i].id == \"player-{ctx_name}":
           var player = Player(state.units[i])
-          if player.units.len > 0:
-            Sign(player.units[0]).owner = nil
-            player.units.clear
           state.units.del i
         else:
           i += 1
