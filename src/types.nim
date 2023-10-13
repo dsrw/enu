@@ -63,7 +63,7 @@ type
     frame_count*: int
     skip_block_paint*: bool
     open_sign_value*: ZenValue[Sign]
-    queued_action*: string
+    queued_action_value*: ZenValue[string]
     scale_factor*: float
     worker_ctx_name*: string
     world_name_value*: ZenValue[string]
@@ -180,6 +180,28 @@ type
     mouse_sensitivity*: float
     gamepad_sensitivity*: float
     invert_gamepad_y_axis*: bool
+
+  UserConfig* = object
+    font_size*: Option[int]
+    dock_icon_size*: Option[float]
+    world_prefix*: Option[string]
+    world*: Option[string]
+    show_stats*: Option[bool]
+    god_mode*: Option[bool]
+    mega_pixels*: Option[float]
+    start_full_screen*: Option[bool]
+    semicolon_as_colon*: Option[bool]
+    listen_address*: Option[string]
+    connect_address*: Option[string]
+    player_color*: Option[colortypes.Color]
+    channel_size*: Option[int]
+    walk_speed*: Option[int]
+    fly_speed*: Option[int]
+    alt_walk_speed*: Option[int]
+    alt_fly_speed*: Option[int]
+    mouse_sensitivity*: Option[float]
+    gamepad_sensitivity*: Option[float]
+    invert_gamepad_y_axis*: Option[bool]
 
   Code* = object
     owner*: string

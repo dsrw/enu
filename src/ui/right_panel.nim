@@ -34,7 +34,8 @@ gdobj RightPanel of MarginContainer:
             self.label.markdown = md(sign, change.item)
             self.label.update
       if removed and change.item != nil:
-        change.item.more_value.untrack(self.zid)
+        if change.item.more_value.valid:
+          change.item.more_value.untrack(self.zid)
         state.pop_flags DocsFocused, DocsVisible
 
     state.local_flags.changes:

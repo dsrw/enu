@@ -7,7 +7,7 @@ import pkg / compiler / ast except new_node
 import pkg / compiler / [vmdef, renderer, msgs]
 
 import godotapi / [spatial, ray_cast]
-import core, models / [states, bots, builds, units, colors, signs]
+import core, models / [states, bots, builds, units, colors, signs, serializers]
 import libs / [interpreters, eval]
 import shared / errors
 
@@ -79,6 +79,9 @@ proc to_node(self: Worker, unit: Unit): PNode =
 
 proc press_action(self: Worker, name: string) =
   state.queued_action = name
+
+proc load_world(name: string) =
+  change_loaded_world(name)
 
 proc register_active(self: Worker, pnode: PNode) =
   assert not self.active_unit.is_nil
@@ -455,7 +458,7 @@ proc `open=`(self: Sign, value: bool) =
 
 proc coding(self: Worker, unit: Unit): Unit =
   if unit == state.player:
-    if state.open_unit notin self.node_map:
+    if ?state.open_unit and state.open_unit notin self.node_map:
       var node = self.node_map[self.active_unit].copy_tree
       self.map_unit(state.open_unit, node)
     result = state.open_unit
@@ -478,7 +481,7 @@ proc bridge_to_vm*(worker: Worker) =
     glow, `glow=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`,
     active_unit, color, `color=`, sees, start_position, wake, frame_count,
     write_stack_trace, show, `show=`, frame_created, lock, `lock=`, reset,
-    press_action
+    press_action, load_world
 
   result.bridged_from_vm "base_bridge_private",
     link_dependency, action_running, `action_running=`, yield_script,

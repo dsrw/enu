@@ -203,6 +203,31 @@ proc load_units(parent: Unit) =
     else:
       unit.global_flags -= ScriptInitializing
 
+proc load_user_config*(dir = ""): UserConfig =
+  var work_dir = dir
+  if not ?dir:
+    work_dir = state.config.work_dir
+  let config_file = join_path(work_dir, "config.json")
+  if file_exists(config_file):
+    let opt = Joptions(allow_missing_keys: true, allow_extra_keys: true)
+    result.from_json(read_file(config_file).parse_json, opt)
+
+proc save_user_config*(config: UserConfig) =
+  let
+    work_dir = state.config.work_dir
+    config_file = join_path(work_dir, "config.json")
+  write_file(config_file, jsonutils.to_json(config).pretty)
+
+proc change_loaded_world*(world: string) =
+  var config = state.config
+  var user_config = load_user_config()
+  config.world = world
+  state.world_name = config.world
+  user_config.world = some(config.world)
+  save_user_config(user_config)
+  config.world_dir = join_path(config.work_dir, config.world)
+  state.config = config
+
 proc unload_world*(worker: Worker) =
   state.global_flags += LoadingWorld
   state.push_flag LoadingScript

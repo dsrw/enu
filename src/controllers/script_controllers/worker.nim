@@ -106,8 +106,11 @@ proc watch_code(self: Worker, unit: Unit) =
 
   unit.eval_value.changes:
     if added or touched and change.item != "":
-      self.eval(unit, change.item)
       unit.eval = ""
+      try:
+        self.eval(unit, change.item)
+      except VMQuit as e:
+        self.script_error(unit, e)
 
   if unit.script_ctx.is_nil:
     unit.script_ctx = ScriptCtx.init(owner = unit,

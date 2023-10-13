@@ -8,29 +8,6 @@ import godotapi / [input, input_event, gd_os, node, scene_tree, packed_scene,
 
 import core, types, globals, controllers, models / [serializers, units, colors]
 
-type
-  UserConfig = object
-    font_size: Option[int]
-    dock_icon_size: Option[float]
-    world_prefix: Option[string]
-    world: Option[string]
-    show_stats: Option[bool]
-    god_mode: Option[bool]
-    mega_pixels: Option[float]
-    start_full_screen: Option[bool]
-    semicolon_as_colon: Option[bool]
-    listen_address: Option[string]
-    connect_address: Option[string]
-    player_color: Option[colortypes.Color]
-    channel_size: Option[int]
-    walk_speed*: Option[int]
-    fly_speed*: Option[int]
-    alt_walk_speed*: Option[int]
-    alt_fly_speed*: Option[int]
-    mouse_sensitivity*: Option[float]
-    gamepad_sensitivity*: Option[float]
-    invert_gamepad_y_axis*: Option[bool]
-
 if file_exists(".env"):
   dotenv.overload()
 
@@ -74,14 +51,6 @@ world: {state.world_name}
       self.rescale_at = MonoTime.high
       self.rescale()
 
-    if state.queued_action != "":
-      var ev = gdnew[InputEventAction]()
-      ev.action = state.queued_action
-      ev.pressed = true
-      state.queued_action = ""
-
-      parse_input_event(ev)
-
   proc rescale*() =
     let vp = self.get_viewport().size
     state.scale_factor = sqrt(state.config.mega_pixels *
@@ -109,20 +78,6 @@ world: {state.world_name}
           action_add_event(name, event)
         erase_action(action)
 
-  proc load_user_config(): UserConfig =
-    let
-      work_dir = get_user_data_dir()
-      config_file = join_path(work_dir, "config.json")
-    if file_exists(config_file):
-      let opt = Joptions(allow_missing_keys: true, allow_extra_keys: true)
-      result.from_json(read_file(config_file).parse_json, opt)
-
-  proc save_user_config(config: UserConfig) =
-    let
-      work_dir = get_user_data_dir()
-      config_file = join_path(work_dir, "config.json")
-    write_file(config_file, jsonutils.to_json(config).pretty)
-
   proc init* =
     self.process_priority = -100
 
@@ -132,7 +87,7 @@ world: {state.world_name}
       else:
         get_screen_dpi(-1).float / 96.0
 
-    var initial_user_config = self.load_user_config()
+    var initial_user_config = load_user_config(get_user_data_dir())
 
     var chan_size = initial_user_config.channel_size || 5000
 
@@ -196,16 +151,16 @@ world: {state.world_name}
     self.node_controller = NodeController.init
     self.script_controller = ScriptController.init
 
-    self.save_user_config(uc)
+    save_user_config(uc)
 
   proc set_font_size(size: int) =
     if state.config.font_size != size:
-      var user_config = self.load_user_config()
+      var user_config = load_user_config()
       state.config_value.value:
         font_size = size
 
       user_config.font_size = some(size)
-      self.save_user_config(user_config)
+      save_user_config(user_config)
 
     let
       theme_holder = self.find_node("LeftPanel").as(Container)
@@ -255,6 +210,14 @@ world: {state.world_name}
 
     state.push_flag MouseCaptured
 
+    state.queued_action_value.changes:
+      if added and change.item != "":
+        var ev = gdnew[InputEventAction]()
+        ev.action = state.queued_action
+        ev.pressed = true
+        state.queued_action = ""
+        parse_input_event(ev)
+
   method on_size_changed() =
     self.rescale_at = get_mono_time()
 
@@ -269,13 +232,7 @@ world: {state.world_name}
       except ValueError:
         1
       num += diff
-      var user_config = self.load_user_config()
-      config.world = prefix & $num
-      state.world_name = config.world
-      user_config.world = some(config.world)
-      self.save_user_config(user_config)
-      config.world_dir = join_path(config.work_dir, config.world)
-      state.config = config
+      change_loaded_world(prefix & $num)
     else:
       # force a reload of the current world
       let current_world = state.config.world_dir

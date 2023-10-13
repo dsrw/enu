@@ -167,7 +167,7 @@ proc destroy_impl*(self: Bot | Build | Sign) =
     state.open_unit = nil
 
   when self is Sign:
-    if state.open_sign == self:
+    if state.open_sign_value.valid and state.open_sign == self:
       state.open_sign = nil
 
   Zen.thread_ctx.free(self)
