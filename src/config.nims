@@ -22,6 +22,8 @@ if host_os == "windows":
 
 if defined(release):
   --define:"chronicles_colors=None"
+  --assertions:off
+  --define:"zen_lax_free"
 
 if project_name() == "enu":
   --app:lib
