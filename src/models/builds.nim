@@ -145,7 +145,6 @@ proc restore_edits*(self: Build) =
           var locations = self.shared.edits[self.id]
           locations[loc] = info
           self.shared.edits[self.id] = locations
-          self.chunks[buffer].destroy
           self.chunks[buffer].del loc
 
 proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) {.gcsafe.} =
@@ -335,6 +334,7 @@ method on_begin_turn*(self: Build,
     self.draw_transform = self.draw_transform.orthonormalized()
 
 proc reset_state*(self: Build) =
+  self.init_shared
   self.draw_transform = Transform.init
   self.transform = self.start_transform
 

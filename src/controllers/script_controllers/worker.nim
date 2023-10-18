@@ -97,6 +97,7 @@ proc watch_code(self: Worker, unit: Unit) =
   unit.code_value.changes:
     if added or touched:
       if change.item.owner == "" or change.item.owner == Zen.thread_ctx.id:
+        save_world(state.config.world_dir)
         self.change_code(unit, change.item)
       elif Server in state.local_flags:
         if change.item.nim == "":

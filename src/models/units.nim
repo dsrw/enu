@@ -142,19 +142,13 @@ proc destroy_impl*(self: Bot | Build | Sign) =
 
   if self.parent == nil:
     let shared = self.shared
+    for _, edit in shared.edits:
+      edit.destroy
     shared.edits.destroy
     self.shared = nil
-    self.shared_value.destroy
-    if Zen.thread_ctx.can_free(shared).freeable:
-      Zen.thread_ctx.free(shared)
-    else:
-      fail \"can't free shared {shared.id} for unit {self.id}"
+    Zen.thread_ctx.free(shared)
   else:
-    if self.id in self.shared.edits:
-      let edit = self.shared.edits[self.id]
-      self.shared.edits.del(self.id)
-      edit.destroy
-      self.shared = nil
+    self.shared = nil
 
   self.parent = nil
   for field in self[].fields:
