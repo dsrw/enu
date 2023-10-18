@@ -9,6 +9,30 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - name: Install certificates. Write dist_config.json.
+        env:
+          MACOS_DIST_CONFIG: ${{ secrets.PROD_MACOS_DIST_CONFIG }}
+          MACOS_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
+          MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
+          MACOS_CI_KEYCHAIN_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
+        run: |
+          # Adapted from https://federicoterzi.com/blog/automatic-code-signing-and-notarization-for-macos-apps-using-github-actions/
+          # Turn our base64-encoded certificate back to a regular .p12 file
+
+          echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
+          echo $MACOS_DIST_CONFIG | base64 --decode > dist_config.json
+
+          # We need to create a new keychain, otherwise using the certificate will prompt
+          # with a UI dialog asking for the certificate password, which we can't
+          # use in a headless CI environment
+
+          security create-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+          security import certificate.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+
       - name: Install build deps
         run: brew install nim scons yasm
       - name: Install nim
@@ -24,8 +48,6 @@ jobs:
         run: nimble setup
       - name: Save SHAs of submodules
         run: 'git submodule status > .submodules.tmp'
-      - name: Prep dist config
-        run: cp dist_config.example.json dist_config.json
       - name: prereq cache
         id: prereq-cache
         uses: actions/cache@v3
