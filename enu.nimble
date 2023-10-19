@@ -293,6 +293,10 @@ task dist_package, "Build distribution binaries":
 
     if config["sign"].get_bool:
       let id = config["id"].get_str
+      if "keychain" in config:
+        let keychain = config["keychain"].get_str
+        let password = config["keychain-password"].get_str
+        exec &"security unlock-keychain -p \"{password}\" {keychain}"
       code_sign(id, "dist/Enu.app/Contents/Frameworks/enu.dylib")
       code_sign(id, "dist/Enu.app")
 
