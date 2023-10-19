@@ -205,7 +205,7 @@ task gen, "Generate build_helpers":
   discard gen()
 
 proc code_sign(id, path: string) =
-  exec &"codesign -s '{id}' -v --timestamp --options runtime {path}"
+  exec &"codesign --force -s '{id}' --options runtime {path} -v"
 
 task dist_prereqs, "Build godot debug and release versions, and download fonts":
   p "Buiding distribution prereqs..."
@@ -293,6 +293,10 @@ task dist_package, "Build distribution binaries":
 
     if config["sign"].get_bool:
       let id = config["id"].get_str
+      if "keychain" in config:
+        let keychain = config["keychain"].get_str
+        let password = config["keychain-password"].get_str
+        exec &"security unlock-keychain -p \"{password}\" {keychain}"
       code_sign(id, "dist/Enu.app/Contents/Frameworks/enu.dylib")
       code_sign(id, "dist/Enu.app")
 
@@ -303,11 +307,16 @@ task dist_package, "Build distribution binaries":
       exec &"mv {package_name} dist"
 
     if config["notarize"].get_bool:
-      let
-        username = config["notarize-username"].get_str
-        password = config["notarize-password"].get_str
+      if "notarize-profile" in config:
+        let profile = config["notarize-profile"].get_str
+        exec &"xcrun notarytool submit \"dist/{package_name}\" --keychain-profile \"{profile}\" --wait"
 
-      exec &"xcrun altool --notarize-app --primary-bundle-id 'ca.dsrw.enu'  --username '{username}' --password '{password}' --file dist/{package_name}"
+      else:
+        let
+          username = config["notarize-username"].get_str
+          password = config["notarize-password"].get_str
+
+        exec &"xcrun altool --notarize-app --primary-bundle-id 'com.getenu.enu'  --username '{username}' --password '{password}' --file dist/{package_name}"
 
   elif host_os == "linux":
     gen_binding_and_copy_stdlib("server")
