@@ -302,7 +302,7 @@ task dist_package, "Build distribution binaries":
 
     let package_name = &"enu-{git_version}.dmg"
     if config["package"].get_bool:
-
+      exec "ln -s /Applications dist/Applications"
       exec &"hdiutil create {package_name} -ov -volname Enu -fs HFS+ -srcfolder dist"
       exec &"mv {package_name} dist"
 
