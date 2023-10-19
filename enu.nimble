@@ -205,7 +205,7 @@ task gen, "Generate build_helpers":
   discard gen()
 
 proc code_sign(id, path: string) =
-  exec &"codesign -s '{id}' -v --timestamp --options runtime {path}"
+  exec &"codesign --force -s '{id}' --options runtime {path} -v"
 
 task dist_prereqs, "Build godot debug and release versions, and download fonts":
   p "Buiding distribution prereqs..."
