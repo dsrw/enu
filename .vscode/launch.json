@@ -10,6 +10,7 @@
       "request": "launch",
       "name": "Client: Build and Debug",
       "program": "${workspaceFolder}/vendor/godot/bin/godot.osx.opt.tools.arm64",
+      "env": {"ENU_CONNECT_ADDRESS": "127.0.0.1"},
       "windows": {
         "program": "${workspaceFolder}/vendor/godot/bin/godot.windows.opt.tools.64"
       },
@@ -45,6 +46,7 @@
       "request": "launch",
       "name": "Client: Debug",
       "program": "${workspaceFolder}/vendor/godot/bin/godot.osx.opt.tools.arm64",
+      "env": {"ENU_CONNECT_ADDRESS": "127.0.0.1"},
       "windows": {
         "program": "${workspaceFolder}/vendor/godot/bin/godot.windows.opt.tools.64"
       },
@@ -90,8 +92,6 @@
       "windows": {
         "program": "${workspaceFolder}/vendor/godot/bin/godot.windows.opt.tools.64"
       },
-      "args": [],
-      "cwd": "${workspaceFolder}/app",
       "initCommands": ["command source ${workspaceRoot}/.lldbinit"],
       "presentation": {
         "clear": true                        // <-- this line

@@ -100,8 +100,20 @@ world: {state.world_name}
     var uc = initial_user_config
     assert not state.is_nil
 
-    let env_listen_address = get_env("ENU_LISTEN_ADDRESS")
     randomize()
+
+    var connect_address = uc.connect_address ||= ""
+    var listen_address = uc.listen_address ||= ""
+
+    if ?get_env("ENU_LISTEN_ADDRESS") and ?get_env("ENU_CONNECT_ADDRESS"):
+      fail "Cannot set both ENU_LISTEN_ADDRESS and ENU_CONNECT_ADDRESS"
+    elif ?get_env("ENU_LISTEN_ADDRESS"):
+      listen_address = get_env("ENU_LISTEN_ADDRESS")
+      connect_address = ""
+    elif ?get_env("ENU_CONNECT_ADDRESS"):
+      connect_address = get_env("ENU_CONNECT_ADDRESS")
+      listen_address = ""
+
     state.config_value.value:
       work_dir = get_user_data_dir()
       font_size = uc.font_size ||= (20 * screen_scale).int
@@ -115,8 +127,8 @@ world: {state.world_name}
       lib_dir = join_path(get_executable_path().parent_dir(), "..", "..", "..",
           "vmlib")
 
-      connect_address = uc.connect_address ||= ""
-      listen_address = env_listen_address || (uc.listen_address ||= "")
+      connect_address = connect_address
+      listen_address = listen_address
       player_color = uc.player_color ||= color(rand(1.0), rand(1.0), rand(1.0))
       channel_size = uc.channel_size ||= chan_size
       world_dir = join_path(value.work_dir, value.world)
