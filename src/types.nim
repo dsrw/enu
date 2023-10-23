@@ -171,7 +171,6 @@ type
     listen_address*: string
     connect_address*: string
     player_color*: Color
-    channel_size*: int
     work_dir*: string
     walk_speed*: int
     fly_speed*: int
@@ -194,7 +193,6 @@ type
     listen_address*: Option[string]
     connect_address*: Option[string]
     player_color*: Option[colortypes.Color]
-    channel_size*: Option[int]
     walk_speed*: Option[int]
     fly_speed*: Option[int]
     alt_walk_speed*: Option[int]

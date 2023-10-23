@@ -25,7 +25,7 @@ gdobj Game of Node:
     script_controller: ScriptController
 
   method process*(delta: float) =
-    Zen.thread_ctx.boop(max_duration = (1.0 / 60.0).seconds)
+    Zen.thread_ctx.boop(max_duration = (1.0 / 30.0).seconds)
     inc state.frame_count
     let time = get_mono_time()
     if state.config.show_stats:
@@ -89,10 +89,8 @@ world: {state.world_name}
 
     var initial_user_config = load_user_config(get_user_data_dir())
 
-    var chan_size = initial_user_config.channel_size || 5000
-
     Zen.thread_ctx = ZenContext.init(id = \"main-{generate_id()}",
-        chan_size = chan_size, buffer = false)
+        chan_size = 100, buffer = false)
 
     state = GameState.init
     state.nodes.game = self
@@ -130,7 +128,6 @@ world: {state.world_name}
       connect_address = connect_address
       listen_address = listen_address
       player_color = uc.player_color ||= color(rand(1.0), rand(1.0), rand(1.0))
-      channel_size = uc.channel_size ||= chan_size
       world_dir = join_path(value.work_dir, value.world)
       walk_speed = uc.walk_speed ||= 500
       fly_speed = uc.fly_speed ||= 1500
