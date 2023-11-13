@@ -153,8 +153,8 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
 
   var listen_address = main_thread_state.config.listen_address
   let worker_ctx = ZenContext.init(id = \"work-{generate_id()}",
-      chan_size = 500, buffer = true,
-      listen_address = listen_address)
+    chan_size = 500, buffer = false, listen_address = listen_address,
+    label = "worker")
 
   Zen.thread_ctx = worker_ctx
   ctx.subscribe(Zen.thread_ctx)
@@ -266,7 +266,7 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
     let timeout = frame_start + max_time
     let wait_until = frame_start + min_time
 
-    Zen.thread_ctx.boop(max_duration = (1.0 / 30).seconds)
+    Zen.thread_ctx.boop
     inc state.frame_count
     for ctx_name in Zen.thread_ctx.unsubscribed:
       var i = 0
@@ -283,15 +283,15 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
 
     var batched: HashSet[Unit]
 
-    while to_process.len > 0 and get_mono_time() < timeout and
-      Zen.thread_ctx.pressure < 0.5:
+    while Zen.thread_ctx.pressure < 0.9 and to_process.len > 0 and
+      get_mono_time() < timeout:
 
       let units = to_process
       to_process = @[]
       for unit in units:
         if Ready in unit.global_flags:
           if unit.batch_changes:
-           batched.incl unit
+            batched.incl unit
           if worker.advance_unit(unit, timeout):
             to_process.add(unit)
 
@@ -308,7 +308,8 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
 
   Zen.thread_ctx.boop
 
-proc launch_worker*(ctx: ZenContext, state: GameState): Thread[tuple[ctx: ZenContext, state: GameState]] =
+proc launch_worker*(ctx: ZenContext, state: GameState): Thread[tuple[
+    ctx: ZenContext, state: GameState]] =
   worker_lock.acquire
   result.create_thread(worker_thread, (ctx, state))
   work_done.wait(worker_lock)

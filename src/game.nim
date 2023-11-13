@@ -1,5 +1,5 @@
-import std / [monotimes, os, jsonutils, json, math, locks, random]
-import pkg / [godot]
+import std / [monotimes, os, jsonutils, json, math, locks, random, net]
+import pkg / [godot, metrics, metrics / stdlib_httpserver]
 from dotenv import nil
 import godotapi / [input, input_event, gd_os, node, scene_tree, packed_scene,
     sprite, control, viewport, viewport_texture, performance, label, theme,
@@ -11,6 +11,11 @@ import core, types, globals, controllers, models / [serializers, units, colors]
 if file_exists(".env"):
   dotenv.overload()
 
+when defined(metrics):
+  set_system_metrics_automatic_update(false)
+
+ZenContext.init_metrics "main", "worker"
+
 gdobj Game of Node:
   var
     reticle: Control
@@ -21,13 +26,18 @@ gdobj Game of Node:
     last_tool = BlueBlock
     saved_mouse_position: Vector2
     rescale_at = get_mono_time()
+    update_metrics_at = get_mono_time()
     node_controller: NodeController
     script_controller: ScriptController
 
   method process*(delta: float) =
-    Zen.thread_ctx.boop(max_duration = (1.0 / 30.0).seconds)
+    Zen.thread_ctx.boop
     inc state.frame_count
     let time = get_mono_time()
+    when defined(metrics):
+      if self.update_metrics_at < time:
+        update_thread_metrics()
+        self.update_metrics_at = time + 10.seconds
     if state.config.show_stats:
       let fps = get_monitor(TIME_FPS)
 
@@ -90,7 +100,7 @@ world: {state.world_name}
     var initial_user_config = load_user_config(get_user_data_dir())
 
     Zen.thread_ctx = ZenContext.init(id = \"main-{generate_id()}",
-        chan_size = 100, buffer = false)
+      chan_size = 2000, buffer = true, label = "main")
 
     state = GameState.init
     state.nodes.game = self
@@ -140,6 +150,14 @@ world: {state.world_name}
     state.set_flag(God, uc.god_mode ||= false)
 
     set_window_fullscreen state.config.start_full_screen
+    when defined(metrics):
+      let metrics_port = if ?get_env("ENU_METRICS_PORT"):
+        get_env("ENU_METRICS_PORT").parse_int
+      else:
+        8000
+
+      {.cast(gcsafe).}:
+        start_metrics_http_server("0.0.0.0", Port(metrics_port))
 
     self.add_platform_input_actions()
 

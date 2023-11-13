@@ -1,5 +1,7 @@
 # --define:"chronicles_log_level=DEBUG"
 # --define:"chronicles_disabled_topics=networking,scripting,publishing"
+# --define:"metrics"
+
 # --define:"zen_trace"
 # --define:"dump_zen_objects"
 

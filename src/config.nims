@@ -1,6 +1,7 @@
 --threads:on
 --mm:orc
 --tls_emulation:off
+--deepcopy:on
 
 if host_os == "windows":
   --pass_l:"-static"
