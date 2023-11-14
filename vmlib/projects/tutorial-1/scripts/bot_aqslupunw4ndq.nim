@@ -262,7 +262,7 @@ This is supposed to be where you move to the next tutorial, but it hasn't been
 written yet. For now, click [HERE](<nim://player.god = true;sign.open = false>)
 to turn on `God Mode`, which will let you see and modify the code for this
 tutorial. It's a bit of a mess, but some folks might find it interesting. Or
-click [HERE](<nim://press_action("next_world")>) to load `Inky: Isolation`, a
+click [HERE](<nim://press_action("next_level")>) to load `Inky: Isolation`, a
 simple game written in Enu that's loosley inspired by **Alien: Isolation**, but
 features Inky, the blue ghost from Pac-Man.
 

@@ -13,6 +13,9 @@ bridged_to_host:
   proc flying*(self: PlayerType): bool = discard
   proc `flying=`*(self: PlayerType, value: bool) = discard
 
+  proc running*(self: PlayerType): bool = discard
+  proc `running=`*(self: PlayerType, value: bool) = discard
+
   proc god*(self: PlayerType): bool = discard
   proc `god=`*(self: PlayerType, value: bool) = discard
 

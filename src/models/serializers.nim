@@ -5,7 +5,7 @@ import controllers / script_controllers / scripting
 
 var load_chunks {.threadvar.}: bool
 
-type WorldInfo = object
+type LevelInfo = object
   enu_version, format_version: string
 
 proc to_json_hook(self: Color): JsonNode =
@@ -152,12 +152,12 @@ proc save*(unit: Unit) =
     for unit in unit.units:
       unit.save
 
-proc save_world*(world_dir: string, save_all = false) =
+proc save_level*(level_dir: string, save_all = false) =
   if Server in state.local_flags:
-    debug "saving world"
-    let world = WorldInfo(enu_version: enu_version, format_version: "v0.9.2")
-    write_file world_dir / "world.json",
-        jsonutils.to_json(world).pretty
+    debug "saving level"
+    let level = LevelInfo(enu_version: enu_version, format_version: "v0.9.2")
+    write_file level_dir / "level.json",
+      jsonutils.to_json(level).pretty
 
     for unit in state.units:
       if save_all or Dirty in unit.global_flags:
@@ -218,49 +218,49 @@ proc save_user_config*(config: UserConfig) =
     config_file = join_path(work_dir, "config.json")
   write_file(config_file, jsonutils.to_json(config).pretty)
 
-proc change_loaded_world*(world: string) =
+proc change_loaded_level*(level: string) =
   var config = state.config
   var user_config = load_user_config()
-  config.world = world
-  state.world_name = config.world
-  user_config.world = some(config.world)
+  config.level = level
+  state.level_name = config.world & "/" & config.level
+  user_config.level = some(config.level)
   save_user_config(user_config)
-  config.world_dir = join_path(config.work_dir, config.world)
+  config.level_dir = join_path(config.work_dir, config.world, config.level)
   state.config = config
 
-proc unload_world*(worker: Worker) =
-  state.global_flags += LoadingWorld
+proc unload_level*(worker: Worker) =
+  state.global_flags += LoadingLevel
   state.push_flag LoadingScript
   state.pop_flag Playing
   state.units.clear_all
   state.pop_flag LoadingScript
-  state.global_flags -= LoadingWorld
+  state.global_flags -= LoadingLevel
 
-proc load_world*(worker: Worker, world_dir: string) =
-  state.global_flags += LoadingWorld
+proc load_level*(worker: Worker, level_dir: string) =
+  state.global_flags += LoadingLevel
   state.push_flag LoadingScript
   var config = state.config
 
-  config.world_dir = world_dir
-  config.data_dir = join_path(config.world_dir, "data")
-  config.script_dir = join_path(config.world_dir, "scripts")
+  config.level_dir = level_dir
+  config.data_dir = join_path(config.level_dir, "data")
+  config.script_dir = join_path(config.level_dir, "scripts")
 
-  if not file_exists(config.world_dir / "world.json"):
+  if not file_exists(config.level_dir / "level.json"):
     for file in walk_dir(config.lib_dir / "projects"):
-      if config.world.ends_with file.path.split_file.name:
-        file.path.copy_dir(config.world_dir)
+      if config.level.ends_with file.path.split_file.name:
+        file.path.copy_dir(config.level_dir)
 
   create_dir(config.data_dir)
   create_dir(config.script_dir)
 
   state.config = config
 
-  let world_file = world_dir / "world.json"
-  debug "loading ", world_file
-  if file_exists(world_file):
-    let world_json = read_file(world_file)
-    let world = world_json.parse_json.json_to(WorldInfo)
-    load_chunks = world.format_version == "v0.9"
+  let level_file = level_dir / "level.json"
+  debug "loading ", evel_file
+  if file_exists(level_file):
+    let level_json = read_file(level_file)
+    let level = level_json.parse_json.json_to(LevelInfo)
+    load_chunks = level.format_version == "v0.9"
 
   dont_join = true
   worker.retry_failures = true
@@ -271,4 +271,4 @@ proc load_world*(worker: Worker, world_dir: string) =
   for unit in state.units:
     unit.global_flags -= Dirty
   state.pop_flag LoadingScript
-  state.global_flags -= LoadingWorld
+  state.global_flags -= LoadingLevel

@@ -97,7 +97,7 @@ proc watch_code(self: Worker, unit: Unit) =
   unit.code_value.changes:
     if added or touched:
       if change.item.owner == "" or change.item.owner == Zen.thread_ctx.id:
-        save_world(state.config.world_dir)
+        save_level(state.config.level_dir)
         self.change_code(unit, change.item)
       elif Server in state.local_flags:
         if change.item.nim == "":
@@ -209,27 +209,27 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
   worker.bridge_to_vm
 
   if Server in state.local_flags:
-    var world_dir = state.config.world_dir
+    var level_dir = state.config.level_dir
     player.script_ctx.interpreter = worker.interpreter
     worker.load_script_and_dependents(player)
 
-    worker.load_world(world_dir)
-    state.world_name = state.config.world
+    worker.load_level(level_dir)
+    state.level_name = state.config.world & "/" & state.config.level
     state.config_value.changes:
       if added:
-        if change.item.world_dir != world_dir:
+        if change.item.level_dir != level_dir:
           let full_reset = ResettingVM in state.local_flags
-          if world_dir != "":
-            save_world(world_dir, save_all = full_reset)
-          worker.unload_world()
+          if level_dir != "":
+            save_level(level_dir, save_all = full_reset)
+          worker.unload_level()
           if full_reset:
             worker.init_interpreter("")
             worker.bridge_to_vm
             player.script_ctx.interpreter = worker.interpreter
             worker.load_script_and_dependents(player)
-          world_dir = change.item.world_dir
-          if world_dir != "":
-            worker.load_world(world_dir)
+          level_dir = change.item.level_dir
+          if level_dir != "":
+            worker.load_level(level_dir)
   else:
     Zen.thread_ctx.subscribe(connect_address)
     state.units.add player
@@ -252,7 +252,7 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
 
   state.local_flags.changes:
     if Quitting.added:
-      save_world(state.config.world_dir)
+      save_level(state.config.level_dir)
       state.pop_flag Quitting
       running = false
 
@@ -299,7 +299,7 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
       unit.apply_changes
 
     if get_mono_time() > save_at:
-      save_world(state.config.world_dir)
+      save_level(state.config.level_dir)
       save_at = get_mono_time() + auto_save_interval
 
     let frame_end = get_mono_time()

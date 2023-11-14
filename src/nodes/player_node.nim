@@ -41,8 +41,7 @@ var
 # :( Most of this needs to be moved into player model
 gdobj PlayerNode of KinematicBody:
   var
-    alt_speed, alt_walk_speed_locked, alt_fly_speed_locked, skip_release,
-        skip_next_mouse_move, jump_down: bool
+    alt_speed, skip_release, skip_next_mouse_move, jump_down: bool
 
     aim_ray, world_ray, down_ray: RayCast
     jump_time, run_time: Option[MonoTime]
@@ -87,11 +86,11 @@ gdobj PlayerNode of KinematicBody:
   proc calculate_velocity(velocity_current: Vector3, move_direction: Vector3,
                           delta: float, flying, alt_speed: bool): Vector3 =
     let speed =
-      if not flying and not (alt_speed xor self.alt_walk_speed_locked):
+      if not flying and not (alt_speed xor AltWalkSpeed in state.local_flags):
         vec3(state.config.walk_speed)
-      elif not flying and (alt_speed xor self.alt_walk_speed_locked):
+      elif not flying and (alt_speed xor AltWalkSpeed in state.local_flags):
         vec3(state.config.alt_walk_speed)
-      elif flying and not (alt_speed xor self.alt_fly_speed_locked):
+      elif flying and not (alt_speed xor AltFlySpeed in state.local_flags):
         vec3(state.config.fly_speed)
       else:
         vec3(state.config.alt_fly_speed)
@@ -135,7 +134,7 @@ gdobj PlayerNode of KinematicBody:
         self.skip_next_mouse_move = true
 
     state.global_flags.watch:
-      if LoadingWorld.added:
+      if LoadingLevel.added:
         self.model.colliders.clear
 
     self.model.transform_value.watch:
@@ -178,7 +177,7 @@ gdobj PlayerNode of KinematicBody:
       self.model.rotation_value.pause(self.rotation_zid):
         self.model.rotation = rad_to_deg r.y
 
-    if LoadingWorld notin state.global_flags:
+    if LoadingLevel notin state.global_flags:
       let ray_length = if state.tool == CodeMode: 200.0 else: 100.0
       if MouseCaptured notin state.local_flags:
         let
@@ -318,9 +317,9 @@ gdobj PlayerNode of KinematicBody:
       if toggle:
         self.run_time = nil_time
         if self.flying:
-          self.alt_fly_speed_locked = not self.alt_fly_speed_locked
+          state.toggle_flag(AltFlySpeed)
         else:
-          self.alt_walk_speed_locked = not self.alt_walk_speed_locked
+          state.toggle_flag(AltWalkSpeed)
       else:
         self.run_time = some time
       self.alt_speed = true

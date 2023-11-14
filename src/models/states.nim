@@ -86,6 +86,12 @@ proc set_flag*(self: GameState, flag: LocalStateFlags, value: bool) =
   else:
     self.pop_flag flag
 
+proc toggle_flag*(self: GameState, flag: LocalStateFlags) =
+  if flag notin self.local_flags:
+    self.push_flag flag
+  else:
+    self.pop_flag flag
+
 proc `+=`*(self: ZenSet[LocalStateFlags], flag: LocalStateFlags) {.error:
   "Use `push_flag`, `pop_flag` and `replace_flag`".}
 
@@ -126,7 +132,7 @@ proc init*(_: type GameState): GameState =
     console: ConsoleModel(log: ~(seq[string], flags)),
     open_sign_value: ~(Sign, flags),
     wants: ~(seq[LocalStateFlags], flags),
-    world_name_value: ~("", id = "world_name"),
+    level_name_value: ~("", id = "level_name"),
     queued_action_value: ~("", flags)
   )
   result = self

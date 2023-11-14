@@ -53,7 +53,7 @@ scale_factor: {state.scale_factor}
 vram: {vram}
 units: {unit_count}
 zen objects: {Zen.thread_ctx.len}
-world: {state.world_name}
+level: {state.level_name}
 
       """
 
@@ -126,8 +126,8 @@ world: {state.world_name}
       work_dir = get_user_data_dir()
       font_size = uc.font_size ||= (20 * screen_scale).int
       dock_icon_size = uc.dock_icon_size ||= 100 * screen_scale
-      world_prefix = uc.world_prefix ||= "tutorial"
-      world = uc.world ||= value.world_prefix & "-1"
+      world = uc.world ||= "tutorial"
+      level = uc.level ||= value.world & "-1"
       show_stats = uc.show_stats ||= false
       mega_pixels = uc.mega_pixels ||= 2.0
       start_full_screen = uc.start_full_screen ||= true
@@ -138,7 +138,7 @@ world: {state.world_name}
       connect_address = connect_address
       listen_address = listen_address
       player_color = uc.player_color ||= color(rand(1.0), rand(1.0), rand(1.0))
-      world_dir = join_path(value.work_dir, value.world)
+      level_dir = join_path(value.work_dir, value.world, value.level)
       walk_speed = uc.walk_speed ||= 500
       fly_speed = uc.fly_speed ||= 1500
       alt_walk_speed = uc.alt_walk_speed ||= 1000
@@ -251,20 +251,20 @@ world: {state.world_name}
   proc switch_world(diff: int) =
     var config = state.config
     if diff != 0:
-      var world = config.world
-      let prefix = config.world_prefix & "-"
-      world.remove_prefix(prefix)
+      var level = config.level
+      let prefix = config.world & "-"
+      level.remove_prefix(prefix)
       var num = try:
-        world.parse_int
+        level.parse_int
       except ValueError:
         1
       num += diff
-      change_loaded_world(prefix & $num)
+      change_loaded_level(prefix & $num)
     else:
       # force a reload of the current world
-      let current_world = state.config.world_dir
-      state.config_value.value: world_dir = ""
-      state.config_value.value: world_dir = current_world
+      let current_level = state.config.level_dir
+      state.config_value.value: level_dir = ""
+      state.config_value.value: level_dir = current_level
 
   method unhandled_input*(event: InputEvent) =
     if EditorVisible in state.local_flags or ConsoleVisible in state.local_flags:
@@ -286,9 +286,9 @@ world: {state.world_name}
         event.as(InputEventKey).scancode == KEY_ENTER):
 
       set_window_fullscreen not is_window_fullscreen()
-    elif event.is_action_pressed("next_world"):
+    elif event.is_action_pressed("next_level"):
       self.switch_world(+1)
-    elif event.is_action_pressed("prev_world"):
+    elif event.is_action_pressed("prev_level"):
       self.switch_world(-1)
     elif event.is_action_pressed("command_mode"):
       state.push_flag CommandMode

@@ -19,11 +19,11 @@ type
     CommandMode, EditorVisible, ConsoleVisible,
     BlockTargetVisible, ReticleVisible, DocsVisible, MouseCaptured,
     PrimaryDown, SecondaryDown, EditorFocused, ConsoleFocused, DocsFocused,
-    Playing, Flying, God,
+    Playing, Flying, God, AltWalkSpeed, AltFlySpeed,
     LoadingScript, Server, Quitting, ResettingVM
 
   GlobalStateFlags* = enum
-    LoadingWorld
+    LoadingLevel
 
   LocalModelFlags* = enum
     Hover, TargetMoved, Highlight, Hide
@@ -66,7 +66,7 @@ type
     queued_action_value*: ZenValue[string]
     scale_factor*: float
     worker_ctx_name*: string
-    world_name_value*: ZenValue[string]
+    level_name_value*: ZenValue[string]
 
   Model* = ref object of RootObj
     id*: string
@@ -157,17 +157,17 @@ type
   Config* = object
     font_size*: int
     world*: string
+    level*: string
     dock_icon_size*: float
     show_stats*: bool
     mega_pixels*: float
-    world_dir*: string
+    level_dir*: string
     data_dir*: string
     script_dir*: string
     scene*: string
     lib_dir*: string
     start_full_screen*: bool
     semicolon_as_colon*: bool
-    world_prefix*: string
     listen_address*: string
     connect_address*: string
     player_color*: Color
@@ -183,8 +183,8 @@ type
   UserConfig* = object
     font_size*: Option[int]
     dock_icon_size*: Option[float]
-    world_prefix*: Option[string]
     world*: Option[string]
+    level*: Option[string]
     show_stats*: Option[bool]
     god_mode*: Option[bool]
     mega_pixels*: Option[float]

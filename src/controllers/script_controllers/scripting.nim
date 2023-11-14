@@ -56,7 +56,7 @@ proc init_interpreter*[T](self: Worker, _: T) {.gcsafe.} =
       else:
         "???"
 
-      if file_exists(file_name):
+      if file_exists(file_name) and ?ctx.file_name:
         if file_name.get_file_info != ctx.file_name.get_file_info:
           (file_name, info) = extract_file_info msg
           # msg = msg.replace(re"unhandled exception:.*\) Error\: ", "")

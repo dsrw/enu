@@ -80,8 +80,8 @@ proc to_node(self: Worker, unit: Unit): PNode =
 proc press_action(self: Worker, name: string) =
   state.queued_action = name
 
-proc load_world(name: string) =
-  change_loaded_world(name)
+proc load_level(name: string) =
+  change_loaded_level(name)
 
 proc register_active(self: Worker, pnode: PNode) =
   assert not self.active_unit.is_nil
@@ -401,6 +401,12 @@ proc flying(self: Unit): bool =
 proc `flying=`*(self: Unit, value: bool) =
   state.set_flag Flying, value
 
+proc running(self: Unit): bool =
+  AltWalkSpeed in state.local_flags
+
+proc `running=`*(self: Unit, value: bool) =
+  state.set_flag AltWalkSpeed, value
+
 proc tool(self: Unit): int =
   int(state.tool)
 
@@ -481,7 +487,7 @@ proc bridge_to_vm*(worker: Worker) =
     glow, `glow=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`,
     active_unit, color, `color=`, sees, start_position, wake, frame_count,
     write_stack_trace, show, `show=`, frame_created, lock, `lock=`, reset,
-    press_action, load_world
+    press_action, load_level
 
   result.bridged_from_vm "base_bridge_private",
     link_dependency, action_running, `action_running=`, yield_script,
@@ -500,4 +506,4 @@ proc bridge_to_vm*(worker: Worker) =
 
   result.bridged_from_vm "players",
     playing, `playing=`, god, `god=`, flying, `flying=`, tool, `tool=`,
-    coding, `coding=`
+    coding, `coding=`, running, `running=`
