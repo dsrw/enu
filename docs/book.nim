@@ -2,9 +2,10 @@ import nimibook
 
 var book = init_book_with_toc:
   section "Introduction", "intro":
-    entry "Examples", "intro/examples"
+    entry "Tutorial", "intro/tutorial"
     entry "Install or Build", "intro/building"
     entry "Controls and Usage", "intro/controls"
+    entry "Examples", "intro/examples"
     entry "Multiplayer (Experimental)", "intro/multiplayer"
     entry "Config", "intro/config"
 
