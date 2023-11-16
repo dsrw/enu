@@ -20,8 +20,7 @@
       "initCommands": ["command source ${workspaceRoot}/.lldbinit"],
       "presentation": {
         "clear": true                        // <-- this line
-      },
-      "terminal": "external"
+      }
     },
     {
       "type": "lldb",
@@ -38,8 +37,7 @@
       "initCommands": ["command source ${workspaceRoot}/.lldbinit"],
       "presentation": {
         "clear": true                        // <-- this line
-      },
-      "terminal": "external"
+      }
     },
     {
       "type": "lldb",
@@ -71,8 +69,22 @@
       "initCommands": ["command source ${workspaceRoot}/.lldbinit"],
       "presentation": {
         "clear": true                        // <-- this line
+      }
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Enu: Debug",
+      "program": "${workspaceFolder}/vendor/godot/bin/godot.osx.opt.tools.arm64",
+      "windows": {
+        "program": "${workspaceFolder}/vendor/godot/bin/godot.windows.opt.tools.64"
       },
-      "terminal": "external"
+      "args": [],
+      "cwd": "${workspaceFolder}/app",
+      "initCommands": ["command source ${workspaceRoot}/.lldbinit"],
+      "presentation": {
+        "clear": true                        // <-- this line
+      }
     },
     {
       "type": "lldb",
