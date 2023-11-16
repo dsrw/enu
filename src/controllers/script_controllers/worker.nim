@@ -204,6 +204,11 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
   # state quicker
   if Server in state.local_flags:
     state.units.add player
+  else:
+    let tmp_path = join_path(state.config.work_dir, "tmp")
+    create_dir tmp_path
+    state.config_value.value:
+      script_dir = tmp_path
 
   worker.init_interpreter("")
   worker.bridge_to_vm
@@ -234,10 +239,6 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
     Zen.thread_ctx.subscribe(connect_address)
     state.units.add player
     player.script_ctx.interpreter = worker.interpreter
-    let tmp_path = join_path(state.config.work_dir, "tmp")
-    create_dir tmp_path
-    state.config_value.value:
-      script_dir = tmp_path
     worker.load_script_and_dependents(player)
 
   var sign = Sign.init("", "", width = 3, height = 2.05, owner = state.player,
