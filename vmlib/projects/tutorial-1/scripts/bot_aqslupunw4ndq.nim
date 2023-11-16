@@ -64,6 +64,7 @@ Sneak behind the `Bot` to continue the tutorial.
 
   """, width = 0.6
 
+  menu.show = true
   while me.angle_to(player).abs notin 150..210:
     sleep 0.5
 
