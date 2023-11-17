@@ -138,7 +138,8 @@ level: {state.level_name}
       connect_address = connect_address
       listen_address = listen_address
       player_color = uc.player_color ||= color(rand(1.0), rand(1.0), rand(1.0))
-      level_dir = join_path(value.work_dir, value.world, value.level)
+      world_dir = join_path(value.work_dir, value.world)
+      level_dir = join_path(value.world_dir, value.level)
       walk_speed = uc.walk_speed ||= 500
       fly_speed = uc.fly_speed ||= 1500
       alt_walk_speed = uc.alt_walk_speed ||= 1000
@@ -259,7 +260,7 @@ level: {state.level_name}
       except ValueError:
         1
       num += diff
-      change_loaded_level(prefix & $num)
+      change_loaded_level(prefix & $num, state.config.world)
     else:
       # force a reload of the current world
       let current_level = state.config.level_dir

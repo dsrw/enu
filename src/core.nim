@@ -251,3 +251,13 @@ template value*(self: ZenValue, body: untyped) {.dirty.} =
     with value:
       body
     self.value = value
+
+var deferred {.threadvar.}: seq[proc() {.closure, gcsafe.}]
+template after_boop*(body: untyped) =
+  deferred.add proc() =
+    body
+
+proc run_deferred* =
+  for fn in deferred:
+    fn()
+  deferred.set_len(0)

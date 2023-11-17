@@ -268,6 +268,7 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
     let wait_until = frame_start + min_time
 
     Zen.thread_ctx.boop
+    run_deferred()
     inc state.frame_count
     for ctx_name in Zen.thread_ctx.unsubscribed:
       var i = 0

@@ -38,7 +38,10 @@ bridged_to_host:
   proc `lock=`*(self: Unit, value: bool)
   proc reset*(self: Unit, clear = false)
   proc press_action*(name: string)
-  proc load_level*(name: string)
+  proc load_level*(level: string, world = "")
+  proc reset_level*()
+  proc level_name*: string
+  proc world_name*: string
 
   # TODO: These should be in base_bridge_private, but are currently needed outside of base_api.
   proc echo_console*(msg: string)

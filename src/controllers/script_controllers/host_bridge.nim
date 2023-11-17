@@ -80,9 +80,6 @@ proc to_node(self: Worker, unit: Unit): PNode =
 proc press_action(self: Worker, name: string) =
   state.queued_action = name
 
-proc load_level(name: string) =
-  change_loaded_level(name)
-
 proc register_active(self: Worker, pnode: PNode) =
   assert not self.active_unit.is_nil
   self.map_unit(self.active_unit, pnode)
@@ -114,9 +111,44 @@ proc exec_instance(self: Worker, unit: Unit) =
 
 proc active_unit(self: Worker): Unit = self.active_unit
 
+proc wake(self: Unit) =
+  self.script_ctx.timer = get_mono_time()
+
 proc pause_script(self: Worker) =
   self.active_unit.global_flags -= ScriptInitializing
   self.active_unit.script_ctx.pause()
+
+proc yield_script(self: Worker, unit: Unit) =
+  let ctx = unit.script_ctx
+  ctx.callback = ctx.saved_callback
+  ctx.saved_callback = nil
+  self.pause_script()
+
+proc exit(self: Worker, ctx: ScriptCtx, exit_code: int) =
+  ctx.exit_code = some(exit_code)
+  self.pause_script()
+  ctx.running = false
+
+proc load_level(self: Worker, level: string, world: string) =
+  var world = world
+  if not ?world:
+    world = state.config.world
+  self.exit(self.active_unit.script_ctx, 0)
+  after_boop:
+    change_loaded_level(level, world)
+
+proc reset_level(self: Worker) =
+  self.exit(self.active_unit.script_ctx, 0)
+  after_boop:
+    let current_level = state.config.level_dir
+    state.config_value.value: level_dir = ""
+    remove_dir current_level
+    state.config_value.value:
+      level_dir = current_level
+
+proc world_name: string = state.config.world
+
+proc level_name: string = state.config.level
 
 proc begin_turn(self: Worker, unit: Unit, direction: Vector3, degrees: float,
     lean: bool, move_mode: int): string =
@@ -301,20 +333,6 @@ proc sees(self: Worker, unit: Unit, target: Unit, distance: float): Future[bool]
   unit.script_ctx.last_ran = MonoTime.default
   self.pause_script()
 
-proc wake(self: Unit) =
-  self.script_ctx.timer = get_mono_time()
-
-proc yield_script(self: Worker, unit: Unit) =
-  let ctx = unit.script_ctx
-  ctx.callback = ctx.saved_callback
-  ctx.saved_callback = nil
-  self.pause_script()
-
-proc exit(self: Worker, ctx: ScriptCtx, exit_code: int) =
-  ctx.exit_code = some(exit_code)
-  self.pause_script()
-  ctx.running = false
-
 proc frame_count(): int = state.frame_count
 
 proc frame_created(unit: Unit): int =
@@ -487,7 +505,7 @@ proc bridge_to_vm*(worker: Worker) =
     glow, `glow=`, speed, `speed=`, scale, `scale=`, velocity, `velocity=`,
     active_unit, color, `color=`, sees, start_position, wake, frame_count,
     write_stack_trace, show, `show=`, frame_created, lock, `lock=`, reset,
-    press_action, load_level
+    press_action, load_level, level_name, world_name, reset_level
 
   result.bridged_from_vm "base_bridge_private",
     link_dependency, action_running, `action_running=`, yield_script,

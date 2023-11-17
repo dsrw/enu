@@ -218,14 +218,17 @@ proc save_user_config*(config: UserConfig) =
     config_file = join_path(work_dir, "config.json")
   write_file(config_file, jsonutils.to_json(config).pretty)
 
-proc change_loaded_level*(level: string) =
+proc change_loaded_level*(level, world: string) =
   var config = state.config
   var user_config = load_user_config()
+  config.world = world
   config.level = level
   state.level_name = config.world & "/" & config.level
+  user_config.world = some(config.world)
   user_config.level = some(config.level)
   save_user_config(user_config)
-  config.level_dir = join_path(config.work_dir, config.world, config.level)
+  config.world_dir = join_path(config.work_dir, config.world)
+  config.level_dir = join_path(config.world_dir, config.level)
   state.config = config
 
 proc unload_level*(worker: Worker) =
@@ -245,18 +248,27 @@ proc load_level*(worker: Worker, level_dir: string) =
   config.data_dir = join_path(config.level_dir, "data")
   config.script_dir = join_path(config.level_dir, "scripts")
 
-  if not file_exists(config.level_dir / "level.json"):
-    for file in walk_dir(config.lib_dir / "projects"):
-      if config.level.ends_with file.path.split_file.name:
-        file.path.copy_dir(config.level_dir)
+  let level_file = level_dir / "level.json"
+
+  if not file_exists(level_file):
+    let
+      base = config.lib_dir / "worlds" / config.world
+      level = base / config.level
+      tmpl = base / "template"
+
+    if dir_exists(level):
+      copy_dir(level, config.level_dir)
+    elif dir_exists(config.world_dir / "template"):
+      copy_dir(config.world_dir / "template", config.level_dir)
+    elif dir_exists(tmpl):
+      copy_dir(tmpl, config.level_dir)
 
   create_dir(config.data_dir)
   create_dir(config.script_dir)
 
   state.config = config
 
-  let level_file = level_dir / "level.json"
-  debug "loading ", evel_file
+  debug "loading ", level_file
   if file_exists(level_file):
     let level_json = read_file(level_file)
     let level = level_json.parse_json.json_to(LevelInfo)
