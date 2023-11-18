@@ -5,7 +5,7 @@
 [ext_resource path="res://components/SignNode.gdns" type="Script" id=7]
 
 [sub_resource type="DynamicFont" id=19]
-size = 110
+size = 72
 font_data = ExtResource( 1 )
 
 [sub_resource type="StyleBoxFlat" id=20]
@@ -87,6 +87,8 @@ mesh = SubResource( 18 )
 material/0 = SubResource( 17 )
 
 [node name="SignBody" type="StaticBody" parent="MeshInstance"]
+collision_layer = 16
+collision_mask = 0
 
 [node name="CollisionShape" type="CollisionShape" parent="MeshInstance/SignBody"]
 shape = SubResource( 15 )

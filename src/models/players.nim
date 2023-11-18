@@ -38,6 +38,7 @@ proc `open_code=`*(self: Player, code: string) =
         unit.global_flags -= Visible
       else:
         unit.message = code
+        unit.more = code
         unit.global_flags += Visible
       return
 
