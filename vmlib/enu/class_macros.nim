@@ -1,4 +1,4 @@
-import std / [macros, strutils, sequtils]
+import std / [macros, strutils, sequtils, base64]
 import types
 import base_api, macro_helpers
 
@@ -245,17 +245,22 @@ proc transform_proc_lists(parent: NimNode): NimNode =
       parent[i] = transform_proc_lists(node)
   parent
 
-macro load_enu_script*(file_name: string, base_type: untyped,
+macro load_enu_script*(base64_code: string, file_name: string, base_type: untyped,
   convert: varargs[untyped]): untyped =
 
   var convert = convert.map_it($it)
   let file_name = file_name.str_val
+  # `static_read` has been disabled for security, so we can't read the code
+  # ourselves. Instead it's passed to us, but because this coming from a nim
+  # string literal in a .nimf template it comes base64 encoded.
+  let base_code = base64_code.str_val
+  let code = decode(base_code)
   when compiles(parse_stmt(file_name, file_name)):
-    var ast = parse_stmt(file_name.static_read, file_name).transform_proc_lists
+    var ast = parse_stmt(code, file_name).transform_proc_lists
   else:
     # Just for tests running in Nim <= 1.6. Enu VM and Nim 2.0 can take both
     # Nim code and a file name.
-    var ast = parse_stmt(file_name.static_read).transform_proc_lists
+    var ast = parse_stmt(code).transform_proc_lists
   var (script_start, name_node) = pop_name_node(ast)
   result = new_stmt_list()
   var inner = new_stmt_list()

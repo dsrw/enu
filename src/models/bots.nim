@@ -1,10 +1,11 @@
-import std / [math, sugar, monotimes]
+import std / [math, sugar, monotimes, base64]
 import godotapi / spatial
 import core, models / [states, units, colors]
 include "bot_code_template.nim.nimf"
 
 method code_template*(self: Bot, imports: string): string =
-  result = bot_code_template(self.script_ctx.script, imports)
+  result = bot_code_template(read_file(self.script_ctx.script).encode(
+    safe = true), self.script_ctx.script, imports)
 
 method on_begin_move*(self: Bot, direction: Vector3, steps: float,
     moving_mode: int): Callback =

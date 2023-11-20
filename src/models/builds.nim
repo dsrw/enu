@@ -1,5 +1,5 @@
 import std / [hashes, tables, sets, options, sequtils, math, wrapnils,
-  monotimes, sugar, deques, macros]
+  monotimes, sugar, deques, macros, base64]
 import godotapi / spatial
 import core, models / [states, bots, colors, units]
 const ChunkSize = vec3(16, 16, 16)
@@ -19,7 +19,8 @@ var
 proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) {.gcsafe.}
 
 method code_template*(self: Build, imports: string): string =
-  result = build_code_template(self.script_ctx.script, imports)
+  result = build_code_template(read_file(self.script_ctx.script).encode(
+    safe = true), self.script_ctx.script, imports)
 
 proc buffer(position: Vector3): Vector3 = (position / ChunkSize).floor
 
