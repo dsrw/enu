@@ -215,7 +215,7 @@ proc update_action_index*(state: GameState, change: int) =
 
   state.tool = Tools(index)
 
-template watch*(zen: Zen, unit: untyped, body: untyped) =
+template watch*[T, O](zen: Zen[T, O], unit: untyped, body: untyped) =
   when unit is Unit:
     mixin thread_ctx
     let zid = zen.changes:
@@ -228,7 +228,7 @@ template watch*(zen: Zen, unit: untyped, body: untyped) =
       "can be passed explicitly, or found implicitly by evaluating " &
       "`self.model`, then `self`." .}
 
-template watch*(zen: Zen, body: untyped) =
+template watch*[T, O](zen: Zen[T, O], body: untyped) =
   when compiles(self.model):
     watch(zen, self.model, body)
   else:

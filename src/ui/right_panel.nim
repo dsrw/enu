@@ -23,6 +23,17 @@ gdobj RightPanel of MarginContainer:
   method ready* =
     self.label = self.find_node("MarkdownLabel") as MarkdownLabel
 
+    state.status_message_value.changes:
+      if added:
+        if ?change.item:
+          state.push_flags DocsVisible, DocsFocused
+          self.label.markdown = change.item
+          self.label.update
+        else:
+          state.pop_flags DocsFocused, DocsVisible
+          self.label.markdown = ""
+          self.label.update
+
     state.open_sign_value.changes:
       if added and change.item != nil:
         state.push_flags DocsVisible, DocsFocused

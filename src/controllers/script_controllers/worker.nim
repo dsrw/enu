@@ -1,5 +1,6 @@
-import std / [locks, os, random]
+import std / [locks, os, random, net]
 import std / times except seconds
+from pkg / netty import Reactor
 import core, models, models / [serializers], libs / [interpreters, eval]
 import ./ [vars, host_bridge, scripting]
 
@@ -78,7 +79,6 @@ proc change_code(self: Worker, unit: Unit, code: Code) =
     self.interpreter.reset_module(unit.script_ctx.module_name)
     debug "reset module", module = unit.script_ctx.module_name
     unit.script_ctx.running = false
-    remove_file unit.script_ctx.script
     self.module_names.excl unit.script_ctx.module_name
   elif code.nim.strip != "":
     debug "loading unit", unit_id = unit.id
@@ -189,7 +189,9 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
       if ?unit.script_ctx:
         unit.script_ctx.running = false
         unit.script_ctx.callback = nil
-        if LoadingScript notin state.local_flags and not ?unit.clone_of:
+        if not (unit of Player) and LoadingScript notin state.local_flags and
+          not ?unit.clone_of:
+
           remove_file unit.script_ctx.script
           remove_dir unit.data_dir
 
@@ -205,6 +207,7 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
   if Server in state.local_flags:
     state.units.add player
   else:
+    state.push_flag(Connecting)
     let tmp_path = join_path(state.config.work_dir, "tmp")
     create_dir tmp_path
     state.config_value.value:
@@ -235,8 +238,19 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
           level_dir = change.item.level_dir
           if level_dir != "":
             worker.load_level(level_dir)
+
   else:
-    Zen.thread_ctx.subscribe(connect_address)
+    var timeout_at = get_mono_time() + 30.seconds
+    var connected = false
+    while not connected and get_mono_time() < timeout_at:
+      try:
+        Zen.thread_ctx.subscribe(connect_address)
+        connected = true
+      except ConnectionError:
+        discard
+    if not connected:
+      fail \"Unable to connect to server at {connect_address}"
+    state.pop_flag(Connecting)
     state.units.add player
     player.script_ctx.interpreter = worker.interpreter
     worker.load_script_and_dependents(player)
@@ -255,6 +269,8 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
     if Quitting.added:
       save_level(state.config.level_dir)
       state.pop_flag Quitting
+      running = false
+    elif NeedsRestart.added:
       running = false
 
   const max_time = (1.0 / 30.0).seconds
@@ -278,6 +294,10 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
           state.units.del i
         else:
           i += 1
+
+      if Server notin state.local_flags:
+        state.push_flag(NeedsRestart)
+        break
 
     var to_process: seq[Unit]
     state.units.value.walk_tree proc(unit: Unit) = to_process.add unit
@@ -308,6 +328,11 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
     if frame_end < wait_until:
       sleep int((wait_until - frame_end).in_milliseconds)
 
+  if NeedsRestart in state.local_flags:
+    if ?listen_address:
+      private_access Reactor
+      Zen.thread_ctx.reactor.socket.close
+    state.pop_flag NeedsRestart
   Zen.thread_ctx.boop
 
 proc launch_worker*(ctx: ZenContext, state: GameState): Thread[tuple[

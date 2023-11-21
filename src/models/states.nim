@@ -133,7 +133,8 @@ proc init*(_: type GameState): GameState =
     open_sign_value: ~(Sign, flags),
     wants: ~(seq[LocalStateFlags], flags),
     level_name_value: ~("", id = "level_name"),
-    queued_action_value: ~("", flags)
+    queued_action_value: ~("", flags),
+    status_message_value: ~("", flags),
   )
   result = self
   self.open_unit_value.changes:

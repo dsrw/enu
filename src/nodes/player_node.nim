@@ -141,6 +141,7 @@ gdobj PlayerNode of KinematicBody:
       if added:
         self.transform = change.item
 
+    self.camera_rig.rotation = vec3(0, deg_to_rad self.model.rotation, 0)
     self.rotation_zid = self.model.rotation_value.watch:
       if added or touched:
         self.camera_rig.rotation = vec3(0, deg_to_rad change.item, 0)

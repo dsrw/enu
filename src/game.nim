@@ -16,6 +16,9 @@ when defined(metrics):
 
 ZenContext.init_metrics "main", "worker"
 
+var saved_transform {.threadvar.}: Transform
+var saved_rotation {.threadvar.}: float
+
 gdobj Game of Node:
   var
     reticle: Control
@@ -27,6 +30,7 @@ gdobj Game of Node:
     saved_mouse_position: Vector2
     rescale_at = get_mono_time()
     update_metrics_at = get_mono_time()
+    force_quit_at = MonoTime.high
     node_controller: NodeController
     script_controller: ScriptController
 
@@ -61,6 +65,9 @@ level: {state.level_name}
       self.rescale_at = MonoTime.high
       self.rescale()
 
+    if time > self.force_quit_at:
+      state.pop_flag Quitting
+
   proc rescale*() =
     let vp = self.get_viewport().size
     state.scale_factor = sqrt(state.config.mega_pixels *
@@ -71,6 +78,7 @@ level: {state.level_name}
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
       state.push_flag Quitting
+
     if what == main_loop.NOTIFICATION_WM_ABOUT:
       alert \"Enu {enu_version}\n\n© 2023 Scott Wadden", "Enu"
 
@@ -219,9 +227,39 @@ level: {state.level_name}
     self.stats = self.find_node("stats").as(Label)
     self.stats.visible = state.config.show_stats
 
-    state.local_flags.changes:
-      if Quitting.removed:
+    state.player_value.changes:
+      if added and ?change.item and ?saved_transform:
+        change.item.transform = saved_transform
+        change.item.rotation = saved_rotation
+        saved_transform = Transform.init
+        saved_rotation = 0.0
+
+    state.local_flags.changes(false):
+      if Quitting.added:
+        # We don't quit until the worker thread acks by popping the `Quitting`
+        # flag, giving it a chance to save and cleanup. If the worker thread is
+        # stuck, killed, or hasn't fully started because it's trying to connect
+        # to a server, it won't pop the flag, so we force it after a timeout.
+        self.force_quit_at = get_mono_time() + 2.seconds
+      elif Quitting.removed:
         self.get_tree().quit()
+
+      if NeedsRestart.removed:
+        saved_transform = state.player.transform
+        saved_rotation = state.player.rotation
+        discard self.get_tree.reload_current_scene()
+
+      if Connecting.added:
+        state.status_message = \"""
+
+# Connecting...
+
+Trying to connect to {state.config.connect_address}.
+
+        """
+      elif Connecting.removed:
+        state.status_message = ""
+
       if MouseCaptured.added:
         let center = self.get_viewport().get_visible_rect().size * 0.5
         self.saved_mouse_position = self.get_viewport().get_mouse_position()
@@ -287,6 +325,12 @@ level: {state.level_name}
         event.as(InputEventKey).scancode == KEY_ENTER):
 
       set_window_fullscreen not is_window_fullscreen()
+      var user_config = load_user_config()
+      state.config_value.value:
+        start_full_screen = is_window_fullscreen()
+
+      user_config.start_full_screen = some(is_window_fullscreen())
+      save_user_config(user_config)
     elif event.is_action_pressed("next_level"):
       self.switch_world(+1)
     elif event.is_action_pressed("prev_level"):

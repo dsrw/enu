@@ -20,7 +20,7 @@ type
     BlockTargetVisible, ReticleVisible, DocsVisible, MouseCaptured,
     PrimaryDown, SecondaryDown, EditorFocused, ConsoleFocused, DocsFocused,
     Playing, Flying, God, AltWalkSpeed, AltFlySpeed,
-    LoadingScript, Server, Quitting, ResettingVM
+    LoadingScript, Server, Quitting, ResettingVM, NeedsRestart, Connecting
 
   GlobalStateFlags* = enum
     LoadingLevel
@@ -67,6 +67,7 @@ type
     scale_factor*: float
     worker_ctx_name*: string
     level_name_value*: ZenValue[string]
+    status_message_value*: ZenValue[string]
 
   Model* = ref object of RootObj
     id*: string
