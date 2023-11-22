@@ -3,25 +3,19 @@
 There's a lot left to do before Enu 1.0. Here are some of the tasks planned
 for the next year or so.
 
-### Security and Sharing
+### Multiplayer and World Sharing
 
-Right now there's no easy way to download and play Enu worlds created by other
-people. It can be done manually by copying a world into Enu's 
-[config directory](intro/config.html), then updating the `world` property in
-`config.json`, but at the moment Enu scripts can read, write, and delete files 
-on your computer, so it's very important to only play an Enu world if you trust 
-it completely. The same applies when playing 
-[multiplayer](intro/multiplayer.html).
-
-Sometime before 0.3, Enu will be updated to run in a sandbox, and the script 
-engine will be locked down to restrict dangerous operations. When this is done
-I'll make it easier to share worlds and find servers to connect to.
+Make it easy to share Enu worlds, and to find and connect to other players.
 
 ### Tutorials
 
 More tutorials!
 
 Tutorials!
+
+### UI
+
+Enu needs a proper inventory, menus, and a way to move objects.
 
 ### Games and Game Features
 
@@ -53,7 +47,3 @@ and iPadOS will likely be next, with Android and VR platforms following later.
 ### Graphics
 
 Enu's graphics can be slow, especially when using lots of units.
-
-### Other Stuff
-
-Other stuff.
