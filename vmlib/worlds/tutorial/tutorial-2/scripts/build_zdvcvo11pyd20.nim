@@ -1,6 +1,5 @@
 proc restart* =
   player.flying = false
-  sleep()
   player.open_sign = nil
   player.position = start_spot
   player.rotation = 180

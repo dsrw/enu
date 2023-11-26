@@ -47,10 +47,13 @@ proc write_stack_trace(self: Worker) =
 
 proc get_unit(self: Worker, a: VmArgs, pos: int): Unit {.gcsafe.} =
   let pnode = a.get_node(pos)
-  if pnode notin self.unit_map:
-    raise NilAccessDefect.init("Unit is nil")
-  {.gcsafe.}:
-    result = self.unit_map[pnode]
+  if pnode.kind != nkNilLit:
+    if pnode notin self.unit_map:
+      when compile_option("assertions"):
+        raise NilAccessDefect.init("Unit is nil")
+    else:
+      {.gcsafe.}:
+        result = self.unit_map[pnode]
 
 proc get_bot(self: Worker, a: VmArgs, pos: int): Bot =
   let unit = self.get_unit(a, pos)
