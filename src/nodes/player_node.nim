@@ -132,6 +132,10 @@ gdobj PlayerNode of KinematicBody:
     state.local_flags.watch:
       if MouseCaptured.removed:
         self.skip_next_mouse_move = true
+      elif change.item == Flying:
+        for i in [0, 1, 2]:
+          let collision_enabled = Flying.removed
+          self.set_collision_mask_bit(i, collision_enabled)
 
     state.global_flags.watch:
       if LoadingLevel.added:
@@ -294,14 +298,9 @@ gdobj PlayerNode of KinematicBody:
         time = get_mono_time()
         toggle = ?self.jump_time and time < self.jump_time.get + fly_toggle
 
-      if toggle:
+      if toggle and Playing notin state.local_flags:
         self.jump_time = nil_time
-        if Playing in state.local_flags:
-          self.flying(false)
-        else:
-          self.flying(not self.flying)
-        for i in [0, 1, 2]:
-          self.set_collision_mask_bit(i, not self.flying)
+        self.flying(not self.flying)
       elif self.is_on_floor():
         self.velocity += vec3(0, jump_impulse, 0)
         self.jump_time = some time
