@@ -219,7 +219,7 @@ proc remove(self: Build) =
 
 proc fire(self: Build) =
   let global_point = self.target_point.global_from(self)
-  if state.tool notin {CodeMode, PlaceBot}:
+  if state.tool notin {Disabled, CodeMode, PlaceBot}:
     state.skip_block_paint = true
     draw_normal = self.target_normal
     let point = (self.target_point + (self.target_normal * 0.5)).floor
@@ -446,6 +446,11 @@ method main_thread_joined*(self: Build) =
     if PrimaryDown.removed or SecondaryDown.removed:
       state.draw_unit_id = ""
       last_point = vec3()
+    if Playing.added:
+      self.local_flags -= Highlight
+    elif Playing.removed:
+      if Hover in self.local_flags:
+        self.local_flags += Highlight
 
 method on_collision*(self: Build, partner: Model, normal: Vector3) =
   self.collisions.add (partner.id, normal)

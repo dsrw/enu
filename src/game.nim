@@ -360,28 +360,29 @@ Trying to connect to {state.config.connect_address}.
         state.set_flag MouseCaptured, MouseCaptured notin state.local_flags
         self.get_tree().set_input_as_handled()
 
-    if event.is_action_pressed("toggle_code_mode"):
-      if state.tool != CodeMode:
-        self.last_tool = state.tool
+    if state.tool != Disabled:
+      if event.is_action_pressed("toggle_code_mode"):
+        if state.tool != CodeMode:
+          self.last_tool = state.tool
+          state.tool = CodeMode
+        else:
+          state.tool = self.last_tool
+      elif event.is_action_pressed("mode_1"):
         state.tool = CodeMode
-      else:
-        state.tool = self.last_tool
-    elif event.is_action_pressed("mode_1"):
-      state.tool = CodeMode
-    elif event.is_action_pressed("mode_2"):
-      state.tool = BlueBlock
-    elif event.is_action_pressed("mode_3"):
-      state.tool = RedBlock
-    elif event.is_action_pressed("mode_4"):
-      state.tool = GreenBlock
-    elif event.is_action_pressed("mode_5"):
-      state.tool = BlackBlock
-    elif event.is_action_pressed("mode_6"):
-      state.tool = WhiteBlock
-    elif event.is_action_pressed("mode_7"):
-      state.tool = BrownBlock
-    elif event.is_action_pressed("mode_8"):
-      state.tool = PlaceBot
+      elif event.is_action_pressed("mode_2"):
+        state.tool = BlueBlock
+      elif event.is_action_pressed("mode_3"):
+        state.tool = RedBlock
+      elif event.is_action_pressed("mode_4"):
+        state.tool = GreenBlock
+      elif event.is_action_pressed("mode_5"):
+        state.tool = BlackBlock
+      elif event.is_action_pressed("mode_6"):
+        state.tool = WhiteBlock
+      elif event.is_action_pressed("mode_7"):
+        state.tool = BrownBlock
+      elif event.is_action_pressed("mode_8"):
+        state.tool = PlaceBot
 
   method on_meta_clicked(url: string) =
     if url.starts_with("nim://"):

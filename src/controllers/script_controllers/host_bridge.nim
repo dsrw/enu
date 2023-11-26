@@ -431,6 +431,12 @@ proc tool(self: Unit): int =
 proc `tool=`(self: Unit, value: int) =
   state.tool = Tools(value)
 
+proc open_sign(self: Unit): Sign =
+  state.open_sign
+
+proc `open_sign=`(self: Unit, value: Sign) =
+  state.open_sign = value
+
 # Sign bindings
 
 proc new_markdown_sign(self: Worker,
@@ -524,4 +530,4 @@ proc bridge_to_vm*(worker: Worker) =
 
   result.bridged_from_vm "players",
     playing, `playing=`, god, `god=`, flying, `flying=`, tool, `tool=`,
-    coding, `coding=`, running, `running=`
+    coding, `coding=`, running, `running=`, open_sign, `open_sign=`

@@ -21,3 +21,6 @@ bridged_to_host:
 
   proc coding*(self: PlayerType): Unit = discard
   proc `coding=`*(self: PlayerType, value: Unit) = discard
+
+  proc open_sign*(self: PlayerType): Sign = discard
+  proc `open_sign=`*(self: PlayerType, value: Sign) = discard

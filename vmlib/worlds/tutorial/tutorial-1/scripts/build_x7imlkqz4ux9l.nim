@@ -31,10 +31,6 @@ If you're not new, here are some other things to do:
   a simple game made with Enu. You can see how it was built in
   [this video](https://youtu.be/9e9sLsmsu_o).
 
-- [Load CodeBots](<nim://load_level("codebots-1", "codebots")>). `CodeBots` is
-  an in-progress coding game that
-  [FrogTower](https://www.youtube.com/@frogtower) is working on.
-
 - [Load default world](<nim://load_level("default-1", "default")>).
 
 """

@@ -33,7 +33,7 @@ type
 
   Tools* = enum
     CodeMode, BlueBlock, RedBlock, GreenBlock, BlackBlock, WhiteBlock,
-    BrownBlock, PlaceBot
+    BrownBlock, PlaceBot, Disabled
 
   TaskStates* = enum
     Running, Done, NextTask

@@ -342,8 +342,7 @@ gdobj PlayerNode of KinematicBody:
     if event.is_action_pressed("fire"):
       if EditorVisible in state.local_flags:
         self.skip_release = true
-      if Playing notin state.local_flags:
-        state.push_flag PrimaryDown
+      state.push_flag PrimaryDown
     elif event.is_action_released("fire"):
       self.skip_release = false
       state.pop_flag PrimaryDown

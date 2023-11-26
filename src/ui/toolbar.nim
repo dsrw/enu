@@ -23,13 +23,16 @@ gdobj Toolbar of HBoxContainer:
     state.local_flags.changes:
       if Playing.added:
         self.visible = false
+        state.tool = Disabled
       if Playing.removed:
         self.visible = true
+        state.tool = BlueBlock
 
     self.zid = state.tool_value.changes:
       if added:
         let b = self.get_child(int(change.item)) as Button
-        b.set_pressed true
+        if ?b:
+          b.set_pressed true
 
   method process*(delta: float) =
     if self.preview_result.is_some:
