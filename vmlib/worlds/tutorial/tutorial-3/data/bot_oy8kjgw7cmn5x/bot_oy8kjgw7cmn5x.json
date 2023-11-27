@@ -1,0 +1,15 @@
+{
+  "id": "bot_oy8kjgw7cmn5x",
+  "start_transform": {
+    "basis": [
+      [1.0, 0.0, 0.0],
+      [0.0, 1.0, 0.0],
+      [0.0, 0.0, 1.0]
+    ],
+    "origin": [41.5, 0.0, -1.5]
+  },
+  "start_color": "black",
+  "edits": {
+    
+  }
+}

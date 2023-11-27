@@ -1,3 +1,4 @@
+import system except echo
 import std / [strformat, math, importutils, strutils, options, sets]
 import random as rnd except rand
 import types, state_machine, base_bridge, base_bridge_private
@@ -190,14 +191,16 @@ type NegativeNode = ref object
 proc `-`*(node: Unit): NegativeNode =
   NegativeNode(node: node)
 
-proc angle_to*(self: Unit, enu_target: Unit): float =
+proc angle_to*(self: Unit, position: Vector3): float =
   let
     p1 = self.position
-    p2 = enu_target.position
-    d = (p1 - p2).normalized()
+    d = (p1 - position).normalized()
   let n = arctan2(d.x, d.z).rad_to_deg
   let rot = self.rotation
   result = -(n - rot)
+
+proc angle_to*(self: Unit, enu_target: Unit): float =
+  self.angle_to(enu_target.position)
 
 proc vec3(direction: Directions): Vector3 =
   result = case direction:
@@ -289,6 +292,18 @@ template build*(new_enu_target: Unit) =
   enu_target = new_enu_target
   move_mode = 1
 
+proc turn*(self: Unit, position: Vector3, move_mode: int) =
+  self.turn(self.angle_to(position), move_mode)
+
+template turn*(self: Unit, position: Vector3) =
+  self.turn(position, move_mode)
+
+template turn*(position: Vector3) =
+  active_unit().turn(position)
+
+template t*(position: Vector3) =
+  turn position
+
 proc turn*(self: Unit, enu_target: Unit, move_mode: int) =
   self.turn(self.angle_to(enu_target), move_mode)
 
@@ -313,17 +328,23 @@ template t*(enu_target: NegativeNode) =
 template hit*(node: Unit): Vector3 =
   enu_target.hit(node)
 
-proc distance*(node: Unit): float =
-  node.position.distance_to(active_unit().position)
+proc distance*(position: Vector3): float =
+  position.distance_to(active_unit().position)
 
-proc near*(node: Unit, less_than = 5.0): bool =
+proc distance*(node: Unit): float =
+  node.position.distance
+
+proc near*(node: Unit | Vector3, less_than = 5.0): bool =
   result = node.distance < less_than
 
-proc far*(node: Unit, greater_than = 100.0): bool =
+proc far*(node: Unit | Vector3, greater_than = 100.0): bool =
   result = node.distance > greater_than
 
 proc height*(self: Vector3): float = self.y
 proc height*(self: Unit): float = self.position.y
+
+template go_home*() =
+  enu_target.go_home
 
 import macros, tables
 export tables

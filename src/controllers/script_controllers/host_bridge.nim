@@ -14,6 +14,14 @@ import shared / errors
 import ./ [vars, scripting]
 include ./ host_bridge_utils
 
+proc assert_present*[T: ref](value: T): T {.discardable.} =
+  if not ?value:
+    let msg = $T & " is nil"
+    var wrapped = WrappedDefect.init("Wrapped: " & msg)
+    wrapped[].defect = NilAccessDefect.init(msg)
+    raise wrapped
+  result = value
+
 proc get_last_error(self: Worker): ErrorData =
   result = self.last_exception.from_exception
   self.last_exception = nil
@@ -42,18 +50,15 @@ proc write_stack_trace(self: Worker) =
   let ctx = self.active_unit.script_ctx
   {.gcsafe.}:
     msg_writeln(ctx.ctx.config, "stack trace: (most recent call last)",
-        {msg_no_unit_sep})
+      {msg_no_unit_sep})
+
     stack_trace_aux(ctx.ctx, ctx.tos, ctx.pc)
 
 proc get_unit(self: Worker, a: VmArgs, pos: int): Unit {.gcsafe.} =
   let pnode = a.get_node(pos)
   if pnode.kind != nkNilLit:
-    if pnode notin self.unit_map:
-      when compile_option("assertions"):
-        raise NilAccessDefect.init("Unit is nil")
-    else:
-      {.gcsafe.}:
-        result = self.unit_map[pnode]
+    {.gcsafe.}:
+      result = self.unit_map[pnode]
 
 proc get_bot(self: Worker, a: VmArgs, pos: int): Bot =
   let unit = self.get_unit(a, pos)
@@ -268,9 +273,10 @@ proc `color=`(self: Unit, color: Colors) =
   types.`color=`(self, action_colors[color])
 
 proc show(self: Unit): bool =
-  Visible in self.global_flags
-
+  Visible in assert_present(self).global_flags
+  
 proc `show=`(self: Unit, value: bool) =
+  assert_present(self)
   if value:
     self.global_flags += Visible
   else:
@@ -300,6 +306,7 @@ proc rotation(self: Unit): float =
     result = (v.x - v.y) * m
 
 proc `rotation=`(self: Unit, degrees: float) =
+  assert_present(self)
   var t = Transform.init
   if self of Player:
     Player(self).rotation_value.touch degrees

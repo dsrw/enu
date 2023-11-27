@@ -260,6 +260,9 @@ type
 
   NodeController* = ref object
 
+  WrappedDefect* = object of CatchableError
+    defect*: ref Defect
+
 proc from_flatty*[N: NimGodotObject](s: string, i: var int, n: N) =
   discard
 

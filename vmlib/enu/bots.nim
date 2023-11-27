@@ -12,3 +12,11 @@ proc walk*(self: Bot) =
 
 proc run*(self: Bot) =
   self.speed = 5.0
+
+proc go_home*(self: Bot) =
+  if ?self.sign:
+    self.sign.show = false
+  self.scale = 1
+  self.glow = 0
+  self.turn self.start_position, 2
+  self.forward self.position.distance_to(self.start_position), 2

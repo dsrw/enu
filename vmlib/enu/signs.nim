@@ -41,10 +41,15 @@ proc say*(self: Unit, message: string, more = "", width = float.high,
     height = if height == float.high: defaults.height else: height
     size = if size == int.high: defaults.size else: size
     billboard = billboard.get(defaults.billboard)
+  
+  if message == "":
+    if ?self.sign:
+      self.sign.show = false
 
-  if self of Bot and ?self.sign:
+  elif self of Bot and ?self.sign:
     result = self.sign
     result.update_markdown_sign(message, more, width, height, size, billboard)
+    result.show = true
   else:
     result = Sign()
     self.new_markdown_sign(result, message, more, width, height, size,
@@ -56,8 +61,7 @@ proc say*(self: Unit, message: string, more = "", width = float.high,
       result.position = result.position + (UP * (height - 1.0))
     elif self of Bot:
       result.position = result.position + (UP * 2) + (LEFT * 1)
-  result.show = true
-
+  
 template say*(message: string, more = "", width = float.high, 
     height = float.high, size = int.high, billboard = none(bool)): Sign =
   enu_target.say(message, more, width, height, size, billboard)

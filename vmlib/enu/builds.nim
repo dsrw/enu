@@ -11,7 +11,7 @@ bridged_to_host:
 
 proc all*(_: type Build): seq[Build] = all_builds()
 
-proc home*(self: Build) =
+proc go_home*(self: Build) =
   self.rotation = 0
   self.scale = 1
   self.glow = 0
