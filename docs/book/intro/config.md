@@ -10,11 +10,11 @@ a few configurable options:
 - `dock_icon_size`: Size of the icons in the dock. DPI is currently ignored, so
   hidpi screens will require a higher number.
 
-- `world_prefix`: The base name that Enu will use when creating or loading
-  a new level. Set to `tutorial` by default.
+- `world`: An Enu world is a collection of levels. Set to `tutorial` by default.
+  If the world doesn't exist, it will be created.
 
-- `world`: The world/project to load. Change this to create a new world. By
-  default, this will be the `world_prefix` plus `-` and a number. Set to
+- `level`: The level to load. Change this to create a new level, or load an
+  existing one. By default, this will be `world` plus `-` and a number. Set to
   `tutorial-1` by default.
 
 - `show_stats`: Show FPS and other stats. `false` by default.
@@ -67,8 +67,8 @@ a few configurable options:
 {
   "font_size": 38,
   "dock_icon_size": 193.75,
-  "world_prefix": "tutorial",
-  "world": "tutorial-1",
+  "world": "tutorial",
+  "level": "tutorial-1",
   "show_stats": true,
   "god_mode": false,
   "mega_pixels": 5.0,
