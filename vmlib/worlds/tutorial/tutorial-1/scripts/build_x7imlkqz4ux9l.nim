@@ -22,8 +22,8 @@ Enu. If you're new, you should try it. It won't take long.
 
 If you're not new, here are some other things to do:
 
-- [Reset Tutorial](<nim://reset_level()>). This resets and restarts this
-  tutorial. Any changes you've made to the world will be lost.
+- [Clear Changes and Reset Tutorial](<nim://reset_level()>). This resets and
+  restarts this tutorial. Any changes you've made to the world will be lost.
 
 - [Help](https://ē.nu/docs/intro.html). Help!
 

@@ -1,0 +1,15 @@
+{
+  "id": "build_1keccg2mvge2d",
+  "start_transform": {
+    "basis": [
+      [1.0, 0.0, 0.0],
+      [0.0, 1.0, 0.0],
+      [0.0, 0.0, 1.0]
+    ],
+    "origin": [-74.0, 0.0, -5.0]
+  },
+  "start_color": "green",
+  "edits": {
+    
+  }
+}
