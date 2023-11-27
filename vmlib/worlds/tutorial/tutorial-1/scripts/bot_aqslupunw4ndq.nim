@@ -260,12 +260,14 @@ spinning confetti monster, were created with `Nim` code inside Enu, and we'll
 cover how to do all of it in future tutorials.
 
 This is supposed to be where you move to the next tutorial, but it hasn't been
-written yet. For now, click [HERE](<nim://player.god = true;sign.open = false>)
-to turn on `God Mode`, which will let you see and modify the code for this
-tutorial. It's a bit of a mess, but some folks might find it interesting. Or
-click [HERE](<nim://press_action("next_level")>) to load `Inky: Isolation`, a
-simple game written in Enu that's loosley inspired by **Alien: Isolation**, but
-features Inky, the blue ghost from Pac-Man.
+written yet. For now, you can try some
+[Enu examples](<nim://load_level("tutorial-2")>) or load
+[Inky: Isolation](<nim://load_level("tutorial-3")>), a simple
+game written in Enu that's loosley inspired by **Alien: Isolation**, but
+features Inky, the blue ghost from Pac-Man. If you're curious how this tutorial
+was written, click [HERE](<nim://player.god = true;sign.open = false>) to turn
+on `God Mode`, which will let you see and modify its code. It's a bit of a mess,
+but some folks might find it interesting.
 
 Contact me at [dsrw@me.com](mailto:dsrw@me.com) if you have any questions or
 suggestions. Thanks for trying Enu!
