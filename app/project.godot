@@ -22,6 +22,7 @@ boot_splash/image="res://media/boot_splash.png"
 boot_splash/fullsize=false
 boot_splash/bg_color=Color( 0, 0, 0, 1 )
 config/icon="res://media/enu_icon.png"
+config/windows_native_icon="res://media/enu_icon.ico"
 
 [display]
 
