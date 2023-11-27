@@ -174,18 +174,20 @@ proc draw*(self: Build, position: Vector3, voxel: VoxelInfo) {.gcsafe.} =
 
   else:
     self.global_flags += Dirty
-    if self.id notin self.shared.edits:
-      self.shared.edits[self.id] = ~Table[Vector3, VoxelInfo]
-    var voxel = voxel
-    if voxel.kind == Hole and position in self:
-      voxel.color = self.voxel_info(position).color
-    var locations = self.shared.edits[self.id]
-    locations[position] = voxel
-    self.shared.edits[self.id] = locations
-    if voxel.kind != Hole:
-      self.add_voxel(position, voxel)
-    else:
-      self.del_voxel(position)
+    # :( Crash fix hack. Why would shared be nil?
+    if ?self.shared:
+      if self.id notin self.shared.edits:
+        self.shared.edits[self.id] = ~Table[Vector3, VoxelInfo]
+      var voxel = voxel
+      if voxel.kind == Hole and position in self:
+        voxel.color = self.voxel_info(position).color
+      var locations = self.shared.edits[self.id]
+      locations[position] = voxel
+      self.shared.edits[self.id] = locations
+      if voxel.kind != Hole:
+        self.add_voxel(position, voxel)
+      else:
+        self.del_voxel(position)
 
   if position == vec3(0, 0, 0) and voxel.kind != Computed:
     self.start_color = voxel.color

@@ -5,7 +5,7 @@ var add_to {.threadvar.}: Build
 proc fire(self: Ground, append = false) {.gcsafe.} =
   state.draw_unit_id = "ground"
   let point = (self.target_point - vec3(0.5, 0, 0.5)).trunc
-  if state.tool notin {CodeMode, PlaceBot}:
+  if state.tool notin {Disabled, CodeMode, PlaceBot}:
     if not append:
       add_to = state.units.find_first(point.surrounding)
     if ?add_to:
