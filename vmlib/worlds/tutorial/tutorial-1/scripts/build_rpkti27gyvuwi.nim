@@ -1,0 +1,1 @@
+player.god = true

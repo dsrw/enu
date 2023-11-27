@@ -27,7 +27,9 @@ If you're not new, here are some other things to do:
 
 - [Help](https://ē.nu/docs/intro.html). Help!
 
-- [Load Inky: Isolation](<nim://load_level("tutorial-2")>). `Inky: Isolation` is
+- [Load Examples](<nim://load_level("tutorial-2">). See some other things you can build with Enu.
+
+- [Load Inky: Isolation](<nim://load_level("tutorial-3")>). `Inky: Isolation` is
   a simple game made with Enu. You can see how it was built in
   [this video](https://youtu.be/9e9sLsmsu_o).
 
