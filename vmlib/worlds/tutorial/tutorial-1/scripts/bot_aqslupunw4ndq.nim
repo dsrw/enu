@@ -220,8 +220,7 @@ Please finish the code to get the `Bot` get to the end of the course.
 
 Run your code by pressing `alt/option (⌥)`. Keep `alt/option (⌥)` held down to
 move around while you're coding. Flying is a great way to get yourself into
-position so you can better see what's happening, so try double jumping to get a
-better view.
+position to see what's happening, so try double jumping to get a better view.
 
 If your `Bot` is moving too slowly for your tastes, make her run by setting the
 `speed` value.

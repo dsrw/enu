@@ -1,6 +1,6 @@
 # Tutorial
 
-When you laungh Enu for the first time, it will bring you through a simple
+When you launch Enu for the first time, it will bring you through a simple
 tutorial.
 
 ![Tutorial Intro Screenshot](../assets/tutorial_1_screenshot_1.webp)
@@ -31,7 +31,7 @@ ever get yourself stuck you can probably fly your way out.
 
 ## Changing tools
 
-Tools are selected from the `Tool Bar` on the bottom of the screen.
+Tools are selected from the `Tool Bar` at the bottom of the screen.
 
 Change tools with the keyboard keys `1` - `8`, the `L1` and `R1` controller
 buttons, or by releasing the mouse with `ESC` and selecting a tool with the
@@ -81,8 +81,7 @@ forward 20
 
 Run your code by pressing `alt/option (⌥)`. Keep `alt/option (⌥)` held down to
 move around while you're coding. Flying is a great way to get yourself into
-position so you can better see what's happening, so try double jumping to get a
-better view.
+position to see what's happening, so try double jumping to get a better view.
 
 If your `Bot` is moving too slowly for your tastes, make her run by setting the
 `speed` value.
