@@ -9,7 +9,7 @@ proc stop_playing* =
   player.running = false
 
 proc level_menu*(me: Build, show_restart = true) =
-  let blurb = "`Inky: Isolation` is a simple survivial game created in Enu. You can see how it was made in the video [Inky: Isolation. A 90 minute game built with Enu and Nim](https://youtu.be/9e9sLsmsu_o)"
+  let blurb = "`Inky: Isolation` is a simple survivial game created in Enu. Find buttons to open new areas of the space station. Hit the top of Inky's head to defeat them."
 
   let copy = \"""
 
@@ -48,6 +48,8 @@ proc level_menu*(me: Build, show_restart = true) =
 # Menu
 
 {blurb}
+
+See how `Inky: Isolation` was built in the video [Inky: Isolation. A 90 minute game built with Enu and Nim](https://youtu.be/9e9sLsmsu_o)
 
 {toolbar_action}
 
