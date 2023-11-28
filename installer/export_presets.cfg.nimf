@@ -26,7 +26,7 @@ application/identifier="ca.dsrw.enu"
 application/signature=""
 application/short_version="$version"
 application/version="$version"
-application/copyright="2021 Scott Wadden"
+application/copyright="2023 Scott Wadden"
 display/high_res=true
 privacy/camera_usage_description=""
 privacy/microphone_usage_description=""
@@ -74,7 +74,7 @@ application/product_version="$version"
 application/company_name="dsrw"
 application/product_name="Enu"
 application/file_description=""
-application/copyright="2021 Scott Wadden"
+application/copyright="2023 Scott Wadden"
 application/trademarks=""
 
 [preset.2]
