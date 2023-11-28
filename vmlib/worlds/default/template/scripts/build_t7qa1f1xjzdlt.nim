@@ -25,6 +25,8 @@ Welcome to level `{level_name()}` of world `{world_name()}`.
 
 - [Load Tutorial](<nim://load_level("tutorial-1", "tutorial")>)
 
+- [Load Examples](<nim://load_level("tutorial-2", "tutorial")>)
+
 - [Reset Level](<nim://reset_level()>)
 
 """
