@@ -234,7 +234,7 @@ task dist_package, "Build distribution binaries":
     mk_dir root
     exec "strip " & release_bin
     cp_file release_bin, root & "/enu.exe"
-    exec &"rcedit {root}/enu.exe --set-icon media/enu_icon.ico"
+    exec &"ResourceHacker -open {root}/enu.exe -save {root}/enu.exe -action addskip -res media/enu_icon.ico -mask ICONGROUP,MAINICON"
     exec &"{gen()} write_export_presets --enu_version {git_version}"
 
     let pck_path = &"{this_dir()}/{root}/enu.pck"
