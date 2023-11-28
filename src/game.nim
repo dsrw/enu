@@ -306,7 +306,9 @@ Trying to connect to {state.config.connect_address}.
       state.config_value.value: level_dir = current_level
 
   method unhandled_input*(event: InputEvent) =
-    if EditorVisible in state.local_flags or ConsoleVisible in state.local_flags:
+    if EditorVisible in state.local_flags or DocsVisible in state.local_flags or
+      ConsoleVisible in state.local_flags:
+
       if event.is_action_pressed("zoom_in"):
         self.set_font_size state.config.font_size + 1
       elif event.is_action_pressed("zoom_out"):
