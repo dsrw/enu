@@ -45,7 +45,7 @@ will be expanded in the future.
 
 Drop a block or robot with the left mouse button/controller trigger, remove it
 with the right. Adjoining blocks will be combined into a single structure. With
-the mouse captured, building works more or less like MineCraft. Release the
+the mouse captured, building works more or less like Minecraft. Release the
 mouse by pressing ESC to draw blocks using the mouse cursor.
 
 Code by switching to the code tool by left clicking/triggering on an object or
