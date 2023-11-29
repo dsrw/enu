@@ -14,7 +14,7 @@ const
   nim_dlls = ["pcre64.dll"]
   godot_opts = "target=release_debug"
 
-version = "0.1.99"
+version = "0.2.0"
 author = "Scott Wadden"
 description = "Logo-like DSL for Godot"
 license = "MIT"
