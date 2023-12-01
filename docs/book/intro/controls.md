@@ -11,7 +11,7 @@
 - `~` - toggle the console.
 - `Cmd`+`Ctrl`+`F` - toggle fullscreen in macOS.
 - `Alt`+`Enter` - toggle fullscreen in Windows/Linux.
-- `Cmd`+`Q` / `Ctrl`+`Q` - Quit Enu.
+- `Cmd`+`Q` / `Ctrl`+`Q` - quit Enu.
 - `1` - enter edit mode.
 - `2 - 9` - change active action.
 - `Mouse Wheel Up` / `Down` - change active action.
