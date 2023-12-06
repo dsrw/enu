@@ -234,7 +234,7 @@ proc fire(self: Build) =
     let transform = Transform.init(origin = global_point)
     state.units += Bot.init(transform = transform)
   elif state.tool == CodeMode:
-    let root = self.find_root(true)
+    let root = self.find_root
     state.open_unit = root
 
 proc is_moving(self: Build, move_mode: int): bool =
