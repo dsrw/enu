@@ -2,7 +2,6 @@
 --mm:orc
 --tls_emulation:off
 --deepcopy:on
---max_loop_iterations_vm:"9_223_372_036_854_775_807"
 
 if host_os == "windows":
   --pass_l:"-static"
