@@ -96,15 +96,31 @@ if player.hit(enemy1):
   echo "The player hit enemy1"
 ```
 
-## `position` / `postion=`
+## `position` / `position=`
 
-Gets or set the position of a unit as a Vector3. `me` by default.
+Gets or set the position of a unit as a Vector3. `me` by default. Can also
+be assigned a unit, which is a shortcut for `unit.position`.
 
 ```nim
 if player.hit(enemy):
   # if the player hits `enemy`, reset the player position
   # to the center of the world.
   player.position = vec3(0, 0, 0)
+```
+
+## `draw_position` / `draw_position=`
+
+Gets or sets the draw point of a `Build` as a Vector3. `me` by default. Can also
+be assigned a unit, which is a shortcut for `unit.position`.
+
+```nim
+speed = 0.1
+# draw randomness around the player
+forever:
+  color = random(blue, red, green)
+  forward 1..10
+  turn -90..90
+  draw_position = player
 ```
 
 ## `start_position`
