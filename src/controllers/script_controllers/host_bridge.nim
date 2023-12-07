@@ -274,7 +274,7 @@ proc `color=`(self: Unit, color: Colors) =
 
 proc show(self: Unit): bool =
   Visible in assert_present(self).global_flags
-  
+
 proc `show=`(self: Unit, value: bool) =
   assert_present(self)
   if value:
@@ -400,6 +400,16 @@ proc `drawing=`(self: Build, drawing: bool) =
 
 proc initial_position(self: Build): Vector3 =
   self.initial_position
+
+proc draw_position(self: Build): Vector3 =
+  self.position + self.draw_transform.origin
+
+proc draw_position_set(self: Build, position: Vector3) =
+  if Global in self.global_flags:
+    self.draw_transform_value.origin = position - self.position
+  else:
+    self.draw_transform_value.origin =
+      (position - self.position).local_to(self.parent)
 
 proc save(self: Build, name: string) =
   self.save_points[name] =
@@ -532,7 +542,8 @@ proc bridge_to_vm*(worker: Worker) =
     play, all_bots
 
   result.bridged_from_vm "builds",
-    drawing, `drawing=`, initial_position, save, restore, all_builds
+    drawing, `drawing=`, initial_position, save, restore, all_builds,
+    draw_position, draw_position_set
 
   result.bridged_from_vm "signs",
     message, `message=`, more, `more=`, height, `height=`, width, `width=`,

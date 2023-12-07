@@ -8,6 +8,11 @@ bridged_to_host:
   proc all_builds(): seq[Build]
   proc save*(self: Build, name = "default")
   proc restore*(self: Build, name = "default")
+  proc draw_position*(self: Build): Vector3
+  proc `draw_position=`*(self: Build, value: Vector3)
+
+proc `draw_position=`*(self: Build, unit: Unit) =
+  self.draw_position = unit.position
 
 proc all*(_: type Build): seq[Build] = all_builds()
 
