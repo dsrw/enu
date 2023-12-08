@@ -26,7 +26,7 @@ type
     LoadingLevel
 
   LocalModelFlags* = enum
-    Hover, TargetMoved, Highlight, Hide
+    Hover, TargetMoved, Highlight, HighlightError, Hide
 
   GlobalModelFlags* = enum
     Global, Visible, Lock, Ready, ScriptInitializing, Dirty, Resetting
@@ -82,6 +82,7 @@ type
   Shared* = ref object of RootObj
     id*: string
     materials*: seq[ShaderMaterial]
+    emission_colors*: seq[godot.Color]
     edits*: ZenTable[string, ZenTable[Vector3, VoxelInfo]]
 
   ScriptErrors* = ZenSeq[tuple[msg: string, info: TLineInfo, location: string]]

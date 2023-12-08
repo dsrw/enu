@@ -9,6 +9,7 @@ const
   highlight_glow = 1.0
   default_glow = 0.0
   empty_zid: ZID = 0
+  error_flash_time = 0.5.seconds
 
 var build_scene {.threadvar.}: PackedScene
 var shader {.threadvar.}: Shader
@@ -21,6 +22,8 @@ gdobj BuildNode of VoxelTerrain:
     transform_zid: ZID
     default_view_distance: int
     chunks_zid: ZID
+    toggle_error_highlight_at = MonoTime.high
+    error_highlight_on: bool
 
   proc init*() =
     self.bind_signals self, "block_loaded", "block_unloaded"
@@ -37,6 +40,9 @@ gdobj BuildNode of VoxelTerrain:
         else:
           let m = m.duplicate.as(ShaderMaterial)
           m.set_shader_param("emission_energy", default_glow.to_variant)
+          self.model.shared.emission_colors.add(m.get_shader_param("emission").
+            as_color)
+
           self.model.shared.materials.add(m)
 
     for i, material in self.model.shared.materials:
@@ -55,6 +61,24 @@ gdobj BuildNode of VoxelTerrain:
       let m = self.get_material(i).as(ShaderMaterial)
       if not m.is_nil:
         m.set_shader_param("emission_energy", glow.to_variant)
+
+  proc set_highlight() =
+    let library = self.mesher.as(VoxelMesherBlocky).library
+    for i in 0..<library.voxel_count.int:
+      let m = self.get_material(i).as(ShaderMaterial)
+      if not m.is_nil:
+        if self.error_highlight_on:
+          m.set_shader_param("emission", action_colors[red].to_variant)
+        else:
+          m.set_shader_param("emission", self.model.shared.emission_colors[i].
+            to_variant)
+
+        if Highlight in self.model.local_flags or (HighlightError in
+          self.model.local_flags and self.error_highlight_on):
+
+          m.set_shader_param("emission_energy", highlight_glow.to_variant)
+        else:
+          m.set_shader_param("emission_energy", self.model.glow.to_variant)
 
   proc track_chunk(chunk_id: Vector3) =
     if chunk_id in self.model.chunks:
@@ -140,10 +164,14 @@ gdobj BuildNode of VoxelTerrain:
         self.track_chunks()
 
     self.model.local_flags.watch:
-      if Highlight.added:
-        self.set_glow highlight_glow
-      elif Highlight.removed:
-        self.set_glow self.model.glow
+      if HighlightError.added:
+        self.toggle_error_highlight_at = get_mono_time() + error_flash_time
+        self.error_highlight_on = true
+      elif HighlightError.removed:
+        self.toggle_error_highlight_at = MonoTime.high
+        self.error_highlight_on = false
+      if change.item in [Highlight, HighlightError]:
+        self.set_highlight
 
     state.local_flags.watch:
       if change.item == God:
@@ -175,6 +203,10 @@ gdobj BuildNode of VoxelTerrain:
     if ?self.model and self.model.code.owner == state.worker_ctx_name:
       self.model.transform_value.pause self.transform_zid:
         self.model.transform = self.transform
+    if get_mono_time() > self.toggle_error_highlight_at:
+      self.error_highlight_on = not self.error_highlight_on
+      self.toggle_error_highlight_at = get_mono_time() + error_flash_time
+      self.set_highlight()
 
   proc setup* =
     let was_skipping_join = dont_join

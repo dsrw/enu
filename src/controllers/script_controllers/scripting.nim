@@ -27,7 +27,8 @@ proc script_error*(self: Worker, unit: Unit, e: ref VMQuit) =
   var msg = e.msg
   if ?e.parent:
     msg = e.parent.msg
-  logger("err", msg)
+  logger("err", \"[color=#FF0000][url=unit://{unit.id}]{msg}[/url][/color]")
+  unit.local_flags += HighlightError
   unit.global_flags -= ScriptInitializing
   unit.ensure_visible
   state.push_flags ConsoleVisible
@@ -117,6 +118,7 @@ proc load_script*(self: Worker, unit: Unit, timeout = script_timeout) =
   try:
     self.active_unit = unit
     unit.errors.clear
+    unit.local_flags -= HighlightError
 
     if not state.paused:
       let module_name = ctx.script.split_file.name

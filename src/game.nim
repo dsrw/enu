@@ -389,8 +389,15 @@ Trying to connect to {state.config.connect_address}.
   method on_meta_clicked(url: string) =
     if url.starts_with("nim://"):
       assert ?state.open_sign
-
       state.open_sign.owner.eval = url[6..^1]
+
+    elif url.starts_with("unit://"):
+      let id = url[7..^1]
+      for unit in state.units:
+        if unit.id == id:
+          state.open_unit = unit
+          return
+      logger("err", \"Unable to open unit {id}")
 
     elif shell_open(url) != godotcoretypes.Error.OK:
       logger("err", \"Unable to open url {url}")

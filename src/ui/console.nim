@@ -2,7 +2,7 @@ import godotapi / [text_edit, scene_tree, node, input_event, input_event_key,
                          rich_text_label, global_constants]
 import godot
 import std / strutils
-import core
+import core, globals
 
 gdobj Console of RichTextLabel:
   var
@@ -28,3 +28,5 @@ gdobj Console of RichTextLabel:
         self.mouse_filter = MOUSE_FILTER_IGNORE
       elif MouseCaptured.removed:
         self.mouse_filter = self.default_mouse_filter
+
+    state.nodes.game.bind_signals(self, "meta_clicked")
