@@ -4,7 +4,7 @@ import godotapi / [node, scene_tree, voxel_buffer]
 import core, models / [states]
 export strformat.`&`, states, types
 
-proc bind_signals*(receiver, sender: Node, signals: varargs[string]) =
+proc bind_signals*(receiver, sender: Object, signals: varargs[string]) =
   let send_node = if sender == nil:
     state.nodes.game
   else:

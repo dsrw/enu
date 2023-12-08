@@ -130,6 +130,13 @@ level: {state.level_name}
       connect_address = get_env("ENU_CONNECT_ADDRESS")
       listen_address = ""
 
+    if host_os == "macosx" and not restarting:
+      global_menu_add_item("Help", "Documentation", "help".to_variant, "".to_variant)
+      global_menu_add_item("Help", "Web Site", "site".to_variant, "".to_variant)
+      if connect_address == "":
+        global_menu_add_separator("Help")
+        global_menu_add_item("Help", "Launch Tutorial", "tutorial".to_variant, "".to_variant)
+
     state.config_value.value:
       work_dir = get_user_data_dir()
       font_size = uc.font_size ||= (20 * screen_scale).int
@@ -216,6 +223,7 @@ level: {state.level_name}
         self.get_node("ViewportContainer/Viewport") as Viewport
 
     self.bind_signals(self.get_viewport(), "size_changed")
+    self.bind_signals(self.get_tree(), "global_menu_action")
     assert not self.scaled_viewport.is_nil
     if state.config.mega_pixels >= 1.0:
       self.scaled_viewport.get_texture.flags = FLAG_FILTER
@@ -286,6 +294,17 @@ Trying to connect to {state.config.connect_address}.
 
   method on_size_changed() =
     self.rescale_at = get_mono_time()
+
+  method on_global_menu_action(action: string, id: string) =
+    if action == "help":
+      discard shell_open("http://getenu.com/docs/intro.html")
+    elif action == "site":
+      discard shell_open("http://getenu.com")
+    elif action == "tutorial":
+      state.config_value.value: level_dir = ""
+      state.player.transform = Transform.init(origin = vec3(0, 2, 0))
+      state.player.rotation = 0
+      change_loaded_level("tutorial-1", "tutorial")
 
   proc switch_world(diff: int) =
     var config = state.config
