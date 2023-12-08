@@ -278,62 +278,74 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
   const auto_save_interval = 30.seconds
   var save_at = get_mono_time() + auto_save_interval
 
-  while running:
-    let frame_start = get_mono_time()
-    let timeout = frame_start + max_time
-    let wait_until = frame_start + min_time
+  try:
+    while running:
+      let frame_start = get_mono_time()
+      let timeout = frame_start + max_time
+      let wait_until = frame_start + min_time
+
+      Zen.thread_ctx.boop
+      run_deferred()
+
+      inc state.frame_count
+      for ctx_name in Zen.thread_ctx.unsubscribed:
+        var i = 0
+        while i < state.units.len:
+          if state.units[i].id == \"player-{ctx_name}":
+            var player = Player(state.units[i])
+            state.units.del i
+          else:
+            i += 1
+
+        if Server notin state.local_flags:
+          state.push_flag(NeedsRestart)
+          break
+
+      var to_process: seq[Unit]
+      state.units.value.walk_tree proc(unit: Unit) = to_process.add unit
+      to_process.shuffle
+
+      var batched: HashSet[Unit]
+
+      while Zen.thread_ctx.pressure < 0.9 and to_process.len > 0 and
+        get_mono_time() < timeout:
+
+        let units = to_process
+        to_process = @[]
+        for unit in units:
+          if Ready in unit.global_flags:
+            if unit.batch_changes:
+              batched.incl unit
+            if worker.advance_unit(unit, timeout):
+              to_process.add(unit)
+
+      for unit in batched:
+        unit.apply_changes
+
+      if get_mono_time() > save_at:
+        save_level(state.config.level_dir)
+        save_at = get_mono_time() + auto_save_interval
+
+      let frame_end = get_mono_time()
+      if frame_end < wait_until:
+        sleep int((wait_until - frame_end).in_milliseconds)
+
+  except Exception as e:
+    error "Unhandled worker thread exception", kind = $e.type, msg = e.msg,
+      stacktrace = e.get_stack_trace
+
+    state.push_flag(NeedsRestart)
+
+  try:
+    if NeedsRestart in state.local_flags:
+      if ?listen_address:
+        private_access Reactor
+        Zen.thread_ctx.reactor.socket.close
+      state.pop_flag NeedsRestart
 
     Zen.thread_ctx.boop
-    run_deferred()
-    inc state.frame_count
-    for ctx_name in Zen.thread_ctx.unsubscribed:
-      var i = 0
-      while i < state.units.len:
-        if state.units[i].id == \"player-{ctx_name}":
-          var player = Player(state.units[i])
-          state.units.del i
-        else:
-          i += 1
-
-      if Server notin state.local_flags:
-        state.push_flag(NeedsRestart)
-        break
-
-    var to_process: seq[Unit]
-    state.units.value.walk_tree proc(unit: Unit) = to_process.add unit
-    to_process.shuffle
-
-    var batched: HashSet[Unit]
-
-    while Zen.thread_ctx.pressure < 0.9 and to_process.len > 0 and
-      get_mono_time() < timeout:
-
-      let units = to_process
-      to_process = @[]
-      for unit in units:
-        if Ready in unit.global_flags:
-          if unit.batch_changes:
-            batched.incl unit
-          if worker.advance_unit(unit, timeout):
-            to_process.add(unit)
-
-    for unit in batched:
-      unit.apply_changes
-
-    if get_mono_time() > save_at:
-      save_level(state.config.level_dir)
-      save_at = get_mono_time() + auto_save_interval
-
-    let frame_end = get_mono_time()
-    if frame_end < wait_until:
-      sleep int((wait_until - frame_end).in_milliseconds)
-
-  if NeedsRestart in state.local_flags:
-    if ?listen_address:
-      private_access Reactor
-      Zen.thread_ctx.reactor.socket.close
-    state.pop_flag NeedsRestart
-  Zen.thread_ctx.boop
+  except Exception:
+    discard
 
 proc launch_worker*(ctx: ZenContext, state: GameState): Thread[tuple[
     ctx: ZenContext, state: GameState]] =

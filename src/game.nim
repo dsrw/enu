@@ -16,8 +16,14 @@ when defined(metrics):
 
 ZenContext.init_metrics "main", "worker"
 
+# saved state when restarting worker thread
+const savable_flags = {ConsoleVisible, MouseCaptured, Flying, God, AltWalkSpeed,
+  AltFlySpeed}
+
 var saved_transform {.threadvar.}: Transform
 var saved_rotation {.threadvar.}: float
+var saved_flags {.threadvar.}: set[LocalStateFlags]
+var restarting {.threadvar.}: bool
 
 gdobj Game of Node:
   var
@@ -236,11 +242,14 @@ level: {state.level_name}
     self.stats.visible = state.config.show_stats
 
     state.player_value.changes:
-      if added and ?change.item and ?saved_transform:
+      if added and ?change.item and restarting:
         change.item.transform = saved_transform
         change.item.rotation = saved_rotation
-        saved_transform = Transform.init
-        saved_rotation = 0.0
+
+        for flag in saved_flags:
+          state.push_flag(flag)
+
+        restarting = false
 
     state.local_flags.changes(false):
       if Quitting.added:
@@ -255,6 +264,13 @@ level: {state.level_name}
       if NeedsRestart.removed:
         saved_transform = state.player.transform
         saved_rotation = state.player.rotation
+        saved_flags = {}
+
+        for flag in state.local_flags:
+          if flag in savable_flags:
+            saved_flags.incl(flag)
+
+        restarting = true
         discard self.get_tree.reload_current_scene()
 
       if Connecting.added:

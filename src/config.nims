@@ -19,8 +19,6 @@ if host_os == "windows":
 --define:"chronicles_log_level=INFO"
 --define:"chronicles_sinks=textlines[dynamic]"
 
---panics:"on"
-
 if defined(release):
   --define:"chronicles_colors=None"
   --assertions:off
