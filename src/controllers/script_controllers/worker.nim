@@ -63,6 +63,7 @@ proc advance_unit(self: Worker, unit: Unit, timeout: MonoTime): bool =
 proc change_code(self: Worker, unit: Unit, code: Code) =
   debug "code changing", unit = unit.id
   unit.errors.clear
+  unit.local_flags -= HighlightError
   if ?unit.script_ctx and unit.script_ctx.running and not ?unit.clone_of:
     unit.collect_garbage
 
@@ -80,6 +81,7 @@ proc change_code(self: Worker, unit: Unit, code: Code) =
     debug "reset module", module = unit.script_ctx.module_name
     unit.script_ctx.running = false
     self.module_names.excl unit.script_ctx.module_name
+    remove_file unit.script_ctx.script
   elif code.nim.strip != "":
     debug "loading unit", unit_id = unit.id
     if LoadingScript notin state.local_flags and not self.retry_failures:

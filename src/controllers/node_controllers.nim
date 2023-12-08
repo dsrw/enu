@@ -115,14 +115,31 @@ proc find_nested_changes(parent: Change[Unit]) =
         elif Removed in change.changes:
           parent.item.set_global(false)
 
+proc watch_units(self: NodeController, unit: Unit) =
+  unit.units.watch(unit):
+    if added:
+      change.item.fix_parents(unit)
+      change.item.add_to_scene()
+      self.watch_units(change.item)
+    elif removed:
+      reset_nodes()
+      change.item.remove_from_scene()
+
+  unit.global_flags.watch(unit):
+    if Global.added:
+      unit.set_global(true)
+    elif Global.removed:
+      unit.set_global(false)
+
 proc watch*(self: NodeController, state: GameState) =
   state.units.changes:
     if added:
       change.item.add_to_scene()
-    elif modified:
-      find_nested_changes(change)
+      self.watch_units(change.item)
     elif removed:
       change.item.remove_from_scene()
+      let unit = change.item
+      Zen.thread_ctx.queue_free(unit)
 
 proc init*(_: type NodeController): NodeController =
   result = NodeController()

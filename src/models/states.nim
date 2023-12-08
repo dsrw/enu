@@ -119,7 +119,7 @@ proc err*(self: GameState, args: varargs[string, `$`]) =
   logger "err", args.join
 
 proc init*(_: type GameState): GameState =
-  let flags = {TrackChildren, SyncLocal}
+  let flags = {SyncLocal}
   let self = GameState(
     player_value: ~(Player, flags),
     local_flags: ~(set[LocalStateFlags], flags),

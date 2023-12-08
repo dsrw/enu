@@ -134,7 +134,8 @@ method destroy*(self: Unit) {.base, gcsafe.} =
 proc destroy_impl*(self: Bot | Build | Sign) =
   assert ?self
 
-  for unit in self.units:
+  let units = self.units.value
+  for unit in units:
     unit.destroy
 
   when self is Sign:
@@ -150,6 +151,7 @@ proc destroy_impl*(self: Bot | Build | Sign) =
   else:
     self.shared = nil
 
+  let parent = self.parent
   self.parent = nil
   for field in self[].fields:
     when field is Zen:
@@ -164,6 +166,9 @@ proc destroy_impl*(self: Bot | Build | Sign) =
     if state.open_sign_value.valid and state.open_sign == self:
       state.open_sign = nil
 
+  if ?parent:
+    parent.units.pause:
+      parent.units -= self
   Zen.thread_ctx.free(self)
 
 proc clear_all*(units: ZenSeq[Unit]) =
