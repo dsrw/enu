@@ -223,7 +223,9 @@ proc loadModule*(i: Interpreter, fileName, code: string,
   var module: PSym
   let moduleName = fileName.splitFile.name
   for iface in i.graph.ifaces:
-    if iface.module != nil and iface.module.name.s == moduleName:
+    if iface.module != nil and iface.module.name.s == moduleName and
+      fileName == toFullPath(i.graph.config, iface.module.info):
+
       module = iface.module
       break
 

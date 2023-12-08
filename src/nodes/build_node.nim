@@ -200,13 +200,15 @@ gdobj BuildNode of VoxelTerrain:
         self.model.sight_query = query
 
   method process(delta: float) =
-    if ?self.model and self.model.code.owner == state.worker_ctx_name:
-      self.model.transform_value.pause self.transform_zid:
-        self.model.transform = self.transform
-    if get_mono_time() > self.toggle_error_highlight_at:
-      self.error_highlight_on = not self.error_highlight_on
-      self.toggle_error_highlight_at = get_mono_time() + error_flash_time
-      self.set_highlight()
+    if ?self.model:
+      if self.model.code.owner == state.worker_ctx_name:
+        self.model.transform_value.pause self.transform_zid:
+          self.model.transform = self.transform
+
+      if get_mono_time() > self.toggle_error_highlight_at:
+        self.error_highlight_on = not self.error_highlight_on
+        self.toggle_error_highlight_at = get_mono_time() + error_flash_time
+        self.set_highlight()
 
   proc setup* =
     let was_skipping_join = dont_join
