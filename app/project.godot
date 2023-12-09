@@ -307,6 +307,7 @@ zoom_out.macosx={
 
 file_logging/enable_file_logging=true
 file_logging/log_path="user://logs/enu.log"
+file_logging/max_log_files=20
 
 [rendering]
 
