@@ -14,7 +14,7 @@ const
   nim_dlls = ["pcre64.dll"]
   godot_opts = "target=release_debug"
 
-version = "0.2.0"
+version = "0.2.2"
 author = "Scott Wadden"
 description = "Logo-like DSL for Godot"
 license = "MIT"
@@ -36,7 +36,8 @@ requires "nim >= 1.6.10",
   "chronicles",
   "dotenv",
   "nimibook",
-  "metrics"
+  "metrics",
+  "zippy"
 
 proc godot_bin(target = target): string =
   result = this_dir() & &"/vendor/godot/bin/godot.{target}.opt.tools.{cpu}{exe_ext}"

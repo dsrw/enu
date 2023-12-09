@@ -19,6 +19,9 @@ import pkg / [pretty, flatty]
 
 export with, sets, tables, pretty, flatty
 
+proc minutes*(m: float | int): Duration {.inline.} =
+  init_duration(seconds = int(m * 60))
+
 ### Debug
 
 export dump

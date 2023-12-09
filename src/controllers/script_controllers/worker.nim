@@ -1,5 +1,5 @@
 import std / [locks, os, random, net]
-import std / times except seconds
+import std / times except seconds, minutes
 from pkg / netty import Reactor
 import core, models, models / [serializers], libs / [interpreters, eval]
 import ./ [vars, host_bridge, scripting]
@@ -278,7 +278,9 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
   const max_time = (1.0 / 30.0).seconds
   const min_time = (1.0 / 120.0).seconds
   const auto_save_interval = 30.seconds
+  const backup_interval = 15.minutes
   var save_at = get_mono_time() + auto_save_interval
+  var backup_at = MonoTime.low
 
   try:
     while running:
@@ -324,13 +326,18 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
       for unit in batched:
         unit.apply_changes
 
-      if get_mono_time() > save_at:
-        save_level(state.config.level_dir)
-        save_at = get_mono_time() + auto_save_interval
+      let now = get_mono_time()
 
-      let frame_end = get_mono_time()
-      if frame_end < wait_until:
-        sleep int((wait_until - frame_end).in_milliseconds)
+      if now > save_at:
+        save_level(state.config.level_dir)
+        save_at = now + auto_save_interval
+
+      if now > backup_at:
+        backup_level(state.config.level_dir)
+        backup_at = now + backup_interval
+
+      if now < wait_until:
+        sleep int((wait_until - get_mono_time()).in_milliseconds)
 
   except Exception as e:
     error "Unhandled worker thread exception", kind = $e.type, msg = e.msg,

@@ -1,4 +1,5 @@
-import std / [json, jsonutils, sugar, tables, strutils, os]
+import std / [json, jsonutils, sugar, tables, strutils, os, times, algorithm]
+import pkg / zippy / ziparchives_v1
 import core except to_json
 import models
 import controllers / script_controllers / scripting
@@ -166,6 +167,23 @@ proc save_level*(level_dir: string, save_all = false) =
 
   else:
     debug "not server. Skipping save."
+
+proc backup_level*(level_dir: string) =
+  if Server in state.local_flags:
+    let backup_dir = state.config.world_dir / "backups"
+    create_dir backup_dir
+
+    let backup_file = backup_dir / state.config.level & "_" &
+      times.now().format("yyyy-MM-dd-HH-mm-ss") & ".zip"
+      
+    let backups = walk_files(backup_dir / 
+      state.config.level & "_????-??-??-??-??-??.zip").to_seq.sorted
+
+    if backups.len > 19:
+      for file in backups[0..^20]:
+        remove_file file
+
+    create_zip_archive(level_dir, backup_file)
 
 proc load_units(parent: Unit) =
   let opts = JOptions(allow_missing_keys: true)
