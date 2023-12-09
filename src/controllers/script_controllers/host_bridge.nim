@@ -14,14 +14,6 @@ import shared / errors
 import ./ [vars, scripting]
 include ./ host_bridge_utils
 
-proc assert_present*[T: ref](value: T): T {.discardable.} =
-  if not ?value:
-    let msg = $T & " is nil"
-    var wrapped = WrappedDefect.init("Wrapped: " & msg)
-    wrapped[].defect = NilAccessDefect.init(msg)
-    raise wrapped
-  result = value
-
 proc get_last_error(self: Worker): ErrorData =
   result = self.last_exception.from_exception
   self.last_exception = nil
@@ -273,10 +265,9 @@ proc `color=`(self: Unit, color: Colors) =
   types.`color=`(self, action_colors[color])
 
 proc show(self: Unit): bool =
-  Visible in assert_present(self).global_flags
+  Visible in self.global_flags
 
 proc `show=`(self: Unit, value: bool) =
-  assert_present(self)
   if value:
     self.global_flags += Visible
   else:
@@ -306,7 +297,6 @@ proc rotation(self: Unit): float =
     result = (v.x - v.y) * m
 
 proc `rotation=`(self: Unit, degrees: float) =
-  assert_present(self)
   var t = Transform.init
   if self of Player:
     Player(self).rotation_value.touch degrees

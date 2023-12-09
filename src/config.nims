@@ -12,6 +12,8 @@ if host_os == "windows":
 --experimental:"dynamic_bind_sym"
 --experimental:"overloadable_enums"
 
+--exceptions:"setjmp"
+
 --define:"vm_exec_hooks"
 --define:"nim_preview_hash_ref"
 --define:"nim_type_names"
