@@ -5,6 +5,8 @@
 
 if host_os == "windows":
   --pass_l:"-static"
+  --define:"chronicles_colors=None"
+  --define:"nim_raw_setjmp"
 
 --warning:"LockLevel:off"
 --warning:"UseBase:off"
