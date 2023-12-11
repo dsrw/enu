@@ -15,7 +15,7 @@
 - `1` - enter edit mode.
 - `2 - 9` - change active action.
 - `Mouse Wheel Up` / `Down` - change active action.
-- `Alt` / `Option` - reload script changes. Hold to temporarily capture the
+- `Left Alt` / `Left Option` - reload script changes. Hold to temporarily capture the
   mouse and move, so you can change your view without having to switch away from
   what you're doing.
 - `Cmd`+`P` / `Ctrl`+`P` - Pause scripts.

@@ -341,6 +341,14 @@ Trying to connect to {state.config.connect_address}.
       state.config_value.value: level_dir = current_level
 
   method unhandled_input*(event: InputEvent) =
+    if event of InputEventKey:
+      let event = InputEventKey(event)
+      if host_os == "macosx" and event.raw_code == 58:
+        if event.pressed:
+          state.push_flag CommandMode
+        else:
+          state.pop_flag CommandMode
+
     if EditorVisible in state.local_flags or DocsVisible in state.local_flags or
       ConsoleVisible in state.local_flags:
 
@@ -372,10 +380,6 @@ Trying to connect to {state.config.connect_address}.
       self.switch_world(+1)
     elif event.is_action_pressed("prev_level"):
       self.switch_world(-1)
-    elif event.is_action_pressed("command_mode"):
-      state.push_flag CommandMode
-    elif event.is_action_released("command_mode"):
-      state.pop_flag CommandMode
     elif event.is_action_pressed("save_and_reload"):
       state.pop_flag Playing
       state.push_flag ResettingVM
