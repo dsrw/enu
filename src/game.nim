@@ -345,7 +345,7 @@ Trying to connect to {state.config.connect_address}.
       let event = InputEventKey(event)
       # Left alt support. raw_code is an enu specific addition
       if (host_os == "macosx" and event.raw_code == 58) or
-        (host_os == "windows" and event.raw_code == 312) or
+        (host_os == "windows" and event.raw_code == 56) or
         (host_os == "linux" and event.raw_code == 65513):
 
         if event.pressed:
