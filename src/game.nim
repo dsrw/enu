@@ -343,7 +343,9 @@ Trying to connect to {state.config.connect_address}.
   method unhandled_input*(event: InputEvent) =
     if event of InputEventKey:
       let event = InputEventKey(event)
-      if host_os == "macosx" and event.raw_code == 58:
+      if (host_os == "macosx" and event.raw_code == 58) or
+        (host_os == "windows" and event.raw_code == 312):
+
         if event.pressed:
           state.push_flag CommandMode
         else:
