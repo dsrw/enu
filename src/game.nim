@@ -343,8 +343,10 @@ Trying to connect to {state.config.connect_address}.
   method unhandled_input*(event: InputEvent) =
     if event of InputEventKey:
       let event = InputEventKey(event)
+      # Left alt support. raw_code is an enu specific addition
       if (host_os == "macosx" and event.raw_code == 58) or
-        (host_os == "windows" and event.raw_code == 312):
+        (host_os == "windows" and event.raw_code == 312) or
+        (host_os == "linux" and event.raw_code == 65513):
 
         if event.pressed:
           state.push_flag CommandMode
