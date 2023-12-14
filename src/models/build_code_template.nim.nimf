@@ -12,6 +12,7 @@ ${imports}
 
 {.experimental: "overloadable_enums".}
 
-load_enu_script r"${base64_code}", r"${file_name}", Build, drawing
+load_enu_script r"${base64_code}", r"${file_name}", Build, drawing,
+  draw_position
 
 exit()

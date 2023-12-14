@@ -2,9 +2,9 @@ import std / [macros, strutils, sequtils, base64]
 import types
 import base_api, macro_helpers
 
-const me_props = ["seed", "global", "lock"]
-const target_props = ["position", "start_position", "draw_position", "speed",
-  "scale", "glow", "global", "seed", "color", "height", "show", "sign"]
+const private_props = ["lock"]
+const public_props = ["position", "start_position", "speed", "scale", "glow",
+  "global", "seed", "color", "height", "show", "sign"]
 
 proc params_to_assignments(nodes: seq[NimNode]): NimNode =
   result = new_stmt_list()
@@ -209,11 +209,17 @@ proc visit_tree(parent: NimNode, convert: open_array[string], receiver: string,
           parent[i] = new_dot_expr(ident receiver, node)
       visit_tree(node, convert, receiver, alias)
 
-proc auto_insert_receiver(ast: NimNode, convert: open_array[string]): NimNode =
+# Converts variable access to property access. Ex. `speed = 1` -> `me.speed = 1`
+# Anything for `enu_target` must work for all units. `me` can be class specific.
+# This tries to take aliasing into account. If a variable called `speed` is
+# created, anywhere it's in scope won't get `me` prefixed.
+proc auto_insert_receiver(ast: NimNode, class_specific_props:
+  open_array[string]): NimNode =
+
   var alias: seq[NimNode] = @[]
-  visit_tree(ast, convert, "me", addr alias)
-  visit_tree(ast, me_props, "me", addr alias)
-  visit_tree(ast, target_props, "enu_target", addr alias)
+  visit_tree(ast, class_specific_props, "me", addr alias)
+  visit_tree(ast, private_props, "me", addr alias)
+  visit_tree(ast, public_props, "enu_target", addr alias)
   result = ast
 
 proc build_proc(sig, body: NimNode, return_type = new_empty_node()): NimNode =
@@ -226,29 +232,29 @@ proc build_proc(sig, body: NimNode, return_type = new_empty_node()): NimNode =
     pragmas = new_nim_node(nnkPragma).add(ident"discardable")
   )
 
-proc transform_proc_lists(parent: NimNode): NimNode =
+proc transform_commands(parent: NimNode): NimNode =
   for i, node in parent:
     if parent.kind == nnkStmtList and node.kind == nnkPrefix and
       node[0] == ident"-":
 
       if node[1].kind in [nnkIdent, nnkCall]:
-        let new_proc = build_proc(node[1], transform_proc_lists node[2])
+        let new_proc = build_proc(node[1], transform_commands node[2])
         parent[i] = new_proc
       elif node[1].kind == nnkCommand:
-        let new_proc = build_proc(node[1][0], transform_proc_lists node[2],
+        let new_proc = build_proc(node[1][0], transform_commands node[2],
           node[1][1])
 
         parent[i] = new_proc
       else:
-        parent[i] = transform_proc_lists(node)
+        parent[i] = transform_commands(node)
     else:
-      parent[i] = transform_proc_lists(node)
+      parent[i] = transform_commands(node)
   parent
 
 macro load_enu_script*(base64_code: string, file_name: string, base_type: untyped,
-  convert: varargs[untyped]): untyped =
+  class_specific_props: varargs[untyped]): untyped =
 
-  var convert = convert.map_it($it)
+  var class_specific_props = class_specific_props.map_it($it)
   let file_name = file_name.str_val
   # `static_read` has been disabled for security, so we can't read the code
   # ourselves. Instead it's passed to us, but because this coming from a nim
@@ -256,27 +262,27 @@ macro load_enu_script*(base64_code: string, file_name: string, base_type: untype
   let base_code = base64_code.str_val
   let code = decode(base_code)
   when compiles(parse_stmt(file_name, file_name)):
-    var ast = parse_stmt(code, file_name).transform_proc_lists
+    var ast = parse_stmt(code, file_name).transform_commands
   else:
     # Just for tests running in Nim <= 1.6. Enu VM and Nim 2.0 can take both
     # Nim code and a file name.
-    var ast = parse_stmt(code).transform_proc_lists
+    var ast = parse_stmt(code).transform_commands
   var (script_start, name_node) = pop_name_node(ast)
   result = new_stmt_list()
   var inner = new_stmt_list()
-  script_start = script_start.auto_insert_receiver(convert)
+  script_start = script_start.auto_insert_receiver(class_specific_props)
   if name_node.kind != nnkNilLit:
     let (name, params) = extract_class_info(name_node)
     for param in params:
-      convert.add($param[0])
-    ast = ast.auto_insert_receiver(convert)
+      class_specific_props.add($param[0])
+    ast = ast.auto_insert_receiver(class_specific_props)
     result.add build_class(name_node, base_type)
     let assignments = params_to_assignments(params)
     inner.add quote do:
       `assignments`
 
   else:
-    ast = ast.auto_insert_receiver(convert)
+    ast = ast.auto_insert_receiver(class_specific_props)
     result.add quote do:
       let me {.inject.} = `base_type`()
       var enu_target {.inject.} = me
