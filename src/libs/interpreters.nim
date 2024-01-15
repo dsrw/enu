@@ -39,6 +39,7 @@ proc run*(self: ScriptCtx): bool =
 
   try:
     self.interpreter.load_module(self.file_name, self.code, self.pass_context)
+
     result = false
   except VMPause:
     private_access ScriptCtx

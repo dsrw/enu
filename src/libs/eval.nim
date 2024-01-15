@@ -3,23 +3,31 @@ import compiler / [syntaxes, reorder, vmdef, msgs]
 import compiler / passes {.all.}
 
 {.warning[UnusedImport]: off.}
-include compiler / [nimeval]
+include compiler / [nimeval, pipelines]
 
 export Interpreter, VmArgs, PCtx, PStackFrame, TLineInfo
 
+# NOTE: This file is mostly made up of modified functions pulled from the nim
+# compiler, and must be updated occasionally to keep up with changes to the vm.
+# To make diffing easier, the original casing has been preserved, so this file
+# is in `camelCase` rather than `snake_case` like the rest of the project.
+
 # adapted from
-# https://github.com/nim-lang/Nim/blob/version-1-6/compiler/passes.nim#L120
-# Normal module loading procedure, but makes TPassContextArray a var param
-# so it can be passed to extend_module
+# https://github.com/nim-lang/Nim/blob/v2.0.2/compiler/pipelines.nim#L88
+# Normal module loading procedure, but makes PContext a param so it can be
+# passed to extend_module
 proc processModule*(graph: ModuleGraph; module: PSym; idgen: IdGenerator;
-                    stream: PLLStream, a: var TPassContextArray): bool {.discardable.} =
+  stream: PLLStream, ctx: var PContext): bool {.discardable.} =
+
   if graph.stopCompile(): return true
+  let bModule = setupEvalGen(graph, module, idgen)
+
   var
     p: Parser
     s: PLLStream
     fileIdx = module.fileIdx
+
   prepareConfigNotes(graph, module)
-  openPasses(graph, a, module, idgen)
   if stream == nil:
     let filename = toFullPathConsiderDirty(graph.config, fileIdx)
     s = llStreamOpen(filename, fmRead)
@@ -29,12 +37,8 @@ proc processModule*(graph: ModuleGraph; module: PSym; idgen: IdGenerator;
   else:
     s = stream
 
-  when defined(nimsuggest):
-    let filename = toFullPathConsiderDirty(graph.config, fileIdx).string
-    msgs.setHash(graph.config, fileIdx, $sha1.secureHashFile(filename))
-
   while true:
-    openParser(p, fileIdx, s, graph.cache, graph.config)
+    syntaxes.openParser(p, fileIdx, s, graph.cache, graph.config)
 
     if not belongsToStdlib(graph, module) or (belongsToStdlib(graph, module) and module.name.s == "distros"):
       # XXX what about caching? no processing then? what if I change the
@@ -42,49 +46,33 @@ proc processModule*(graph: ModuleGraph; module: PSym; idgen: IdGenerator;
       # in ROD files. I think we should enable this feature only
       # for the interactive mode.
       if module.name.s != "nimscriptapi":
-        processImplicits graph, graph.config.implicitImports, nkImportStmt, a, module
-        processImplicits graph, graph.config.implicitIncludes, nkIncludeStmt, a, module
+        processImplicitImports graph, graph.config.implicitImports, nkImportStmt, module, ctx, bModule, idgen
+        processImplicitImports graph, graph.config.implicitIncludes, nkIncludeStmt, module, ctx, bModule, idgen
 
-    while true:
-      if graph.stopCompile(): break
+    checkFirstLineIndentation(p)
+    block processCode:
+      if graph.stopCompile(): break processCode
       var n = parseTopLevelStmt(p)
-      if n.kind == nkEmpty: break
-      if (sfSystemModule notin module.flags and
-          ({sfNoForward, sfReorder} * module.flags != {} or
-          codeReordering in graph.config.features)):
-        # read everything, no streaming possible
-        var sl = newNodeI(nkStmtList, n.info)
+      if n.kind == nkEmpty: break processCode
+      # read everything, no streaming possible
+      var sl = newNodeI(nkStmtList, n.info)
+      sl.add n
+      while true:
+        var n = parseTopLevelStmt(p)
+        if n.kind == nkEmpty: break
         sl.add n
-        while true:
-          var n = parseTopLevelStmt(p)
-          if n.kind == nkEmpty: break
-          sl.add n
-        if sfReorder in module.flags or codeReordering in graph.config.features:
-          sl = reorder(graph, sl, module)
-        discard processTopLevelStmt(graph, sl, a)
-        break
-      elif n.kind in imperativeCode:
-        # read everything until the next proc declaration etc.
-        var sl = newNodeI(nkStmtList, n.info)
-        sl.add n
-        var rest: PNode = nil
-        while true:
-          var n = parseTopLevelStmt(p)
-          if n.kind == nkEmpty or n.kind notin imperativeCode:
-            rest = n
-            break
-          sl.add n
-        #echo "-----\n", sl
-        if not processTopLevelStmt(graph, sl, a): break
-        if rest != nil:
-          #echo "-----\n", rest
-          if not processTopLevelStmt(graph, rest, a): break
-      else:
-        #echo "----- single\n", n
-        if not processTopLevelStmt(graph, n, a): break
+
+      prePass(ctx, sl)
+      var semNode = semWithPContext(ctx, sl)
+      discard processPipeline(graph, semNode, bModule)
+
     closeParser(p)
     if s.kind != llsStdIn: break
-  closePasses(graph, a)
+
+  assert graph.pipelinePass == EvalPass
+  let finalNode = closePContext(graph, ctx, nil)
+  discard interpreterCode(bModule, finalNode)
+
   if graph.config.backend notin {backendC, backendCpp, backendObjc}:
     # We only write rod files here if no C-like backend is active.
     # The C-like backends have been patched to support the IC mechanism.
@@ -130,8 +118,8 @@ proc resetModule*(i: Interpreter, moduleName: string) =
       iface.module.ast = nil
       break
 
-proc loadModule*(i: Interpreter, fileName, code: string,
-  a: var TPassContextArray) {.gcsafe.} =
+proc loadModule*(i: Interpreter, fileName, code: string, ctx: var PContext
+  ) {.gcsafe.} =
 
   assert i != nil
 
@@ -156,61 +144,53 @@ proc loadModule*(i: Interpreter, fileName, code: string,
   # which causes "cannot evaluate at compile time" issues with some variables.
   # Force things back to emRepl.
   PCtx(i.graph.vm).mode = emRepl
+
+  ctx = preparePContext(i.graph, module, i.idgen)
+
   {.gcsafe.}:
-    discard processModule(i.graph, module, i.idgen, stream, a)
+    discard processModule(i.graph, module, i.idgen, stream, ctx)
 
 # adapted from
-# https://github.com/nim-lang/Nim/blob/version-1-6/compiler/passes.nim#L120
-proc extendModule(graph: ModuleGraph; a: var TPassContextArray, module: PSym;
-    idgen: IdGenerator; stream: PLLStream): bool {.discardable.} =
+# https://github.com/nim-lang/Nim/blob/v2.0.2/compiler/pipelines.nim#L88
+proc extendModule*(graph: ModuleGraph; module: PSym; idgen: IdGenerator;
+  stream: PLLStream, ctx: var PContext): bool {.discardable.} =
 
   if graph.stopCompile(): return true
+  let bModule = setupEvalGen(graph, module, idgen)
+
   var
     p: Parser
     s = stream
     fileIdx = module.fileIdx
 
   while true:
-    openParser(p, fileIdx, s, graph.cache, graph.config)
+    syntaxes.openParser(p, fileIdx, s, graph.cache, graph.config)
 
-    while true:
-      if graph.stopCompile(): break
+    checkFirstLineIndentation(p)
+    assert graph.pipelinePass == EvalPass
+    block processCode:
+      if graph.stopCompile(): break processCode
       var n = parseTopLevelStmt(p)
-      if n.kind == nkEmpty: break
-      if (sfSystemModule notin module.flags and
-          ({sfNoForward, sfReorder} * module.flags != {} or
-          codeReordering in graph.config.features)):
-        # read everything, no streaming possible
-        var sl = newNodeI(nkStmtList, n.info)
+      if n.kind == nkEmpty: break processCode
+      # read everything, no streaming possible
+      var sl = newNodeI(nkStmtList, n.info)
+      sl.add n
+      while true:
+        var n = parseTopLevelStmt(p)
+        if n.kind == nkEmpty: break
         sl.add n
-        while true:
-          var n = parseTopLevelStmt(p)
-          if n.kind == nkEmpty: break
-          sl.add n
 
-        discard processTopLevelStmt(graph, sl, a)
-        break
-      elif n.kind in imperativeCode:
-        # read everything until the next proc declaration etc.
-        var sl = newNodeI(nkStmtList, n.info)
-        sl.add n
-        var rest: PNode = nil
-        while true:
-          var n = parseTopLevelStmt(p)
-          if n.kind == nkEmpty or n.kind notin imperativeCode:
-            rest = n
-            break
-          sl.add n
-        if not processTopLevelStmt(graph, sl, a): break
-        if rest != nil:
-          if not processTopLevelStmt(graph, rest, a): break
-      else:
-        if not processTopLevelStmt(graph, n, a): break
+      prePass(ctx, sl)
+
+      var semNode = semWithPContext(ctx, sl)
+      discard processPipeline(graph, semNode, bModule)
+
     closeParser(p)
     if s.kind != llsStdIn: break
+
   result = true
 
-proc eval*(i: Interpreter, a: var TPassContextArray, fileName, code: string) =
+proc eval*(i: Interpreter, ctx: var PContext, fileName, code: string) =
   ## This can also be used to *reload* the script.
   assert i != nil
   var module: PSym
@@ -222,7 +202,7 @@ proc eval*(i: Interpreter, a: var TPassContextArray, fileName, code: string) =
 
   assert module != nil, "no valid module selected"
   let s = llStreamOpen(code)
-  extendModule(i.graph, a, module, i.idgen, s)
+  extendModule(i.graph, module, i.idgen, s, ctx)
 
 proc config*(i: Interpreter): ConfigRef = i.graph.config
 

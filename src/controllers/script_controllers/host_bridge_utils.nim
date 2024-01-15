@@ -60,25 +60,26 @@ macro bridged_from_vm(self: Worker,
       arg_nodes = proc_impl[3][1..^1]
 
     let args = collect:
-      var pos = -1
-      for ident_def in arg_nodes:
-        let typ = ident_def[1].str_val
-        if typ == $Worker.type:
-          ident"script_engine"
-        elif typ == "VmArgs":
-          ident"a"
-        elif typ == "ScriptCtx":
-          quote do: script_engine.active_unit.script_ctx
-        elif typ in ["Unit", "Bot", "Build", "Sign"]:
-          let getter = "get_" & typ
-          pos.inc
-          new_call(bind_sym(getter), ident"script_engine",
-              ident"a", new_lit(pos))
+      block:
+        var pos = -1
+        for ident_def in arg_nodes:
+          let typ = ident_def[1].str_val
+          if typ == $Worker.type:
+            ident"script_engine"
+          elif typ == "VmArgs":
+            ident"a"
+          elif typ == "ScriptCtx":
+            quote do: script_engine.active_unit.script_ctx
+          elif typ in ["Unit", "Bot", "Build", "Sign"]:
+            let getter = "get_" & typ
+            pos.inc
+            new_call(bind_sym(getter), ident"script_engine",
+                ident"a", new_lit(pos))
 
-        else:
-          let getter = "get_" & typ
-          pos.inc
-          new_call(bind_sym(getter), ident"a", new_lit(pos))
+          else:
+            let getter = "get_" & typ
+            pos.inc
+            new_call(bind_sym(getter), ident"a", new_lit(pos))
 
     var call = new_call(proc_ref, args)
     if return_node.kind == nnk_sym:
@@ -96,7 +97,7 @@ macro bridged_from_vm(self: Worker,
 
     result.add quote do:
       mixin implement_routine
-      `self`.interpreter.implement_routine "*", `module_name`, `proc_impl_name`,
+      `self`.interpreter.implement_routine "enu", `module_name`, `proc_impl_name`,
           proc(a {.inject.}: VmArgs) {.gcsafe.} =
 
         debug "calling routine", name = `proc_name`
