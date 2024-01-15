@@ -27,7 +27,7 @@ se.name = "NilAccessDefect"
 se.msg = "Could not access value because it is nil."
 
 when defined(windows):
-  include "../system/ansi_c"
+  include "system/ansi_c"
 
   import winlean
 
