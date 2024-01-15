@@ -126,9 +126,9 @@ proc watch_units(self: Worker,
   parent: Unit,
   body: proc(unit: Unit, change: Change[Unit], added: bool,
       removed: bool) {.gcsafe.}
-) =
+) {.gcsafe.} =
 
-  units.track proc(changes: seq[Change[Unit]]) =
+  units.track proc(changes: seq[Change[Unit]]) {.gcsafe.} =
     for change in changes:
       let unit = change.item
       let added = Added in change.changes

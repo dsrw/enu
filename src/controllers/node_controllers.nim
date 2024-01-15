@@ -115,7 +115,7 @@ proc find_nested_changes(parent: Change[Unit]) =
         elif Removed in change.changes:
           parent.item.set_global(false)
 
-proc watch_units(self: NodeController, unit: Unit) =
+proc watch_units(self: NodeController, unit: Unit) {.gcsafe.} =
   unit.units.watch(unit):
     if added:
       change.item.fix_parents(unit)

@@ -63,9 +63,11 @@ proc get_build(self: Worker, a: VmArgs, pos: int): Build =
   Build(unit)
 
 proc get_sign(self: Worker, a: VmArgs, pos: int): Sign =
-  let unit = self.get_unit(a, pos)
-  assert not unit.is_nil and unit of Sign
-  Sign(unit)
+  let pnode = a.get_node(pos)
+  if pnode.kind != nkNilLit:
+    let unit = self.get_unit(a, pos)
+    assert not unit.is_nil and unit of Sign
+    result = Sign(unit)
 
 proc to_node(self: Worker, unit: Unit): PNode =
   if ?unit:

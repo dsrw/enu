@@ -2,8 +2,7 @@ import std / [tables, monotimes, sets, options, macros]
 import godotapi / [spatial, ray_cast]
 import pkg/core/godotcoretypes except Color
 import pkg / core / [vector3, basis, aabb, godotbase]
-import pkg / compiler / passes {.all.}
-import pkg / compiler / [ast, lineinfos]
+import pkg / compiler / [ast, lineinfos, semdata]
 import pkg / [model_citizen]
 import models / colors, libs / [eval]
 
@@ -228,7 +227,7 @@ type
     interpreter*: Interpreter
     code*: string
     dependents*: HashSet[string]
-    pass_context*: TPassContextArray
+    pass_context*: PContext
     last_ran*: MonoTime
     file_index*: int
 
