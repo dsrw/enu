@@ -1,5 +1,5 @@
-import std / [hashes, tables, sets, options, sequtils, math, wrapnils,
-  monotimes, sugar, deques, macros, base64]
+import std / [tables, sets, options, sequtils, math, wrapnils, monotimes, sugar,
+    deques, macros, base64]
 import godotapi / spatial
 import core, models / [states, bots, colors, units]
 const ChunkSize = vec3(16, 16, 16)
@@ -228,8 +228,8 @@ proc fire(self: Build) =
     skip_point = self.target_point + self.target_normal
     last_point = self.target_point
     self.draw(point, (Manual, state.selected_color))
-  elif state.tool == PlaceBot and EditorVisible in state.local_flags and
-    state.bot_at(global_point).is_nil:
+  elif state.tool == PlaceBot and BlockTargetVisible in state.local_flags and
+      state.bot_at(global_point).is_nil:
 
     let transform = Transform.init(origin = global_point)
     state.units += Bot.init(transform = transform)
