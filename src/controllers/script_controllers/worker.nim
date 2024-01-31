@@ -275,7 +275,7 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
     elif NeedsRestart.added:
       running = false
 
-  const max_time = (1.0 / 30.0).seconds
+  const max_time = (1.0 / 120.0).seconds
   const min_time = (1.0 / 120.0).seconds
   const auto_save_interval = 30.seconds
   const backup_interval = 15.minutes
@@ -311,7 +311,7 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
 
       var batched: HashSet[Unit]
 
-      while Zen.thread_ctx.pressure < 0.9 and to_process.len > 0 and
+      while Zen.thread_ctx.pressure < 0.9 and to_process.len > 0 and state.voxel_tasks <= 10 and
         get_mono_time() < timeout:
 
         let units = to_process
@@ -356,7 +356,7 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
   except Exception:
     discard
 
-proc launch_worker*(ctx: ZenContext, state: GameState): Thread[tuple[
+proc launch_worker*(ctx: ZenContext, state: GameState): system.Thread[tuple[
     ctx: ZenContext, state: GameState]] =
   worker_lock.acquire
   result.create_thread(worker_thread, (ctx, state))

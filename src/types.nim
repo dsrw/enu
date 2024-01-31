@@ -67,6 +67,7 @@ type
     worker_ctx_name*: string
     level_name_value*: ZenValue[string]
     status_message_value*: ZenValue[string]
+    voxel_tasks_value*: ZenValue[int]
 
   Model* = ref object of RootObj
     id*: string

@@ -135,6 +135,7 @@ proc init*(_: type GameState): GameState =
     level_name_value: ~("", id = "level_name"),
     queued_action_value: ~("", flags),
     status_message_value: ~("", flags),
+    voxel_tasks_value: ~(0, flags)
   )
   result = self
   self.open_unit_value.changes:

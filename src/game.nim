@@ -4,7 +4,8 @@ from dotenv import nil
 import godotapi / [input, input_event, gd_os, node, scene_tree, packed_scene,
     sprite, control, viewport, viewport_texture, performance, label, theme,
     dynamic_font, resource_loader, main_loop, project_settings, input_map,
-    input_event_action, input_event_key, global_constants, scroll_container]
+    input_event_action, input_event_key, global_constants, scroll_container,
+    voxel_server]
 
 import core, types, globals, controllers, models / [serializers, units, colors]
 
@@ -64,8 +65,10 @@ vram: {vram}
 units: {unit_count}
 zen objects: {Zen.thread_ctx.len}
 level: {state.level_name}
+{get_stats()}
 
       """
+    state.voxel_tasks = parse_int($get_stats()["tasks"].as_dictionary["main_thread"])
 
     if time > self.rescale_at:
       self.rescale_at = MonoTime.high
