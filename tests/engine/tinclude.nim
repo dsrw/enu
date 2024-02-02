@@ -12,7 +12,7 @@ let
     var place = "script 1 header"
     proc in_script_1_header*() = echo "in script 1 header"
     include "script_1.nim"
-  """.dedent
+    """.dedent
   script_2 =
     """
     import script_1
@@ -23,7 +23,7 @@ let
     in_script_1_body()
     in_script_2_header()
     in_script_2_body()
-  """.dedent
+    """.dedent
 
 e.load(script_dir, script_dir & "/script_1.nim", script_1, vmlib)
 assert not e.run()

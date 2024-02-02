@@ -13,7 +13,7 @@ let
     type
       Type1* = object
         name*: string
-  """.dedent
+    """.dedent
   user_classes2 =
     """
     type
@@ -22,14 +22,14 @@ let
         size*: int
       Type2* = object
         name*: string
-  """.dedent
+    """.dedent
   script1 =
     prefix &
     """
     import user_classes
     let a = Type1(name: "type1")
     log "a=" & a.repr
-  """.dedent
+    """.dedent
   script2 =
     prefix &
     """
@@ -38,7 +38,7 @@ let
     let b = Type2(name: "type2")
     log "a=" & a.repr
     log "b=" & b.repr
-  """.dedent
+    """.dedent
 
 e.load(script_dir, script_dir & "/user_classes.nim", user_classes1, vmlib)
 assert not e.run()
@@ -62,4 +62,4 @@ assert output ==
   a=(name: "type1")
   a=(name: "type1", size: 5)
   b=(name: "type2")
-""".dedent
+  """.dedent
