@@ -124,10 +124,9 @@ proc watch_units(
     self: Worker,
     units: ZenSeq[Unit],
     parent: Unit,
-    body:
-      proc(unit: Unit, change: Change[Unit], added: bool, removed: bool) {.
-        gcsafe
-      .},
+    body: proc(unit: Unit, change: Change[Unit], added: bool, removed: bool) {.
+      gcsafe
+    .},
 ) {.gcsafe.} =
   units.track proc(changes: seq[Change[Unit]]) {.gcsafe.} =
     for change in changes:
@@ -156,14 +155,13 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
   worker_lock.acquire
 
   var listen_address = main_thread_state.config.listen_address
-  let worker_ctx =
-    ZenContext.init(
-      id = \"work-{generate_id()}",
-      chan_size = 500,
-      buffer = false,
-      listen_address = listen_address,
-      label = "worker",
-    )
+  let worker_ctx = ZenContext.init(
+    id = \"work-{generate_id()}",
+    chan_size = 500,
+    buffer = false,
+    listen_address = listen_address,
+    label = "worker",
+  )
 
   Zen.thread_ctx = worker_ctx
   ctx.subscribe(Zen.thread_ctx)
@@ -262,18 +260,17 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
     player.script_ctx.interpreter = worker.interpreter
     worker.load_script_and_dependents(player)
 
-  var sign =
-    Sign.init(
-      "",
-      "",
-      width = 4,
-      height = 3.05,
-      owner = state.player,
-      size = 244,
-      billboard = true,
-      text_only = true,
-      transform = Transform.init(origin = vec3(0, 4, 0)),
-    )
+  var sign = Sign.init(
+    "",
+    "",
+    width = 4,
+    height = 3.05,
+    owner = state.player,
+    size = 244,
+    billboard = true,
+    text_only = true,
+    transform = Transform.init(origin = vec3(0, 4, 0)),
+  )
 
   state.player.units += sign
   sign.global_flags -= Visible

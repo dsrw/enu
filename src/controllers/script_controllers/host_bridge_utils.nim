@@ -76,51 +76,48 @@ macro bridged_from_vm(
     let
       symbol = bind_sym($proc_ref)
       proc_impl = (if symbol.kind == nnkSym: symbol
-        else: symbol[0]
-        ).get_impl
+      else: symbol[0]
+      ).get_impl
       proc_name = proc_impl[0].str_val
       proc_impl_name = proc_name.replace("=", "_set") & "_impl"
       return_node = proc_impl[3][0]
       arg_nodes = proc_impl[3][1 ..^ 1]
 
-    let args =
-      collect:
-        block:
-          var pos = -1
-          for ident_def in arg_nodes:
-            let typ = ident_def[1].str_val
-            if typ == $Worker.type:
-              ident"script_engine"
-            elif typ == "VmArgs":
-              ident"a"
-            elif typ == "ScriptCtx":
-              quote:
-                script_engine.active_unit.script_ctx
-            elif typ in ["Unit", "Bot", "Build", "Sign"]:
-              let getter = "get_" & typ
-              pos.inc
-              new_call(
-                bind_sym(getter), ident"script_engine", ident"a", new_lit(pos)
-              )
-            else:
-              let getter = "get_" & typ
-              pos.inc
-              new_call(bind_sym(getter), ident"a", new_lit(pos))
+    let args = collect:
+      block:
+        var pos = -1
+        for ident_def in arg_nodes:
+          let typ = ident_def[1].str_val
+          if typ == $Worker.type:
+            ident"script_engine"
+          elif typ == "VmArgs":
+            ident"a"
+          elif typ == "ScriptCtx":
+            quote:
+              script_engine.active_unit.script_ctx
+          elif typ in ["Unit", "Bot", "Build", "Sign"]:
+            let getter = "get_" & typ
+            pos.inc
+            new_call(
+              bind_sym(getter), ident"script_engine", ident"a", new_lit(pos)
+            )
+          else:
+            let getter = "get_" & typ
+            pos.inc
+            new_call(bind_sym(getter), ident"a", new_lit(pos))
 
     var call = new_call(proc_ref, args)
     if return_node.kind == nnk_sym:
       if return_node.str_val in ["Unit", "Bot", "Build", "Sign"]:
-        call =
-          new_call(
-            bind_sym"set_result",
-            ident"a",
-            new_call(bind_sym"to_node", ident"script_engine", call),
-          )
+        call = new_call(
+          bind_sym"set_result",
+          ident"a",
+          new_call(bind_sym"to_node", ident"script_engine", call),
+        )
       else:
-        call =
-          new_call(
-            bind_sym"set_result", ident"a", new_call(bind_sym"to_result", call)
-          )
+        call = new_call(
+          bind_sym"set_result", ident"a", new_call(bind_sym"to_result", call)
+        )
     elif return_node.kind == nnk_bracket_expr and return_node.len == 2 and
         return_node[0].str_val == "Future":
       call = new_call(bind_sym"await_future", call, ident"a")

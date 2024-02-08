@@ -457,9 +457,8 @@ template x*(count: int, body: untyped): untyped =
 
 macro dump*(x: typed): untyped =
   let s = x.toStrLit
-  let r =
-    quote:
-      echo(`s` & " = " & $`x`)
+  let r = quote:
+    echo(`s` & " = " & $`x`)
   return r
 
 template cycle*[T](args: varargs[T]): T =

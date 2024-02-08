@@ -114,10 +114,9 @@ gdobj MarkdownLabel of ScrollContainer:
     self.og_text_edit.add_font_override("font", self.local_mono_font)
     self.og_label.add_font_override("normal_font", self.local_default_font)
 
-    self.zid =
-      state.config_value.changes:
-        if added:
-          self.set_font_sizes()
+    self.zid = state.config_value.changes:
+      if added:
+        self.set_font_sizes()
 
     self.update
 

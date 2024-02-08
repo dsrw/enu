@@ -56,9 +56,8 @@ proc find_root*(self: Unit, all_clones = false): Unit =
   while parent != nil:
     result = parent
 
-    if (all_clones and not ?parent.clone_of) or (
-      not all_clones and Global in parent.global_flags
-    ):
+    if (all_clones and not ?parent.clone_of) or
+        (not all_clones and Global in parent.global_flags):
       parent = nil
     else:
       parent = parent.parent

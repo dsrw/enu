@@ -88,8 +88,9 @@ gdobj AimTarget of Sprite3D:
       self.look_at(align_normal, self.transform.basis.x)
 
       if ?unit:
-        if (unit.target_point, unit.target_normal) !=
-            (local_point, local_normal):
+        if (unit.target_point, unit.target_normal) != (
+          local_point, local_normal
+        ):
           unit.target_point = local_point
           unit.target_normal = local_normal
           unit.local_flags.touch TargetMoved

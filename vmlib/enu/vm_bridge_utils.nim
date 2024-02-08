@@ -31,9 +31,8 @@ macro bridged_to_host*(body: untyped): untyped =
       let params = node.params
       var call = new_call impl_proc
       var def = copy_nim_tree(node)
-      def.body =
-        quote:
-          raise_assert `impl_proc` & " must be implemented by host"
+      def.body = quote:
+        raise_assert `impl_proc` & " must be implemented by host"
       def[0] = ident(impl_proc)
 
       if params.len > 1:

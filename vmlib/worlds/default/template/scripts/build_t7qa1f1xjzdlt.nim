@@ -5,29 +5,33 @@ lock = true
 
 let overview =
   \"""
-  World `{world_name()}`
 
-  Level `{level_name()}`
-  """
+World `{world_name()}`
+
+Level `{level_name()}`
+
+"""
 
 let details =
   \"""
-  # Menu
 
-  Welcome to level `{level_name()}` of world `{world_name()}`.
+# Menu
 
-  - [Next Level](<nim://press_action("next_level")>)
+Welcome to level `{level_name()}` of world `{world_name()}`.
 
-  - [Previous Level](<nim://press_action("prev_level")>)
+- [Next Level](<nim://press_action("next_level")>)
 
-  - [Help](https://ē.nu/docs/intro.html)
+- [Previous Level](<nim://press_action("prev_level")>)
 
-  - [Load Tutorial](<nim://load_level("tutorial-1", "tutorial")>)
+- [Help](https://ē.nu/docs/intro.html)
 
-  - [Load Examples](<nim://load_level("tutorial-2", "tutorial")>)
+- [Load Tutorial](<nim://load_level("tutorial-1", "tutorial")>)
 
-  - [Reset Level](<nim://reset_level()>)
-  """
+- [Load Examples](<nim://load_level("tutorial-2", "tutorial")>)
+
+- [Reset Level](<nim://reset_level()>)
+
+"""
 
 turn 180
 up 5

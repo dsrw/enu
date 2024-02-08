@@ -48,8 +48,8 @@ proc add_to_scene(unit: Unit) =
     if node.owner != nil:
       fail \"{T.name} node shouldn't be owned. unit = {unit.id}"
     unit.node.visible =
-      Visible in unit.global_flags() and
-      ScriptInitializing notin unit.global_flags()
+      Visible in unit.global_flags and
+      (ScriptInitializing notin unit.global_flags)
 
     parent_node.add_child(unit.node)
     unit.node.owner = parent_node

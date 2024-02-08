@@ -5,9 +5,8 @@ import libs/[interpreters, eval]
 
 var state = GameState.active
 
-state.logger =
-  proc(level, msg: string) =
-    echo level, ": ", msg
+state.logger = proc(level, msg: string) =
+  echo level, ": ", msg
 
 state.config.script_dir =
   current_source_path().parent_dir / "scripts" / "instancing"

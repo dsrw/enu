@@ -24,7 +24,7 @@ block:
     echo "count1: " & $count1 & " count2: " & $count2
     nil -> task1
     if count1 > 5:
-      task1 -> task2:
+      task1 -> task2 do:
         echo "finished in main"
   do:
     inc count2
@@ -102,7 +102,7 @@ block:
       nil -> action_b(name)
       inc counter
       if counter == 2:
-        action_b -> loop_b as loop_b2:
+        action_b -> loop_b as loop_b2 do:
           counter = -20
         loop_b2 -> action_c(name)
       if counter == 6:
@@ -119,19 +119,19 @@ block:
   counter = 0
   var name = "loop_main"
   loop nil:
-    nil -> loop_a as initial_loop:
+    nil -> loop_a as initial_loop do:
       echo "initial loop "
     inc counter
     if done:
-      initial_loop -> action_a(name):
+      initial_loop -> action_a(name) do:
         counter = 0
     if counter == 3:
-      action_a -> action_b(name):
+      action_a -> action_b(name) do:
         counter = 0
-      action_b -> action_c(name) as ac:
+      action_b -> action_c(name) as ac do:
         counter = 0
-      ac -> loop_a:
+      ac -> loop_a do:
         counter = 0
     if counter == 70:
-      loop_a -> nil:
+      loop_a -> nil do:
         echo "loop_main done ", counter

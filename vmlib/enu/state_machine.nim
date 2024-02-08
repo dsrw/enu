@@ -114,12 +114,11 @@ macro loop*(body: untyped) =
 macro loop*(sig: untyped, body: untyped): untyped =
   var (name, params, vars) = sig.parse_sig
 
-  let proc_body =
-    quote:
-      const this_state {.inject.} = `name . ast_to_str`
-      `vars`
-      loop:
-        `body`
+  let proc_body = quote:
+    const this_state {.inject.} = `name . ast_to_str`
+    `vars`
+    loop:
+      `body`
 
   result = new_stmt_list()
   params.add new_ident_defs(ident"ctx", ident"Context", new_nil_lit())
@@ -129,9 +128,8 @@ macro loop*(sig: untyped, body: untyped): untyped =
 macro smart_call*(call: untyped) =
   var call_without_ctx = call.copy_nim_tree
   call_without_ctx.del call_without_ctx.len - 1
-  result =
-    quote:
-      when compiles(`call`): `call` else: `call_without_ctx`
+  result = quote:
+    when compiles(`call`): `call` else: `call_without_ctx`
 
 proc transition(from_state, to_state, body, immediate: NimNode): NimNode =
   var
@@ -208,35 +206,34 @@ proc transition(from_state, to_state, body, immediate: NimNode): NimNode =
     includes_str = includes.join(",")
     excludes_str = excludes.join(",")
 
-  result =
-    quote:
-      when not declared(current_state) or not declared(ctx):
-        {.error: "`->` or `==>` must be inside a `loop` ".}
-      if `immediate` or (active and done):
-        let
-          from_includes: seq[string] = `includes_str`.split(",")
-          from_excludes: seq[string] = `excludes_str`.split(",")
-        if (
-          current_state in from_includes or (
-            current_state != "nil" and (
-              ("others" in from_includes and `to_state_name` != current_state) or
-              "any" in from_includes
-            )
+  result = quote:
+    when not declared(current_state) or not declared(ctx):
+      {.error: "`->` or `==>` must be inside a `loop` ".}
+    if `immediate` or (active and done):
+      let
+        from_includes: seq[string] = `includes_str`.split(",")
+        from_excludes: seq[string] = `excludes_str`.split(",")
+      if (
+        current_state in from_includes or (
+          current_state != "nil" and (
+            ("others" in from_includes and `to_state_name` != current_state) or
+            "any" in from_includes
           )
-        ) and current_state notin from_excludes:
-          current_state = `to_state_name`
-          first_iteration = true
-          proc action() =
-            if first_iteration:
-              `body`
-            smart_call(`to_state`)
-            first_iteration = false
+        )
+      ) and current_state notin from_excludes:
+        current_state = `to_state_name`
+        first_iteration = true
+        proc action() =
+          if first_iteration:
+            `body`
+          smart_call(`to_state`)
+          first_iteration = false
 
-          if `to_state_name` != "nil":
-            frame.action = action
-          else:
-            frame.action = nil
-          raise (ref Halt)()
+        if `to_state_name` != "nil":
+          frame.action = action
+        else:
+          frame.action = nil
+        raise (ref Halt)()
 
 macro `==>`*(from_state: untyped, to_state: untyped, body: untyped = nil) =
   result = transition(from_state, to_state, body, ident"true")
@@ -257,7 +254,7 @@ when is_main_module:
     echo "count: " & $count
     nil -> task1
     if count > 5:
-      task1 -> task2:
+      task1 -> task2 do:
         echo "finished in main"
     if count > 10:
       echo "true true"
@@ -288,7 +285,7 @@ when is_main_module:
   loop:
     if counter > 100:
       (little_square, big_square) -> nil
-    (nil, big_square) -> square(counter) as little_square:
+    (nil, big_square) -> square(counter) as little_square do:
       inc counter
     little_square -> square(2) as big_square
 
@@ -321,7 +318,7 @@ when is_main_module:
     nil -> action_b(name)
     inc counter
     if counter == 2:
-      action_b ==> loop_b:
+      action_b ==> loop_b do:
         counter = -20
       loop_b ==> action_c(name)
     if counter == 6:
@@ -337,21 +334,21 @@ when is_main_module:
   counter = 0
   var name = "loop_main"
   loop:
-    nil ==> loop_a as initial_loop:
+    nil ==> loop_a as initial_loop do:
       echo "initial loop "
     inc counter
     if done:
-      initial_loop ==> action_a(name):
+      initial_loop ==> action_a(name) do:
         counter = 0
     if counter == 3:
-      action_a ==> action_b(name):
+      action_a ==> action_b(name) do:
         counter = 0
-      action_b ==> action_c(name) as ac:
+      action_b ==> action_c(name) as ac do:
         counter = 0
-      ac ==> loop_a:
+      ac ==> loop_a do:
         counter = 0
     if counter == 70:
-      loop_a ==> nil:
+      loop_a ==> nil do:
         echo "loop_main done ", counter
 
   loop:

@@ -18,12 +18,11 @@ proc init*(_: type Interpreter, script_dir, vmlib: string): Interpreter =
   let std_paths = STDLIB_PATHS.map_it join_path(vmlib, "stdlib", it)
   let source_paths = std_paths & join_path(vmlib, "enu") & @[script_dir]
   {.gcsafe.}:
-    result =
-      create_interpreter(
-        "base_api.nim",
-        source_paths,
-        defines = @{"nimscript": "true", "nimconfig": "true"},
-      )
+    result = create_interpreter(
+      "base_api.nim",
+      source_paths,
+      defines = @{"nimscript": "true", "nimconfig": "true"},
+    )
     result.config.max_loop_iterations_vm = int.high
 
 proc pause*(ctx: ScriptCtx) =
@@ -80,8 +79,8 @@ proc call_proc*(
     self.interpreter.select_routine(proc_name, module_name = self.module_name)
   if foreign_proc == nil:
     raise new_exception(
-        VMError, \"script does not export a proc of the name: '{proc_name}'"
-      )
+      VMError, \"script does not export a proc of the name: '{proc_name}'"
+    )
   result =
     try:
       {.gcsafe.}:

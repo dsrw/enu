@@ -82,8 +82,9 @@ gdobj Editor of TextEdit:
     state.player.open_code = self.text
 
   method on_cursor_changed*() =
-    state.player.cursor_position =
-      (int self.cursor_get_line, int self.cursor_get_column)
+    state.player.cursor_position = (
+      int self.cursor_get_line, int self.cursor_get_column
+    )
 
   method ready*() =
     self.bind_signals(self, "text_changed", "cursor_changed")
@@ -107,14 +108,13 @@ gdobj Editor of TextEdit:
           self.visible = false
           state.player.open_code = ""
         else:
-          line_zid =
-            unit.current_line_value.changes:
-              if added:
-                # only update the executing line if the code hasn't been changed.
-                if self.text == state.open_unit.code.nim:
-                  self.executing_line = change.item - 1
-                else:
-                  self.clear_executing_line()
+          line_zid = unit.current_line_value.changes:
+            if added:
+              # only update the executing line if the code hasn't been changed.
+              if self.text == state.open_unit.code.nim:
+                self.executing_line = change.item - 1
+              else:
+                self.clear_executing_line()
           self.visible = true
           self.text = state.open_unit.code.nim
           state.player.open_code = self.text

@@ -40,11 +40,10 @@ gdobj RightPanel of MarginContainer:
         var sign = change.item
         self.label.markdown = md(sign, sign.more)
         self.label.update
-        self.zid =
-          sign.more_value.changes:
-            if added:
-              self.label.markdown = md(sign, change.item)
-              self.label.update
+        self.zid = sign.more_value.changes:
+          if added:
+            self.label.markdown = md(sign, change.item)
+            self.label.update
       if removed and change.item != nil:
         if change.item.more_value.valid:
           change.item.more_value.untrack(self.zid)
@@ -63,8 +62,7 @@ gdobj RightPanel of MarginContainer:
         self.modulate = solid_alpha
 
   method unhandled_input*(event: InputEvent) =
-    if DocsFocused in state.local_flags and
-        event.is_action_pressed("ui_cancel"):
+    if DocsFocused in state.local_flags and event.is_action_pressed("ui_cancel"):
       if not (event of InputEventJoypadButton) or
           CommandMode notin state.local_flags:
         state.open_sign = nil

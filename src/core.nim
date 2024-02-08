@@ -142,12 +142,13 @@ proc wrap*[T](value, min, max: T): float =
 when not defined(no_godot):
   import pkg/godot
 
-  default_chronicles_stream.output.writer =
-    proc(logLevel: LogLevel, msg: LogOutputStr) {.gcsafe.} =
-      when defined(release):
-        godot.print msg
-      else:
-        echo msg
+  default_chronicles_stream.output.writer = proc(
+      logLevel: LogLevel, msg: LogOutputStr
+  ) {.gcsafe.} =
+    when defined(release):
+      godot.print msg
+    else:
+      echo msg
 
 # misc
 
@@ -217,9 +218,8 @@ proc update_action_index*(state: GameState, change: int) =
 template watch*[T, O](zen: Zen[T, O], unit: untyped, body: untyped) =
   when unit is Unit:
     mixin thread_ctx
-    let zid =
-      zen.changes:
-        body
+    let zid = zen.changes:
+      body
     unit.zids.add(zid)
     make_discardable(zid)
   else:

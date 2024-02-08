@@ -7,14 +7,12 @@ let
   vmlib = "vmlib"
   e = Engine()
   script_dir = nim_filename().parent_dir & "/scripts/instancing"
-  script_1 =
-    """
+  script_1 = """
     var place = "script 1 header"
     proc in_script_1_header*() = echo "in script 1 header"
     include "script_1.nim"
-    """.dedent
-  script_2 =
-    """
+  """.dedent
+  script_2 = """
     import script_1
     var place = "script 2 header"
     proc in_script_2_header*() = echo "in script 2 header"
@@ -23,7 +21,7 @@ let
     in_script_1_body()
     in_script_2_header()
     in_script_2_body()
-    """.dedent
+  """.dedent
 
 e.load(script_dir, script_dir & "/script_1.nim", script_1, vmlib)
 assert not e.run()

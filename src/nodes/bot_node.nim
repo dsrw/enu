@@ -112,11 +112,10 @@ gdobj BotNode of KinematicBody:
     var velocity_zid: ZID
     if self.model of Bot:
       let bot = Bot(self.model)
-      velocity_zid =
-        bot.velocity_value.watch:
-          if touched:
-            if bot.animation == "auto":
-              self.set_walk_animation(change.item.length, false)
+      velocity_zid = bot.velocity_value.watch:
+        if touched:
+          if bot.animation == "auto":
+            self.set_walk_animation(change.item.length, false)
       bot.animation_value.watch:
         if added or touched and change.item in ["", "auto"]:
           self.animation_player.play("idle")
@@ -152,10 +151,9 @@ gdobj BotNode of KinematicBody:
       if added:
         self.set_color(change.item)
 
-    self.transform_zid =
-      self.model.transform_value.watch:
-        if added:
-          self.transform = change.item
+    self.transform_zid = self.model.transform_value.watch:
+      if added:
+        self.transform = change.item
 
     self.model.sight_query_value.watch:
       if added:

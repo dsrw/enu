@@ -124,24 +124,23 @@ proc err*(self: GameState, args: varargs[string, `$`]) =
 
 proc init*(_: type GameState): GameState =
   let flags = {SyncLocal}
-  let self =
-    GameState(
-      player_value: ~(Player, flags),
-      local_flags: ~(set[LocalStateFlags], flags),
-      global_flags: ~(set[GlobalStateFlags], id = "state_global_flags"),
-      units: ~(seq[Unit], id = "root_units"),
-      open_unit_value: ~(Unit, flags),
-      config_value: ~(Config, flags, id = "config"),
-      tool_value: ~(BlueBlock, flags),
-      gravity: -80.0,
-      console: ConsoleModel(log: ~(seq[string], flags)),
-      open_sign_value: ~(Sign, flags),
-      wants: ~(seq[LocalStateFlags], flags),
-      level_name_value: ~("", id = "level_name"),
-      queued_action_value: ~("", flags),
-      status_message_value: ~("", flags),
-      voxel_tasks_value: ~(0, flags),
-    )
+  let self = GameState(
+    player_value: ~(Player, flags),
+    local_flags: ~(set[LocalStateFlags], flags),
+    global_flags: ~(set[GlobalStateFlags], id = "state_global_flags"),
+    units: ~(seq[Unit], id = "root_units"),
+    open_unit_value: ~(Unit, flags),
+    config_value: ~(Config, flags, id = "config"),
+    tool_value: ~(BlueBlock, flags),
+    gravity: -80.0,
+    console: ConsoleModel(log: ~(seq[string], flags)),
+    open_sign_value: ~(Sign, flags),
+    wants: ~(seq[LocalStateFlags], flags),
+    level_name_value: ~("", id = "level_name"),
+    queued_action_value: ~("", flags),
+    status_message_value: ~("", flags),
+    voxel_tasks_value: ~(0, flags),
+  )
   result = self
   self.open_unit_value.changes:
     if added and change.item != nil:

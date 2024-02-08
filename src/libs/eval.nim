@@ -45,9 +45,8 @@ proc processModule*(
   while true:
     syntaxes.openParser(p, fileIdx, s, graph.cache, graph.config)
 
-    if not belongsToStdlib(graph, module) or (
-      belongsToStdlib(graph, module) and module.name.s == "distros"
-    ):
+    if not belongsToStdlib(graph, module) or
+        (belongsToStdlib(graph, module) and module.name.s == "distros"):
       # XXX what about caching? no processing then? what if I change the
       # modules to include between compilation runs? we'd need to track that
       # in ROD files. I think we should enable this feature only
@@ -129,13 +128,12 @@ proc selectRoutine*(i: Interpreter, name: string, module_name: string): PSym =
   ## The routine needs to have the export marker ``*``. The only matching
   ## routine is returned and ``nil`` if it is overloaded.
   {.gcsafe.}:
-    result =
-      selectUniqueSymbol(
-        i,
-        name,
-        {skTemplate, skMacro, skFunc, skMethod, skProc, skConverter},
-        moduleName,
-      )
+    result = selectUniqueSymbol(
+      i,
+      name,
+      {skTemplate, skMacro, skFunc, skMethod, skProc, skConverter},
+      moduleName,
+    )
 
 proc resetModule*(i: Interpreter, moduleName: string) =
   for iface in i.graph.ifaces:
@@ -254,9 +252,8 @@ proc `enter_hook=`*(
 
 proc `error_hook=`*(
     i: Interpreter,
-    hook:
-      proc(config: ConfigRef, info: TLineInfo, msg: string, severity: Severity) {.
-        gcsafe
-      .},
+    hook: proc(
+      config: ConfigRef, info: TLineInfo, msg: string, severity: Severity
+    ) {.gcsafe.},
 ) =
   i.registerErrorHook(hook)

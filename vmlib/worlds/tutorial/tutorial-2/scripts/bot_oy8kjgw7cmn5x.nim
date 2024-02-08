@@ -44,7 +44,7 @@ loop:
   if player.near(10) and start_position.near(30):
     # `chase` if the player is near and we're not too far 
     # from home base
-    (wander, wander_home) ==> chase:
+    (wander, wander_home) ==> chase do:
       # this will be called when the command switches
       say cycle(hellos)
 

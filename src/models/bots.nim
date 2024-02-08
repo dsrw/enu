@@ -4,12 +4,11 @@ import core, models/[states, units, colors]
 include "bot_code_template.nim.nimf"
 
 method code_template*(self: Bot, imports: string): string =
-  result =
-    bot_code_template(
-      read_file(self.script_ctx.script).encode(safe = true),
-      self.script_ctx.script,
-      imports,
-    )
+  result = bot_code_template(
+    read_file(self.script_ctx.script).encode(safe = true),
+    self.script_ctx.script,
+    imports,
+  )
 
 method on_begin_move*(
     self: Bot, direction: Vector3, steps: float, moving_mode: int
@@ -20,17 +19,16 @@ method on_begin_move*(
     moving = -self.transform.basis.z
     finish_time = 1.0 / self.speed * steps
 
-  result =
-    proc(delta: float, _: MonoTime): TaskStates =
-      duration += delta
-      if duration >= finish_time:
-        self.velocity_value.touch(vec3())
-        self.transform_value.origin =
-          self.transform.origin.snapped(vec3(0.1, 0.1, 0.1))
-        return Done
-      else:
-        self.velocity_value.touch(moving * self.speed)
-        return Running
+  result = proc(delta: float, _: MonoTime): TaskStates =
+    duration += delta
+    if duration >= finish_time:
+      self.velocity_value.touch(vec3())
+      self.transform_value.origin =
+        self.transform.origin.snapped(vec3(0.1, 0.1, 0.1))
+      return Done
+    else:
+      self.velocity_value.touch(moving * self.speed)
+      return Running
 
 method on_begin_turn*(
     self: Bot, axis: Vector3, degrees: float, lean: bool, move_mode: int
@@ -39,19 +37,16 @@ method on_begin_turn*(
   let degrees = degrees * -axis.x
   var duration = 0.0
   var final_basis = self.transform.basis.rotated(UP, deg_to_rad(degrees))
-  result =
-    proc(delta: float, _: MonoTime): TaskStates =
-      duration += delta
-      self.transform_value.basis =
-        self.transform.basis.rotated(
-          UP, deg_to_rad(degrees * delta * self.speed)
-        )
+  result = proc(delta: float, _: MonoTime): TaskStates =
+    duration += delta
+    self.transform_value.basis =
+      self.transform.basis.rotated(UP, deg_to_rad(degrees * delta * self.speed))
 
-      if duration <= 1.0 / self.speed:
-        Running
-      else:
-        self.transform_value.basis = final_basis
-        Done
+    if duration <= 1.0 / self.speed:
+      Running
+    else:
+      self.transform_value.basis = final_basis
+      Done
 
 proc bot_at*(state: GameState, position: Vector3): Bot =
   for unit in state.units:
@@ -81,16 +76,15 @@ proc init*(
     global = true,
     parent: Unit = nil,
 ): Bot =
-  var self =
-    Bot(
-      id: id,
-      start_transform: transform,
-      animation_value: ~"auto",
-      speed: 1.0,
-      clone_of: clone_of,
-      start_color: action_colors[black],
-      parent: parent,
-    )
+  var self = Bot(
+    id: id,
+    start_transform: transform,
+    animation_value: ~"auto",
+    speed: 1.0,
+    clone_of: clone_of,
+    start_color: action_colors[black],
+    parent: parent,
+  )
 
   self.init_unit
 

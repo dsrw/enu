@@ -13,22 +13,21 @@ proc init*(
     billboard = false,
     text_only = false,
 ): Sign =
-  var self =
-    Sign(
-      id: "sign_" & generate_id(),
-      message_value: ~message,
-      more_value: ~more,
-      width_value: ~width,
-      height_value: ~height,
-      size_value: ~size,
-      billboard_value: ~billboard,
-      frame_created: state.frame_count,
-      start_color: action_colors[black],
-      start_transform: transform,
-      owner_value: ~owner,
-      text_only: text_only,
-      parent: owner,
-    )
+  var self = Sign(
+    id: "sign_" & generate_id(),
+    message_value: ~message,
+    more_value: ~more,
+    width_value: ~width,
+    height_value: ~height,
+    size_value: ~size,
+    billboard_value: ~billboard,
+    frame_created: state.frame_count,
+    start_color: action_colors[black],
+    start_transform: transform,
+    owner_value: ~owner,
+    text_only: text_only,
+    parent: owner,
+  )
   self.init_unit
   result = self
 

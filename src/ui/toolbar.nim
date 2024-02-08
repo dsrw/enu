@@ -27,12 +27,11 @@ gdobj Toolbar of HBoxContainer:
         self.visible = true
         state.tool = BlueBlock
 
-    self.zid =
-      state.tool_value.changes:
-        if added:
-          let b = self.get_child(int(change.item)) as Button
-          if ?b:
-            b.set_pressed true
+    self.zid = state.tool_value.changes:
+      if added:
+        let b = self.get_child(int(change.item)) as Button
+        if ?b:
+          b.set_pressed true
 
   method process*(delta: float) =
     if self.preview_result.is_some:

@@ -160,15 +160,13 @@ gdobj PlayerNode of KinematicBody:
         self.transform = change.item
 
     self.camera_rig.rotation = vec3(0, deg_to_rad self.model.rotation, 0)
-    self.rotation_zid =
-      self.model.rotation_value.watch:
-        if added or touched:
-          self.camera_rig.rotation = vec3(0, deg_to_rad change.item, 0)
+    self.rotation_zid = self.model.rotation_value.watch:
+      if added or touched:
+        self.camera_rig.rotation = vec3(0, deg_to_rad change.item, 0)
 
-    self.velocity_zid =
-      self.model.velocity_value.watch:
-        if added:
-          self.velocity = change.item
+    self.velocity_zid = self.model.velocity_value.watch:
+      if added:
+        self.velocity = change.item
 
   proc current_raycast*(): RayCast =
     if MouseCaptured in state.local_flags: self.aim_ray else: self.world_ray
@@ -176,8 +174,7 @@ gdobj PlayerNode of KinematicBody:
   method process*(delta: float) =
     self.model.velocity_value.pause self.velocity_zid:
       self.model.velocity = self.velocity
-    if EditorVisible notin state.local_flags or
-        CommandMode in state.local_flags:
+    if EditorVisible notin state.local_flags or CommandMode in state.local_flags:
       var transform = self.camera_rig.global_transform
       transform.origin = self.global_transform.origin + self.position_start
 
@@ -243,20 +240,18 @@ gdobj PlayerNode of KinematicBody:
     move_direction.y = 0
     move_direction += up
 
-    var velocity =
-      self.calculate_velocity(
-        self.velocity, move_direction, delta, self.flying, self.alt_speed
-      )
+    var velocity = self.calculate_velocity(
+      self.velocity, move_direction, delta, self.flying, self.alt_speed
+    )
 
     self.model.input_direction = input_direction
     self.velocity = self.move_and_slide(velocity, UP)
 
     self.model.transform = self.transform
 
-    let collisions =
-      collect:
-        for i in 0 .. (self.get_slide_count - 1):
-          self.get_slide_collision(i)
+    let collisions = collect:
+      for i in 0 .. (self.get_slide_count - 1):
+        self.get_slide_collision(i)
 
     handle_collisions(self.model, collisions)
 
@@ -304,9 +299,8 @@ gdobj PlayerNode of KinematicBody:
         self.input_relative += event.as(InputEventMouseMotion).relative()
       else:
         self.skip_next_mouse_move = false
-    if EditorVisible in state.local_flags and not self.skip_release and (
-      event of InputEventJoypadButton or event of InputEventJoypadMotion
-    ):
+    if EditorVisible in state.local_flags and not self.skip_release and
+        (event of InputEventJoypadButton or event of InputEventJoypadMotion):
       let active_input = self.has_active_input(event.device.int)
       if CommandMode in state.local_flags and not active_input:
         self.command_timer = input_command_timeout

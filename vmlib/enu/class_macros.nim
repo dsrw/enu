@@ -81,13 +81,12 @@ proc params_to_accessors(type_name: NimNode, nodes: seq[NimNode]): NimNode =
 proc build_ctors(
     name_str: string, type_name: NimNode, params: seq[NimNode]
 ): NimNode =
-  var ctor_body =
-    quote:
-      assert not instance.is_nil
-      link_dependency(instance)
-      result = `type_name`()
-      result.seed = active_unit().seed
-      new_instance(instance, result)
+  var ctor_body = quote:
+    assert not instance.is_nil
+    link_dependency(instance)
+    result = `type_name`()
+    result.seed = active_unit().seed
+    new_instance(instance, result)
 
   for param in params:
     let prop = param[0]
@@ -129,13 +128,12 @@ proc build_ctors(
 
   # add baked in constructor params for speed, color, etc.
   # probably shouldn't be here.
-  result =
-    new_proc(
-      name = "new".ident.postfix("*"),
-      params = params,
-      pragmas = nnkPragma.new_tree("discardable".ident),
-      body = ctor_body,
-    )
+  result = new_proc(
+    name = "new".ident.postfix("*"),
+    params = params,
+    pragmas = nnkPragma.new_tree("discardable".ident),
+    body = ctor_body,
+  )
 
 proc extract_class_info(
     name_node: NimNode
@@ -166,9 +164,8 @@ proc build_class(name_node: NimNode, base_type: NimNode): NimNode =
   result = new_stmt_list()
 
   let name_str = name
-  var type_def =
-    quote:
-      type `type_name`* = ref object of `base_type`
+  var type_def = quote:
+    type `type_name`* = ref object of `base_type`
 
   type_def[0][2][0][2] = params_to_properties(params)
   let accessors = params_to_accessors(type_name, params)
@@ -240,13 +237,12 @@ proc auto_insert_receiver(
 proc build_proc(sig, body: NimNode, return_type = new_empty_node()): NimNode =
   let (name, params, vars) = sig.parse_sig(return_type)
   let new_body = new_stmt_list(vars, body)
-  result =
-    new_proc(
-      name = ident(name),
-      params = params,
-      body = new_body,
-      pragmas = new_nim_node(nnkPragma).add(ident"discardable"),
-    )
+  result = new_proc(
+    name = ident(name),
+    params = params,
+    body = new_body,
+    pragmas = new_nim_node(nnkPragma).add(ident"discardable"),
+  )
 
 proc transform_commands(parent: NimNode): NimNode =
   for i, node in parent:

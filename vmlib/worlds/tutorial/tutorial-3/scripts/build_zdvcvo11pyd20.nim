@@ -10,20 +10,18 @@ proc stop_playing*() =
 
 proc level_menu*(me: Build, show_restart = true) =
   let blurb =
-    """
-    `Inky: Isolation` is a simple survivial game created in Enu. Find buttons to
-    open new areas of the space station. Hit the top of Inky's head to defeat
-    them.
-    """
+    "`Inky: Isolation` is a simple survivial game created in Enu. Find buttons to open new areas of the space station. Hit the top of Inky's head to defeat them."
 
   let copy =
     \"""
-    # Inky: Isolation
 
-    {blurb}
+# Inky: Isolation
 
-    - CLICK TO OPEN MENU
-    """
+{blurb}
+
+- CLICK TO OPEN MENU
+
+  """
 
   me.right 3
 
@@ -48,23 +46,24 @@ proc level_menu*(me: Build, show_restart = true) =
 
     let more =
       \"""
-      # Menu
 
-      {blurb}
+# Menu
 
-      See how `Inky: Isolation` was built in the video [Inky: Isolation. A 90
-      minute game built with Enu and Nim](https://youtu.be/9e9sLsmsu_o)
+{blurb}
 
-      {toolbar_action}
+See how `Inky: Isolation` was built in the video [Inky: Isolation. A 90 minute game built with Enu and Nim](https://youtu.be/9e9sLsmsu_o)
 
-      {return_action}
+{toolbar_action}
 
-      - [LOAD TUTORIAL](<nim://load_level("tutorial-1")>)
+{return_action}
 
-      - [LOAD EXAMPLES](<nim://load_level("tutorial-2")>)
+- [LOAD TUTORIAL](<nim://load_level("tutorial-1")>)
 
-      - [CLEAR CHANGES AND RESET LEVEL](<nim://reset_level()>)
-      """
+- [LOAD EXAMPLES](<nim://load_level("tutorial-2")>)
+
+- [CLEAR CHANGES AND RESET LEVEL](<nim://reset_level()>)
+
+    """
     sign1.more = more
     sign2.more = more
     sleep 1

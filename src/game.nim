@@ -62,14 +62,16 @@ gdobj Game of Node:
 
       self.stats.text =
         \"""
-        FPS: {fps}
-        scale_factor: {state.scale_factor}
-        vram: {vram}
-        units: {unit_count}
-        zen objects: {Zen.thread_ctx.len}
-        level: {state.level_name}
-        {get_stats()}
-        """
+
+FPS: {fps}
+scale_factor: {state.scale_factor}
+vram: {vram}
+units: {unit_count}
+zen objects: {Zen.thread_ctx.len}
+level: {state.level_name}
+{get_stats()}
+
+      """
     state.voxel_tasks =
       parse_int($get_stats()["tasks"].as_dictionary["main_thread"])
 
@@ -119,13 +121,12 @@ gdobj Game of Node:
 
     var initial_user_config = load_user_config(get_user_data_dir())
 
-    Zen.thread_ctx =
-      ZenContext.init(
-        id = \"main-{generate_id()}",
-        chan_size = 2000,
-        buffer = true,
-        label = "main",
-      )
+    Zen.thread_ctx = ZenContext.init(
+      id = \"main-{generate_id()}",
+      chan_size = 2000,
+      buffer = true,
+      label = "main",
+    )
 
     state = GameState.init
     state.nodes.game = self
@@ -289,10 +290,12 @@ gdobj Game of Node:
       if Connecting.added:
         state.status_message =
           \"""
-          # Connecting...
 
-          Trying to connect to {state.config.connect_address}.
-          """
+# Connecting...
+
+Trying to connect to {state.config.connect_address}.
+
+        """
       elif Connecting.removed:
         state.status_message = ""
 
@@ -360,9 +363,9 @@ gdobj Game of Node:
     if event of InputEventKey:
       let event = InputEventKey(event)
       # Left alt support. raw_code is an enu specific addition
-      if (host_os == "macosx" and event.raw_code == 58) or (
-        host_os == "windows" and event.raw_code == 56
-      ) or (host_os == "linux" and event.raw_code == 65513):
+      if (host_os == "macosx" and event.raw_code == 58) or
+          (host_os == "windows" and event.raw_code == 56) or
+          (host_os == "linux" and event.raw_code == 65513):
         if event.pressed:
           state.push_flag CommandMode
         else:

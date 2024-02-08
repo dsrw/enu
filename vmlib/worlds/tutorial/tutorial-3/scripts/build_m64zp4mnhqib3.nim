@@ -4,11 +4,11 @@ move me
 loop:
   nil -> up(home + 0.2)
   if player.hit:
-    up -> down(home + 0.2):
+    up -> down(home + 0.2) do:
       door.open = true
       ghost.charge_player = true
   else:
-    sleep -> up(home + 0.2):
+    sleep -> up(home + 0.2) do:
       door.open = false
   down -> sleep(pause)
   glow = cycle(0.0, 0.05)

@@ -78,9 +78,11 @@ gdobj BuildNode of VoxelTerrain:
             "emission", self.model.shared.emission_colors[i].to_variant
           )
 
-        if Highlight in self.model.local_flags or (
-          HighlightError in self.model.local_flags and self.error_highlight_on
-        ):
+        if Highlight in self.model.local_flags or
+            (
+              HighlightError in self.model.local_flags and
+              self.error_highlight_on
+            ):
           m.set_shader_param("emission_energy", highlight_glow.to_variant)
         else:
           m.set_shader_param("emission_energy", self.model.glow.to_variant)
@@ -88,14 +90,13 @@ gdobj BuildNode of VoxelTerrain:
   proc track_chunk(chunk_id: Vector3) =
     if chunk_id in self.model.chunks:
       self.draw_block(self.model.chunks[chunk_id])
-      self.active_chunks[chunk_id] =
-        self.model.chunks[chunk_id].watch:
-          # `and not modified` isn't required, but the block will be
-          # replaced on the next iteration anyway.
-          if removed and not modified:
-            self.draw(change.item.key, action_colors[eraser])
-          elif added:
-            self.draw(change.item.key, change.item.value.color)
+      self.active_chunks[chunk_id] = self.model.chunks[chunk_id].watch:
+        # `and not modified` isn't required, but the block will be
+        # replaced on the next iteration anyway.
+        if removed and not modified:
+          self.draw(change.item.key, action_colors[eraser])
+        elif added:
+          self.draw(change.item.key, change.item.value.color)
       self.draw_block(self.model.chunks[chunk_id])
     else:
       self.active_chunks[chunk_id] = empty_zid
@@ -126,14 +127,13 @@ gdobj BuildNode of VoxelTerrain:
       self.visible = false
 
   proc track_chunks() =
-    self.chunks_zid =
-      self.model.chunks.watch:
-        let id = change.item.key
-        if id in self.active_chunks:
-          if added:
-            self.track_chunk(change.item.key)
-          elif removed:
-            self.active_chunks[id] = empty_zid
+    self.chunks_zid = self.model.chunks.watch:
+      let id = change.item.key
+      if id in self.active_chunks:
+        if added:
+          self.track_chunk(change.item.key)
+        elif removed:
+          self.active_chunks[id] = empty_zid
 
   proc untrack_chunks() =
     Zen.thread_ctx.untrack(self.chunks_zid)
@@ -191,10 +191,9 @@ gdobj BuildNode of VoxelTerrain:
           self.model.transform = self.transform
         self.max_view_distance = int(self.default_view_distance.float / scale)
 
-    self.transform_zid =
-      self.model.transform_value.watch:
-        if added:
-          self.transform = change.item
+    self.transform_zid = self.model.transform_value.watch:
+      if added:
+        self.transform = change.item
 
     self.model.sight_query_value.watch:
       if added:

@@ -80,12 +80,11 @@ proc from_json_hook(self: var Transform, json: JsonNode) =
 
 proc from_json_hook(self: var Build, json: JsonNode) =
   let color = json["start_color"].json_to(Color)
-  self =
-    Build.init(
-      id = json["id"].json_to(string),
-      transform = json["start_transform"].json_to(Transform),
-      color = color,
-    )
+  self = Build.init(
+    id = json["id"].json_to(string),
+    transform = json["start_transform"].json_to(Transform),
+    color = color,
+  )
 
   if load_chunks:
     var edit = ~Table[Vector3, VoxelInfo]()
@@ -95,11 +94,10 @@ proc from_json_hook(self: var Build, json: JsonNode) =
     self.shared.edits.from_json(json["edits"])
 
 proc from_json_hook(self: var Bot, json: JsonNode) =
-  self =
-    Bot.init(
-      id = json["id"].json_to(string),
-      transform = json["start_transform"].json_to(Transform),
-    )
+  self = Bot.init(
+    id = json["id"].json_to(string),
+    transform = json["start_transform"].json_to(Transform),
+  )
 
   if not load_chunks:
     self.shared.edits.from_json(json["edits"])
@@ -117,16 +115,14 @@ proc `$`(self: tuple[voxel: Vector3, info: VoxelInfo]): string =
   \"[{self.voxel}, [{int self.info.kind}, {self.info.color}]]"
 
 proc `$`(self: ZenTable[string, ZenTable[Vector3, VoxelInfo]]): string =
-  let edits =
-    collect:
-      for id, edit in self.value:
-        let json =
-          collect:
-            for voxel, info in edit.value:
-              $(voxel, info)
-        if json.len > 0:
-          let elements = json.join(",\n").indent(2)
-          \"\"{id}\": [\n{elements}\n]"
+  let edits = collect:
+    for id, edit in self.value:
+      let json = collect:
+        for voxel, info in edit.value:
+          $(voxel, info)
+      if json.len > 0:
+        let elements = json.join(",\n").indent(2)
+        \"\"{id}\": [\n{elements}\n]"
   result = edits.join(",\n")
 
 proc `$`(self: Unit): string =
@@ -134,20 +130,23 @@ proc `$`(self: Unit): string =
   let edits = $self.shared.edits
   result =
     \"""
-    {{
-      "id": "{self.id}",
-      "start_transform": {{
-        "basis": [
-    {elements.indent(6)}
-        ],
-        "origin": {$self.start_transform.origin}
-      }},
-      "start_color": {self.start_color},
-      "edits": {{
-    {edits.indent(4)}
-      }}
-    }}
-    """
+
+{{
+  "id": "{self.id}",
+  "start_transform": {{
+    "basis": [
+{elements.indent(6)}
+    ],
+    "origin": {$self.start_transform.origin}
+  }},
+  "start_color": {self.start_color},
+  "edits": {{
+{edits.indent(4)}
+  }}
+}}
+
+
+  """
 
 proc save*(unit: Unit) =
   if not ?unit.clone_of:
@@ -184,8 +183,9 @@ proc backup_level*(level_dir: string) =
       backup_dir / state.config.level & "_" &
       times.now().format("yyyy-MM-dd-HH-mm-ss") & ".zip"
 
-    let backups =
-      walk_files(backup_dir / state.config.level & "_????-??-??-??-??-??.zip").to_seq.sorted
+    let backups = walk_files(
+      backup_dir / state.config.level & "_????-??-??-??-??-??.zip"
+    ).to_seq.sorted
 
     if backups.len > 19:
       for file in backups[0 ..^ 20]:

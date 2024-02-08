@@ -95,10 +95,9 @@ proc new_instance(self: Worker, src: Unit, dest: PNode) =
 
   var clone = src.clone(self.active_unit, id)
   assert not clone.is_nil
-  clone.script_ctx =
-    ScriptCtx.init(
-      owner = clone, clone_of = src, interpreter = self.interpreter
-    )
+  clone.script_ctx = ScriptCtx.init(
+    owner = clone, clone_of = src, interpreter = self.interpreter
+  )
 
   self.map_unit(clone, dest)
 
@@ -193,15 +192,14 @@ proc begin_move(
 
 proc sleep_impl(self: Worker, ctx: ScriptCtx, seconds: float) =
   var duration = 0.0
-  ctx.callback =
-    proc(delta: float, _: MonoTime): TaskStates =
-      duration += delta
-      if seconds > 0 and duration < seconds:
-        Running
-      elif seconds <= 0 and duration <= 0.5 and ctx.timer > get_mono_time():
-        Running
-      else:
-        Done
+  ctx.callback = proc(delta: float, _: MonoTime): TaskStates =
+    duration += delta
+    if seconds > 0 and duration < seconds:
+      Running
+    elif seconds <= 0 and duration <= 0.5 and ctx.timer > get_mono_time():
+      Running
+    else:
+      Done
   ctx.last_ran = MonoTime.default
   self.pause_script()
 
@@ -342,14 +340,13 @@ proc sees(
     return
 
   let future = result
-  unit.script_ctx.callback =
-    proc(delta: float, timeout: MonoTime): TaskStates =
-      let query = unit.sight_query
-      if ?query.answer:
-        future.complete(query.answer.get)
-        result = Done
-      else:
-        result = Running
+  unit.script_ctx.callback = proc(delta: float, timeout: MonoTime): TaskStates =
+    let query = unit.sight_query
+    if ?query.answer:
+      future.complete(query.answer.get)
+      result = Done
+    else:
+      result = Running
 
   unit.script_ctx.last_ran = MonoTime.default
   self.pause_script()
@@ -428,8 +425,9 @@ proc draw_position_set(self: Build, position: Vector3) =
       (position - self.position).local_to(self.parent)
 
 proc save(self: Build, name: string) =
-  self.save_points[name] =
-    (self.draw_transform, self.color_value.value, self.drawing)
+  self.save_points[name] = (
+    self.draw_transform, self.color_value.value, self.drawing
+  )
 
 proc restore(self: Build, name: string) =
   (self.draw_transform, self.color_value.value, self.drawing) =
@@ -486,17 +484,16 @@ proc new_markdown_sign(
     size: int,
     billboard: bool,
 ): Unit =
-  result =
-    Sign.init(
-      message,
-      more = more,
-      owner = self.active_unit,
-      transform = drop_transform(unit),
-      width = width,
-      height = height,
-      size = size,
-      billboard = billboard,
-    )
+  result = Sign.init(
+    message,
+    more = more,
+    owner = self.active_unit,
+    transform = drop_transform(unit),
+    width = width,
+    height = height,
+    size = size,
+    billboard = billboard,
+  )
 
   info "creating sign", id = result.id
   self.map_unit(result, pnode)
