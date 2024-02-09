@@ -62,16 +62,14 @@ gdobj Game of Node:
 
       self.stats.text =
         \"""
-
-FPS: {fps}
-scale_factor: {state.scale_factor}
-vram: {vram}
-units: {unit_count}
-zen objects: {Zen.thread_ctx.len}
-level: {state.level_name}
-{get_stats()}
-
-      """
+        FPS: {fps}
+        scale_factor: {state.scale_factor}
+        vram: {vram}
+        units: {unit_count}
+        zen objects: {Zen.thread_ctx.len}
+        level: {state.level_name}
+        {get_stats()}
+        """
     state.voxel_tasks =
       parse_int($get_stats()["tasks"].as_dictionary["main_thread"])
 
@@ -290,12 +288,10 @@ level: {state.level_name}
       if Connecting.added:
         state.status_message =
           \"""
+          # Connecting...
 
-# Connecting...
-
-Trying to connect to {state.config.connect_address}.
-
-        """
+          Trying to connect to {state.config.connect_address}.
+          """
       elif Connecting.removed:
         state.status_message = ""
 
