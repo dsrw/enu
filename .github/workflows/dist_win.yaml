@@ -14,6 +14,8 @@ jobs:
           cd ${HOME}
           C:\msys64\usr\bin\wget.exe https://nim-lang.org/download/nim-2.0.2_x64.zip
           7z.exe x nim-2.0.2_x64.zip -y
+          cd nim-2.0.2
+          finish.exe
       - name: Install build deps
         run: choco install yasm innosetup rcedit zip reshack
       - name: Install scons
