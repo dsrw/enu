@@ -11,10 +11,9 @@ jobs:
           fetch-depth: 0
       - name: Install Nim
         run: |
+          cd ${HOME}
           C:\msys64\usr\bin\wget.exe https://nim-lang.org/download/nim-2.0.2_x64.zip
           7z.exe x nim-2.0.2_x64.zip -y
-          dir
-          dir nim-2.0.2
       - name: Install build deps
         run: choco install yasm innosetup rcedit zip reshack
       - name: Install scons
