@@ -4,22 +4,27 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
-
     {
       "type": "lldb",
       "request": "launch",
       "name": "Client: Build and Debug",
       "program": "${workspaceFolder}/vendor/godot/bin/godot.osx.opt.tools.arm64",
-      "env": {"ENU_CONNECT_ADDRESS": "127.0.0.1", "ENU_METRICS_PORT": "8001"},
+      "env": {
+        "ENU_CONNECT_ADDRESS": "127.0.0.1",
+        "ENU_METRICS_PORT": "8001"
+      },
       "windows": {
         "program": "${workspaceFolder}/vendor/godot/bin/godot.windows.opt.tools.64"
       },
       "args": [],
       "cwd": "${workspaceFolder}/app",
       "preLaunchTask": "Build enu",
-      "initCommands": ["command source ${workspaceRoot}/.lldbinit"],
+      "initCommands": [
+        "script import shutil;sys.path.append(os.path.join(shutil.which('nim'), '../../tools/debug'))",
+        "command script import nimlldb"
+      ],
       "presentation": {
-        "clear": true                        // <-- this line
+        "clear": true // <-- this line
       }
     },
     {
@@ -27,16 +32,22 @@
       "request": "launch",
       "name": "Host: Build and Debug",
       "program": "${workspaceFolder}/vendor/godot/bin/godot.osx.opt.tools.arm64",
-      "env": {"ENU_LISTEN_ADDRESS": "0.0.0.0", "ENU_METRICS_PORT": "8000"},
+      "env": {
+        "ENU_LISTEN_ADDRESS": "0.0.0.0",
+        "ENU_METRICS_PORT": "8000"
+      },
       "windows": {
         "program": "${workspaceFolder}/vendor/godot/bin/godot.windows.opt.tools.64"
       },
       "args": [],
       "cwd": "${workspaceFolder}/app",
       "preLaunchTask": "Build enu",
-      "initCommands": ["command source ${workspaceRoot}/.lldbinit"],
+      "initCommands": [
+        "script import shutil;sys.path.append(os.path.join(shutil.which('nim'), '../../tools/debug'))",
+        "command script import nimlldb"
+      ],
       "presentation": {
-        "clear": true                        // <-- this line
+        "clear": true // <-- this line
       }
     },
     {
@@ -44,15 +55,21 @@
       "request": "launch",
       "name": "Client: Debug",
       "program": "${workspaceFolder}/vendor/godot/bin/godot.osx.opt.tools.arm64",
-      "env": {"ENU_CONNECT_ADDRESS": "127.0.0.1", "ENU_METRICS_PORT": "8001"},
+      "env": {
+        "ENU_CONNECT_ADDRESS": "127.0.0.1",
+        "ENU_METRICS_PORT": "8001"
+      },
       "windows": {
         "program": "${workspaceFolder}/vendor/godot/bin/godot.windows.opt.tools.64"
       },
       "args": [],
       "cwd": "${workspaceFolder}/app",
-      "initCommands": ["command source ${workspaceRoot}/.lldbinit"],
+      "initCommands": [
+        "script import shutil;sys.path.append(os.path.join(shutil.which('nim'), '../../tools/debug'))",
+        "command script import nimlldb"
+      ],
       "presentation": {
-        "clear": true                        // <-- this line
+        "clear": true // <-- this line
       }
     },
     {
@@ -60,15 +77,21 @@
       "request": "launch",
       "name": "Host: Debug",
       "program": "${workspaceFolder}/vendor/godot/bin/godot.osx.opt.tools.arm64",
-      "env": {"ENU_LISTEN_ADDRESS": "0.0.0.0", "ENU_METRICS_PORT": "8000"},
+      "env": {
+        "ENU_LISTEN_ADDRESS": "0.0.0.0",
+        "ENU_METRICS_PORT": "8000"
+      },
       "windows": {
         "program": "${workspaceFolder}/vendor/godot/bin/godot.windows.opt.tools.64"
       },
       "args": [],
       "cwd": "${workspaceFolder}/app",
-      "initCommands": ["command source ${workspaceRoot}/.lldbinit"],
+      "initCommands": [
+        "script import shutil;sys.path.append(os.path.join(shutil.which('nim'), '../../tools/debug'))",
+        "command script import nimlldb"
+      ],
       "presentation": {
-        "clear": true                        // <-- this line
+        "clear": true // <-- this line
       }
     },
     {
@@ -81,9 +104,12 @@
       },
       "args": [],
       "cwd": "${workspaceFolder}/app",
-      "initCommands": ["command source ${workspaceRoot}/.lldbinit"],
+      "initCommands": [
+        "script import shutil;sys.path.append(os.path.join(shutil.which('nim'), '../../tools/debug'))",
+        "command script import nimlldb"
+      ],
       "presentation": {
-        "clear": true                        // <-- this line
+        "clear": true // <-- this line
       }
     },
     {
@@ -94,7 +120,10 @@
       "args": [],
       "cwd": "${workspaceFolder}",
       "preLaunchTask": "Build Current File",
-      "initCommands": ["command source ${workspaceRoot}/.lldbinit"],
+      "initCommands": [
+        "script import shutil;sys.path.append(os.path.join(shutil.which('nim'), '../../tools/debug'))",
+        "command script import nimlldb"
+      ],
     },
     {
       "type": "lldb",
@@ -104,9 +133,12 @@
       "windows": {
         "program": "${workspaceFolder}/vendor/godot/bin/godot.windows.opt.tools.64"
       },
-      "initCommands": ["command source ${workspaceRoot}/.lldbinit"],
+      "initCommands": [
+        "script import shutil;sys.path.append(os.path.join(shutil.which('nim'), '../../tools/debug'))",
+        "command script import nimlldb"
+      ],
       "presentation": {
-        "clear": true                        // <-- this line
+        "clear": true // <-- this line
       }
     }
   ]
