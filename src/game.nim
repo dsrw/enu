@@ -6,7 +6,8 @@ import
     input, input_event, gd_os, node, scene_tree, packed_scene, sprite, control,
     viewport, viewport_texture, performance, label, theme, dynamic_font,
     resource_loader, main_loop, project_settings, input_map, input_event_action,
-    input_event_key, global_constants, scroll_container, voxel_server
+    input_event_key, global_constants, scroll_container, voxel_server,
+    world_environment
   ]
 
 import core, types, globals, controllers, models/[serializers, units, colors]
@@ -23,6 +24,8 @@ ZenContext.init_metrics "main", "worker"
 const savable_flags = {
   ConsoleVisible, MouseCaptured, Flying, God, AltWalkSpeed, AltFlySpeed
 }
+
+const game_modes = ["default", "dream_mode"]
 
 var saved_transform {.threadvar.}: Transform
 var saved_rotation {.threadvar.}: float
@@ -43,6 +46,7 @@ gdobj Game of Node:
     force_quit_at = MonoTime.high
     node_controller: NodeController
     script_controller: ScriptController
+    game_mode: int
 
   method process*(delta: float) =
     Zen.thread_ctx.boop
@@ -412,6 +416,17 @@ gdobj Game of Node:
     elif event.is_action_pressed("quit"):
       if host_os != "macosx":
         state.push_flag Quitting
+    elif event.is_action_pressed("change_mode"):
+      self.game_mode += 1
+      if self.game_mode >= game_modes.len:
+        self.game_mode = 0
+      let env =
+        state.nodes.game.find_node("Level").get_node("WorldEnvironment") as
+        WorldEnvironment
+      let mode_scene =
+        load(\"res://environments/{game_modes[self.game_mode]}.tres") as
+        Environment
+      env.environment = mode_scene
     elif EditorVisible notin state.local_flags:
       if event.is_action_pressed("toggle_mouse_captured"):
         state.set_flag MouseCaptured, MouseCaptured notin state.local_flags
