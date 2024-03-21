@@ -25,7 +25,10 @@ const savable_flags = {
   ConsoleVisible, MouseCaptured, Flying, God, AltWalkSpeed, AltFlySpeed
 }
 
-const game_modes = ["default", "dream_mode"]
+const game_modes = [
+  "default", "blue", "bright", "bw", "bw2", "bw3", "noir", "strange",
+  "dream_mode"
+]
 
 var saved_transform {.threadvar.}: Transform
 var saved_rotation {.threadvar.}: float
@@ -427,6 +430,7 @@ gdobj Game of Node:
         load(\"res://environments/{game_modes[self.game_mode]}.tres") as
         Environment
       env.environment = mode_scene
+      logger("info", \"Changed game mode to {game_modes[self.game_mode]}")
     elif EditorVisible notin state.local_flags:
       if event.is_action_pressed("toggle_mouse_captured"):
         state.set_flag MouseCaptured, MouseCaptured notin state.local_flags
