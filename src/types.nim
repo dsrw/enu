@@ -196,6 +196,7 @@ type
     dock_icon_size*: float
     show_stats*: bool
     mega_pixels*: float
+    environment*: string
     world_dir*: string
     level_dir*: string
     data_dir*: string

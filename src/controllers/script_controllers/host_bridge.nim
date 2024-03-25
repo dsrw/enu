@@ -471,6 +471,15 @@ proc open_sign(self: Unit): Sign =
 proc `open_sign=`(self: Unit, value: Sign) =
   state.open_sign = value
 
+# World bindings
+
+proc environment(_: PNode): string =
+  state.config.environment
+
+proc `environment=`(_: PNode, mode: string) =
+  state.config_value.value:
+    environment = mode
+
 # Sign bindings
 
 proc new_markdown_sign(
@@ -583,4 +592,7 @@ proc bridge_to_vm*(worker: Worker) =
 
   result.bridged_from_vm "players",
     playing, `playing=`, god, `god=`, flying, `flying=`, tool, `tool=`, coding,
-    `coding=`, running, `running=`, open_sign, `open_sign=`
+    `coding=`, running, `running=`, open_sign, `open_sign=`, environment,
+    `environment=`
+
+  result.bridged_from_vm "worlds", environment, `environment=`

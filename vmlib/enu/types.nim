@@ -30,6 +30,8 @@ type
     seed: int
     sign*: Sign
 
+  World* = ref object of RootObj
+
   PositionOffset* = object
     position*: Vector3
     offset*: float

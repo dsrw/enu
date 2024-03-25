@@ -4,44 +4,17 @@ let player* = PlayerType()
 register_active(player)
 
 bridged_to_host:
-  proc tool*(self: PlayerType): Tools =
-    discard
-
-  proc `tool=`*(self: PlayerType, value: Tools) =
-    discard
-
-  proc playing*(self: PlayerType): bool =
-    discard
-
-  proc `playing=`*(self: PlayerType, value: bool) =
-    discard
-
-  proc flying*(self: PlayerType): bool =
-    discard
-
-  proc `flying=`*(self: PlayerType, value: bool) =
-    discard
-
-  proc running*(self: PlayerType): bool =
-    discard
-
-  proc `running=`*(self: PlayerType, value: bool) =
-    discard
-
-  proc god*(self: PlayerType): bool =
-    discard
-
-  proc `god=`*(self: PlayerType, value: bool) =
-    discard
-
-  proc coding*(self: PlayerType): Unit =
-    discard
-
-  proc `coding=`*(self: PlayerType, value: Unit) =
-    discard
-
-  proc open_sign*(self: PlayerType): Sign =
-    discard
-
-  proc `open_sign=`*(self: PlayerType, value: Sign) =
-    discard
+  proc tool*(self: PlayerType): Tools
+  proc `tool=`*(self: PlayerType, value: Tools)
+  proc playing*(self: PlayerType): bool
+  proc `playing=`*(self: PlayerType, value: bool)
+  proc flying*(self: PlayerType): bool
+  proc `flying=`*(self: PlayerType, value: bool)
+  proc running*(self: PlayerType): bool
+  proc `running=`*(self: PlayerType, value: bool)
+  proc god*(self: PlayerType): bool
+  proc `god=`*(self: PlayerType, value: bool)
+  proc coding*(self: PlayerType): Unit
+  proc `coding=`*(self: PlayerType, value: Unit)
+  proc open_sign*(self: PlayerType): Sign
+  proc `open_sign=`*(self: PlayerType, value: Sign)

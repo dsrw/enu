@@ -25,11 +25,12 @@ const savable_flags = {
   ConsoleVisible, MouseCaptured, Flying, God, AltWalkSpeed, AltFlySpeed
 }
 
-const game_modes = [
+const environment_names = [
   "default", "blue", "bright", "bw", "bw2", "bw3", "noir", "strange",
-  "dream_mode"
+  "dream_mode", "opposite", "none", "wild_imagination"
 ]
 
+var environments {.threadvar.}: Table[string, Environment]
 var saved_transform {.threadvar.}: Transform
 var saved_rotation {.threadvar.}: float
 var saved_flags {.threadvar.}: set[LocalStateFlags]
@@ -49,7 +50,6 @@ gdobj Game of Node:
     force_quit_at = MonoTime.high
     node_controller: NodeController
     script_controller: ScriptController
-    game_mode: int
 
   method process*(delta: float) =
     Zen.thread_ctx.boop
@@ -189,6 +189,7 @@ gdobj Game of Node:
       mouse_sensitivity = uc.mouse_sensitivity ||= 5.0
       gamepad_sensitivity = uc.gamepad_sensitivity ||= 2.5
       invert_gamepad_y_axis = uc.invert_gamepad_y_axis ||= false
+      environment = "default"
 
     state.set_flag(God, uc.god_mode ||= false)
 
@@ -259,6 +260,22 @@ gdobj Game of Node:
     self.reticle = self.find_node("Reticle").as(Control)
     self.stats = self.find_node("stats").as(Label)
     self.stats.visible = state.config.show_stats
+
+    state.config_value.changes:
+      if removed and change.item.environment != state.config.environment:
+        let env =
+          state.nodes.game.find_node("Level").get_node("WorldEnvironment") as
+          WorldEnvironment
+        if state.config.environment notin environments:
+          let res = \"res://environments/{state.config.environment}.tres"
+
+          let environment = load(res) as Environment
+          if not ?environment:
+            logger("err", \"Environment {state.config.environment} not found")
+            return
+          environments[state.config.environment] = environment
+        env.environment = environments[state.config.environment]
+        logger("info", \"Changed game mode to {state.config.environment}")
 
     state.player_value.changes:
       if added and ?change.item and restarting:
@@ -420,17 +437,11 @@ gdobj Game of Node:
       if host_os != "macosx":
         state.push_flag Quitting
     elif event.is_action_pressed("change_mode"):
-      self.game_mode += 1
-      if self.game_mode >= game_modes.len:
-        self.game_mode = 0
-      let env =
-        state.nodes.game.find_node("Level").get_node("WorldEnvironment") as
-        WorldEnvironment
-      let mode_scene =
-        load(\"res://environments/{game_modes[self.game_mode]}.tres") as
-        Environment
-      env.environment = mode_scene
-      logger("info", \"Changed game mode to {game_modes[self.game_mode]}")
+      var mode = state.config.environment
+      while (mode = environment_names.sample; mode == state.config.environment):
+        discard
+      state.config_value.value:
+        environment = mode
     elif EditorVisible notin state.local_flags:
       if event.is_action_pressed("toggle_mouse_captured"):
         state.set_flag MouseCaptured, MouseCaptured notin state.local_flags

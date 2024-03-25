@@ -307,7 +307,6 @@ proc lean*(self: Unit, degrees: float, move_mode: int) =
   if degrees <= 180:
     self.lean Directions.right, degrees, move_mode
   else:
-    let d = 180 - (degrees - 180)
     self.lean Directions.left, 180 - (degrees - 180), move_mode
 
 template lean*(self: Unit, direction: Directions, degrees = 90.0) =
