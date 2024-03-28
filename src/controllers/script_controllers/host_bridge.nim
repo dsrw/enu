@@ -480,6 +480,13 @@ proc `environment=`(_: PNode, mode: string) =
   state.config_value.value:
     environment = mode
 
+proc mega_pixels(_: PNode): float =
+  state.config.mega_pixels
+
+proc `mega_pixels=`(_: PNode, pixels: float) =
+  state.config_value.value:
+    mega_pixels = pixels
+
 # Sign bindings
 
 proc new_markdown_sign(
@@ -595,4 +602,5 @@ proc bridge_to_vm*(worker: Worker) =
     `coding=`, running, `running=`, open_sign, `open_sign=`, environment,
     `environment=`
 
-  result.bridged_from_vm "worlds", environment, `environment=`
+  result.bridged_from_vm "worlds",
+    environment, `environment=`, mega_pixels, `mega_pixels=`

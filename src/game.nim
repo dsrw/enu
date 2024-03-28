@@ -25,12 +25,25 @@ const savable_flags = {
   ConsoleVisible, MouseCaptured, Flying, God, AltWalkSpeed, AltFlySpeed
 }
 
-const environment_names = [
-  "default", "blue", "bright", "bw", "bw2", "bw3", "noir", "strange",
-  "dream_mode", "opposite", "none", "wild_imagination"
-]
+const environments = {
+  "default": 0.0,
+  "blue": 0.0,
+  "bright": 0.0,
+  "bw": 0.0,
+  "bw2": 0.0,
+  "bw3": 0.0,
+  "noir": 0.0,
+  "dream": 0.0,
+  "opposite": 0.0,
+  "none": 0.0,
+  "arcade": 0.1,
+  "gb": 0.02,
+  "gb2": 0.02,
+  "strange": 0.5,
+  "wild_imagination": 0.3
+}.to_table
 
-var environments {.threadvar.}: Table[string, Environment]
+var environment_cache {.threadvar.}: Table[string, Environment]
 var saved_transform {.threadvar.}: Transform
 var saved_rotation {.threadvar.}: float
 var saved_flags {.threadvar.}: set[LocalStateFlags]
@@ -93,13 +106,17 @@ gdobj Game of Node:
       sqrt(state.config.mega_pixels * 1_000_000.0 / (vp.x * vp.y))
 
     self.scaled_viewport.size = vp * state.scale_factor
+    self.scaled_viewport.get_texture.flags =
+      if state.config.mega_pixels >= 1.0: FLAG_FILTER else: 0
+
+    logger("info", \"Rescaled to {self.scaled_viewport.size}")
 
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
       state.push_flag Quitting
 
     if what == main_loop.NOTIFICATION_WM_ABOUT:
-      alert \"Enu {enu_version}\n\n© 2023 Scott Wadden", "Enu"
+      alert \"Enu {enu_version}\n\n© 2024 Scott Wadden", "Enu"
 
   proc add_platform_input_actions() =
     let suffix = "." & host_os
@@ -251,9 +268,6 @@ gdobj Game of Node:
     self.bind_signals(self.get_viewport(), "size_changed")
     self.bind_signals(self.get_tree(), "global_menu_action")
     assert not self.scaled_viewport.is_nil
-    if state.config.mega_pixels >= 1.0:
-      self.scaled_viewport.get_texture.flags = FLAG_FILTER
-
     self.get_tree().auto_accept_quit = false
     self.set_font_size state.config.font_size
 
@@ -262,20 +276,31 @@ gdobj Game of Node:
     self.stats.visible = state.config.show_stats
 
     state.config_value.changes:
-      if removed and change.item.environment != state.config.environment:
+      if change.item.environment != state.config.environment:
         let env =
           state.nodes.game.find_node("Level").get_node("WorldEnvironment") as
           WorldEnvironment
-        if state.config.environment notin environments:
+        if state.config.environment notin environment_cache:
           let res = \"res://environments/{state.config.environment}.tres"
 
-          let environment = load(res) as Environment
-          if not ?environment:
-            logger("err", \"Environment {state.config.environment} not found")
-            return
-          environments[state.config.environment] = environment
-        env.environment = environments[state.config.environment]
+          var environment: Environment = nil
+          if state.config.environment != "none":
+            environment = load(res) as Environment
+            if not ?environment:
+              logger("err", \"Environment {state.config.environment} not found")
+              return
+          environment_cache[state.config.environment] = environment
+        env.environment = environment_cache[state.config.environment]
+        state.config_value.value:
+          mega_pixels = environments[state.config.environment]
         logger("info", \"Changed game mode to {state.config.environment}")
+
+      if change.item.mega_pixels != state.config.mega_pixels:
+        if state.config.mega_pixels == 0.0:
+          let uc = load_user_config()
+          state.config_value.value:
+            mega_pixels = uc.mega_pixels
+        self.rescale_at = get_mono_time()
 
     state.player_value.changes:
       if added and ?change.item and restarting:
@@ -438,7 +463,8 @@ gdobj Game of Node:
         state.push_flag Quitting
     elif event.is_action_pressed("change_mode"):
       var mode = state.config.environment
-      while (mode = environment_names.sample; mode == state.config.environment):
+      let keys = environments.keys.to_seq
+      while (mode = keys.sample; mode == state.config.environment):
         discard
       state.config_value.value:
         environment = mode
