@@ -6,7 +6,7 @@ import
     scene_tree, kinematic_body, material, mesh_instance, spatial, input_event,
     animation_player, resource_loader, packed_scene, spatial_material, text_edit
   ]
-import globals, core, models/[colors], ui/markdown_label
+import gdutils, core, models/[colors], ui/markdown_label
 import ./queries
 
 gdobj BotNode of KinematicBody:

@@ -152,6 +152,22 @@ when not defined(no_godot):
 
 # misc
 
+proc resolve_level_name*(world, level: string, diff: int): string =
+  var level = level
+  let prefix = world & "-"
+  level.remove_prefix(prefix)
+  var og_num =
+    try:
+      level.parse_int
+    except ValueError:
+      1
+  let num = og_num + diff
+  result =
+    if diff < 0 and num < 1:
+      prefix & $og_num
+    else:
+      prefix & $num
+
 proc init*(_: type Future, T: type, proc_name = ""): Future[T] =
   return new_future[T](proc_name)
 
@@ -264,3 +280,21 @@ proc run_deferred*() =
   for fn in deferred:
     fn()
   deferred.set_len(0)
+
+const environments* = {
+  "default": 0.0,
+  "blue": 0.0,
+  "bright": 0.0,
+  "bw": 0.0,
+  "bw2": 0.0,
+  "bw3": 0.0,
+  "noir": 0.0,
+  "dream": 0.0,
+  "opposite": 0.0,
+  "none": 0.0,
+  "arcade": 0.1,
+  "gb": 0.02,
+  "gb2": 0.02,
+  "strange": 0.5,
+  "wild_imagination": 0.3
+}.to_table

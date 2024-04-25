@@ -6,7 +6,7 @@ import core, game
 import
   ui/[
     editor, console, toolbar, action_button, preview_maker, markdown_label,
-    right_panel
+    right_panel, settings
   ]
 import
   nodes/[

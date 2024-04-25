@@ -8,7 +8,7 @@ import
     viewport, camera, global_constants, collision_shape, kinematic_collision,
     packed_scene, resource_loader
   ]
-import core, globals, nodes/helpers
+import core, gdutils, nodes/helpers
 import aim_target, models
 
 proc handle_collisions(

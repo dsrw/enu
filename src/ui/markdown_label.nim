@@ -5,7 +5,7 @@ import
     rich_text_label, scroll_container, text_edit, theme, dynamic_font,
     dynamic_font_data, style_box_flat, main_loop
   ]
-import core, globals, ui/editor
+import core, gdutils, ui/editor
 import models/colors except Color
 
 export scroll_container

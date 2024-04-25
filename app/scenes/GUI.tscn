@@ -128,6 +128,7 @@ custom_colors/selection_color = Color( 0.207843, 0, 0.321569, 1 )
 custom_colors/executing_line_color = Color( 0.0392157, 0, 0.168627, 1 )
 custom_styles/normal = SubResource( 5 )
 indent_using_spaces = true
+always_draw_caret = false
 indent_size = 2
 syntax_highlighting = true
 show_line_numbers = true

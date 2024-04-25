@@ -10,7 +10,7 @@ import
     world_environment
   ]
 
-import core, types, globals, controllers, models/[serializers, units, colors]
+import core, types, gdutils, controllers, models/[serializers, units, colors]
 
 if file_exists(".env"):
   dotenv.overload()
@@ -24,24 +24,6 @@ ZenContext.init_metrics "main", "worker"
 const savable_flags = {
   ConsoleVisible, MouseCaptured, Flying, God, AltWalkSpeed, AltFlySpeed
 }
-
-const environments = {
-  "default": 0.0,
-  "blue": 0.0,
-  "bright": 0.0,
-  "bw": 0.0,
-  "bw2": 0.0,
-  "bw3": 0.0,
-  "noir": 0.0,
-  "dream": 0.0,
-  "opposite": 0.0,
-  "none": 0.0,
-  "arcade": 0.1,
-  "gb": 0.02,
-  "gb2": 0.02,
-  "strange": 0.5,
-  "wild_imagination": 0.3
-}.to_table
 
 var environment_cache {.threadvar.}: Table[string, Environment]
 var saved_transform {.threadvar.}: Transform
@@ -182,9 +164,10 @@ gdobj Game of Node:
         )
 
     state.config_value.value:
+      screen_scale = screen_scale
       work_dir = get_user_data_dir()
-      font_size = uc.font_size ||= (20 * screen_scale).int
-      dock_icon_size = uc.dock_icon_size ||= 100 * screen_scale
+      font_size = uc.font_size ||= 20
+      toolbar_size = uc.toolbar_size ||= 100
       world = uc.world ||= "tutorial"
       level = uc.level ||= value.world & "-1"
       show_stats = uc.show_stats ||= false
@@ -255,8 +238,8 @@ gdobj Game of Node:
       font = theme.default_font.as(DynamicFont)
       bold_font = theme.get_font("bold_font", "RichTextLabel").as(DynamicFont)
 
-    font.size = size
-    bold_font.size = size
+    font.size = (size.float * state.config.screen_scale).int
+    bold_font.size = font.size
     theme_holder.theme = theme
 
   method ready*() =
@@ -386,16 +369,10 @@ gdobj Game of Node:
   proc switch_world(diff: int) =
     var config = state.config
     if diff != 0:
-      var level = config.level
-      let prefix = config.world & "-"
-      level.remove_prefix(prefix)
-      var num =
-        try:
-          level.parse_int
-        except ValueError:
-          1
-      num += diff
-      change_loaded_level(prefix & $num, state.config.world)
+      change_loaded_level(
+        resolve_level_name(state.config.world, state.config.level, diff),
+        state.config.world,
+      )
     else:
       # force a reload of the current world
       let current_level = state.config.level_dir

@@ -193,7 +193,7 @@ type
     font_size*: int
     world*: string
     level*: string
-    dock_icon_size*: float
+    toolbar_size*: float
     show_stats*: bool
     mega_pixels*: float
     environment*: string
@@ -216,10 +216,11 @@ type
     mouse_sensitivity*: float
     gamepad_sensitivity*: float
     invert_gamepad_y_axis*: bool
+    screen_scale*: float
 
   UserConfig* = object
     font_size*: Option[int]
-    dock_icon_size*: Option[float]
+    toolbar_size*: Option[float]
     world*: Option[string]
     level*: Option[string]
     show_stats*: Option[bool]

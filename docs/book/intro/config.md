@@ -4,11 +4,9 @@ The Enu data directory lives in `~/Library/Application Support/enu` on Mac,
 `%AppData%\enu` on Windows, and `~/.local/share/enu` on Linux. `config.json` has
 a few configurable options:
 
-- `font_size`: The font size. DPI is currently ignored, so hidpi screens will
-  require a higher number.
+- `font_size`: The font size.
 
-- `dock_icon_size`: Size of the icons in the dock. DPI is currently ignored, so
-  hidpi screens will require a higher number.
+- `toolbar_size`: Size of the icons in the dock.
 
 - `world`: An Enu world is a collection of levels. Set to `tutorial` by default.
   If the world doesn't exist, it will be created.

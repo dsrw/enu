@@ -5,7 +5,7 @@ import
   ]
 import godot
 import std/strutils
-import core, globals
+import core, gdutils
 
 gdobj Console of RichTextLabel:
   var default_mouse_filter: int64

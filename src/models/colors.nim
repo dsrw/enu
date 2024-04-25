@@ -58,7 +58,7 @@ const action_colors* = [
   green: col"14f707",
   black: col"000000",
   white: col"d9eed8",
-  brown: col"3f302b"
+  brown: col"14f707"
 ]
 
 const solid_alpha* = Color(r: 1.0, g: 1.0, b: 1.0, a: 1.0)

@@ -6,7 +6,7 @@ import
     text_edit, scene_tree, node, input_event, global_constants, input_event_key,
     style_box_flat, gd_os
   ]
-import core, globals
+import core, gdutils
 import models except Color
 
 proc configure_highlighting*(self: TextEdit) =
