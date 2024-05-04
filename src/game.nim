@@ -170,6 +170,7 @@ gdobj Game of Node:
       toolbar_size = uc.toolbar_size ||= 100
       world = uc.world ||= "tutorial"
       level = uc.level ||= value.world & "-1"
+      run_server = uc.run_server ||= false
       show_stats = uc.show_stats ||= false
       mega_pixels = uc.mega_pixels ||= 2.0
       start_full_screen = uc.start_full_screen ||= true
@@ -419,6 +420,8 @@ gdobj Game of Node:
 
       user_config.start_full_screen = some(is_window_fullscreen())
       save_user_config(user_config)
+    elif event.is_action_pressed("settings"):
+
     elif event.is_action_pressed("next_level"):
       self.switch_world(+1)
     elif event.is_action_pressed("prev_level"):

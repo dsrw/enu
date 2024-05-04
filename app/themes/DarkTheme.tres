@@ -6702,7 +6702,7 @@ margin_bottom = 1.0
 font_path = "res://themes/icons.otf"
 
 [sub_resource type="DynamicFont" id=2910]
-size = 59
+size = 24
 use_mipmaps = true
 font_data = SubResource( 2909 )
 
@@ -6743,7 +6743,7 @@ border_color = Color( 0.0901961, 0.0901961, 0.0901961, 1 )
 font_path = "res://themes/text-bold.otf"
 
 [sub_resource type="DynamicFont" id=1351]
-size = 59
+size = 24
 use_mipmaps = true
 font_data = SubResource( 1662 )
 
@@ -6794,7 +6794,7 @@ expand_margin_bottom = 8.0
 shadow_color = Color( 1, 1, 1, 0 )
 
 [sub_resource type="DynamicFont" id=1350]
-size = 59
+size = 24
 use_mipmaps = true
 font_data = ExtResource( 2 )
 

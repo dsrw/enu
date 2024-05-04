@@ -207,6 +207,7 @@ type
     semicolon_as_colon*: bool
     listen_address*: string
     connect_address*: string
+    run_server*: bool
     player_color*: Color
     work_dir*: string
     walk_speed*: int
@@ -230,6 +231,7 @@ type
     semicolon_as_colon*: Option[bool]
     listen_address*: Option[string]
     connect_address*: Option[string]
+    run_server*: Option[bool]
     player_color*: Option[colortypes.Color]
     walk_speed*: Option[int]
     fly_speed*: Option[int]

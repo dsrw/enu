@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=2]
+[gd_scene load_steps=16 format=2]
 
 [ext_resource path="res://components/Console.gdns" type="Script" id=1]
 [ext_resource path="res://components/TextEdit.gdns" type="Script" id=2]
@@ -11,6 +11,7 @@
 [ext_resource path="res://scenes/PreviewWorld.tscn" type="PackedScene" id=9]
 [ext_resource path="res://components/PreviewMaker.gdns" type="Script" id=10]
 [ext_resource path="res://components/Toolbar.gdns" type="Script" id=11]
+[ext_resource path="res://components/Settings.tscn" type="PackedScene" id=12]
 
 [sub_resource type="ButtonGroup" id=1]
 
@@ -36,9 +37,6 @@ grow_horizontal = 2
 grow_vertical = 0
 alignment = 1
 script = ExtResource( 11 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="Button-code" parent="Toolbar" instance=ExtResource( 3 )]
 margin_left = 746.0
@@ -128,7 +126,6 @@ custom_colors/selection_color = Color( 0.207843, 0, 0.321569, 1 )
 custom_colors/executing_line_color = Color( 0.0392157, 0, 0.168627, 1 )
 custom_styles/normal = SubResource( 5 )
 indent_using_spaces = true
-always_draw_caret = false
 indent_size = 2
 syntax_highlighting = true
 show_line_numbers = true
@@ -213,3 +210,21 @@ autowrap = true
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="CenterContainer" type="GridContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+columns = 2
+
+[node name="Label" type="Label" parent="CenterContainer"]
+margin_right = 1042.0
+margin_bottom = 521.0
+size_flags_horizontal = 3
+size_flags_vertical = 1
+
+[node name="Settings" parent="CenterContainer" instance=ExtResource( 12 )]
+margin_left = 1046.0
+margin_right = 1920.0
+margin_bottom = 521.0
+
+[editable path="CenterContainer/Settings"]
