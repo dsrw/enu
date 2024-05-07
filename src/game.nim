@@ -238,9 +238,13 @@ gdobj Game of Node:
       theme = theme_holder.theme
       font = theme.default_font.as(DynamicFont)
       bold_font = theme.get_font("bold_font", "RichTextLabel").as(DynamicFont)
+      icon_font = theme.get_font("font", "IconButton").as(DynamicFont)
+      mono_font = theme.get_font("font", "MonoButton").as(DynamicFont)
 
     font.size = (size.float * state.config.screen_scale).int
     bold_font.size = font.size
+    icon_font.size = font.size
+    mono_font.size = font.size
     theme_holder.theme = theme
 
   method ready*() =
@@ -260,6 +264,8 @@ gdobj Game of Node:
     self.stats.visible = state.config.show_stats
 
     state.config_value.changes:
+      if change.item.start_full_screen != state.config.start_full_screen:
+        set_window_fullscreen state.config.start_full_screen
       if change.item.environment != state.config.environment:
         let env =
           state.nodes.game.find_node("Level").get_node("WorldEnvironment") as
@@ -285,6 +291,9 @@ gdobj Game of Node:
           state.config_value.value:
             mega_pixels = uc.mega_pixels
         self.rescale_at = get_mono_time()
+
+      if change.item.font_size != state.config.font_size:
+        self.set_font_size(state.config.font_size)
 
     state.player_value.changes:
       if added and ?change.item and restarting:
@@ -397,9 +406,11 @@ gdobj Game of Node:
     if EditorVisible in state.local_flags or DocsVisible in state.local_flags or
         ConsoleVisible in state.local_flags:
       if event.is_action_pressed("zoom_in"):
-        self.set_font_size state.config.font_size + 1
+        state.config_value.value:
+          font_size = state.config.font_size + 1
       elif event.is_action_pressed("zoom_out"):
-        self.set_font_size state.config.font_size - 1
+        state.config_value.value:
+          font_size = state.config.font_size - 1
     else:
       if event.is_action_pressed("next"):
         state.update_action_index(1)
@@ -413,15 +424,11 @@ gdobj Game of Node:
       EditorVisible in state.local_flags and event of InputEventKey and
       event.as(InputEventKey).scancode == KEY_ENTER
     ):
-      set_window_fullscreen not is_window_fullscreen()
-      var user_config = load_user_config()
       state.config_value.value:
         start_full_screen = is_window_fullscreen()
-
-      user_config.start_full_screen = some(is_window_fullscreen())
-      save_user_config(user_config)
     elif event.is_action_pressed("settings"):
-
+      echo "PUSHING"
+      state.push_flag SettingsVisible
     elif event.is_action_pressed("next_level"):
       self.switch_world(+1)
     elif event.is_action_pressed("prev_level"):

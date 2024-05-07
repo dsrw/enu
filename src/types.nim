@@ -21,12 +21,14 @@ type
     BlockTargetVisible
     ReticleVisible
     DocsVisible
+    SettingsVisible
     MouseCaptured
     PrimaryDown
     SecondaryDown
     EditorFocused
     ConsoleFocused
     DocsFocused
+    SettingsFocused
     Playing
     Flying
     God

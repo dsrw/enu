@@ -8,7 +8,7 @@ log_scope:
 # only one flag from the group is active at a time
 const groups =
   @[
-    {EditorFocused, ConsoleFocused, DocsFocused},
+    {EditorFocused, ConsoleFocused, DocsFocused, SettingsFocused},
     {ReticleVisible, BlockTargetVisible},
     {Playing, Flying}
   ]
@@ -37,7 +37,8 @@ proc resolve_flags(self: GameState) =
     for flag in groups[0]:
       result.excl(flag)
   else:
-    if EditorVisible in result or DocsVisible in result:
+    if EditorVisible in result or DocsVisible in result or
+        SettingsVisible in result:
       result.excl(MouseCaptured)
 
   if Playing in result:
@@ -157,6 +158,10 @@ proc init*(_: type GameState): GameState =
       self.push_flag DocsFocused
     elif DocsVisible.removed:
       self.pop_flag DocsFocused
+    elif SettingsVisible.added:
+      self.push_flag SettingsFocused
+    elif SettingsVisible.removed:
+      self.pop_flag SettingsFocused
 
   result = self
 

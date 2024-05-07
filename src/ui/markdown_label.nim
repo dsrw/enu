@@ -50,7 +50,11 @@ gdobj MarkdownLabel of ScrollContainer:
     state.nodes.game.bind_signals(self.current_label, "meta_clicked")
 
   proc set_font_sizes() =
-    var size = if self.size > 0: self.size else: state.config.font_size
+    var size =
+      if self.size > 0:
+        self.size
+      else:
+        int(float(state.config.font_size.float) * state.config.screen_scale)
 
     self.local_default_font.size = size
     self.local_italic_font.size = size

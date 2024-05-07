@@ -214,6 +214,7 @@ __meta__ = {
 [node name="CenterContainer" type="GridContainer" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
+mouse_filter = 2
 columns = 2
 
 [node name="Label" type="Label" parent="CenterContainer"]
@@ -224,6 +225,7 @@ size_flags_vertical = 1
 
 [node name="Settings" parent="CenterContainer" instance=ExtResource( 12 )]
 margin_left = 1046.0
+margin_top = 0.0
 margin_right = 1920.0
 margin_bottom = 521.0
 
