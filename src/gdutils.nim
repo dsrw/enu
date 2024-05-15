@@ -1,6 +1,6 @@
 import std/[strformat]
 import pkg/[godot]
-import godotapi/[node, scene_tree, voxel_buffer]
+import godotapi/[node, scene_tree, voxel_buffer, canvas_item, control]
 import core, models/[states]
 export strformat.`&`, states, types
 
@@ -41,6 +41,12 @@ proc trigger*(
     node.add_user_signal(signal)
   node.emit_signal(signal, args)
 
+proc `opacity=`*(node: CanvasItem, value: float) =
+  node.modulate = Color(r: 1.0, g: 1.0, b: 1.0, a: value)
+
+proc opacity*(node: CanvasItem): float =
+  node.modulate.a
+
 proc trigger*(signal: string, args: varargs[Variant]) =
   trigger(state.nodes.game, signal, args)
 
@@ -49,3 +55,22 @@ template find*(name: string, T: type Node): untyped =
     let obj = self.find_node(name) as T
     assert ?obj
     obj
+
+proc set_mouse_cursor_recursive*(control: Control, mouse_filter: int) =
+  echo \"set mouse filter {control.name}: {mouse_filter}"
+  control.mouse_filter = mouse_filter
+  for child in control.get_children():
+    let child = child.as_object(Node) as Control
+    if ?child:
+      child.set_mouse_cursor_recursive(mouse_filter)
+
+const solid_alpha* = Color(r: 1.0, g: 1.0, b: 1.0, a: 1.0)
+const dimmed_alpha* = Color(r: 1.0, g: 1.0, b: 1.0, a: 0.4)
+
+proc ghost*(self: Control) =
+  self.set_mouse_cursor_recursive(MOUSE_FILTER_IGNORE)
+  self.modulate = dimmed_alpha
+
+proc unghost*(self: Control) =
+  self.set_mouse_cursor_recursive(MOUSE_FILTER_STOP)
+  self.modulate = solid_alpha

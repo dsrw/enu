@@ -1,19 +1,21 @@
 import std/[algorithm, math]
 import
-  godotapi/[panel_container, option_button, line_edit, margin_container, tween]
+  godotapi/[
+    panel_container, option_button, line_edit, margin_container, tween,
+    input_event, scene_tree
+  ]
 import godot
 import core, gdutils, models/colors
 
-type WindowAnimation = enum
+type WindowState = enum
   None
-  ShowNewLevel
-  HideNewLevel
-  ShowRemote
-  HideRemote
-  Closing
   Closed
+  NewLevel
+  Opened
 
 const transition = TRANS_EXPO
+const check = " ✓ "
+const blank = "   "
 
 gdobj Settings of PanelContainer:
   var
@@ -21,19 +23,21 @@ gdobj Settings of PanelContainer:
     megapixels, font_size, toolbar_size, server_address: LineEdit
     megapixels_up, megapixels_down, font_size_up, font_size_down,
       toolbar_size_up, toolbar_size_down, switch_level, full_screen, run_server,
-      connect, close, save, cancel: Button
+      connect, close, open, save, cancel: Button
     remote_container, main_container, new_level_container, row_container,
       settings_container, window: Container
     repeat_timers: Table[string, MonoTime]
     size_timer = MonoTime.high
-    tween_x, tween_y: Tween
+    tween: Tween
     separation: int
-    window_animation: WindowAnimation
+    action_steps: seq[proc() {.gc_safe.}]
+    state: WindowState
 
   proc update_values() =
-    self.megapixels.text = \"{state.config.mega_pixels:.2f}"
+    self.megapixels.text = \"{state.config.megapixels:.2f}"
     self.font_size.text = $state.config.font_size
-    self.toolbar_size.text = $state.config.toolbar_size
+    self.toolbar_size.text = $int(state.config.toolbar_size)
+    self.full_screen.text = if state.config.full_screen: check else: blank
     # self.level.text = state.config.level
 
   method ready*() =
@@ -43,7 +47,6 @@ gdobj Settings of PanelContainer:
       megapixels = find("Megapixels", LineEdit)
       font_size = find("FontSize", LineEdit)
       toolbar_size = find("ToolbarSize", LineEdit)
-      # level = find("Level", LineEdit)
       server_address = find("ServerAddress", LineEdit)
       megapixels_up = find("MegapixelsUp", Button)
       megapixels_down = find("MegapixelsDown", Button)
@@ -51,7 +54,6 @@ gdobj Settings of PanelContainer:
       font_size_down = find("FontSizeDown", Button)
       toolbar_size_up = find("ToolbarSizeUp", Button)
       toolbar_size_down = find("ToolbarSizeDown", Button)
-      # switch_level = find("SwitchLevel", Button)
       full_screen = find("FullScreen", Button)
       run_server = find("RunServer", Button)
       connect = find("Connect", Button)
@@ -63,11 +65,10 @@ gdobj Settings of PanelContainer:
       row_container = find("RowContainer", Container)
       settings_container = find("SettingsContainer", Container)
       window = find("Window", Container)
-      tween_x = find("TweenX", Tween)
-      tween_y = find("TweenY", Tween)
+      tween = find("Tween", Tween)
       close = find("Close", Button)
+      open = find("Open", Button)
 
-    # self.remote_margin = self.remote_container.get_constant("margin_bottom")
     self.separation = self.row_container.get_constant("separation")
 
     self.environments.add_item("default")
@@ -80,9 +81,6 @@ gdobj Settings of PanelContainer:
       if color != eraser:
         self.color.add_item($color)
 
-    if not ?state:
-      state = GameState.init
-
     for button in [
       self.megapixels_up, self.megapixels_down, self.font_size_up,
       self.font_size_down, self.toolbar_size_up, self.toolbar_size_down
@@ -94,11 +92,10 @@ gdobj Settings of PanelContainer:
     for option_button in [self.environments, self.color]:
       self.bind_signal(option_button, "item_selected", option_button.name)
 
-    # self.bind_signal(self.switch_level, "pressed", "SwitchLevel")
     self.bind_signal(self.connect, "pressed", "Connect")
+    self.bind_signal(self.open, ("pressed", "opened"))
     self.bind_signal(self.close, ("pressed", "closed"))
     self.bind_signal(self.cancel, ("pressed", "cancelled"))
-    self.bind_signal(self.tween_y, "tween_completed")
 
     for button in [self.full_screen, self.run_server]:
       self.bind_signal(button, ("pressed", "toggled"), button, button.text)
@@ -114,9 +111,19 @@ gdobj Settings of PanelContainer:
       self.update_values()
 
     state.local_flags.changes:
-      echo "CHANGED"
-      self.visible = SettingsVisible in state.local_flags
-    self.visible = SettingsVisible in state.local_flags
+      if SettingsVisible.added:
+        self.open_window()
+      elif SettingsVisible.removed:
+        self.close_window()
+      elif CommandMode.added:
+        self.ghost()
+      elif CommandMode.removed:
+        self.unghost()
+    if SettingsVisible notin state.local_flags:
+      self.window.opacity = 0.0
+      state.local_flags.changes:
+        if SceneReady.added:
+          self.close_window
 
   proc collapsed_margin(): int =
     -int(
@@ -162,18 +169,18 @@ gdobj Settings of PanelContainer:
       (4.0, 10.0, 1.0)
     ]
     if name == "MegapixelsUp":
-      let megapixels = state.config.mega_pixels
+      let megapixels = state.config.megapixels
       for step in megapixel_steps:
         if megapixels < step.high:
           state.config_value.value:
-            mega_pixels = round(mega_pixels + step.step, 2)
+            megapixels = round(megapixels + step.step, 2)
           break
     elif name == "MegapixelsDown":
-      let megapixels = state.config.mega_pixels
+      let megapixels = state.config.megapixels
       for step in megapixel_steps.reversed:
         if megapixels > step.low:
           state.config_value.value:
-            mega_pixels = round(mega_pixels - step.step, 2)
+            megapixels = round(megapixels - step.step, 2)
           break
 
     if name == "FontSizeUp" and state.config.font_size < 42:
@@ -189,33 +196,18 @@ gdobj Settings of PanelContainer:
       state.config_value.value:
         toolbar_size = state.config.toolbar_size - 5
 
-    # elif name == "SwitchLevel":
-    #   state.config_value.value:
-    #     level = self.level.text
-    #   self.switch_level.disabled = true
-    # elif name == "LevelDown":
-    #   state.config_value.value:
-    #     level = resolve_level_name(state.config.world, state.config.level, -1)
-
     self.update_values()
 
-  proc resize(
-      start_margin, end_margin: float,
-      node: Node,
-      tween: Tween,
-      property: string,
-  ) =
-    discard tween.interpolate_property(
-      node, property, start_margin.to_variant, end_margin.to_variant, 0.2,
-      transition, EASE_IN_OUT
+  proc resize(start_margin, end_margin: float, node: Node, property: string) =
+    discard self.tween.interpolate_property(
+      node, property, start_margin.to_variant, end_margin.to_variant,
+      animation_duration, transition, EASE_IN_OUT
     )
-    discard tween.start()
+    discard self.tween.start()
 
-  proc resize(
-      start_margin, end_margin: int, node: Node, tween: Tween, property: string
-  ) =
+  proc resize(start_margin, end_margin: int, node: Node, property: string) =
     self.main_container.add_constant_override(property, start_margin)
-    self.resize(float(start_margin), float(end_margin), node, tween, property)
+    self.resize(float(start_margin), float(end_margin), node, property)
 
   proc margin_y(): int =
     self.main_container.get_constant("margin_bottom")
@@ -229,7 +221,6 @@ gdobj Settings of PanelContainer:
       start_margin,
       end_margin,
       node = self.main_container,
-      tween = self.tween_x,
       property = "custom_constants/margin_left",
     )
 
@@ -239,7 +230,6 @@ gdobj Settings of PanelContainer:
       start_margin,
       end_margin,
       node = self.main_container,
-      tween = self.tween_y,
       property = "custom_constants/margin_bottom",
     )
 
@@ -249,40 +239,71 @@ gdobj Settings of PanelContainer:
   proc resize_y(end_margin: int) =
     self.resize_y(self.margin_y, end_margin)
 
-  method on_closed() =
-    self.window_animation = Closing
-    self.resize_y self.collapsed_margin()
+  proc open_window() =
+    self.state = Opened
+    self.window.visible = true
+    self.action_steps =
+      @[
+        proc() =
+          self.window.anchor_left = 1.0
+        ,
+        proc() =
+          self.window.opacity = 1.0
+          self.resize(1.0, 0.0, node = self.window, property = "anchor_right")
+        ,
+        proc() =
+          self.resize_y self.expanded_margin()
+      ]
 
-    # self.new_level_container.visible = false
-    # self.window_animation = ShowNewLevel
-    # self.resize(self.expanded_margin, self.collapsed_margin)
+  proc close_window() =
+    self.state = Closed
+    self.action_steps =
+      @[
+        proc() =
+          self.resize_y self.collapsed_margin()
+        ,
+        proc() =
+          self.resize(0.0, 1.0, node = self.window, property = "anchor_left")
+        ,
+        proc() =
+          self.window.opacity = 0.0
+          self.window.visible = false
+      ]
+
+  method on_closed() =
+    state.pop_flag SettingsVisible
+
+  method on_opened() =
+    state.push_flag SettingsVisible
 
   method on_cancelled() =
-    self.window_animation = HideNewLevel
-    self.resize_y(
-      self.expanded_new_level_margin, self.collapsed_new_level_margin
-    )
+    self.state = Opened
+    self.action_steps =
+      @[
+        proc() =
+          self.resize_y(
+            self.expanded_new_level_margin, self.collapsed_new_level_margin
+          )
+        ,
+        proc() =
+          self.new_level_container.visible = false
+          self.resize_y(self.collapsed_margin, self.expanded_margin)
+      ]
 
-  method on_tween_completed(obj: Object, key: NodePath) =
-    if self.window_animation == ShowNewLevel:
-      self.new_level_container.visible = true
-      self.resize_y(
-        self.collapsed_new_level_margin, self.expanded_new_level_margin
-      )
-    elif self.window_animation == HideNewLevel:
-      self.new_level_container.visible = false
-      self.resize_y(self.collapsed_margin, self.expanded_margin)
-    elif self.window_animation == Closing:
-      self.window_animation = Closed
-      self.resize_x -int(self.main_container.rect_size.x)
-    elif self.window_animation == Closed:
-      self.resize(
-        0.0,
-        1.0,
-        node = self.window,
-        tween = self.tween_y,
-        property = "anchor_left",
-      )
+  proc show_new_level() =
+    self.new_level_container.visible = false
+    self.state = NewLevel
+    self.action_steps =
+      @[
+        proc() =
+          self.resize_y(self.expanded_margin, self.collapsed_margin)
+        ,
+        proc() =
+          self.new_level_container.visible = true
+          self.resize_y(
+            self.collapsed_new_level_margin, self.expanded_new_level_margin
+          )
+      ]
 
   method on_button_up*(name: string) =
     self.repeat_timers[name] = MonoTime.high
@@ -291,23 +312,26 @@ gdobj Settings of PanelContainer:
     self.repeat_timers[name] = get_mono_time() + 0.4.seconds
 
   method on_toggled*(button: Button, default: string) =
-    let enabled = button.text != default
-    if not enabled:
-      button.text = "   "
+    let current = button.text == check
+    let enable = not current
+    if not enable:
+      button.text = blank
     else:
-      button.text = default
+      button.text = check
 
     if button.name == "FullScreen":
       state.config_value.value:
-        echo \"full screen: {enabled}"
-        start_full_screen = enabled
+        echo \"full screen: {enable}"
+        full_screen = enable
     if button.name == "RunServer":
       state.config_value.value:
-        run_server = enabled
-      if enabled:
-        self.resize_y(self.remote_opened_margin, self.remote_closed_margin)
+        run_server = enable
+      if enable:
+        self.action_steps.add proc() =
+          self.resize_y(self.remote_opened_margin, self.remote_closed_margin)
       else:
-        self.resize_y(self.remote_closed_margin, self.remote_opened_margin)
+        self.action_steps.add proc() =
+          self.resize_y(self.remote_closed_margin, self.remote_opened_margin)
 
     self.update_values()
 
@@ -317,13 +341,6 @@ gdobj Settings of PanelContainer:
         environment = self.environments.get_item_text(index)
 
   method on_text_changed*(text, name: string) =
-    # if name == "Level":
-    #   self.switch_level.disabled = text == ""
-    #   if text == state.config.level:
-    #     self.switch_level.text = open_symbol
-    #   else:
-    #     self.switch_level.text = enter_symbol
-
     echo \"changed {name}: {text}"
 
   method on_text_entered*(text, name: string) =
@@ -343,6 +360,18 @@ gdobj Settings of PanelContainer:
         time = now + 0.14.seconds
         self.on_pressed(name)
 
-    if self.window_animation == None and not self.new_level_container.visible and
-        not self.tween_y.is_active and self.margin_y != self.expanded_margin:
+    if self.action_steps.len > 0 and not self.tween.is_active:
+      let step = self.action_steps[0]
+      self.action_steps.delete(0)
+      step()
+    elif self.action_steps.len == 0 and not self.tween.is_active and
+        self.state == Opened and self.margin_y != self.expanded_margin:
       self.resize_y(self.expanded_margin)
+
+  method unhandled_input*(event: InputEvent) =
+    if SettingsFocused in state.local_flags and
+        event.is_action_pressed("ui_cancel"):
+      if not (event of InputEventJoypadButton) or
+          CommandMode notin state.local_flags:
+        state.pop_flag SettingsVisible
+        self.get_tree().set_input_as_handled()

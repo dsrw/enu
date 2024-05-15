@@ -20,11 +20,11 @@ a few configurable options:
 - `god_mode`: Makes hidden units slightly visible, and allows editing locked
   units. `false` by default.
 
-- `mega_pixels`: The render resolution, in mega pixels. Increase for more
+- `megapixels`: The render resolution, in mega pixels. Increase for more
   detail. Decrease for better performance. `2.0` by default.
 
-- `start_full_screen`: Whether to start Enu full screen, or in a window. `true`
-  by default.
+- `full_screen`: Whether to start Enu full screen, or in a window. `true` by
+  default.
 
 - `semicolon_as_colon`: Both `;` and `:` will be interpreted as `:`, allowing
   `:` to be typed without shift. Sometimes useful for new typists. `false` by
@@ -69,8 +69,8 @@ a few configurable options:
   "level": "tutorial-1",
   "show_stats": true,
   "god_mode": false,
-  "mega_pixels": 5.0,
-  "start_full_screen": false,
+  "megapixels": 5.0,
+  "full_screen": false,
   "semicolon_as_colon": false,
   "listen_address": "",
   "connect_address": "",

@@ -40,6 +40,7 @@ type
     ResettingVM
     NeedsRestart
     Connecting
+    SceneReady
 
   GlobalStateFlags* = enum
     LoadingLevel
@@ -197,7 +198,8 @@ type
     level*: string
     toolbar_size*: float
     show_stats*: bool
-    mega_pixels*: float
+    megapixels*: float
+    megapixels_override*: float
     environment*: string
     world_dir*: string
     level_dir*: string
@@ -205,7 +207,7 @@ type
     script_dir*: string
     scene*: string
     lib_dir*: string
-    start_full_screen*: bool
+    full_screen*: bool
     semicolon_as_colon*: bool
     listen_address*: string
     connect_address*: string
@@ -228,8 +230,8 @@ type
     level*: Option[string]
     show_stats*: Option[bool]
     god_mode*: Option[bool]
-    mega_pixels*: Option[float]
-    start_full_screen*: Option[bool]
+    megapixels*: Option[float]
+    full_screen*: Option[bool]
     semicolon_as_colon*: Option[bool]
     listen_address*: Option[string]
     connect_address*: Option[string]

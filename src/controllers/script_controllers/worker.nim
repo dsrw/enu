@@ -286,6 +286,13 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
     elif NeedsRestart.added:
       running = false
 
+  # var user_config = UserConfig.init()
+  state.config_value.changes:
+    if added:
+      let uc = state.config.build_user_config
+      save_user_config(uc)
+  #   for field in
+
   const max_time = (1.0 / 120.0).seconds
   const min_time = (1.0 / 120.0).seconds
   const auto_save_interval = 30.seconds

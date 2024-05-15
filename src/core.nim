@@ -9,6 +9,7 @@ export utils, sequtils, strutils, sugar, importutils
 
 const enu_version* = static_exec("git describe --tags HEAD")
 var state* {.threadvar.}: GameState
+const animation_duration* = 0.3
 
 ### Sugar ###
 

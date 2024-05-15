@@ -480,12 +480,12 @@ proc `environment=`(_: PNode, mode: string) =
   state.config_value.value:
     environment = mode
 
-proc mega_pixels(_: PNode): float =
-  state.config.mega_pixels
+proc megapixels(_: PNode): float =
+  state.config.megapixels
 
-proc `mega_pixels=`(_: PNode, pixels: float) =
+proc `megapixels=`(_: PNode, pixels: float) =
   state.config_value.value:
-    mega_pixels = pixels
+    megapixels = pixels
 
 # Sign bindings
 
@@ -603,4 +603,4 @@ proc bridge_to_vm*(worker: Worker) =
     `environment=`
 
   result.bridged_from_vm "worlds",
-    environment, `environment=`, mega_pixels, `mega_pixels=`
+    environment, `environment=`, megapixels, `megapixels=`

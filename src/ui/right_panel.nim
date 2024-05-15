@@ -1,7 +1,11 @@
 import pkg/[godot]
-import godotapi/[margin_container, input_event, scene_tree]
+import
+  godotapi/[
+    margin_container, input_event, scene_tree, scene_tree_tween, method_tweener,
+    tween
+  ]
 import ui/markdown_label
-import core, models/[states, colors]
+import core, gdutils, models/[states, colors]
 
 proc set_filter(self: Control, filter: int64) =
   self.mouse_filter = filter
@@ -19,6 +23,13 @@ proc md(self: Sign, md: string): string =
 gdobj RightPanel of MarginContainer:
   var label: MarkdownLabel
   var zid: ZID
+
+  # method set_opacity*(opacity: float) {.gdexport.} =
+  #   self.opacity = opacity
+
+  method offset_x*(offset: float) {.gdexport.} =
+    let width = self.rect_size.x
+    self.rect_position = vec2(width * offset + 3.0, self.rect_position.y)
 
   method ready*() =
     self.label = self.find_node("MarkdownLabel") as MarkdownLabel
@@ -47,19 +58,40 @@ gdobj RightPanel of MarginContainer:
       if removed and change.item != nil:
         if change.item.more_value.valid:
           change.item.more_value.untrack(self.zid)
+      if removed and not ?state.open_sign:
         state.pop_flags DocsFocused, DocsVisible
 
     state.local_flags.changes:
       if DocsVisible.added:
-        self.label.visible = true
+        var tween = self.get_tree.create_tween()
+        self.visible = true
+        discard
+          tween
+          .tween_method(
+            self, "_offset_x", 2.0.to_variant, 1.0.to_variant,
+            animation_duration
+          )
+          .set_trans(TRANS_EXPO)
+          .set_ease(EASE_IN_OUT)
       elif DocsVisible.removed:
-        self.label.visible = false
+        # self.visible = false
+        var tween = self.get_tree.create_tween()
+        discard
+          tween
+          .tween_method(
+            self, "_offset_x", 1.0.to_variant, 2.0.to_variant,
+            animation_duration
+          )
+          .set_trans(TRANS_EXPO)
+          .set_ease(EASE_IN_OUT)
+        discard
+          tween.tween_callback(self, "set_visible", new_array(false.to_variant))
       elif DocsFocused.removed:
         self.label.release_focus
       elif CommandMode.added:
-        self.modulate = dimmed_alpha
+        self.ghost()
       elif CommandMode.removed:
-        self.modulate = solid_alpha
+        self.unghost()
 
   method unhandled_input*(event: InputEvent) =
     if DocsFocused in state.local_flags and event.is_action_pressed("ui_cancel"):

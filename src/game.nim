@@ -54,6 +54,11 @@ gdobj Game of Node:
       if self.update_metrics_at < time:
         update_thread_metrics()
         self.update_metrics_at = time + 10.seconds
+
+    if state.config.full_screen != is_window_fullscreen():
+      state.config_value.value:
+        full_screen = not state.config.full_Screen
+
     if state.config.show_stats:
       let fps = get_monitor(TIME_FPS)
 
@@ -82,14 +87,23 @@ gdobj Game of Node:
     if time > self.force_quit_at:
       state.pop_flag Quitting
 
+    if SceneReady notin state.local_flags:
+      state.push_flag SceneReady
+
   proc rescale*() =
     let vp = self.get_viewport().size
-    state.scale_factor =
-      sqrt(state.config.mega_pixels * 1_000_000.0 / (vp.x * vp.y))
+    let megapixels =
+      if ?state.config.megapixels_override:
+        state.config.megapixels_override
+      else:
+        state.config.megapixels
+    state.scale_factor = sqrt(megapixels * 1_000_000.0 / (vp.x * vp.y))
 
     self.scaled_viewport.size = vp * state.scale_factor
     self.scaled_viewport.get_texture.flags =
-      if state.config.mega_pixels >= 1.0: FLAG_FILTER else: 0
+      if megapixels >= 1.0: FLAG_FILTER else: 0
+
+    echo \"full screen: {is_window_fullscreen()} maximizied: {is_window_maximized()}"
 
     logger("info", \"Rescaled to {self.scaled_viewport.size}")
 
@@ -153,6 +167,10 @@ gdobj Game of Node:
       listen_address = ""
 
     if host_os == "macosx" and not restarting:
+      # global_menu_add_separator("")
+      # global_menu_add_item(
+      #   "", "Settings...", "settings".to_variant, "".to_variant
+      # )
       global_menu_add_item(
         "Help", "Documentation", "help".to_variant, "".to_variant
       )
@@ -172,8 +190,8 @@ gdobj Game of Node:
       level = uc.level ||= value.world & "-1"
       run_server = uc.run_server ||= false
       show_stats = uc.show_stats ||= false
-      mega_pixels = uc.mega_pixels ||= 2.0
-      start_full_screen = uc.start_full_screen ||= true
+      megapixels = uc.megapixels ||= 2.0
+      full_screen = uc.full_screen ||= true
       semicolon_as_colon = uc.semicolon_as_colon ||= false
       lib_dir =
         join_path(get_executable_path().parent_dir(), "..", "..", "..", "vmlib")
@@ -194,7 +212,7 @@ gdobj Game of Node:
 
     state.set_flag(God, uc.god_mode ||= false)
 
-    set_window_fullscreen state.config.start_full_screen
+    set_window_fullscreen state.config.full_screen
     when defined(metrics):
       let metrics_port =
         if ?get_env("ENU_METRICS_PORT"):
@@ -230,9 +248,6 @@ gdobj Game of Node:
       state.config_value.value:
         font_size = size
 
-      user_config.font_size = some(size)
-      save_user_config(user_config)
-
     let
       theme_holder = self.find_node("LeftPanel").as(Container)
       theme = theme_holder.theme
@@ -240,11 +255,15 @@ gdobj Game of Node:
       bold_font = theme.get_font("bold_font", "RichTextLabel").as(DynamicFont)
       icon_font = theme.get_font("font", "IconButton").as(DynamicFont)
       mono_font = theme.get_font("font", "MonoButton").as(DynamicFont)
+      label_font = theme.get_font("font", "Label").as(DynamicFont)
+      normal_font = theme.get_font("font", "LineEdit").as(DynamicFont)
 
     font.size = (size.float * state.config.screen_scale).int
     bold_font.size = font.size
     icon_font.size = font.size
     mono_font.size = font.size
+    label_font.size = font.size
+    normal_font.size = font.size
     theme_holder.theme = theme
 
   method ready*() =
@@ -264,8 +283,8 @@ gdobj Game of Node:
     self.stats.visible = state.config.show_stats
 
     state.config_value.changes:
-      if change.item.start_full_screen != state.config.start_full_screen:
-        set_window_fullscreen state.config.start_full_screen
+      if change.item.full_screen != state.config.full_screen:
+        set_window_fullscreen state.config.full_screen
       if change.item.environment != state.config.environment:
         let env =
           state.nodes.game.find_node("Level").get_node("WorldEnvironment") as
@@ -282,14 +301,15 @@ gdobj Game of Node:
           environment_cache[state.config.environment] = environment
         env.environment = environment_cache[state.config.environment]
         state.config_value.value:
-          mega_pixels = environments[state.config.environment]
+          megapixels_override = environments[state.config.environment]
         logger("info", \"Changed game mode to {state.config.environment}")
 
-      if change.item.mega_pixels != state.config.mega_pixels:
-        if state.config.mega_pixels == 0.0:
-          let uc = load_user_config()
-          state.config_value.value:
-            mega_pixels = uc.mega_pixels
+      if change.item.megapixels != state.config.megapixels:
+        state.config_value.value:
+          megapixels_override = 0.0
+        self.rescale_at = get_mono_time()
+
+      if change.item.megapixels_override != state.config.megapixels_override:
         self.rescale_at = get_mono_time()
 
       if change.item.font_size != state.config.font_size:
@@ -369,6 +389,8 @@ gdobj Game of Node:
       discard shell_open("http://getenu.com/docs/intro.html")
     elif action == "site":
       discard shell_open("http://getenu.com")
+    elif action == "settings":
+      state.push_flag SettingsVisible
     elif action == "tutorial":
       state.config_value.value:
         level_dir = ""
@@ -425,10 +447,9 @@ gdobj Game of Node:
       event.as(InputEventKey).scancode == KEY_ENTER
     ):
       state.config_value.value:
-        start_full_screen = is_window_fullscreen()
+        full_screen = not state.config.full_screen
     elif event.is_action_pressed("settings"):
-      echo "PUSHING"
-      state.push_flag SettingsVisible
+      state.set_flag SettingsVisible, SettingsVisible notin state.local_flags
     elif event.is_action_pressed("next_level"):
       self.switch_world(+1)
     elif event.is_action_pressed("prev_level"):

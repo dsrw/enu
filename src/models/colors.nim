@@ -61,9 +61,6 @@ const action_colors* = [
   brown: col"14f707"
 ]
 
-const solid_alpha* = Color(r: 1.0, g: 1.0, b: 1.0, a: 1.0)
-const dimmed_alpha* = Color(r: 1.0, g: 1.0, b: 1.0, a: 0.4)
-
 proc action_index*(self: Color): Colors =
   for key, value in action_colors:
     if value == self:
