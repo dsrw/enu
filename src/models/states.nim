@@ -1,6 +1,9 @@
 import std/[tables, strutils, sequtils, sets, sugar]
 import core, models/[colors]
 
+proc write_value*(w: var JsonWriter, self: set[LocalStateFlags]) =
+  write_value(w, self.to_seq)
+
 log_scope:
   topics = "state"
   ctx = Zen.thread_ctx.id
@@ -67,7 +70,7 @@ proc replace_flag*(self: GameState, flag: LocalStateFlags) =
 
 proc push_flags*(self: GameState, flags: varargs[LocalStateFlags]) =
   for flag in flags:
-    if flag notin self.wants:
+    if flag notin self.local_flags:
       self.wants += flag
   self.resolve_flags
 

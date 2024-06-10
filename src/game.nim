@@ -6,8 +6,8 @@ import
     input, input_event, gd_os, node, scene_tree, packed_scene, sprite, control,
     viewport, viewport_texture, performance, label, theme, dynamic_font,
     resource_loader, main_loop, project_settings, input_map, input_event_action,
-    input_event_key, global_constants, scroll_container, voxel_server,
-    world_environment
+    input_event_key, input_event, global_constants, scroll_container,
+    voxel_server, world_environment
   ]
 
 import core, types, gdutils, controllers, models/[serializers, units, colors]
@@ -25,11 +25,15 @@ const savable_flags = {
   ConsoleVisible, MouseCaptured, Flying, God, AltWalkSpeed, AltFlySpeed
 }
 
+type SavedState = object
+  transform: Transform
+  rotation: float
+  flags: set[LocalStateFlags]
+  restarting: bool
+  connect_address: string
+
+var saved_state {.threadvar.}: SavedState
 var environment_cache {.threadvar.}: Table[string, Environment]
-var saved_transform {.threadvar.}: Transform
-var saved_rotation {.threadvar.}: float
-var saved_flags {.threadvar.}: set[LocalStateFlags]
-var restarting {.threadvar.}: bool
 
 gdobj Game of Node:
   var
@@ -154,8 +158,8 @@ gdobj Game of Node:
 
     randomize()
 
-    var connect_address = uc.connect_address ||= ""
-    var listen_address = uc.listen_address ||= ""
+    var connect_address = ""
+    var listen_address = ""
 
     if ?get_env("ENU_LISTEN_ADDRESS") and ?get_env("ENU_CONNECT_ADDRESS"):
       fail "Cannot set both ENU_LISTEN_ADDRESS and ENU_CONNECT_ADDRESS"
@@ -166,7 +170,10 @@ gdobj Game of Node:
       connect_address = get_env("ENU_CONNECT_ADDRESS")
       listen_address = ""
 
-    if host_os == "macosx" and not restarting:
+    if ?saved_state.connect_address:
+      connect_address = saved_state.connect_address
+
+    if host_os == "macosx" and not saved_state.restarting:
       # global_menu_add_separator("")
       # global_menu_add_item(
       #   "", "Settings...", "settings".to_variant, "".to_variant
@@ -266,6 +273,24 @@ gdobj Game of Node:
     normal_font.size = font.size
     theme_holder.theme = theme
 
+  method on_gui_input*(event: InputEvent, name: string) =
+    if event of InputEventMouseButton:
+      case name
+      of "Editor":
+        debug "pushing EditorFocused", topics = "state"
+        state.push_flag EditorFocused
+      of "Console":
+        debug "pushing ConsoleFocused", topics = "state"
+        state.push_flag ConsoleFocused
+      of "Settings":
+        debug "pushing SettingsFocused", topics = "state"
+        state.push_flag SettingsFocused
+      of "RightPanel":
+        debug "pushing DocsFocused", topics = "state"
+        state.push_flag DocsFocused
+      else:
+        warn "Couldn't focus control", name
+
   method ready*() =
     state.nodes.data = state.nodes.game.find_node("Level").get_node("data")
     assert not state.nodes.data.is_nil
@@ -316,14 +341,14 @@ gdobj Game of Node:
         self.set_font_size(state.config.font_size)
 
     state.player_value.changes:
-      if added and ?change.item and restarting:
-        change.item.transform = saved_transform
-        change.item.rotation = saved_rotation
+      if added and ?change.item and saved_state.restarting:
+        change.item.transform = saved_state.transform
+        change.item.rotation = saved_state.rotation
 
-        for flag in saved_flags:
+        for flag in saved_state.flags:
           state.push_flag(flag)
 
-        restarting = false
+        saved_state.restarting = false
 
     state.local_flags.changes(false):
       if Quitting.added:
@@ -336,15 +361,16 @@ gdobj Game of Node:
         self.get_tree().quit()
 
       if NeedsRestart.removed:
-        saved_transform = state.player.transform
-        saved_rotation = state.player.rotation
-        saved_flags = {}
+        saved_state.transform = state.player.transform
+        saved_state.rotation = state.player.rotation
+        saved_state.flags = {}
+        saved_state.connect_address = state.config.connect_address
 
         for flag in state.local_flags:
           if flag in savable_flags:
-            saved_flags.incl(flag)
+            saved_state.flags.incl(flag)
 
-        restarting = true
+        saved_state.restarting = true
         discard self.get_tree.reload_current_scene()
 
       if Connecting.added:
@@ -391,12 +417,16 @@ gdobj Game of Node:
       discard shell_open("http://getenu.com")
     elif action == "settings":
       state.push_flag SettingsVisible
+    elif action == "openurl":
+      logger("info", \"Open URL: {id}")
     elif action == "tutorial":
       state.config_value.value:
         level_dir = ""
       state.player.transform = Transform.init(origin = vec3(0, 2, 0))
       state.player.rotation = 0
       change_loaded_level("tutorial-1", "tutorial")
+    else:
+      warn "Unknown action", action, id
 
   proc switch_world(diff: int) =
     var config = state.config
@@ -465,7 +495,10 @@ gdobj Game of Node:
     elif event.is_action_pressed("clear_console"):
       state.console.log.clear()
     elif event.is_action_pressed("toggle_console"):
-      state.set_flag ConsoleVisible, ConsoleVisible notin state.local_flags
+      if ConsoleVisible in state.local_flags:
+        state.pop_flags ConsoleVisible, ConsoleFocused
+      else:
+        state.push_flags ConsoleVisible, ConsoleFocused
     elif event.is_action_pressed("quit"):
       if host_os != "macosx":
         state.push_flag Quitting

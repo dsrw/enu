@@ -34,6 +34,8 @@ gdobj RightPanel of MarginContainer:
   method ready*() =
     self.label = self.find_node("MarkdownLabel") as MarkdownLabel
 
+    state.nodes.game.bind_signal(self.label, "gui_input", self.name)
+
     state.status_message_value.changes:
       if added:
         if ?change.item:

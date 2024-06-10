@@ -233,8 +233,6 @@ type
     megapixels*: Option[float]
     full_screen*: Option[bool]
     semicolon_as_colon*: Option[bool]
-    listen_address*: Option[string]
-    connect_address*: Option[string]
     run_server*: Option[bool]
     player_color*: Option[colortypes.Color]
     walk_speed*: Option[int]

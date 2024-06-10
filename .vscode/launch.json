@@ -7,6 +7,24 @@
     {
       "type": "lldb",
       "request": "launch",
+      "name": "Open bundle",
+      "program": "${workspaceFolder}/dist/Enu.app",
+      "env": {
+        "ENU_METRICS_PORT": "8001"
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}/app",
+      "initCommands": [
+        "script import shutil;sys.path.append(os.path.join(shutil.which('nim'), '../../tools/debug'))",
+        "command script import nimlldb"
+      ],
+      "presentation": {
+        "clear": true
+      }
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
       "name": "Client: Build and Debug",
       "program": "${workspaceFolder}/vendor/godot/bin/godot.osx.opt.tools.arm64",
       "env": {
@@ -129,7 +147,7 @@
       "type": "lldb",
       "request": "attach",
       "name": "Attatch to Enu",
-      "program": "${workspaceFolder}/vendor/godot/bin/godot.osx.opt.tools.arm64",
+      "program": "${workspaceFolder}/dist/Enu.app",
       "windows": {
         "program": "${workspaceFolder}/vendor/godot/bin/godot.windows.opt.tools.64"
       },

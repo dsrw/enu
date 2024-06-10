@@ -1,7 +1,7 @@
 [gd_scene load_steps=17 format=2]
 
 [ext_resource path="res://components/Editor.tscn" type="PackedScene" id=1]
-[ext_resource path="res://components/Console2.tscn" type="PackedScene" id=2]
+[ext_resource path="res://components/Console.tscn" type="PackedScene" id=2]
 [ext_resource path="res://components/ActionButton.tscn" type="PackedScene" id=3]
 [ext_resource path="res://components/MarkdownLabel.tscn" type="PackedScene" id=4]
 [ext_resource path="res://textures/reticle.png" type="Texture" id=5]
@@ -14,11 +14,6 @@
 [ext_resource path="res://components/Settings.tscn" type="PackedScene" id=12]
 
 [sub_resource type="ButtonGroup" id=1]
-
-[sub_resource type="StyleBoxFlat" id=8]
-bg_color = Color( 0.6, 0.6, 0.6, 0 )
-draw_center = false
-border_width_left = 2
 
 [sub_resource type="StyleBoxFlat" id=6]
 resource_local_to_scene = true
@@ -35,6 +30,11 @@ corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id=8]
+bg_color = Color( 0.6, 0.6, 0.6, 0 )
+draw_center = false
+border_width_left = 2
 
 [sub_resource type="DynamicFont" id=4]
 size = 20
@@ -111,6 +111,26 @@ margin_bottom = 50.0
 group = SubResource( 1 )
 icon = null
 
+[node name="CenterContainer" type="GridContainer" parent="."]
+anchor_right = 1.0
+mouse_filter = 2
+columns = 2
+
+[node name="Label" type="Label" parent="CenterContainer"]
+margin_right = 1042.0
+margin_bottom = 521.0
+size_flags_horizontal = 3
+size_flags_vertical = 1
+
+[node name="Settings" parent="CenterContainer" instance=ExtResource( 12 )]
+margin_left = 1046.0
+margin_top = 0.0
+margin_right = 1920.0
+margin_bottom = 521.0
+
+[node name="Window" parent="CenterContainer/Settings" index="1"]
+custom_styles/panel = SubResource( 6 )
+
 [node name="LeftPanel" type="MarginContainer" parent="."]
 anchor_right = 0.5
 anchor_bottom = 1.0
@@ -161,75 +181,6 @@ margin_bottom = 1080.0
 focus_mode = 2
 custom_styles/bg = SubResource( 8 )
 
-[node name="CenterContainer" type="GridContainer" parent="."]
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 2
-columns = 2
-
-[node name="Label" type="Label" parent="CenterContainer"]
-margin_right = 1042.0
-margin_bottom = 521.0
-size_flags_horizontal = 3
-size_flags_vertical = 1
-
-[node name="Settings" parent="CenterContainer" instance=ExtResource( 12 )]
-margin_left = 1046.0
-margin_top = 0.0
-margin_right = 1920.0
-margin_bottom = 521.0
-
-[node name="Window" parent="CenterContainer/Settings" index="1"]
-custom_styles/panel = SubResource( 6 )
-
-[node name="CenterContainer2" type="GridContainer" parent="."]
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 2
-columns = 2
-
-[node name="Label" type="Label" parent="CenterContainer2"]
-margin_right = 1042.0
-margin_bottom = 521.0
-size_flags_horizontal = 3
-size_flags_vertical = 1
-
-[node name="Settings" parent="CenterContainer2" instance=ExtResource( 12 )]
-margin_left = 1046.0
-margin_top = 0.0
-margin_right = 1920.0
-margin_bottom = 521.0
-
-[node name="Window" parent="CenterContainer2/Settings" index="1"]
-custom_styles/panel = SubResource( 6 )
-
-[node name="MegapixelsUp" parent="CenterContainer2/Settings/Window/MainContainer/RowContainer/SettingsContainer/HBoxContainer" index="1"]
-focus_mode = 2
-
-[node name="MegapixelsDown" parent="CenterContainer2/Settings/Window/MainContainer/RowContainer/SettingsContainer/HBoxContainer" index="2"]
-focus_mode = 2
-
-[node name="FontSizeUp" parent="CenterContainer2/Settings/Window/MainContainer/RowContainer/SettingsContainer/HBoxContainer3" index="1"]
-focus_mode = 2
-
-[node name="FontSizeDown" parent="CenterContainer2/Settings/Window/MainContainer/RowContainer/SettingsContainer/HBoxContainer3" index="2"]
-focus_mode = 2
-
-[node name="ToolbarSizeUp" parent="CenterContainer2/Settings/Window/MainContainer/RowContainer/SettingsContainer/HBoxContainer2" index="1"]
-focus_mode = 2
-
-[node name="ToolbarSizeDown" parent="CenterContainer2/Settings/Window/MainContainer/RowContainer/SettingsContainer/HBoxContainer2" index="2"]
-focus_mode = 2
-
-[node name="FullScreen" parent="CenterContainer2/Settings/Window/MainContainer/RowContainer/SettingsContainer" index="13"]
-focus_mode = 2
-
-[node name="RunServer" parent="CenterContainer2/Settings/Window/MainContainer/RowContainer/SettingsContainer" index="15"]
-focus_mode = 2
-
-[node name="Connect" parent="CenterContainer2/Settings/Window/MainContainer/RowContainer/RemoteContainer/VBoxContainer2/HBoxContainer" index="2"]
-focus_mode = 2
-
 [node name="Reticle" type="Control" parent="."]
 visible = false
 anchor_left = 0.5
@@ -275,4 +226,3 @@ __meta__ = {
 }
 
 [editable path="CenterContainer/Settings"]
-[editable path="CenterContainer2/Settings"]

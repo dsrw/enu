@@ -304,6 +304,7 @@ theme_type_variation = "MonoButton"
 text = " ✓ "
 
 [node name="Label6" type="Label" parent="Window/MainContainer/RowContainer/SettingsContainer"]
+visible = false
 margin_left = 417.0
 margin_top = 190.0
 margin_right = 587.0
@@ -311,9 +312,10 @@ margin_bottom = 227.0
 text = "  Run Server"
 
 [node name="RunServer" type="Button" parent="Window/MainContainer/RowContainer/SettingsContainer"]
-margin_left = 607.0
+visible = false
+margin_left = 417.0
 margin_top = 190.0
-margin_right = 656.0
+margin_right = 466.0
 margin_bottom = 227.0
 focus_mode = 0
 size_flags_horizontal = 0

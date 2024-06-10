@@ -1,8 +1,10 @@
-const extra_include* {.strdefine.} = ""
+type Path2 = distinct string
+type SqlQuery2 = distinct string
 
-when extra_include != "":
-  template incl(file):
-    include file
-  incl extra_include
+proc `$`*(self: Path2): string {.borrow.}
+proc `$`*(self: SqlQuery2): string {.borrow.}
 
-echo "Done"
+let a = Path2("path")
+let b = SqlQuery2("sql query")
+
+echo a, b

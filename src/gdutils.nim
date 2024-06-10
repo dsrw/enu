@@ -56,21 +56,21 @@ template find*(name: string, T: type Node): untyped =
     assert ?obj
     obj
 
-proc set_mouse_cursor_recursive*(control: Control, mouse_filter: int) =
-  echo \"set mouse filter {control.name}: {mouse_filter}"
+proc set_mouse_filter_recursive*(control: Control, mouse_filter: int) =
   control.mouse_filter = mouse_filter
   for child in control.get_children():
     let child = child.as_object(Node) as Control
     if ?child:
-      child.set_mouse_cursor_recursive(mouse_filter)
+      child.set_mouse_filter_recursive(mouse_filter)
 
 const solid_alpha* = Color(r: 1.0, g: 1.0, b: 1.0, a: 1.0)
 const dimmed_alpha* = Color(r: 1.0, g: 1.0, b: 1.0, a: 0.4)
 
 proc ghost*(self: Control) =
-  self.set_mouse_cursor_recursive(MOUSE_FILTER_IGNORE)
+  self.set_mouse_filter_recursive(MOUSE_FILTER_IGNORE)
   self.modulate = dimmed_alpha
 
 proc unghost*(self: Control) =
-  self.set_mouse_cursor_recursive(MOUSE_FILTER_STOP)
+  self.set_mouse_filter_recursive(MOUSE_FILTER_PASS)
+  self.mouse_filter = MOUSE_FILTER_STOP
   self.modulate = solid_alpha

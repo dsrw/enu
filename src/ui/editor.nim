@@ -23,6 +23,7 @@ gdobj Editor of TextEdit:
   var
     comment_color* {.gdExport.} = init_color(0.5, 0.5, 0.5)
     og_bg_color: Color
+    tween: SceneTreeTween
 
   proc indent_new_line() =
     let column = int self.cursor_get_column - 1
@@ -99,6 +100,7 @@ gdobj Editor of TextEdit:
 
   method ready*() =
     self.bind_signals(self, "text_changed", "cursor_changed")
+    state.nodes.game.bind_signal(self, "gui_input", self.name)
     var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
     self.og_bg_color = stylebox.bg_color
 
@@ -117,17 +119,18 @@ gdobj Editor of TextEdit:
         if unit.is_nil:
           self.release_focus()
           self.rect_position = vec2(0, 0)
-
-          var tween = self.get_tree.create_tween()
+          if ?self.tween:
+            self.tween.kill
+          self.tween = self.get_tree.create_tween()
           discard
-            tween
+            self.tween
             .tween_method(
               self, "_offset_x", 0.0.to_variant, -1.0.to_variant,
               animation_duration
             )
             .set_trans(TRANS_EXPO)
             .set_ease(EASE_IN_OUT)
-          discard tween.tween_callback(
+          discard self.tween.tween_callback(
             self, "set_visible", new_array(false.to_variant)
           )
 
@@ -146,15 +149,19 @@ gdobj Editor of TextEdit:
 
           if change.item == nil:
             self.opacity = 0.0
-            var tween = self.get_tree.create_tween()
+            if ?self.tween:
+              self.tween.kill
+            self.tween = self.get_tree.create_tween()
 
+            discard self.tween.tween_callback(
+              self, "_offset_x", new_array(0.0.to_variant)
+            )
             discard
-              tween.tween_callback(self, "_offset_x", new_array(0.0.to_variant))
-            discard tween.tween_property(self, "modulate:a", 1.0.to_variant, 0.0)
+              self.tween.tween_property(self, "modulate:a", 1.0.to_variant, 0.0)
             if CommandMode in state.local_flags:
-              discard tween.tween_callback(self, "_ghost_me")
+              discard self.tween.tween_callback(self, "_ghost_me")
             discard
-              tween
+              self.tween
               .tween_method(
                 self, "_offset_x", -1.0.to_variant, 0.0.to_variant,
                 animation_duration

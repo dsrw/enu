@@ -57,7 +57,7 @@ gdobj Settings of PanelContainer:
       full_screen = find("FullScreen", Button)
       run_server = find("RunServer", Button)
       connect = find("Connect", Button)
-      connect = find("Save", Button)
+      save = find("Save", Button)
       cancel = find("Cancel", Button)
       remote_container = find("RemoteContainer", Container)
       main_container = find("MainContainer", Container)
@@ -105,6 +105,8 @@ gdobj Settings of PanelContainer:
       self.bind_signal(line_edit, "text_entered", line_edit.name)
       self.bind_signal(line_edit, "focus_exited", line_edit.name)
 
+    state.nodes.game.bind_signal(self, "gui_input", self.name)
+
     self.update_values()
 
     state.config_value.changes:
@@ -121,9 +123,12 @@ gdobj Settings of PanelContainer:
         self.unghost()
     if SettingsVisible notin state.local_flags:
       self.window.opacity = 0.0
-      state.local_flags.changes:
-        if SceneReady.added:
-          self.close_window
+      if SceneReady in state.local_flags:
+        self.close_window
+      else:
+        state.local_flags.changes:
+          if SceneReady.added:
+            self.close_window
 
   proc collapsed_margin(): int =
     -int(
@@ -138,10 +143,10 @@ gdobj Settings of PanelContainer:
     -int(self.remote_container.rect_size.y + float(self.separation)) + 15
 
   proc expanded_margin(): int =
-    if state.config.run_server:
-      self.remote_closed_margin
-    else:
-      self.remote_opened_margin
+    # if state.config.run_server:
+    #   self.remote_closed_margin
+    # else:
+    self.remote_opened_margin
 
   proc new_level_margin(): int =
     int(
@@ -195,6 +200,12 @@ gdobj Settings of PanelContainer:
     elif name == "ToolbarSizeDown" and state.config.toolbar_size > 20:
       state.config_value.value:
         toolbar_size = state.config.toolbar_size - 5
+    elif name == "Connect" and not ?state.config.connect_address and
+        ?self.server_address.text:
+      state.config_value.value:
+        connect_address = self.server_address.text
+      state.pop_flags SettingsFocused, SettingsVisible
+      state.push_flag NeedsRestart
 
     self.update_values()
 

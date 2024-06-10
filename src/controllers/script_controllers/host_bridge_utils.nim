@@ -128,6 +128,8 @@ macro bridged_from_vm(
         `module_name`,
         `proc_impl_name`,
         proc(a {.inject.}: VmArgs) {.gcsafe.} =
+          log_scope:
+            topics = "scripting"
           debug "calling routine", name = `proc_name`
           try:
             `call`
