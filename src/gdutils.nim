@@ -1,6 +1,7 @@
 import std/[strformat]
 import pkg/[godot]
-import godotapi/[node, scene_tree, voxel_buffer, canvas_item, control]
+import
+  godotapi/[node, scene_tree, voxel_buffer, canvas_item, control, option_button]
 import core, models/[states]
 export strformat.`&`, states, types
 
@@ -74,3 +75,10 @@ proc unghost*(self: Control) =
   self.set_mouse_filter_recursive(MOUSE_FILTER_PASS)
   self.mouse_filter = MOUSE_FILTER_STOP
   self.modulate = solid_alpha
+
+proc select*(self: OptionButton, text: string): int {.discardable.} =
+  for i in 0 ..< self.get_item_count:
+    if self.get_item_text(i) == text:
+      self.select(i)
+      return i
+  result = -1

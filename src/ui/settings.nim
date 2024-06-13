@@ -1,11 +1,11 @@
-import std/[algorithm, math]
+import std/[algorithm, math, os]
 import
   godotapi/[
     panel_container, option_button, line_edit, margin_container, tween,
     input_event, scene_tree
   ]
 import godot
-import core, gdutils, models/colors
+import core, gdutils, models/[colors, serializers]
 
 type WindowState = enum
   None
@@ -17,10 +17,13 @@ const transition = TRANS_EXPO
 const check = " ✓ "
 const blank = "   "
 
+# state = GameState.init
+# state.push_flag SettingsVisible
+
 gdobj Settings of PanelContainer:
   var
-    environments, color: OptionButton
-    megapixels, font_size, toolbar_size, server_address: LineEdit
+    environments, colors, levels: OptionButton
+    megapixels, font_size, toolbar_size, server_address, level_name: LineEdit
     megapixels_up, megapixels_down, font_size_up, font_size_down,
       toolbar_size_up, toolbar_size_down, switch_level, full_screen, run_server,
       connect, close, open, save, cancel: Button
@@ -38,16 +41,38 @@ gdobj Settings of PanelContainer:
     self.font_size.text = $state.config.font_size
     self.toolbar_size.text = $int(state.config.toolbar_size)
     self.full_screen.text = if state.config.full_screen: check else: blank
-    # self.level.text = state.config.level
+    self.environments.select(state.config.environment)
+    self.levels.select(state.config.level)
+
+    if ?state.config.connect_address:
+      self.server_address.text = state.config.connect_address
+      self.server_address.editable = false
+      self.connect.text = "Disconnect"
+    else:
+      self.server_address.editable = true
+      self.connect.text = "Connect"
+
+  proc update_level_list() =
+    self.levels.clear()
+    self.levels.add_item("New...")
+    for file in walk_dirs(state.config.world_dir / "*"):
+      let world = file.split_file.name
+      if world != "backups":
+        self.levels.add_item(world)
+
+    # for level in state.config.levels:
+    #   self.level.add_item(level)
 
   method ready*() =
     with self:
       environments = find("Environments", OptionButton)
-      color = find("PlayerColor", OptionButton)
+      colors = find("PlayerColors", OptionButton)
+      levels = find("Levels", OptionButton)
       megapixels = find("Megapixels", LineEdit)
       font_size = find("FontSize", LineEdit)
       toolbar_size = find("ToolbarSize", LineEdit)
       server_address = find("ServerAddress", LineEdit)
+      level_name = find("LevelName", LineEdit)
       megapixels_up = find("MegapixelsUp", Button)
       megapixels_down = find("MegapixelsDown", Button)
       font_size_up = find("FontSizeUp", Button)
@@ -79,7 +104,7 @@ gdobj Settings of PanelContainer:
 
     for color in Colors:
       if color != eraser:
-        self.color.add_item($color)
+        self.colors.add_item($color)
 
     for button in [
       self.megapixels_up, self.megapixels_down, self.font_size_up,
@@ -89,24 +114,23 @@ gdobj Settings of PanelContainer:
       self.bind_signal(button, "button_up", button.name)
       self.bind_signal(button, "button_down", button.name)
 
-    for option_button in [self.environments, self.color]:
+    for option_button in [self.environments, self.colors, self.levels]:
       self.bind_signal(option_button, "item_selected", option_button.name)
 
     self.bind_signal(self.connect, "pressed", "Connect")
     self.bind_signal(self.open, ("pressed", "opened"))
     self.bind_signal(self.close, ("pressed", "closed"))
     self.bind_signal(self.cancel, ("pressed", "cancelled"))
+    self.bind_signal(self.save, "pressed", self.save.name)
 
     for button in [self.full_screen, self.run_server]:
       self.bind_signal(button, ("pressed", "toggled"), button, button.text)
 
-    for line_edit in [self.megapixels, self.font_size, self.toolbar_size]:
-      self.bind_signal(line_edit, "text_changed", line_edit.name)
-      self.bind_signal(line_edit, "text_entered", line_edit.name)
-      self.bind_signal(line_edit, "focus_exited", line_edit.name)
+    self.bind_signal(self.level_name, "text_entered", self.level_name.name)
 
     state.nodes.game.bind_signal(self, "gui_input", self.name)
 
+    self.update_level_list()
     self.update_values()
 
     state.config_value.changes:
@@ -143,10 +167,11 @@ gdobj Settings of PanelContainer:
     -int(self.remote_container.rect_size.y + float(self.separation)) + 15
 
   proc expanded_margin(): int =
-    # if state.config.run_server:
-    #   self.remote_closed_margin
-    # else:
-    self.remote_opened_margin
+    result =
+      if ?state.config.listen_address:
+        self.remote_closed_margin
+      else:
+        self.remote_opened_margin
 
   proc new_level_margin(): int =
     int(
@@ -155,7 +180,8 @@ gdobj Settings of PanelContainer:
     )
 
   proc collapsed_new_level_margin(): int =
-    int(float(self.collapsed_margin) - self.new_level_container.rect_size.y) -
+    result =
+      int(float(self.collapsed_margin) - self.new_level_container.rect_size.y) -
       self.separation
 
   proc expanded_new_level_margin(): int =
@@ -206,6 +232,15 @@ gdobj Settings of PanelContainer:
         connect_address = self.server_address.text
       state.pop_flags SettingsFocused, SettingsVisible
       state.push_flag NeedsRestart
+    elif name == "Connect" and self.connect.text == "Disconnect":
+      state.config_value.value:
+        connect_address = ""
+      state.pop_flags SettingsFocused, SettingsVisible
+      state.push_flag NeedsRestart
+    elif name == "Save":
+      if is_valid_file_name(self.level_name.text):
+        change_loaded_level(self.level_name.text, state.config.world)
+        state.pop_flag SettingsVisible
 
     self.update_values()
 
@@ -251,6 +286,8 @@ gdobj Settings of PanelContainer:
     self.resize_y(self.margin_y, end_margin)
 
   proc open_window() =
+    self.update_level_list()
+    self.update_values()
     self.state = Opened
     self.window.visible = true
     self.action_steps =
@@ -267,19 +304,40 @@ gdobj Settings of PanelContainer:
       ]
 
   proc close_window() =
-    self.state = Closed
     self.action_steps =
-      @[
-        proc() =
-          self.resize_y self.collapsed_margin()
-        ,
-        proc() =
-          self.resize(0.0, 1.0, node = self.window, property = "anchor_left")
-        ,
-        proc() =
-          self.window.opacity = 0.0
-          self.window.visible = false
-      ]
+      if self.state != NewLevel:
+        @[
+          proc() =
+            self.resize_y self.collapsed_margin()
+          ,
+          proc() =
+            self.resize(0.0, 1.0, node = self.window, property = "anchor_left")
+          ,
+          proc() =
+            self.window.opacity = 0.0
+            self.window.visible = false
+        ]
+      else:
+        @[
+          proc() =
+            self.resize_y(
+              self.expanded_new_level_margin, self.collapsed_new_level_margin
+            )
+          ,
+          proc() =
+            self.new_level_container.visible = false
+            self.main_container.add_constant_override(
+              "margin_bottom", self.collapsed_margin
+            )
+          ,
+          proc() =
+            self.resize(0.0, 1.0, node = self.window, property = "anchor_left")
+          ,
+          proc() =
+            self.window.opacity = 0.0
+            self.window.visible = false
+        ]
+    self.state = Closed
 
   method on_closed() =
     state.pop_flag SettingsVisible
@@ -288,6 +346,7 @@ gdobj Settings of PanelContainer:
     state.push_flag SettingsVisible
 
   method on_cancelled() =
+    self.update_values()
     self.state = Opened
     self.action_steps =
       @[
@@ -298,10 +357,16 @@ gdobj Settings of PanelContainer:
         ,
         proc() =
           self.new_level_container.visible = false
+          self.main_container.add_constant_override(
+            "margin_bottom", self.collapsed_margin
+          )
+        ,
+        proc() =
           self.resize_y(self.collapsed_margin, self.expanded_margin)
       ]
 
   proc show_new_level() =
+    self.level_name.text = ""
     self.new_level_container.visible = false
     self.state = NewLevel
     self.action_steps =
@@ -311,9 +376,16 @@ gdobj Settings of PanelContainer:
         ,
         proc() =
           self.new_level_container.visible = true
+          self.level_name.grab_focus()
+          self.main_container.add_constant_override(
+            "margin_bottom", self.collapsed_new_level_margin
+          )
+        ,
+        proc() =
           self.resize_y(
             self.collapsed_new_level_margin, self.expanded_new_level_margin
           )
+
       ]
 
   method on_button_up*(name: string) =
@@ -332,7 +404,6 @@ gdobj Settings of PanelContainer:
 
     if button.name == "FullScreen":
       state.config_value.value:
-        echo \"full screen: {enable}"
         full_screen = enable
     if button.name == "RunServer":
       state.config_value.value:
@@ -350,19 +421,17 @@ gdobj Settings of PanelContainer:
     if name == "Environments":
       state.config_value.value:
         environment = self.environments.get_item_text(index)
-
-  method on_text_changed*(text, name: string) =
-    echo \"changed {name}: {text}"
+        environment_override = ""
+    elif name == "Levels":
+      if self.levels.text == "New...":
+        self.show_new_level()
+      else:
+        change_loaded_level(self.levels.text, state.config.world)
+        state.pop_flag SettingsVisible
 
   method on_text_entered*(text, name: string) =
-    echo \"entered {name}: {text}"
-    if name == "Level":
-      self.on_pressed("SwitchLevel")
-
-    self.update_values()
-
-  method on_focus_exited*(name: string) =
-    self.on_text_entered(find(name, LineEdit).text, name)
+    if name == "LevelName":
+      self.on_pressed("Save")
 
   method process*(delta: float) =
     let now = get_mono_time()
@@ -384,5 +453,8 @@ gdobj Settings of PanelContainer:
         event.is_action_pressed("ui_cancel"):
       if not (event of InputEventJoypadButton) or
           CommandMode notin state.local_flags:
-        state.pop_flag SettingsVisible
+        if self.state == NewLevel:
+          self.on_cancelled()
+        else:
+          state.pop_flag SettingsVisible
         self.get_tree().set_input_as_handled()

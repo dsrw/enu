@@ -25,14 +25,6 @@ const savable_flags = {
   ConsoleVisible, MouseCaptured, Flying, God, AltWalkSpeed, AltFlySpeed
 }
 
-type SavedState = object
-  transform: Transform
-  rotation: float
-  flags: set[LocalStateFlags]
-  restarting: bool
-  connect_address: string
-
-var saved_state {.threadvar.}: SavedState
 var environment_cache {.threadvar.}: Table[string, Environment]
 
 gdobj Game of Node:
@@ -95,6 +87,7 @@ gdobj Game of Node:
       state.push_flag SceneReady
 
   proc rescale*() =
+    warn "rescale", config = state.config
     let vp = self.get_viewport().size
     let megapixels =
       if ?state.config.megapixels_override:
@@ -107,9 +100,7 @@ gdobj Game of Node:
     self.scaled_viewport.get_texture.flags =
       if megapixels >= 1.0: FLAG_FILTER else: 0
 
-    echo \"full screen: {is_window_fullscreen()} maximizied: {is_window_maximized()}"
-
-    logger("info", \"Rescaled to {self.scaled_viewport.size}")
+    info "Rescaled viewport", size = self.scaled_viewport.size
 
   method notification*(what: int) =
     if what == main_loop.NOTIFICATION_WM_QUIT_REQUEST:
@@ -215,7 +206,8 @@ gdobj Game of Node:
       mouse_sensitivity = uc.mouse_sensitivity ||= 5.0
       gamepad_sensitivity = uc.gamepad_sensitivity ||= 2.5
       invert_gamepad_y_axis = uc.invert_gamepad_y_axis ||= false
-      environment = "default"
+      environment = uc.environment ||= "default"
+      megapixels_override = environments[value.environment]
 
     state.set_flag(God, uc.god_mode ||= false)
 
@@ -291,6 +283,25 @@ gdobj Game of Node:
       else:
         warn "Couldn't focus control", name
 
+  method load_environment(environment: string) =
+    let env =
+      state.nodes.game.find_node("Level").get_node("WorldEnvironment") as
+      WorldEnvironment
+    if environment notin environment_cache:
+      let res = \"res://environments/{environment}.tres"
+
+      var environment_res: Environment = nil
+      if environment != "none":
+        environment_res = load(res) as Environment
+        if not ?environment_res:
+          logger("err", \"Environment {environment} not found")
+          return
+      environment_cache[environment] = environment_res
+    env.environment = environment_cache[environment]
+    state.config_value.value:
+      megapixels_override = environments[environment]
+    info "Changed game mode", environment
+
   method ready*() =
     state.nodes.data = state.nodes.game.find_node("Level").get_node("data")
     assert not state.nodes.data.is_nil
@@ -301,8 +312,9 @@ gdobj Game of Node:
     self.bind_signals(self.get_tree(), "global_menu_action")
     assert not self.scaled_viewport.is_nil
     self.get_tree().auto_accept_quit = false
-    self.set_font_size state.config.font_size
-
+    self.set_font_size(state.config.font_size)
+    self.load_environment(state.config.environment)
+    info "config", config = state.config
     self.reticle = self.find_node("Reticle").as(Control)
     self.stats = self.find_node("stats").as(Label)
     self.stats.visible = state.config.show_stats
@@ -310,24 +322,14 @@ gdobj Game of Node:
     state.config_value.changes:
       if change.item.full_screen != state.config.full_screen:
         set_window_fullscreen state.config.full_screen
-      if change.item.environment != state.config.environment:
+      if change.item.environment != state.config.environment or
+          change.item.environment_override != state.config.environment_override:
         let env =
-          state.nodes.game.find_node("Level").get_node("WorldEnvironment") as
-          WorldEnvironment
-        if state.config.environment notin environment_cache:
-          let res = \"res://environments/{state.config.environment}.tres"
-
-          var environment: Environment = nil
-          if state.config.environment != "none":
-            environment = load(res) as Environment
-            if not ?environment:
-              logger("err", \"Environment {state.config.environment} not found")
-              return
-          environment_cache[state.config.environment] = environment
-        env.environment = environment_cache[state.config.environment]
-        state.config_value.value:
-          megapixels_override = environments[state.config.environment]
-        logger("info", \"Changed game mode to {state.config.environment}")
+          if ?state.config.environment_override:
+            state.config.environment_override
+          else:
+            state.config.environment
+        self.load_environment(env)
 
       if change.item.megapixels != state.config.megapixels:
         state.config_value.value:

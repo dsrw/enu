@@ -58,7 +58,7 @@ const action_colors* = [
   green: col"14f707",
   black: col"000000",
   white: col"d9eed8",
-  brown: col"14f707"
+  brown: col"3f302b"
 ]
 
 proc action_index*(self: Color): Colors =

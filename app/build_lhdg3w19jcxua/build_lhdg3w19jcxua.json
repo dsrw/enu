@@ -1,0 +1,18 @@
+    {
+      "id": "build_lhdg3w19jcxua",
+      "start_transform": {
+        "basis": [
+          [1.0, 0.0, 0.0],
+      [0.0, 1.0, 0.0],
+      [0.0, 0.0, 1.0]
+        ],
+        "origin": [-1.0, 0.0, -6.0]
+      },
+      "start_color": "black",
+      "edits": {
+        "build_lhdg3w19jcxua": [
+      [[1.0, 2.0, 1.0], [0, "blue"]],
+      [[0.0, 25.0, 0.0], [0, ""]]
+    ]
+      }
+    }

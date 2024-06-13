@@ -201,6 +201,7 @@ type
     megapixels*: float
     megapixels_override*: float
     environment*: string
+    environment_override*: string
     world_dir*: string
     level_dir*: string
     data_dir*: string
@@ -228,6 +229,7 @@ type
     toolbar_size*: Option[float]
     world*: Option[string]
     level*: Option[string]
+    environment*: Option[string]
     show_stats*: Option[bool]
     god_mode*: Option[bool]
     megapixels*: Option[float]
@@ -300,6 +302,14 @@ type
     last_exception*: ref Exception
 
   NodeController* = ref object
+
+  SavedState* = object
+    transform*: Transform
+    rotation*: float
+    flags*: set[LocalStateFlags]
+    restarting*: bool
+    connect_address*: string
+    error_message*: string
 
 proc from_flatty*[N: NimGodotObject](s: string, i: var int, n: N) =
   discard

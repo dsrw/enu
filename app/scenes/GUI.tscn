@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=2]
+[gd_scene load_steps=16 format=2]
 
 [ext_resource path="res://components/Editor.tscn" type="PackedScene" id=1]
 [ext_resource path="res://components/Console.tscn" type="PackedScene" id=2]
@@ -14,22 +14,6 @@
 [ext_resource path="res://components/Settings.tscn" type="PackedScene" id=12]
 
 [sub_resource type="ButtonGroup" id=1]
-
-[sub_resource type="StyleBoxFlat" id=6]
-resource_local_to_scene = true
-content_margin_left = 20.0
-content_margin_right = 20.0
-content_margin_top = 20.0
-content_margin_bottom = 20.0
-bg_color = Color( 0.0784314, 0.0117647, 0.113725, 1 )
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id=8]
 bg_color = Color( 0.6, 0.6, 0.6, 0 )
@@ -117,19 +101,15 @@ mouse_filter = 2
 columns = 2
 
 [node name="Label" type="Label" parent="CenterContainer"]
-margin_right = 1042.0
-margin_bottom = 521.0
+margin_right = 1916.0
+margin_bottom = 14.0
 size_flags_horizontal = 3
 size_flags_vertical = 1
 
 [node name="Settings" parent="CenterContainer" instance=ExtResource( 12 )]
-margin_left = 1046.0
-margin_top = 0.0
+margin_left = 1920.0
 margin_right = 1920.0
-margin_bottom = 521.0
-
-[node name="Window" parent="CenterContainer/Settings" index="1"]
-custom_styles/panel = SubResource( 6 )
+margin_bottom = 0.0
 
 [node name="LeftPanel" type="MarginContainer" parent="."]
 anchor_right = 0.5

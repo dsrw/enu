@@ -222,7 +222,7 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
   worker.init_interpreter("")
   worker.bridge_to_vm
 
-  if Server in state.local_flags:
+  let load_level = proc() =
     var level_dir = state.config.level_dir
     player.script_ctx.interpreter = worker.interpreter
     worker.load_script_and_dependents(player)
@@ -244,8 +244,11 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
           level_dir = change.item.level_dir
           if level_dir != "":
             worker.load_level(level_dir)
+
+  if Server in state.local_flags:
+    load_level()
   else:
-    var timeout_at = get_mono_time() + 30.seconds
+    var timeout_at = get_mono_time() + 10.seconds
     var connected = false
     while not connected and get_mono_time() < timeout_at:
       try:
@@ -253,12 +256,18 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
         connected = true
       except ConnectionError:
         discard
-    if not connected:
-      fail \"Unable to connect to server at {connect_address}"
+
     state.pop_flag(Connecting)
     state.units.add player
     player.script_ctx.interpreter = worker.interpreter
-    worker.load_script_and_dependents(player)
+    if not connected:
+      state.err \"Unable to connect to server at {connect_address}"
+      state.config_value.value:
+        connect_address = ""
+      state.push_flag Server
+      load_level()
+    else:
+      worker.load_script_and_dependents(player)
 
   var sign = Sign.init(
     "",
@@ -277,6 +286,8 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
   sign.local_flags += Hide
 
   var running = true
+  if NeedsRestart in state.local_flags:
+    running = false
 
   state.local_flags.changes:
     if Quitting.added:
@@ -286,12 +297,10 @@ proc worker_thread(params: (ZenContext, GameState)) {.gcsafe.} =
     elif NeedsRestart.added:
       running = false
 
-  # var user_config = UserConfig.init()
   state.config_value.changes:
     if added:
       let uc = state.config.build_user_config
       save_user_config(uc)
-  #   for field in
 
   const max_time = (1.0 / 120.0).seconds
   const min_time = (1.0 / 120.0).seconds

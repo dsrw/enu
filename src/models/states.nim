@@ -124,7 +124,7 @@ proc info*(self: GameState, args: varargs[string, `$`]) =
   logger("info", args.join)
 
 proc err*(self: GameState, args: varargs[string, `$`]) =
-  logger "err", args.join
+  logger("err", \"[color=#FF0000]{args.join}[/color]")
 
 proc init*(_: type GameState): GameState =
   let flags = {SyncLocal}

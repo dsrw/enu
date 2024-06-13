@@ -6,8 +6,8 @@
 [node name="Settings" type="MarginContainer"]
 margin_left = 20.0
 margin_top = 20.0
-margin_right = 76.0
-margin_bottom = 58.0
+margin_right = 894.0
+margin_bottom = 541.0
 theme = ExtResource( 1 )
 script = ExtResource( 2 )
 
@@ -43,6 +43,8 @@ margin_right = 874.0
 margin_bottom = 521.0
 rect_clip_content = true
 mouse_filter = 1
+size_flags_horizontal = 0
+size_flags_vertical = 0
 
 [node name="MainContainer" type="MarginContainer" parent="Window"]
 margin_left = 20.0
@@ -93,7 +95,7 @@ size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.51
 text = "Level Name"
 
-[node name="LineEdit" type="LineEdit" parent="Window/MainContainer/RowContainer/NewLevelContainer/HBoxContainer"]
+[node name="LevelName" type="LineEdit" parent="Window/MainContainer/RowContainer/NewLevelContainer/HBoxContainer"]
 margin_left = 398.0
 margin_right = 1288.0
 margin_bottom = 82.0
@@ -139,7 +141,7 @@ margin_right = 160.0
 margin_bottom = 37.0
 text = "Level"
 
-[node name="Level" type="OptionButton" parent="Window/MainContainer/RowContainer/SettingsContainer"]
+[node name="Levels" type="OptionButton" parent="Window/MainContainer/RowContainer/SettingsContainer"]
 margin_left = 180.0
 margin_right = 397.0
 margin_bottom = 37.0
@@ -150,7 +152,7 @@ margin_right = 587.0
 margin_bottom = 37.0
 text = "  Player Color"
 
-[node name="PlayerColor" type="OptionButton" parent="Window/MainContainer/RowContainer/SettingsContainer"]
+[node name="PlayerColors" type="OptionButton" parent="Window/MainContainer/RowContainer/SettingsContainer"]
 margin_left = 607.0
 margin_right = 824.0
 margin_bottom = 37.0
