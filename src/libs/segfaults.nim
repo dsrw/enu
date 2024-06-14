@@ -1,4 +1,4 @@
-# adapted from https://github.com/nim-lang/Nim/blob/v1.6.14/lib/pure/segfaults.nim 
+# adapted from https://github.com/nim-lang/Nim/blob/v1.6.14/lib/pure/segfaults.nim
 # to handle SEGV_ACCERR. Needed for arm64
 
 #
@@ -27,7 +27,7 @@ se.name = "NilAccessDefect"
 se.msg = "Could not access value because it is nil."
 
 when defined(windows):
-  include "../system/ansi_c"
+  include "system/ansi_c"
 
   import winlean
 
