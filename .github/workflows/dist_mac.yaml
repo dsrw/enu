@@ -45,9 +45,9 @@ jobs:
         run: brew install nim scons yasm
       - name: Install nim
         run: |
-          curl -LO https://github.com/nim-lang/nightlies/releases/download/2023-12-15-version-2-0-c4c44d10df8a14204a75c34e499def200589cb7c/nim-2.0.2-macosx_x64.tar.xz
-          tar xzf nim-2.0.2-macosx_x64.tar.xz
-          echo "$(pwd)/nim-2.0.2/bin" >> $GITHUB_PATH
+          curl -LO https://github.com/nim-lang/nightlies/releases/download/2024-03-28-version-2-0-b47747d31844c6bd9af4322efe55e24fefea544c/nim-2.0.4-macosx_x64.tar.xz
+          tar xzf nim-2.0.4-macosx_x64.tar.xz
+          echo "$(pwd)/nim-2.0.4/bin" >> $GITHUB_PATH
       - name: Update path
         run: echo "$HOME/.nimble/bin" >> $GITHUB_PATH
       - name: Install nimble deps
