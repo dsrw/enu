@@ -4,7 +4,7 @@ import
     resource_loader
   ]
 import godot
-import ".."/[core, globals]
+import ".."/[core, gdutils]
 
 gdobj PreviewMaker of Viewport:
   var

@@ -7,7 +7,25 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Client: Build and Debug",
+      "name": "Open bundle",
+      "program": "${workspaceFolder}/dist/Enu.app",
+      "env": {
+        "ENU_METRICS_PORT": "8001"
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}/app",
+      "initCommands": [
+        "script import shutil;sys.path.append(os.path.join(shutil.which('nim'), '../../tools/debug'))",
+        "command script import nimlldb"
+      ],
+      "presentation": {
+        "clear": true
+      }
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Client: Build & Debug",
       "program": "${workspaceFolder}/vendor/godot/bin/godot.osx.opt.tools.arm64",
       "env": {
         "ENU_CONNECT_ADDRESS": "127.0.0.1",
@@ -30,7 +48,7 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Host: Build and Debug",
+      "name": "Host: Build & Debug",
       "program": "${workspaceFolder}/vendor/godot/bin/godot.osx.opt.tools.arm64",
       "env": {
         "ENU_LISTEN_ADDRESS": "0.0.0.0",
@@ -115,6 +133,25 @@
     {
       "type": "lldb",
       "request": "launch",
+      "name": "Enu: Build & Debug",
+      "program": "${workspaceFolder}/vendor/godot/bin/godot.osx.opt.tools.arm64",
+      "windows": {
+        "program": "${workspaceFolder}/vendor/godot/bin/godot.windows.opt.tools.64"
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}/app",
+      "preLaunchTask": "Build enu",
+      "initCommands": [
+        "script import shutil;sys.path.append(os.path.join(shutil.which('nim'), '../../tools/debug'))",
+        "command script import nimlldb"
+      ],
+      "presentation": {
+        "clear": true // <-- this line
+      }
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
       "name": "Debug Current file",
       "program": "${relativeFileDirname}/${fileBasenameNoExtension}.out",
       "args": [],
@@ -129,7 +166,7 @@
       "type": "lldb",
       "request": "attach",
       "name": "Attatch to Enu",
-      "program": "${workspaceFolder}/vendor/godot/bin/godot.osx.opt.tools.arm64",
+      "program": "${workspaceFolder}/dist/Enu.app",
       "windows": {
         "program": "${workspaceFolder}/vendor/godot/bin/godot.windows.opt.tools.64"
       },

@@ -21,12 +21,14 @@ type
     BlockTargetVisible
     ReticleVisible
     DocsVisible
+    SettingsVisible
     MouseCaptured
     PrimaryDown
     SecondaryDown
     EditorFocused
     ConsoleFocused
     DocsFocused
+    SettingsFocused
     Playing
     Flying
     God
@@ -38,6 +40,7 @@ type
     ResettingVM
     NeedsRestart
     Connecting
+    SceneReady
 
   GlobalStateFlags* = enum
     LoadingLevel
@@ -193,20 +196,23 @@ type
     font_size*: int
     world*: string
     level*: string
-    dock_icon_size*: float
+    toolbar_size*: float
     show_stats*: bool
-    mega_pixels*: float
+    megapixels*: float
+    megapixels_override*: float
     environment*: string
+    environment_override*: string
     world_dir*: string
     level_dir*: string
     data_dir*: string
     script_dir*: string
     scene*: string
     lib_dir*: string
-    start_full_screen*: bool
+    full_screen*: bool
     semicolon_as_colon*: bool
     listen_address*: string
     connect_address*: string
+    run_server*: bool
     player_color*: Color
     work_dir*: string
     walk_speed*: int
@@ -216,19 +222,20 @@ type
     mouse_sensitivity*: float
     gamepad_sensitivity*: float
     invert_gamepad_y_axis*: bool
+    screen_scale*: float
 
   UserConfig* = object
     font_size*: Option[int]
-    dock_icon_size*: Option[float]
+    toolbar_size*: Option[float]
     world*: Option[string]
     level*: Option[string]
+    environment*: Option[string]
     show_stats*: Option[bool]
     god_mode*: Option[bool]
-    mega_pixels*: Option[float]
-    start_full_screen*: Option[bool]
+    megapixels*: Option[float]
+    full_screen*: Option[bool]
     semicolon_as_colon*: Option[bool]
-    listen_address*: Option[string]
-    connect_address*: Option[string]
+    run_server*: Option[bool]
     player_color*: Option[colortypes.Color]
     walk_speed*: Option[int]
     fly_speed*: Option[int]
@@ -295,6 +302,14 @@ type
     last_exception*: ref Exception
 
   NodeController* = ref object
+
+  SavedState* = object
+    transform*: Transform
+    rotation*: float
+    flags*: set[LocalStateFlags]
+    restarting*: bool
+    connect_address*: string
+    error_message*: string
 
 proc from_flatty*[N: NimGodotObject](s: string, i: var int, n: N) =
   discard

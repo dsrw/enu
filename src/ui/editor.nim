@@ -4,9 +4,10 @@ import pkg/compiler/[lineinfos]
 import
   godotapi/[
     text_edit, scene_tree, node, input_event, global_constants, input_event_key,
-    style_box_flat, gd_os
+    style_box_flat, gd_os, tween, scene_tree_tween, property_tweener,
+    method_tweener
   ]
-import core, globals
+import core, gdutils
 import models except Color
 
 proc configure_highlighting*(self: TextEdit) =
@@ -22,6 +23,7 @@ gdobj Editor of TextEdit:
   var
     comment_color* {.gdExport.} = init_color(0.5, 0.5, 0.5)
     og_bg_color: Color
+    tween: SceneTreeTween
 
   proc indent_new_line() =
     let column = int self.cursor_get_column - 1
@@ -86,8 +88,19 @@ gdobj Editor of TextEdit:
       int self.cursor_get_line, int self.cursor_get_column
     )
 
+  method set_opacity*(opacity: float) {.gdexport.} =
+    self.opacity = opacity
+
+  method offset_x*(offset: float) {.gdexport.} =
+    let width = self.rect_size.x
+    self.rect_position = vec2(width * offset, self.rect_position.y)
+
+  method ghost_me*() {.gdexport.} =
+    self.ghost()
+
   method ready*() =
     self.bind_signals(self, "text_changed", "cursor_changed")
+    state.nodes.game.bind_signal(self, "gui_input", self.name)
     var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
     self.og_bg_color = stylebox.bg_color
 
@@ -101,11 +114,26 @@ gdobj Editor of TextEdit:
 
     var line_zid: ZID
     state.open_unit_value.changes:
-      if added:
-        let unit = change.item
+      if removed:
+        let unit = state.open_unit
         if unit.is_nil:
           self.release_focus()
-          self.visible = false
+          self.rect_position = vec2(0, 0)
+          if ?self.tween:
+            self.tween.kill
+          self.tween = self.get_tree.create_tween()
+          discard
+            self.tween
+            .tween_method(
+              self, "_offset_x", 0.0.to_variant, -1.0.to_variant,
+              animation_duration
+            )
+            .set_trans(TRANS_EXPO)
+            .set_ease(EASE_IN_OUT)
+          discard self.tween.tween_callback(
+            self, "set_visible", new_array(false.to_variant)
+          )
+
           state.player.open_code = ""
         else:
           line_zid = unit.current_line_value.changes:
@@ -116,14 +144,41 @@ gdobj Editor of TextEdit:
               else:
                 self.clear_executing_line()
           self.visible = true
+
+          # self.rect_position = vec2(-960, 0)
+
+          if change.item == nil:
+            self.opacity = 0.0
+            if ?self.tween:
+              self.tween.kill
+            self.tween = self.get_tree.create_tween()
+
+            discard self.tween.tween_callback(
+              self, "_offset_x", new_array(0.0.to_variant)
+            )
+            discard
+              self.tween.tween_property(self, "modulate:a", 1.0.to_variant, 0.0)
+            if CommandMode in state.local_flags:
+              discard self.tween.tween_callback(self, "_ghost_me")
+            discard
+              self.tween
+              .tween_method(
+                self, "_offset_x", -1.0.to_variant, 0.0.to_variant,
+                animation_duration
+              )
+              .set_trans(TRANS_EXPO)
+              .set_ease(EASE_IN_OUT)
+
+          # tween.interpolate_value(
+          #   0.0.as_variant, 0.2.as_variant, 0.0, 0.2, TRANS_EXPO, EASE_IN_OUT
+          # )
           self.text = state.open_unit.code.nim
           state.player.open_code = self.text
 
           if CommandMode in state.local_flags:
-            self.modulate = dimmed_alpha
+            self.ghost()
           else:
-            self.modulate = solid_alpha
-            self.grab_focus()
+            self.unghost()
           self.clear_errors()
           self.highlight_errors()
           let line = unit.current_line - 1
@@ -139,11 +194,16 @@ gdobj Editor of TextEdit:
         if EditorVisible in state.local_flags:
           state.open_unit.code = Code.init(self.text)
 
-          self.modulate = dimmed_alpha
+          self.ghost()
           self.release_focus
       elif CommandMode.removed:
         if EditorVisible in state.local_flags:
-          self.modulate = solid_alpha
+          self.unghost()
           self.grab_focus
 
     self.configure_highlighting()
+    # hide verticle scrollbar. Should be restyled and re-enabled in the future.
+    for child in self.get_children():
+      let o = child.as_object(Node) as VScrollBar
+      if ?o:
+        o.modulate = Color(r: 1.0, g: 1.0, b: 1.0, a: 0.0)

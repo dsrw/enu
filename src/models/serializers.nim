@@ -231,6 +231,12 @@ proc load_user_config*(dir = ""): UserConfig =
     let opt = Joptions(allow_missing_keys: true, allow_extra_keys: true)
     result.from_json(read_file(config_file).parse_json, opt)
 
+proc build_user_config*(config: Config): UserConfig =
+  for config_name, config_field in config.field_pairs:
+    for user_name, user_field in result.field_pairs:
+      when config_name == user_name:
+        user_field = some(config_field)
+
 proc save_user_config*(config: UserConfig) =
   let
     work_dir = state.config.work_dir
@@ -239,13 +245,9 @@ proc save_user_config*(config: UserConfig) =
 
 proc change_loaded_level*(level, world: string) =
   var config = state.config
-  var user_config = load_user_config()
   config.world = world
   config.level = level
   state.level_name = config.world & "/" & config.level
-  user_config.world = some(config.world)
-  user_config.level = some(config.level)
-  save_user_config(user_config)
   config.world_dir = join_path(config.work_dir, config.world)
   config.level_dir = join_path(config.world_dir, config.level)
   state.config = config

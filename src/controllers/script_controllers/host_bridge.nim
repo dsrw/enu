@@ -474,18 +474,21 @@ proc `open_sign=`(self: Unit, value: Sign) =
 # World bindings
 
 proc environment(_: PNode): string =
-  state.config.environment
+  if ?state.config.environment_override:
+    state.config.environment_override
+  else:
+    state.config.environment
 
 proc `environment=`(_: PNode, mode: string) =
   state.config_value.value:
-    environment = mode
+    environment_override = mode
 
-proc mega_pixels(_: PNode): float =
-  state.config.mega_pixels
+proc megapixels(_: PNode): float =
+  state.config.megapixels
 
-proc `mega_pixels=`(_: PNode, pixels: float) =
+proc `megapixels=`(_: PNode, pixels: float) =
   state.config_value.value:
-    mega_pixels = pixels
+    megapixels = pixels
 
 # Sign bindings
 
@@ -599,8 +602,7 @@ proc bridge_to_vm*(worker: Worker) =
 
   result.bridged_from_vm "players",
     playing, `playing=`, god, `god=`, flying, `flying=`, tool, `tool=`, coding,
-    `coding=`, running, `running=`, open_sign, `open_sign=`, environment,
-    `environment=`
+    `coding=`, running, `running=`, open_sign, `open_sign=`
 
   result.bridged_from_vm "worlds",
-    environment, `environment=`, mega_pixels, `mega_pixels=`
+    environment, `environment=`, megapixels, `megapixels=`

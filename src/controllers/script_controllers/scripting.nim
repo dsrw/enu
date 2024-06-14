@@ -34,7 +34,7 @@ proc script_error*(self: Worker, unit: Unit, e: ref VMQuit) =
   var msg = e.msg
   if ?e.parent:
     msg = e.parent.msg
-  logger("err", \"[color=#FF0000][url=unit://{unit.id}]{msg}[/url][/color]")
+  state.err(\"[url=unit://{unit.id}]{msg}[/url]")
   unit.local_flags += HighlightError
   unit.global_flags -= ScriptInitializing
   unit.ensure_visible

@@ -5,7 +5,7 @@ import
     node, voxel_terrain, voxel_mesher_blocky, voxel_tool, voxel_library,
     shader_material, resource_loader, packed_scene, ray_cast
   ]
-import core, models/[units, builds, colors], globals
+import core, models/[units, builds, colors], gdutils
 import ./queries
 
 const

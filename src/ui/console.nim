@@ -1,19 +1,56 @@
 import
   godotapi/[
     text_edit, scene_tree, node, input_event, input_event_key, rich_text_label,
-    global_constants
+    global_constants, scene_tree_tween, tween, property_tweener, method_tweener
   ]
 import godot
 import std/strutils
-import core, globals
+import core, gdutils
 
 gdobj Console of RichTextLabel:
-  var default_mouse_filter: int64
+  var
+    default_mouse_filter: int64
+    tween: SceneTreeTween
+
+  method offset_x*(offset: float) {.gdexport.} =
+    let width = self.rect_size.x
+    self.rect_position = vec2(width * offset, self.rect_position.y)
 
   proc init*() =
     state.local_flags.changes:
-      self.visible = ConsoleVisible in state.local_flags
-
+      if ConsoleVisible.added:
+        if ?self.tween:
+          self.tween.kill
+        self.tween = self.get_tree.create_tween
+        self.visible = true
+        discard
+          self.tween
+          .tween_method(
+            self, "_offset_x", -1.0.to_variant, 0.0.to_variant,
+            animation_duration
+          )
+          .set_trans(TRANS_EXPO)
+          .set_ease(EASE_IN_OUT)
+      elif ConsoleVisible.removed:
+        if ?self.tween:
+          self.tween.kill
+        self.tween = self.get_tree.create_tween
+        self.rect_position = vec2(0.0, self.rect_position.y)
+        discard
+          self.tween
+          .tween_method(
+            self, "_offset_x", 0.0.to_variant, -1.0.to_variant,
+            animation_duration
+          )
+          .set_trans(TRANS_EXPO)
+          .set_ease(EASE_IN_OUT)
+        discard self.tween.tween_callback(
+          self, "set_visible", new_array(false.to_variant)
+        )
+      elif CommandMode.added:
+        self.ghost()
+      elif CommandMode.removed:
+        self.unghost()
     state.console.log.changes:
       if added:
         discard self.append_bbcode(change.item)
@@ -32,3 +69,27 @@ gdobj Console of RichTextLabel:
         self.mouse_filter = self.default_mouse_filter
 
     state.nodes.game.bind_signals(self, "meta_clicked")
+    state.nodes.game.bind_signal(self, "gui_input", self.name)
+
+    if ConsoleVisible notin state.local_flags:
+      let tween = self.get_tree.create_tween
+      self.opacity = 0.0
+      discard tween.tween_property(
+        self, "rect_position:y", (self.rect_size.y).to_variant, 0.0
+      )
+      discard
+        tween.tween_callback(self, "set_visible", new_array(false.to_variant))
+      discard tween.tween_property(self, "modulate:a", 1.0.to_variant, 0.0)
+
+    for child in self.get_children():
+      let o = child.as_object(Node) as VScrollBar
+      if ?o:
+        o.modulate = Color(r: 1.0, g: 1.0, b: 1.0, a: 0.0)
+
+  method unhandled_input*(event: InputEvent) =
+    if ConsoleFocused in state.local_flags and
+        event.is_action_pressed("ui_cancel"):
+      if not (event of InputEventJoypadButton) or
+          CommandMode notin state.local_flags:
+        state.pop_flags ConsoleVisible, ConsoleFocused
+        self.get_tree().set_input_as_handled()

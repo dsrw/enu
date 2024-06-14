@@ -1,7 +1,7 @@
 import godotapi/[h_box_container, scene_tree, button, image_texture]
 import pkg/[godot]
 import core
-import globals, ui/preview_maker
+import gdutils, ui/preview_maker
 
 type PreviewResult = tuple[color: string, preview: Image]
 

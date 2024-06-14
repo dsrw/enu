@@ -8,7 +8,7 @@ import
     viewport, camera, global_constants, collision_shape, kinematic_collision,
     packed_scene, resource_loader
   ]
-import core, globals, nodes/helpers
+import core, gdutils, nodes/helpers
 import aim_target, models
 
 proc handle_collisions(
@@ -84,11 +84,16 @@ gdobj PlayerNode of KinematicBody:
     self.camera_rig.rotation = r
 
   proc get_input_direction(): Vector3 =
-    vec3(
-      get_action_strength("move_right") - get_action_strength("move_left"),
-      get_action_strength("jump") - get_action_strength("crouch"),
-      get_action_strength("move_back") - get_action_strength("move_front"),
-    )
+    if CommandMode in state.local_flags or
+        (
+          {EditorFocused, ConsoleFocused, DocsFocused, SettingsFocused} -
+          state.local_flags.value
+        ).card == 4:
+      result = vec3(
+        get_action_strength("move_right") - get_action_strength("move_left"),
+        get_action_strength("jump") - get_action_strength("crouch"),
+        get_action_strength("move_back") - get_action_strength("move_front"),
+      )
 
   proc calculate_velocity(
       velocity_current: Vector3,

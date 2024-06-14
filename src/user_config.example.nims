@@ -1,5 +1,7 @@
 # --define:"chronicles_log_level=DEBUG"
-# --define:"chronicles_disabled_topics=networking,scripting,publishing"
+# --define:"chronicles_sinks=textlines[dynamic],json[file]"
+# --define:"chronicles_disabled_topics=verbose"
+# --define:"chronicles_line_numbers"
 # --define:"metrics"
 
 # --define:"zen_trace"

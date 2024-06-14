@@ -1,7 +1,7 @@
 import std/[strutils, wrapnils]
 import pkg/[godot]
 import godotapi/[sprite_3d, ray_cast, spatial]
-import globals, core, nodes/helpers, models
+import gdutils, core, nodes/helpers, models
 
 gdobj AimTarget of Sprite3D:
   var target_model: Model

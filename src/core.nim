@@ -2,18 +2,21 @@ import types
 export types
 
 import pkg/model_citizen/utils
-import std/[sequtils, strutils, sugar, macros, asyncfutures, importutils]
+import
+  std/[sequtils, strutils, sugar, macros, asyncfutures, importutils, typetraits]
 export utils, sequtils, strutils, sugar, importutils
 
 ### Globals ###
 
 const enu_version* = static_exec("git describe --tags HEAD")
 var state* {.threadvar.}: GameState
+var saved_state* {.threadvar.}: SavedState
+const animation_duration* = 0.3
 
 ### Sugar ###
 
 from sugar import dup, dump, collect
-import std/[with, sets, monotimes, tables]
+import std/[with, sets, tables]
 import std/times except seconds
 import pkg/[pretty, flatty]
 
@@ -142,15 +145,38 @@ proc wrap*[T](value, min, max: T): float =
 when not defined(no_godot):
   import pkg/godot
 
-  default_chronicles_stream.output.writer = proc(
-      logLevel: LogLevel, msg: LogOutputStr
-  ) {.gcsafe.} =
-    when defined(release):
-      godot.print msg
-    else:
-      echo msg
+  when default_chronicles_stream.outputs.tuple_len > 0:
+    default_chronicles_stream.outputs[0].writer = proc(
+        log_level: LogLevel, msg: LogOutputStr
+    ) {.gcsafe.} =
+      when defined(release):
+        godot.print msg
+      else:
+        if log_level >= INFO:
+          echo msg
+
+  when default_chronicles_stream.outputs.tuple_len > 1:
+    discard default_chronicles_stream.outputs[1].open(
+      \"logs/enu-{times.now().format(\"yyyyMMdd-HHmmss\")}.log", fm_append
+    )
 
 # misc
+
+proc resolve_level_name*(world, level: string, diff: int): string =
+  var level = level
+  let prefix = world & "-"
+  level.remove_prefix(prefix)
+  var og_num =
+    try:
+      level.parse_int
+    except ValueError:
+      1
+  let num = og_num + diff
+  result =
+    if diff < 0 and num < 1:
+      prefix & $og_num
+    else:
+      prefix & $num
 
 proc init*(_: type Future, T: type, proc_name = ""): Future[T] =
   return new_future[T](proc_name)
@@ -264,3 +290,21 @@ proc run_deferred*() =
   for fn in deferred:
     fn()
   deferred.set_len(0)
+
+const environments* = {
+  "default": 0.0,
+  "blue": 0.0,
+  "bright": 0.0,
+  "bw": 0.0,
+  "bw2": 0.0,
+  "bw3": 0.0,
+  "noir": 0.0,
+  "dream": 0.0,
+  "opposite": 0.0,
+  "none": 0.0,
+  "arcade": 0.1,
+  "gb": 0.02,
+  "gb2": 0.02,
+  "strange": 0.5,
+  "wild_imagination": 0.3
+}.to_table

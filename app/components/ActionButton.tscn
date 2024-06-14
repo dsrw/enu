@@ -35,11 +35,11 @@ margin_right = 596.0
 margin_bottom = 20.0
 rect_min_size = Vector2( 50, 50 )
 focus_mode = 0
+custom_constants/hseparation = 0
 custom_styles/hover = SubResource( 1 )
 custom_styles/pressed = SubResource( 2 )
 custom_styles/focus = SubResource( 1 )
 custom_styles/normal = SubResource( 1 )
-custom_constants/hseparation = 0
 toggle_mode = true
 shortcut_in_tooltip = false
 action_mode = 0
@@ -49,6 +49,3 @@ group = SubResource( 3 )
 icon = ExtResource( 1 )
 expand_icon = true
 script = ExtResource( 2 )
-__meta__ = {
-"_edit_use_anchors_": false
-}

@@ -1,6 +1,9 @@
 import std/[tables, strutils, sequtils, sets, sugar]
 import core, models/[colors]
 
+proc write_value*(w: var JsonWriter, self: set[LocalStateFlags]) =
+  write_value(w, self.to_seq)
+
 log_scope:
   topics = "state"
   ctx = Zen.thread_ctx.id
@@ -8,7 +11,7 @@ log_scope:
 # only one flag from the group is active at a time
 const groups =
   @[
-    {EditorFocused, ConsoleFocused, DocsFocused},
+    {EditorFocused, ConsoleFocused, DocsFocused, SettingsFocused},
     {ReticleVisible, BlockTargetVisible},
     {Playing, Flying}
   ]
@@ -37,7 +40,8 @@ proc resolve_flags(self: GameState) =
     for flag in groups[0]:
       result.excl(flag)
   else:
-    if EditorVisible in result or DocsVisible in result:
+    if EditorVisible in result or DocsVisible in result or
+        SettingsVisible in result:
       result.excl(MouseCaptured)
 
   if Playing in result:
@@ -66,7 +70,8 @@ proc replace_flag*(self: GameState, flag: LocalStateFlags) =
 
 proc push_flags*(self: GameState, flags: varargs[LocalStateFlags]) =
   for flag in flags:
-    if flag notin self.wants:
+    if flag notin self.local_flags and
+        (self.wants.len == 0 or self.wants[^1] != flag):
       self.wants += flag
   self.resolve_flags
 
@@ -120,7 +125,7 @@ proc info*(self: GameState, args: varargs[string, `$`]) =
   logger("info", args.join)
 
 proc err*(self: GameState, args: varargs[string, `$`]) =
-  logger "err", args.join
+  logger("err", \"[color=#FF0000]{args.join}[/color]")
 
 proc init*(_: type GameState): GameState =
   let flags = {SyncLocal}
@@ -157,6 +162,10 @@ proc init*(_: type GameState): GameState =
       self.push_flag DocsFocused
     elif DocsVisible.removed:
       self.pop_flag DocsFocused
+    elif SettingsVisible.added:
+      self.push_flag SettingsFocused
+    elif SettingsVisible.removed:
+      self.pop_flag SettingsFocused
 
   result = self
 

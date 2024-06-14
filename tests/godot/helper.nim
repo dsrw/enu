@@ -1,4 +1,4 @@
-import globals, os
+import gdutils, os
 
 proc echo(args: varargs[string, `$`]) =
   stdout.write "Enu: " & args.join() & "\n"

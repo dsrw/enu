@@ -5,7 +5,7 @@ import
     rich_text_label, scroll_container, text_edit, theme, dynamic_font,
     dynamic_font_data, style_box_flat, main_loop
   ]
-import core, globals, ui/editor
+import core, gdutils, ui/editor
 import models/colors except Color
 
 export scroll_container
@@ -50,7 +50,11 @@ gdobj MarkdownLabel of ScrollContainer:
     state.nodes.game.bind_signals(self.current_label, "meta_clicked")
 
   proc set_font_sizes() =
-    var size = if self.size > 0: self.size else: state.config.font_size
+    var size =
+      if self.size > 0:
+        self.size
+      else:
+        int(float(state.config.font_size.float) * state.config.screen_scale)
 
     self.local_default_font.size = size
     self.local_italic_font.size = size

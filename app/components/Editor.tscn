@@ -1,0 +1,30 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://components/TextEdit.gdns" type="Script" id=1]
+
+[sub_resource type="StyleBoxFlat" id=5]
+bg_color = Color( 0, 0, 0, 0.839216 )
+border_width_right = 2
+border_color = Color( 0.964706, 0.952941, 0.909804, 1 )
+
+[node name="Editor" type="TextEdit"]
+visible = false
+margin_right = 961.0
+margin_bottom = 1080.0
+size_flags_vertical = 3
+custom_colors/selection_color = Color( 0.207843, 0, 0.321569, 1 )
+custom_colors/executing_line_color = Color( 0.0392157, 0, 0.168627, 1 )
+custom_styles/read_only = SubResource( 5 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/normal = SubResource( 5 )
+custom_styles/completion = SubResource( 5 )
+indent_using_spaces = true
+always_draw_caret = true
+indent_size = 2
+syntax_highlighting = true
+show_line_numbers = true
+smooth_scrolling = true
+wrap_enabled = true
+caret_blink = true
+caret_moving_by_right_click = false
+script = ExtResource( 1 )
