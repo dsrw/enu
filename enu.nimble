@@ -111,15 +111,15 @@ proc copy_fonts =
       cp_file "SF-Pro-Display-Bold.otf", dest / "display-bold.otf"
       cp_file "SF-Pro-Display-BoldItalic.otf", dest / "display-bold-italic.otf"
   else:
-    with_dir "fonts/static":
-      let dest = "../../app/themes"
+    with_dir "fonts/Roboto Mono/static":
+      let dest = "../../../app/themes"
       cp_file "RobotoMono-Regular.ttf", dest / "mono.otf"
       cp_file "RobotoMono-Italic.ttf", dest / "mono-italic.otf"
       cp_file "RobotoMono-Bold.ttf", dest / "mono-bold.otf"
       cp_file "RobotoMono-BoldItalic.ttf", dest / "mono-bold-italic.otf"
 
-    with_dir "fonts":
-      let dest = "../app/themes"
+    with_dir "fonts/Roboto":
+      let dest = "../../app/themes"
       cp_file "Roboto-Regular.ttf", dest / "text.otf"
       cp_file "Roboto-Italic.ttf", dest / "text-italic.otf"
       cp_file "Roboto-Bold.ttf", dest / "text-bold.otf"
@@ -149,10 +149,10 @@ proc download_fonts =
       exec "hdiutil detach /Volumes/SFProFonts"
 
     else:
-      exec "curl -OJL \"https://fonts.google.com/download?family=Roboto\""
-      exec "curl -OJL \"https://fonts.google.com/download?family=Roboto%20Mono\""
+      exec "curl -OJL \"https://github.com/mobiledesres/Google-UI-fonts/blob/main/zip/Roboto.zip?raw=true\""
+      exec "curl -OJL \"https://github.com/mobiledesres/Google-UI-fonts/blob/main/zip/Roboto%20Mono.zip?raw=true\""
       exec "unzip Roboto.zip"
-      exec "unzip -o Roboto_Mono.zip"
+      exec "unzip -o Roboto%20Mono.zip"
 
 proc mingw_path: string =
   var pre, match: string
