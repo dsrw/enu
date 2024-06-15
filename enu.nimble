@@ -149,10 +149,10 @@ proc download_fonts =
       exec "hdiutil detach /Volumes/SFProFonts"
 
     else:
-      exec "curl -OJL \"https://github.com/mobiledesres/Google-UI-fonts/blob/main/zip/Roboto.zip?raw=true\""
-      exec "curl -OJL \"https://github.com/mobiledesres/Google-UI-fonts/blob/main/zip/Roboto%20Mono.zip?raw=true\""
+      exec "curl -o Roboto.zip \"https://github.com/mobiledesres/Google-UI-fonts/blob/main/zip/Roboto.zip?raw=true\""
+      exec "curl -o RobotoMono.zip \"https://github.com/mobiledesres/Google-UI-fonts/blob/main/zip/Roboto%20Mono.zip?raw=true\""
       exec "unzip Roboto.zip"
-      exec "unzip -o Roboto%20Mono.zip"
+      exec "unzip -o RobotoMono.zip"
 
 proc mingw_path: string =
   var pre, match: string
