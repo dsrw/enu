@@ -124,7 +124,8 @@ macro bridged_from_vm(
 
     result.add quote do:
       mixin implement_routine
-      `self`.interpreter.implement_routine "enu",
+      debug "implementing routine", name = `proc_name`
+      `self`.interpreter.implement_routine "*",
         `module_name`,
         `proc_impl_name`,
         proc(a {.inject.}: VmArgs) {.gcsafe.} =

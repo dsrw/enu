@@ -1,4 +1,5 @@
 import std/options
+import pkg/pretty
 import compiler/[syntaxes, reorder, vmdef, msgs]
 import compiler/passes {.all.}
 
@@ -142,6 +143,8 @@ proc resetModule*(i: Interpreter, moduleName: string) =
       iface.module.ast = nil
       break
 
+import std / posix
+
 proc loadModule*(
     i: Interpreter, fileName, code: string, ctx: var PContext
 ) {.gcsafe.} =
@@ -153,6 +156,8 @@ proc loadModule*(
     if iface.module != nil and iface.module.name.s == moduleName and
         fileName == toFullPath(i.graph.config, iface.module.info):
       module = iface.module
+      print "@@@@module ", iface.module.info
+      discard posix.raise SIGINT
       break
 
   if module.isNil:

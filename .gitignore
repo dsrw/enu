@@ -4,6 +4,8 @@
 !*.*
 !AppRun
 
+vendor/pcre
+
 *.dSYM
 *.so
 *.dylib
@@ -19,8 +21,8 @@ logs/
 
 app/.import
 .DS_Store
-app/_dlls/enu.exp
-app/_dlls/enu.lib
+app/enu.exp
+app/enu.lib
 
 generated/
 app/export_presets.cfg

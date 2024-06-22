@@ -25,9 +25,6 @@ if host_os == "windows":
 --experimental:
   "overloadable_enums"
 
---exceptions:
-  "setjmp"
-
 --define:
   "vm_exec_hooks"
 --define:
@@ -51,9 +48,17 @@ if defined(release):
   --define:
     "zen_lax_free"
 
+# --passC:"-I/opt/homebrew/include"
+
+--define:usePcreHeader
+--passC:"-Ivendor/pcre"
+
 if project_name() == "enu":
-  --app:
-    lib
+  if host_os == "ios":
+    --app:staticlib
+  else:
+    --app:lib
+    --passL:"-Lvendor/pcre/.libs -lpcre"
   --no_main
 else:
   --define:

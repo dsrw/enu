@@ -149,11 +149,11 @@ when not defined(no_godot):
     default_chronicles_stream.outputs[0].writer = proc(
         log_level: LogLevel, msg: LogOutputStr
     ) {.gcsafe.} =
-      when defined(release):
-        godot.print msg
-      else:
-        if log_level >= INFO:
-          echo msg
+      # when defined(release):
+      godot.print msg
+      # else:
+      #   if log_level >= INFO:
+      #     echo msg
 
   when default_chronicles_stream.outputs.tuple_len > 1:
     discard default_chronicles_stream.outputs[1].open(

@@ -7,3 +7,6 @@
 	url = https://github.com/dsrw/godot.git
 	branch = enu
 	ignore = untracked
+[submodule "vendor/pcre2"]
+	path = vendor/pcre2
+	url = https://github.com/PhilipHazel/pcre2.git

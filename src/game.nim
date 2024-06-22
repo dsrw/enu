@@ -174,6 +174,11 @@ gdobj Game of Node:
           "Help", "Launch Tutorial", "tutorial".to_variant, "".to_variant
         )
 
+    when host_os == "ios":
+      let vmlib = join_path(get_executable_path().parent_dir(), "vmlib")
+    else:
+      let vmlib = join_path(get_executable_path().parent_dir(), "..", "..", "..", "vmlib")
+
     state.config_value.value:
       screen_scale = screen_scale
       work_dir = get_user_data_dir()
@@ -186,9 +191,7 @@ gdobj Game of Node:
       megapixels = uc.megapixels ||= 2.0
       full_screen = uc.full_screen ||= true
       semicolon_as_colon = uc.semicolon_as_colon ||= false
-      lib_dir =
-        join_path(get_executable_path().parent_dir(), "..", "..", "..", "vmlib")
-
+      lib_dir = vmlib
       connect_address = connect_address
       listen_address = listen_address
       player_color = uc.player_color ||= color(rand(1.0), rand(1.0), rand(1.0))
