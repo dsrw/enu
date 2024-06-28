@@ -34,6 +34,9 @@ gdobj Settings of PanelContainer:
     state: WindowState
 
   proc update_values() =
+    find("FullScreenLabel", Label).visible = host_os != "ios"
+    self.full_screen.visible = host_os != "ios"
+
     self.megapixels.text = \"{state.config.megapixels:.2f}"
     self.font_size.text = $state.config.font_size
     self.toolbar_size.text = $int(state.config.toolbar_size)

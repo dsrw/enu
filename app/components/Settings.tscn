@@ -291,7 +291,7 @@ focus_mode = 0
 theme_type_variation = "MonoButton"
 text = " ↓ "
 
-[node name="Label5" type="Label" parent="Window/MainContainer/RowContainer/SettingsContainer"]
+[node name="FullScreenLabel" type="Label" parent="Window/MainContainer/RowContainer/SettingsContainer"]
 margin_top = 190.0
 margin_right = 160.0
 margin_bottom = 227.0
