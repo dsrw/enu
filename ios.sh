@@ -1,4 +1,0 @@
-nim c --os:ios --debugger:native -o:dist/ios/Enu/libenu.a -t:'-Ivendor/pcre -miphoneos-version-min=12.0 --sysroot=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -mcpu=apple-a10' -l:'-target aarch64-ios --sysroot=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk' src/enu.nim
-
-
-# TARGET=ios nim c -o:app/enu.simulator.a -t:'-mios-simulator-version-min=12.0 --sysroot=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk -mcpu=apple-a10' -l:'-target arm64-apple-ios-simulator --sysroot=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk' src/enu.nim

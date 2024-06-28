@@ -125,7 +125,12 @@ macro bridged_from_vm(
     result.add quote do:
       mixin implement_routine
       debug "implementing routine", name = `proc_name`
-      `self`.interpreter.implement_routine "*",
+      const pkg_name =
+        when host_os == "ios":
+          "unknown"
+        else:
+          "enu"
+      `self`.interpreter.implement_routine pkg_name,
         `module_name`,
         `proc_impl_name`,
         proc(a {.inject.}: VmArgs) {.gcsafe.} =

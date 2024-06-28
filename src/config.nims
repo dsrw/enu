@@ -50,15 +50,15 @@ if defined(release):
 
 # --passC:"-I/opt/homebrew/include"
 
---define:usePcreHeader
---passC:"-Ivendor/pcre"
-
 if project_name() == "enu":
   if host_os == "ios":
+    --define:use_pcre_header
+    --define:"chronicles_colors=None"
+    --passC:"-Ivendor/pcre -miphoneos-version-min=12.0 --sysroot=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -mcpu=apple-a10"
+    --passL:"-target aarch64-ios --sysroot=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk"
     --app:staticlib
   else:
     --app:lib
-    --passL:"-Lvendor/pcre/.libs -lpcre"
   --no_main
 else:
   --define:

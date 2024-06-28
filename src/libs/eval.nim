@@ -156,8 +156,6 @@ proc loadModule*(
     if iface.module != nil and iface.module.name.s == moduleName and
         fileName == toFullPath(i.graph.config, iface.module.info):
       module = iface.module
-      print "@@@@module ", iface.module.info
-      discard posix.raise SIGINT
       break
 
   if module.isNil:

@@ -38,7 +38,6 @@ requires "nim >= 2.0.2",
   "https://github.com/dsrw/model_citizen 0.19.2",
   "https://github.com/dsrw/nanoid.nim 0.2.1", "cligen 1.6.17",
   "https://github.com/treeform/pretty",
-  "https://github.com/theAkito/xxnimterop",
   "chroma", "markdown", "chronicles", "dotenv", "nimibook", "metrics#51f1227",
   "zippy"
 
