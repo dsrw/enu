@@ -10,3 +10,4 @@
 [submodule "vendor/pcre"]
 	path = vendor/pcre
 	url = https://github.com/luvit/pcre
+	ignore = dirty
