@@ -100,6 +100,20 @@ proc round*(v: Vector3): Vector3 {.inline.} =
 proc is_axis_aligned*(v: Vector3): bool {.inline.} =
   v in [UP, DOWN, LEFT, RIGHT, FORWARD, BACK]
 
+proc limit_length*(self: Vector2, length: float): Vector2 =
+  let l = self.length()
+  result = self
+  if l > 0 and length < l:
+    result /= l
+    result *= length
+
+proc within*(
+    self: Vector2, position: Vector2, size: Vector2, scale = vec2(1.0, 1.0)
+): bool =
+  let x = self.x >= position.x and self.x <= position.x + (size.x * scale.x)
+  let y = self.y >= position.y and self.y <= position.y + (size.y * scale.y)
+  result = x and y
+
 # Basis
 
 proc `x=`*(self: var Basis, value: Vector3) {.inline.} =

@@ -49,6 +49,9 @@ proc resolve_flags(self: GameState) =
     result.excl(EditorVisible)
     result.incl(ReticleVisible)
 
+  if TouchControls in result:
+    result.excl(BlockTargetVisible)
+
   if MouseCaptured notin result:
     result.excl(ReticleVisible)
 

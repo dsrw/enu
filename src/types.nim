@@ -41,6 +41,7 @@ type
     NeedsRestart
     Connecting
     SceneReady
+    TouchControls
 
   GlobalStateFlags* = enum
     LoadingLevel
@@ -104,6 +105,7 @@ type
     level_name_value*: ZenValue[string]
     status_message_value*: ZenValue[string]
     voxel_tasks_value*: ZenValue[int]
+    ignored_touches*: set[byte]
 
   Model* = ref object of RootObj
     id*: string

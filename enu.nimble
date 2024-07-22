@@ -20,7 +20,7 @@ const
     "https://docs.godotengine.org/en/stable/development/compiling/index.html"
   gcc_dlls = ["libgcc_s_seh-1.dll", "libwinpthread-1.dll"]
   nim_dlls = ["pcre64.dll"]
-  godot_opts = "target=release_debug"
+  godot_opts = "target=debug"
 
 version = "0.2.2"
 author = "Scott Wadden"
@@ -32,18 +32,16 @@ src_dir = "src"
 bin = @["enu" & lib_ext]
 
 requires "nim >= 2.0.2",
-  "https://github.com/dsrw/Nim#ccf10a81f",
+  "https://github.com/dsrw/Nim#44959b7",
   "https://github.com/arnetheduck/nim-results#f3c666a",
   "https://github.com/dsrw/godot-nim#43addc1",
   "https://github.com/dsrw/model_citizen 0.19.2",
   "https://github.com/dsrw/nanoid.nim 0.2.1", "cligen 1.6.17",
-  "https://github.com/treeform/pretty",
-  "chroma", "markdown", "chronicles", "dotenv", "nimibook", "metrics#51f1227",
-  "zippy"
+  "https://github.com/treeform/pretty", "chroma", "markdown", "chronicles",
+  "dotenv", "nimibook", "metrics#51f1227", "zippy"
 
 proc godot_bin(target = target): string =
-  result =
-    this_dir() & &"/vendor/godot/bin/godot.{target}.opt.tools.{cpu}{exe_ext}"
+  result = this_dir() & &"/vendor/godot/bin/godot.{target}.tools.{cpu}{exe_ext}"
   if target == "server":
     result = result.replace("godot.server", "godot_server.x11")
 

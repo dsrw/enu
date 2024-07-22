@@ -40,7 +40,7 @@ text = "  "
 
 [node name="Window" type="PanelContainer" parent="."]
 margin_right = 874.0
-margin_bottom = 521.0
+margin_bottom = 516.0
 rect_clip_content = true
 mouse_filter = 1
 size_flags_horizontal = 0
@@ -50,7 +50,7 @@ size_flags_vertical = 0
 margin_left = 20.0
 margin_top = 20.0
 margin_right = 854.0
-margin_bottom = 501.0
+margin_bottom = 496.0
 mouse_filter = 1
 custom_constants/margin_right = 10
 custom_constants/margin_top = 5
@@ -59,21 +59,21 @@ custom_constants/margin_bottom = 0
 [node name="RowContainer" type="VBoxContainer" parent="Window/MainContainer"]
 margin_top = 5.0
 margin_right = 824.0
-margin_bottom = 481.0
+margin_bottom = 476.0
 custom_constants/separation = 50
 
 [node name="VFlowContainer" type="HBoxContainer" parent="Window/MainContainer/RowContainer"]
 margin_right = 824.0
-margin_bottom = 33.0
+margin_bottom = 28.0
 size_flags_horizontal = 3
 alignment = 2
 
 [node name="Close" type="Button" parent="Window/MainContainer/RowContainer/VFlowContainer"]
-margin_left = 775.0
+margin_left = 784.0
 margin_right = 824.0
-margin_bottom = 33.0
-theme_type_variation = "MonoButton"
-text = " × "
+margin_bottom = 28.0
+theme_type_variation = "IconButton"
+text = "  "
 
 [node name="NewLevelContainer" type="VBoxContainer" parent="Window/MainContainer/RowContainer"]
 visible = false
@@ -129,9 +129,9 @@ margin_right = 1753.0
 margin_bottom = 80.0
 
 [node name="SettingsContainer" type="GridContainer" parent="Window/MainContainer/RowContainer"]
-margin_top = 83.0
+margin_top = 78.0
 margin_right = 824.0
-margin_bottom = 310.0
+margin_bottom = 305.0
 custom_constants/vseparation = 25
 custom_constants/hseparation = 20
 columns = 4
@@ -332,9 +332,9 @@ margin_bottom = 180.0
 rect_min_size = Vector2( 400, 140 )
 
 [node name="RemoteContainer" type="MarginContainer" parent="Window/MainContainer/RowContainer"]
-margin_top = 360.0
+margin_top = 355.0
 margin_right = 824.0
-margin_bottom = 476.0
+margin_bottom = 471.0
 rect_clip_content = true
 mouse_filter = 1
 custom_constants/margin_bottom = 20

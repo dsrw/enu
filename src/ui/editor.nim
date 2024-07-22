@@ -5,7 +5,7 @@ import
   godotapi/[
     text_edit, scene_tree, node, input_event, global_constants, input_event_key,
     style_box_flat, gd_os, tween, scene_tree_tween, property_tweener,
-    method_tweener
+    method_tweener, input
   ]
 import core, gdutils
 import models except Color
@@ -25,26 +25,36 @@ gdobj Editor of TextEdit:
     og_bg_color: Color
     tween: SceneTreeTween
 
-  proc indent_new_line() =
-    let column = int self.cursor_get_column - 1
-    if column > 0:
-      let
-        line = self.get_line(self.cursor_get_line)[0 .. column]
-        stripped = line.strip()
+  # proc indent_new_line() =
+  #   let column = int self.cursor_get_column - 1
+  #   if column > 0:
+  #     let
+  #       line = self.get_line(self.cursor_get_line)[0 .. column]
+  #       stripped = line.strip()
 
-      if stripped.high > 0:
-        let last = $stripped[stripped.high]
+  #     if stripped.high > 0:
+  #       let last = $stripped[stripped.high]
 
-        if (stripped in ["var", "let", "const", "type"]) or last in [":", "="]:
-          let spaces = " ".repeat(line.indentation + 2)
-          self.insert_text_at_cursor("\n" & spaces)
-          self.get_tree.set_input_as_handled()
+  #       var spaces = line.indentation
+  #       if (stripped in ["var", "let", "const", "type"]) or last in [":", "="]:
+  #         spaces += 2
+  #       var pressed = true
+  #       for i in 0 ..< spaces:
+  #         var ev = gdnew[InputEventKey]()
+  #         ev.pressed = pressed
+  #         pressed = not pressed
+  #         ev.scancode = 0x0020
+  #         ev.physical_scancode = 0x0020
+  #         parse_input_event(ev)
+
+  #       # self.insert_text_at_cursor("\n" & " ".repeat(spaces))
+  #       # self.get_tree.set_input_as_handled()
 
   method input*(event: InputEvent) =
     var event = event.as(InputEventKey)
     if not event.is_nil and event.pressed:
-      if event.scancode == KEY_ENTER:
-        self.indent_new_line()
+      # if event.scancode == KEY_ENTER:
+      #   self.indent_new_line()
       if event.scancode == KEY_SEMICOLON and state.config.semicolon_as_colon:
         self.insert_text_at_cursor(":")
         self.get_tree.set_input_as_handled()
@@ -101,6 +111,12 @@ gdobj Editor of TextEdit:
   method ready*() =
     self.bind_signals(self, "text_changed", "cursor_changed")
     state.nodes.game.bind_signal(self, "gui_input", self.name)
+
+    for name in ["Close", "Run"]:
+      let control = find(name, Control)
+      self.bind_signal(control, ("pressed", name.to_lower))
+      self.bind_signal(control, ("gui_input", "child_focused"))
+
     var stylebox = self.get_stylebox("normal").as(StyleBoxFlat)
     self.og_bg_color = stylebox.bg_color
 
@@ -207,3 +223,16 @@ gdobj Editor of TextEdit:
       let o = child.as_object(Node) as VScrollBar
       if ?o:
         o.modulate = Color(r: 1.0, g: 1.0, b: 1.0, a: 0.0)
+
+  method on_close() =
+    if ?state.open_unit:
+      state.open_unit.code = Code.init(self.text)
+      state.open_unit = nil
+
+  method on_run() =
+    if ?state.open_unit:
+      state.open_unit.code = Code.init("")
+      state.open_unit.code = Code.init(self.text)
+
+  method on_child_focused(event: InputEvent) =
+    self.grab_focus()

@@ -470,6 +470,9 @@ gdobj Settings of PanelContainer:
         self.state == Opened and self.margin_y != self.expanded_margin:
       self.resize_y(self.expanded_margin)
 
+  method input(event: InputEvent) =
+    self.ignore_touches(event)
+
   method unhandled_input*(event: InputEvent) =
     if SettingsFocused in state.local_flags and
         event.is_action_pressed("ui_cancel"):
