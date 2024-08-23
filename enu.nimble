@@ -1,15 +1,20 @@
-import std / [strformat, strutils, strscans, os, json, os]
+import std/[strformat, strutils, strscans, os, json, os]
 
 const
-  (target, lib_ext, exe_ext) = case host_os
-    of "windows": ("windows", ".dll", ".exe")
-    of "macosx" : ("osx", ".dylib", "")
-    else        : ("x11", ".so", "")
+  (target, lib_ext, exe_ext) =
+    case host_os
+    of "windows":
+      ("windows", ".dll", ".exe")
+    of "macosx":
+      ("osx", ".dylib", "")
+    else:
+      ("x11", ".so", "")
   cpu = if host_cpu == "arm64": "arm64" else: "64"
   generated_dir = "generated/godotapi"
   api_json = "api.json"
   generator = "tools/build_helpers"
-  godot_build_url = "https://docs.godotengine.org/en/stable/development/compiling/index.html"
+  godot_build_url =
+    "https://docs.godotengine.org/en/stable/development/compiling/index.html"
   gcc_dlls = ["libgcc_s_seh-1.dll", "libwinpthread-1.dll"]
   nim_dlls = ["pcre64.dll"]
   godot_opts = "target=release_debug"
@@ -28,24 +33,18 @@ requires "nim >= 2.0.2",
   "https://github.com/arnetheduck/nim-results#f3c666a",
   "https://github.com/dsrw/godot-nim#43addc1",
   "https://github.com/dsrw/model_citizen 0.19.2",
-  "https://github.com/dsrw/nanoid.nim 0.2.1",
-  "cligen 1.6.0",
-  "https://github.com/treeform/pretty",
-  "chroma",
-  "markdown",
-  "chronicles",
-  "dotenv",
-  "nimibook",
-  "metrics#51f1227",
-  "zippy"
+  "https://github.com/dsrw/nanoid.nim 0.2.1", "cligen 1.6.0",
+  "https://github.com/treeform/pretty", "chroma", "markdown", "chronicles",
+  "dotenv", "nimibook", "metrics#51f1227", "zippy"
 
 proc godot_bin(target = target): string =
-  result = this_dir() & &"/vendor/godot/bin/godot.{target}.opt.tools.{cpu}{exe_ext}"
+  result =
+    this_dir() & &"/vendor/godot/bin/godot.{target}.opt.tools.{cpu}{exe_ext}"
   if target == "server":
     result = result.replace("godot.server", "godot_server.x11")
 
 var generator_path = ""
-proc gen: string =
+proc gen(): string =
   if generator_path == "":
     exec &"nimble c -d:ssl {generator}"
     generator_path = find_exe generator
@@ -83,13 +82,14 @@ task build_headless, "build headless godot":
 task test, "run godot tests":
   exec "nimble c tests/godot/tnode_factories"
   cd "tests/godot/app"
-  exec this_dir() / &"vendor/godot/bin/godot_server.osx.opt.tools.{cpu} --quiet --script tests/tests.gdns"
+  exec this_dir() /
+    &"vendor/godot/bin/godot_server.osx.opt.tools.{cpu} --quiet --script tests/tests.gdns"
 
 proc find_and_copy_dlls(dep_path, dest: string, dlls: varargs[string]) =
   for dep in dlls:
     cp_file dep_path.join_path(dep), join_path(dest, dep)
 
-proc copy_fonts =
+proc copy_fonts() =
   p "Coping fonts..."
   when host_os == "macosx":
     with_dir "fonts/mono/SFMonoFonts.pkg/Payload/Library/Fonts":
@@ -132,7 +132,7 @@ proc copy_fonts =
       cp_file "Roboto-Bold.ttf", dest / "display-bold.otf"
       cp_file "Roboto-BoldItalic.ttf", dest / "display-bold-italic.otf"
 
-proc download_fonts =
+proc download_fonts() =
   p "Downloading fonts..."
   rm_dir "fonts"
   mk_dir "fonts"
@@ -147,19 +147,19 @@ proc download_fonts =
       exec "hdiutil attach SF-Pro.dmg"
       exec "pkgutil --expand-full '/Volumes/SFProFonts/SF Pro Fonts.pkg' pro"
       exec "hdiutil detach /Volumes/SFProFonts"
-
     else:
-      exec "curl -o Roboto.zip \"https://github.com/mobiledesres/Google-UI-fonts/blob/main/zip/Roboto.zip?raw=true\""
-      exec "curl -o RobotoMono.zip \"https://github.com/mobiledesres/Google-UI-fonts/blob/main/zip/Roboto%20Mono.zip?raw=true\""
+      exec "curl -Lo Roboto.zip \"https://github.com/mobiledesres/Google-UI-fonts/blob/main/zip/Roboto.zip?raw=true\""
+      exec "curl -Lo RobotoMono.zip \"https://github.com/mobiledesres/Google-UI-fonts/blob/main/zip/Roboto%20Mono.zip?raw=true\""
       exec "unzip Roboto.zip"
       exec "unzip -o RobotoMono.zip"
 
-proc mingw_path: string =
+proc mingw_path(): string =
   var pre, match: string
   let shim_help = gorge_ex("gcc --shimgen-help")
   # chocolatey uses shim exes, so we need to parse shimgen-help to find the real
   # gcc path
-  if shim_help.exit_code < 1 and shim_help.output.scanf("$+Target: '$+'", pre, match):
+  if shim_help.exit_code < 1 and
+      shim_help.output.scanf("$+Target: '$+'", pre, match):
     match.parent_dir
   else:
     find_exe("gcc").parent_dir
@@ -168,7 +168,8 @@ proc gen_binding_and_copy_stdlib(target = target) =
   if host_os == "windows":
     # Assumes mingw
     find_and_copy_dlls mingw_path(), join_path("app", "_dlls"), gcc_dlls
-    find_and_copy_dlls get_current_compiler_exe().parent_dir, join_path("vendor", "godot", "bin"), nim_dlls
+    find_and_copy_dlls get_current_compiler_exe().parent_dir,
+      join_path("vendor", "godot", "bin"), nim_dlls
   mk_dir generated_dir
   exec &"{godot_bin(target)} --verbose --gdnative-generate-json-api {join_path generated_dir, api_json}"
   exec &"{gen()} generate_api -d={generated_dir} -j={api_json}"
@@ -180,7 +181,8 @@ task prereqs, "Build godot, download fonts, generate binding and stdlib":
   copy_fonts()
   gen_binding_and_copy_stdlib()
 
-task import_assets, "Import Godot assets. Only required if you're not using the Godot editor":
+task import_assets,
+  "Import Godot assets. Only required if you're not using the Godot editor":
   p "Importing assets..."
   exec godot_bin() & " app/project.godot --editor --quit"
 
@@ -249,12 +251,12 @@ task dist_package, "Build distribution binaries":
     exec &"iscc /DVersion={git_version} installer/enu.iss"
     with_dir "dist":
       exec &"zip -r enu-{git_version}-windows-x64.zip enu-{git_version}"
-
   elif host_os == "macosx":
     gen_binding_and_copy_stdlib()
     proc nim_build(target, cpu: string) =
       rm_dir ".nim_cache"
-      let cmd =  &"nim c --cpu:{cpu} -l:'-target {target}-apple-macos11' " &
+      let cmd =
+        &"nim c --cpu:{cpu} -l:'-target {target}-apple-macos11' " &
         &"-t:'-target {target}-apple-macos11' -d:release -d:dist " &
         &"-o:dist/Enu.app/Contents/Frameworks/enu.dylib.{target} src/enu.nim"
       exec cmd
@@ -308,14 +310,12 @@ task dist_package, "Build distribution binaries":
       if "notarize-profile" in config:
         let profile = config["notarize-profile"].get_str
         exec &"xcrun notarytool submit \"dist/{package_name}\" --keychain-profile \"{profile}\" --wait"
-
       else:
         let
           username = config["notarize-username"].get_str
           password = config["notarize-password"].get_str
 
         exec &"xcrun altool --notarize-app --primary-bundle-id 'com.getenu.enu'  --username '{username}' --password '{password}' --file dist/{package_name}"
-
   elif host_os == "linux":
     gen_binding_and_copy_stdlib("server")
     let release_bin = &"vendor/godot/bin/godot.{target}.opt.{cpu}{exe_ext}"
@@ -330,7 +330,8 @@ task dist_package, "Build distribution binaries":
     exec "chmod +x " & root & "/bin/enu"
     exec &"{gen()} write_export_presets --enu_version {git_version}"
     let pck_path = this_dir() & "/" & root & "/enu.pck"
-    exec &"{godot_bin(\"server\")} --verbose --path app --export-pack \"x11\" " & pck_path
+    exec &"{godot_bin(\"server\")} --verbose --path app --export-pack \"x11\" " &
+      pck_path
     with_dir "dist":
       exec &"tar -czvf enu-{git_version}-linux-x64.tar.gz enu-{git_version}"
 
@@ -344,7 +345,6 @@ task dist_package, "Build distribution binaries":
       exec "curl -OJL https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
       exec "chmod a+x appimagetool-x86_64.AppImage"
       exec &"./appimagetool-x86_64.AppImage Enu.AppDir enu-{git_version}-x86_64.AppImage"
-
   else:
     quit &"dist is currently unsupported on {host_os}"
 
