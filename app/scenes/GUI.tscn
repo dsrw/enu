@@ -169,36 +169,40 @@ margin_bottom = 1080.0
 focus_mode = 2
 custom_styles/bg = SubResource( 8 )
 
-[node name="GridContainer" type="GridContainer" parent="RightPanel"]
+[node name="Overlay" type="GridContainer" parent="RightPanel"]
 margin_left = -2.0
 margin_right = 959.0
 margin_bottom = 1080.0
+mouse_filter = 2
 theme = ExtResource( 6 )
 columns = 2
 
-[node name="Label" type="Label" parent="RightPanel/GridContainer"]
-margin_right = 887.0
+[node name="Label" type="Label" parent="RightPanel/Overlay"]
+margin_right = 882.0
 margin_bottom = 53.0
 size_flags_horizontal = 3
 size_flags_vertical = 1
 
-[node name="MarginContainer" type="MarginContainer" parent="RightPanel/GridContainer"]
-margin_left = 891.0
+[node name="MarginContainer" type="MarginContainer" parent="RightPanel/Overlay"]
+margin_left = 886.0
 margin_right = 961.0
 margin_bottom = 53.0
+mouse_filter = 2
 custom_constants/margin_right = 35
 custom_constants/margin_top = 25
 
-[node name="GridContainer" type="GridContainer" parent="RightPanel/GridContainer/MarginContainer"]
+[node name="GridContainer" type="GridContainer" parent="RightPanel/Overlay/MarginContainer"]
 margin_top = 25.0
 margin_right = 40.0
 margin_bottom = 53.0
 rect_pivot_offset = Vector2( -911, -78 )
+mouse_filter = 2
 custom_constants/vseparation = 30
 
-[node name="Close" type="Button" parent="RightPanel/GridContainer/MarginContainer/GridContainer"]
+[node name="Close" type="Button" parent="RightPanel/Overlay/MarginContainer/GridContainer"]
 margin_right = 40.0
 margin_bottom = 28.0
+mouse_default_cursor_shape = 2
 theme_type_variation = "IconButton"
 text = "  "
 

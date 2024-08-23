@@ -50,5 +50,6 @@ custom_constants/vseparation = 30
 [node name="Close" type="Button" parent="GridContainer/MarginContainer/GridContainer"]
 margin_right = 40.0
 margin_bottom = 28.0
+mouse_default_cursor_shape = 2
 theme_type_variation = "IconButton"
 text = "  "

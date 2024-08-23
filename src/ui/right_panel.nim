@@ -91,6 +91,8 @@ gdobj RightPanel of MarginContainer:
         self.ghost()
       elif CommandMode.removed:
         self.unghost()
+        find("Overlay", Control).set_mouse_filter_recursive(MOUSE_FILTER_IGNORE)
+        find("Close", Control).mouse_filter = MOUSE_FILTER_STOP
 
   method on_close() =
     state.open_sign = nil

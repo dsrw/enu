@@ -11,7 +11,10 @@ log_scope:
 # only one flag from the group is active at a time
 const groups =
   @[
-    {EditorFocused, ConsoleFocused, DocsFocused, SettingsFocused},
+    {
+      EditorFocused, ConsoleFocused, DocsFocused, SettingsFocused,
+      ViewportFocused
+    },
     {ReticleVisible, BlockTargetVisible},
     {Playing, Flying}
   ]

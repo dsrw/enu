@@ -29,6 +29,7 @@ type
     ConsoleFocused
     DocsFocused
     SettingsFocused
+    ViewportFocused
     Playing
     Flying
     God
