@@ -25,36 +25,28 @@ gdobj Editor of TextEdit:
     og_bg_color: Color
     tween: SceneTreeTween
 
-  # proc indent_new_line() =
-  #   let column = int self.cursor_get_column - 1
-  #   if column > 0:
-  #     let
-  #       line = self.get_line(self.cursor_get_line)[0 .. column]
-  #       stripped = line.strip()
+  proc indent_new_line() =
+    let column = int self.cursor_get_column - 1
+    if column > 0:
+      let
+        line = self.get_line(self.cursor_get_line)[0 .. column]
+        stripped = line.strip()
 
-  #     if stripped.high > 0:
-  #       let last = $stripped[stripped.high]
+      if stripped.high > 0:
+        let last = $stripped[stripped.high]
 
-  #       var spaces = line.indentation
-  #       if (stripped in ["var", "let", "const", "type"]) or last in [":", "="]:
-  #         spaces += 2
-  #       var pressed = true
-  #       for i in 0 ..< spaces:
-  #         var ev = gdnew[InputEventKey]()
-  #         ev.pressed = pressed
-  #         pressed = not pressed
-  #         ev.scancode = 0x0020
-  #         ev.physical_scancode = 0x0020
-  #         parse_input_event(ev)
+        var spaces = line.indentation
+        if (stripped in ["var", "let", "const", "type"]) or last in [":", "="]:
+          spaces += 2
 
-  #       # self.insert_text_at_cursor("\n" & " ".repeat(spaces))
-  #       # self.get_tree.set_input_as_handled()
+        self.insert_text_at_cursor("\n" & " ".repeat(spaces))
+        self.get_tree.set_input_as_handled()
 
   method input*(event: InputEvent) =
     var event = event.as(InputEventKey)
     if not event.is_nil and event.pressed:
-      # if event.scancode == KEY_ENTER:
-      #   self.indent_new_line()
+      if event.scancode == KEY_ENTER and host_os != "ios":
+        self.indent_new_line()
       if event.scancode == KEY_SEMICOLON and state.config.semicolon_as_colon:
         self.insert_text_at_cursor(":")
         self.get_tree.set_input_as_handled()
