@@ -410,7 +410,7 @@ task test_sandbox, "verify scripts can't reach host files/env from the VM":
   echo r.output
   if "SANDBOX-LEAK" in r.output:
     quit "SANDBOX ESCAPE: a script read host file/env data from the VM"
-  if "build_read_probe" notin r.output or "build_env_probe" notin r.output:
+  if ["build_read_probe", "build_env_probe", "build_slurp_probe"].any_it(it notin r.output):
     quit "sandbox probe did not run (level failed to load); cannot verify"
   p "sandbox probe passed: scripts can't read host files or env"
 
